@@ -18,8 +18,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed:plo-2564": "ts-node prisma/seed-plo-2564.ts",
-    "prisma:seed:plo-clo:sample": "ts-node prisma/seed-plo-clo.ts --allow-sample"
+    "prisma:seed:plo-2564": "ts-node prisma/seed-plo-2564.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

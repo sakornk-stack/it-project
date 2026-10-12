@@ -139,7 +139,6 @@ Three commits delivered (2026-09-30):
 4. `npx ts-node prisma/import-ict-clo-plo.ts` (PLO/CLO/mapping ของ 2569) — **ต้องมี CSV ใน `prisma/private-data/`**
 5. `npx ts-node prisma/copy-ict-clo-plo-to-2564.ts` (คัดลอก CLO/mapping 2569 ไป 2564 ตามชื่อวิชา) — อ่านจาก DB แต่รายงาน (ฉ) ใช้ `private-data/` ด้วย
 - `private-data/` (เล่มหลักสูตรและ CSV ที่แปลงแล้ว) **ไม่อยู่ใน git** ต้องเอาไฟล์มาวางเองบนเครื่องใหม่ ถ้าไม่มี ขั้นที่ 4 ใช้ไม่ได้ ขั้นที่ 5 รันได้แต่ข้ามการตรวจ (ฉ)
-- `prisma/seed-plo-clo.ts` (`prisma:seed:plo-clo:sample`) เป็นข้อมูลตัวอย่างเก่า ห้ามใช้บน DB จริง ยังไม่ได้ลบ รอยืนยัน
 
 
 ---
