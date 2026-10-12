@@ -131,6 +131,16 @@ Three commits delivered (2026-09-30):
 - ยังไม่มี checkbox ยอมรับเงื่อนไข/PDPA ในฟอร์มสมัคร
 - ยังไม่เคยดูหน้า auth จริงบนหน้าจอ (โลโก้บนมือถือ, การ์ดเดียวกันทั้ง 5 หน้า, Light/Dark)
 
+### ลำดับสร้างข้อมูลหลักสูตร ICT บนฐานข้อมูลใหม่ (2026-10-12)
+รันจาก `apps/backend` ทุกสคริปต์เป็น dry-run โดยปริยาย ใส่ `--apply` เมื่อพร้อมเขียนจริง (รันซ้ำได้ ไม่ซ้ำข้อมูล) ทดสอบลำดับนี้บนฐานข้อมูลว่างชั่วคราวแล้ว ได้ PLO 2564 ครบ 6 ข้อ:
+1. `npx prisma migrate deploy` แล้ว `npx ts-node prisma/seed.ts` (สร้างคณะ/โปรแกรม/curriculum)
+2. `npx ts-node prisma/import-ict-2564.ts` และ `import-ict-2564-gened.ts` (วิชา 2564), `import-ict-2569.ts` (วิชา 2569)
+3. `npm run prisma:seed:plo-2564` (PLO1–6 ของ 2564 — ข้อความยังไม่ได้ยืนยันกับเล่ม 2564)
+4. `npx ts-node prisma/import-ict-clo-plo.ts` (PLO/CLO/mapping ของ 2569) — **ต้องมี CSV ใน `prisma/private-data/`**
+5. `npx ts-node prisma/copy-ict-clo-plo-to-2564.ts` (คัดลอก CLO/mapping 2569 ไป 2564 ตามชื่อวิชา) — อ่านจาก DB แต่รายงาน (ฉ) ใช้ `private-data/` ด้วย
+- `private-data/` (เล่มหลักสูตรและ CSV ที่แปลงแล้ว) **ไม่อยู่ใน git** ต้องเอาไฟล์มาวางเองบนเครื่องใหม่ ถ้าไม่มี ขั้นที่ 4 ใช้ไม่ได้ ขั้นที่ 5 รันได้แต่ข้ามการตรวจ (ฉ)
+- `prisma/seed-plo-clo.ts` (`prisma:seed:plo-clo:sample`) เป็นข้อมูลตัวอย่างเก่า ห้ามใช้บน DB จริง ยังไม่ได้ลบ รอยืนยัน
+
 
 ---
 
