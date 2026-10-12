@@ -275,6 +275,9 @@ async function plan(db: Db, src: Source, apply: boolean) {
       ploIdByCode.set(p.code, found.id);
     } else {
       found ? ploT.update++ : ploT.create++;
+      // An updated PLO keeps its id, so the mapping lookup below sees its existing rows
+      // in dry-run too (otherwise they were miscounted as creates).
+      if (found) ploIdByCode.set(p.code, found.id);
       if (apply) {
         const saved = await upsertActive({
           find: async () => found,
