@@ -61,3 +61,7 @@ skills-lock.json
 issues.json
 sonar-issues.json
 eduanalyze-ai_report.pdf
+
+# ข้อมูลหลักสูตรที่เป็นความลับ
+apps/backend/prisma/private-data/
+DEPLOY_GUIDE.md
