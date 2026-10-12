@@ -462,6 +462,7 @@ model Course {
   assessments           CourseAssessment[]
   assessmentDefinitions AssessmentDefinition[]
   plannedBy             StudentPlannedCourse[]
+  careerCourses         CareerCourse[]
 
   // No @@unique([curriculumId, code]) here on purpose — see Faculty.code
   // comment above. Real constraint: partial unique index on (curriculumId,
@@ -597,6 +598,49 @@ model CloPloMapping {
 
   @@unique([cloId, ploId])
   @@map("clo_plo_mappings")
+}
+
+// A career path a graduate can enter (e.g. the careers listed in the curriculum
+// book). Global like AssessmentDefinition: the same career applies to every
+// curriculum, and CareerCourse (below) is what ties it to a curriculum's courses.
+// Soft-delete because it parameterizes the career-fit scores shown to students.
+model Career {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  // Display order, set by the import (file order).
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses CareerCourse[]
+
+  // No @@unique([name]) here on purpose — see Faculty.code comment above.
+  // Real constraint: partial unique index on (name) WHERE isActive = true.
+  @@map("careers")
+}
+
+// Course → career link with a 1-3 relevance weight (3 = core). Course is
+// curriculum-scoped, so 2564 and 2569 each get their own rows.
+model CareerCourse {
+  id        String   @id @default(uuid())
+  weight    Int
+  reason    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  careerId String
+  career   Career @relation(fields: [careerId], references: [id], onDelete: Restrict)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  // No @@unique([careerId, courseId]) here on purpose — see Faculty.code
+  // comment above. Real constraint: partial unique index on (careerId,
+  // courseId) WHERE isActive = true.
+  @@map("career_courses")
 }
 
 // Student self-assessment against a Course's CLOs (1-5 scale), separate
