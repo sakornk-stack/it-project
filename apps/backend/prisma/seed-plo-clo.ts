@@ -464,6 +464,19 @@ async function seedCurriculum(cur: CurriculumSeed) {
 }
 
 async function main() {
+  // The real ICT 2569 PLO/CLO/mapping data is imported by import-ict-clo-plo.ts.
+  // This script writes SAMPLE data and would overwrite those rows, so it
+  // refuses to run unless the caller explicitly asks for the sample data.
+  if (!process.argv.includes('--allow-sample')) {
+    console.error(
+      'seed-plo-clo.ts writes SAMPLE PLO/CLO data and would overwrite the real ICT 2569 ' +
+        'curriculum data imported by import-ict-clo-plo.ts.\n' +
+        'Refusing to run. If you really want the sample data, use ' +
+        '"npm run prisma:seed:plo-clo:sample" (passes --allow-sample).',
+    );
+    process.exitCode = 1;
+    return;
+  }
   for (const cur of CURRICULA) {
     await seedCurriculum(cur);
   }
