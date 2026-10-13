@@ -17,19 +17,81 @@ const prisma = new PrismaClient();
 //   ts-node prisma/import-career-courses.ts --apply               # one transaction, idempotent
 //   ts-node prisma/import-career-courses.ts --exclude-career=TEXT # skip careers whose name contains TEXT
 //   ts-node prisma/import-career-courses.ts --file=PATH           # default private-data/career-course-draft.csv
+//   ts-node prisma/import-career-courses.ts --no-additions        # do not auto-load the default additions file
+//   ts-node prisma/import-career-courses.ts --additions-file=PATH # default private-data/career-course-additions.csv if present; extra links by course CODE in each curriculum (no name matching)
 //   ts-node prisma/import-career-courses.ts --rename-file=PATH    # CSV old,new: rename an existing career instead of creating a new one
 //
 // CSV columns: career, course_code, weight (1-3), reason.
+// Additions CSV columns: career, course_code, weight (1-3), curriculum (2569 | 2564 | both),
+// reason (optional column). Careers must already exist (DB or main file).
 const APPLY = process.argv.includes('--apply');
 const argValues = (name: string) =>
   process.argv.filter((a) => a.startsWith(`--${name}=`)).map((a) => a.slice(name.length + 3));
 const EXCLUDE = argValues('exclude-career');
 const FILE =
   argValues('file')[0] ?? path.join(__dirname, 'private-data', 'career-course-draft.csv');
+// Links carry no record of which file created them, so the stale-link cleanup would
+// soft-delete additions on a main-file-only run. To prevent that the default
+// additions file is loaded whenever it exists; --no-additions turns that off.
+const DEFAULT_ADDITIONS = path.join(__dirname, 'private-data', 'career-course-additions.csv');
+const ADDITIONS_FILE =
+  argValues('additions-file')[0] ??
+  (!process.argv.includes('--no-additions') && fs.existsSync(DEFAULT_ADDITIONS)
+    ? DEFAULT_ADDITIONS
+    : undefined);
 const RENAME_FILE = argValues('rename-file')[0];
 const PROGRAM_CODE = 'ICT';
 const SOURCE_VERSION = '2569';
 const TARGET_VERSION = '2564';
+
+interface Addition {
+  line: number;
+  career: string;
+  courseCode: string;
+  weight: number;
+  reason: string | null;
+  versions: string[];
+}
+
+function readAdditions() {
+  const errors: string[] = [];
+  const rows: Addition[] = [];
+  if (!ADDITIONS_FILE) return { rows, errors };
+  const csv = parseCsv(fs.readFileSync(ADDITIONS_FILE, 'utf8'));
+  const header = (csv[0] ?? []).map((h) => h.trim());
+  for (const col of ['career', 'course_code', 'weight', 'curriculum']) {
+    if (!header.includes(col)) errors.push(`additions header: missing-column-${col}`);
+  }
+  if (errors.length) return { rows, errors };
+  const idx = (c: string) => header.indexOf(c);
+  const seen = new Set<string>();
+  csv.slice(1).forEach((cells, i) => {
+    const line = i + 2;
+    if (cells.every((c) => !c.trim())) return;
+    const cell = (c: string) => (idx(c) >= 0 ? (cells[idx(c)] ?? '').trim() : '');
+    const career = cell('career');
+    const courseCode = cell('course_code');
+    const weight = Number(cell('weight'));
+    const curriculum = cell('curriculum');
+    const reason = cell('reason') || null;
+    if (!career) errors.push(`additions line ${line}: empty-career`);
+    if (!/^\d{8}$/.test(courseCode)) errors.push(`additions line ${line}: bad-course-code`);
+    if (!Number.isInteger(weight) || weight < 1 || weight > 3) {
+      errors.push(`additions line ${line}: weight-not-1-to-3`);
+    }
+    const versions = curriculum === 'both' ? [SOURCE_VERSION, TARGET_VERSION] : [curriculum];
+    if (!versions.every((v) => v === SOURCE_VERSION || v === TARGET_VERSION)) {
+      errors.push(`additions line ${line}: bad-curriculum`);
+    }
+    for (const v of versions) {
+      const key = `${career}\u0000${courseCode}\u0000${v}`;
+      if (seen.has(key)) errors.push(`additions line ${line}: duplicate-career-course-curriculum`);
+      seen.add(key);
+    }
+    rows.push({ line, career, courseCode, weight, reason, versions });
+  });
+  return { rows, errors };
+}
 
 // new career name -> old name (only when --rename-file is given)
 function readRenames() {
@@ -101,7 +163,13 @@ const tally = (): Tally => ({ create: 0, update: 0, skip: 0 });
 const fmt = (t: Tally) => `create ${t.create} / update ${t.update} / skip ${t.skip}`;
 const list = (codes: string[]) => (codes.length ? ` [${codes.join(', ')}]` : '');
 
-async function plan(db: Db, rows: Row[], apply: boolean) {
+class AdditionsError extends Error {
+  constructor(readonly errors: string[]) {
+    super('additions-invalid');
+  }
+}
+
+async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) {
   const program = await db.program.findFirstOrThrow({ where: { code: PROGRAM_CODE } });
   const curricula = {
     [SOURCE_VERSION]: await db.curriculum.findFirstOrThrow({
@@ -128,6 +196,7 @@ async function plan(db: Db, rows: Row[], apply: boolean) {
   const sourceNameCount = countByName(sourceCourses);
   const targetNameCount = countByName(targetCourses);
   const sourceByCode = new Map(sourceCourses.map((c) => [c.code, c]));
+  const targetByCode = new Map(targetCourses.map((c) => [c.code, c]));
   const targetByName = new Map(targetCourses.map((c) => [normName(c.name), c]));
 
   // course code (2569) → { 2569 course id, 2564 course id | reason it has none }
@@ -176,6 +245,7 @@ async function plan(db: Db, rows: Row[], apply: boolean) {
 
   // --- links
   const links = { [SOURCE_VERSION]: tally(), [TARGET_VERSION]: tally() };
+  const planned = new Set<string>(); // career|version|courseId from the main file
   const wanted = new Map<string, Set<string>>(); // careerId → courseIds that must stay active
   const wantLink = async (version: string, careerId: string | null, courseId: string, row: Row) => {
     const t = links[version as keyof typeof links];
@@ -215,7 +285,68 @@ async function plan(db: Db, rows: Row[], apply: boolean) {
     }
     const careerId = careerIdByName.get(row.career) ?? null;
     await wantLink(SOURCE_VERSION, careerId, resolved.sourceId, row);
-    if (resolved.targetId) await wantLink(TARGET_VERSION, careerId, resolved.targetId, row);
+    planned.add(`${row.career}\u0000${SOURCE_VERSION}\u0000${resolved.sourceId}`);
+    if (resolved.targetId) {
+      await wantLink(TARGET_VERSION, careerId, resolved.targetId, row);
+      planned.add(`${row.career}\u0000${TARGET_VERSION}\u0000${resolved.targetId}`);
+    }
+  }
+
+  // --- additions file: links by course code, per curriculum, no name matching
+  const addErrors: string[] = [];
+  const addMissing = new Set<string>();
+  const addLinks = { [SOURCE_VERSION]: tally(), [TARGET_VERSION]: tally() };
+  if (additions.length) {
+    const knownCareers = new Set(careerNames);
+    for (const c of await db.career.findMany({
+      where: { isActive: true },
+      select: { name: true },
+    })) {
+      knownCareers.add(c.name);
+    }
+    const byCode = { [SOURCE_VERSION]: sourceByCode, [TARGET_VERSION]: targetByCode };
+    const todo: { a: Addition; version: string; courseId: string }[] = [];
+    for (const a of additions) {
+      if (!knownCareers.has(a.career)) addErrors.push(`additions line ${a.line}: career-not-found`);
+      for (const version of a.versions) {
+        const course = byCode[version as keyof typeof byCode].get(a.courseCode);
+        if (!course) {
+          addErrors.push(`additions line ${a.line}: course-not-found-in-${version}`);
+          addMissing.add(`${a.courseCode}(${version})`);
+          continue;
+        }
+        if (planned.has(`${a.career}\u0000${version}\u0000${course.id}`)) {
+          addErrors.push(`additions line ${a.line}: already-in-main-file-for-${version}`);
+          continue;
+        }
+        todo.push({ a, version, courseId: course.id });
+      }
+    }
+    if (addErrors.length) throw new AdditionsError(addErrors); // also rolls back the transaction
+    for (const { a, version, courseId } of todo) {
+      let careerId = careerIdByName.get(a.career) ?? null;
+      if (!careerId) {
+        careerId =
+          (await db.career.findFirst({ where: { name: a.career, isActive: true } }))?.id ?? null;
+        if (careerId && !careerIdByName.has(a.career)) careerIdByName.set(a.career, careerId);
+      }
+      const before = { ...links[version as keyof typeof links] };
+      await wantLink(version, careerId, courseId, {
+        line: a.line,
+        career: a.career,
+        courseCode: a.courseCode,
+        weight: a.weight,
+        reason: a.reason,
+      });
+      const now = links[version as keyof typeof links];
+      const t = addLinks[version as keyof typeof addLinks];
+      t.create += now.create - before.create;
+      t.update += now.update - before.update;
+      t.skip += now.skip - before.skip;
+      now.create = before.create;
+      now.update = before.update;
+      now.skip = before.skip;
+    }
   }
 
   // --- active links of the imported careers that the file no longer asks for
@@ -235,6 +366,8 @@ async function plan(db: Db, rows: Row[], apply: boolean) {
   }
 
   return {
+    addMissing: [...addMissing],
+    addLinks,
     careerCount: careerNames.length,
     careerT,
     links,
@@ -258,13 +391,38 @@ async function main() {
     return;
   }
 
-  const result = APPLY
-    ? await prisma.$transaction((tx) => plan(tx, rows, true), { timeout: 120_000 })
-    : await plan(prisma, rows, false);
+  const additions = readAdditions();
+  if (additions.errors.length) {
+    for (const e of additions.errors) console.log(`  ${e}`);
+    console.log('มี error ในไฟล์เสริม — หยุด ไม่เขียนอะไร');
+    process.exitCode = 1;
+    return;
+  }
+
+  let result;
+  try {
+    result = APPLY
+      ? await prisma.$transaction((tx) => plan(tx, rows, additions.rows, true), {
+          timeout: 120_000,
+        })
+      : await plan(prisma, rows, additions.rows, false);
+  } catch (e) {
+    if (!(e instanceof AdditionsError)) throw e;
+    for (const msg of e.errors) console.log(`  ${msg}`);
+    console.log('มี error ในไฟล์เสริม — หยุด ไม่เขียนอะไร');
+    process.exitCode = 1;
+    return;
+  }
 
   console.log(`สาย (career): ${result.careerCount}  ${fmt(result.careerT)}`);
   console.log(`ลิงก์ ${SOURCE_VERSION}: ${fmt(result.links[SOURCE_VERSION])}`);
   console.log(`ลิงก์ ${TARGET_VERSION}: ${fmt(result.links[TARGET_VERSION])}`);
+  if (ADDITIONS_FILE) {
+    console.log(`ไฟล์เสริม ${additions.rows.length} แถว:`);
+    console.log(`  ลิงก์ ${SOURCE_VERSION}: ${fmt(result.addLinks[SOURCE_VERSION])}`);
+    console.log(`  ลิงก์ ${TARGET_VERSION}: ${fmt(result.addLinks[TARGET_VERSION])}`);
+    console.log(`  รหัสวิชาไม่พบ: ${result.addMissing.length}${list(result.addMissing)}`);
+  }
   console.log(`soft-delete ลิงก์ที่ไฟล์ไม่ได้ขออีก: ${result.removed}`);
   console.log(
     `รหัสวิชาไม่พบใน ${SOURCE_VERSION} (ข้าม): ${result.missing.length}${list(result.missing)}`,
