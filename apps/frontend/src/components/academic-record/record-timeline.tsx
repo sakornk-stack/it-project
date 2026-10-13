@@ -7,7 +7,6 @@ import type { CourseListItem, Grade, SemesterGpa, StudentCourseRecord } from '@e
 import { deleteCourseRecord, updateCourseRecordGrade } from '@/lib/api/academic-record';
 import { fetchClos, fetchMyAssessments } from '@/lib/api/course-assessment';
 import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
-import { gradeBadgeClassName } from '@/lib/grade-badge-color';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
 import { ApiErrorAlert } from '@/components/admin/api-error-alert';
@@ -232,7 +231,7 @@ export function RecordTimeline({
             ) : (
               <p className="text-sm text-muted-foreground">
                 {assessmentStatusReady && assessableCourseIds.length > 0
-                  ? `ประเมินตนเองตาม CLO แล้ว ${assessedCourseIds.size} จาก ${assessableCourseIds.length} วิชา`
+                  ? `ประเมินตนเองตาม CLO แล้ว ${assessedCourseIds.size} จาก ${assessableCourseIds.length} วิชาที่มี CLO ให้ประเมิน`
                   : ' '}
               </p>
             )}
@@ -336,15 +335,11 @@ export function RecordTimeline({
                           {assessedCourseIds.has(record.courseId) && (
                             <Badge tone="success">ประเมินแล้ว</Badge>
                           )}
-
-                          <span
-                            className={cn(
-                              'shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium',
-                              gradeBadgeClassName(record.grade),
+                          {assessmentStatusReady &&
+                            assessableCourseIds.includes(record.courseId) &&
+                            !assessedCourseIds.has(record.courseId) && (
+                              <Badge tone="neutral">ยังไม่ประเมิน</Badge>
                             )}
-                          >
-                            {GRADE_LABELS[record.grade]}
-                          </span>
 
                           <GradeSelectConfirm
                             value={record.grade}
@@ -376,7 +371,7 @@ export function RecordTimeline({
                               </Button>
                             </div>
                           ) : (
-                            <div className="flex shrink-0 gap-2">
+                            <div className="flex shrink-0 gap-3">
                               {(!closLoaded || assessableCourseIds.includes(record.courseId)) && (
                                 <Link href={`/course-assessment/${record.courseId}`}>
                                   <Button
@@ -392,8 +387,9 @@ export function RecordTimeline({
                               )}
                               <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
+                                className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 aria-label={`ลบผลการเรียน ${course?.code ?? ''}`}
                                 onClick={() => setConfirmingId(record.id)}
                               >

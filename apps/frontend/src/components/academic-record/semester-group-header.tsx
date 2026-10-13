@@ -34,6 +34,7 @@ export function SemesterGroupHeader({
         : 'same'
     : null;
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
+  const trendLabel = trend === 'up' ? 'สูงขึ้น' : trend === 'down' ? 'ลดลง' : 'เท่าเดิม';
   const trendColorClassName =
     trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-destructive' : 'text-muted-foreground';
 
@@ -41,7 +42,7 @@ export function SemesterGroupHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="mb-3 flex w-full flex-wrap items-baseline justify-between gap-2 text-left"
+      className="mb-3 flex min-h-11 w-full flex-wrap items-center gap-x-4 gap-y-1 text-left"
     >
       <span className="flex items-center gap-2">
         <ChevronDown
@@ -51,10 +52,15 @@ export function SemesterGroupHeader({
         <h3 className="font-semibold text-primary">{label}</h3>
       </span>
       {gpa != null && (
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-l border-slate-200 pl-4 text-xs text-muted-foreground">
           เกรดเฉลี่ยเทอมนี้{' '}
           <span className={cn('font-semibold', gpaColorClassName(gpa))}>{gpa.toFixed(2)}</span>
-          {showTrend && <TrendIcon size={14} className={trendColorClassName} />}
+          {showTrend && (
+            <span className={cn('flex items-center gap-1', trendColorClassName)}>
+              <TrendIcon size={14} aria-hidden="true" />
+              {trendLabel}
+            </span>
+          )}
           <span>({creditsCounted} หน่วยกิต)</span>
         </span>
       )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { GraduationCap, FileCheck2, Plus, Star, X } from 'lucide-react';
+import { GraduationCap, FileCheck2, Info, Plus, Star, X } from 'lucide-react';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import {
   fetchAcademicYears,
@@ -142,6 +142,8 @@ function AcademicRecordContent() {
   // only thing to do on this page). An explicit open also autofocuses it.
   const [addFormToggle, setAddFormToggle] = useState<boolean | null>(null);
   const addFormId = useId();
+  const [showCreditsNote, setShowCreditsNote] = useState(false);
+  const creditsNoteId = useId();
   const addFormToggleRef = useRef<HTMLButtonElement>(null);
 
   function closeAddForm() {
@@ -290,10 +292,27 @@ function AcademicRecordContent() {
             label="หน่วยกิตที่นับ GPA"
             value={Math.round(animatedCredits)}
             footer={
-              <p className="text-xs text-muted-foreground">
-                รวมวิชาที่สอบตก (F) ด้วย เพราะมีผลต่อเกรดเฉลี่ย — ไม่เหมือน &quot;หน่วยกิตสะสม&quot;
-                ที่นับเฉพาะวิชาที่ผ่าน ไม่นับวิชาที่ได้ W, I, S หรือ U
-              </p>
+              <div className="text-xs text-muted-foreground">
+                <p className="flex items-center gap-1">
+                  รวมวิชาที่ได้ F เพราะมีผลต่อเกรดเฉลี่ย
+                  <button
+                    type="button"
+                    aria-label="คำอธิบายหน่วยกิตที่นับ GPA"
+                    aria-expanded={showCreditsNote}
+                    aria-controls={creditsNoteId}
+                    onClick={() => setShowCreditsNote((v) => !v)}
+                    className="-my-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </button>
+                </p>
+                {showCreditsNote && (
+                  <p id={creditsNoteId} className="mt-1">
+                    รวมวิชาที่สอบตก (F) ด้วย เพราะมีผลต่อเกรดเฉลี่ย — ไม่เหมือน
+                    &quot;หน่วยกิตสะสม&quot; ที่นับเฉพาะวิชาที่ผ่าน ไม่นับวิชาที่ได้ W, I, S หรือ U
+                  </p>
+                )}
+              </div>
             }
           />
         </Reveal>
