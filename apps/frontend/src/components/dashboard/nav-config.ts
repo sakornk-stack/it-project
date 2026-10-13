@@ -42,14 +42,19 @@ const INSTRUCTOR_NAV_ITEMS: NavItem[] = [
   { label: 'ภาพรวมชั้นปี', icon: GraduationCap, href: '/instructor/year-levels' },
 ];
 
-// SUPER_ADMIN-only pages (e.g. academic-years) don't belong in plain
-// ADMIN's nav — the two used to be lumped into one array, which would have
-// shown ADMIN a link into a page RequireRole immediately blocks them from.
+// SUPER_ADMIN lives under /superadmin and ADMIN under /admin, each tree gated
+// by its own layout — so a menu must never link across the two.
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: 'ภาพรวมระบบ', icon: LayoutGrid, href: '/admin/system-overview' },
-  { label: 'ผู้ใช้งาน', icon: Users, href: '/admin/users' },
-  { label: 'โครงสร้างองค์กร', icon: Building2, href: '/admin/organization' },
-  { label: 'ปีการศึกษา', icon: CalendarClock, href: '/admin/academic-years' },
+  { label: 'ภาพรวมระบบ', icon: LayoutGrid, href: '/superadmin/system-overview' },
+  {
+    label: 'ผู้ใช้งาน',
+    icon: Users,
+    href: '/superadmin/users',
+    // A user's own page lives under /superadmin/users/[id].
+    matchPrefixes: ['/superadmin/users'],
+  },
+  { label: 'โครงสร้างองค์กร', icon: Building2, href: '/superadmin/organization' },
+  { label: 'ปีการศึกษา', icon: CalendarClock, href: '/superadmin/academic-years' },
 ];
 
 const ADMIN_NAV_ITEMS: NavItem[] = [

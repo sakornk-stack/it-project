@@ -8,8 +8,6 @@ import { fetchDepartments, fetchFaculties, fetchPrograms } from '@/lib/api/organ
 import { fetchUsers } from '@/lib/api/user-management';
 import { systemUserCounts } from '@/lib/system-overview';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { PageHeader } from '@/components/layout/page-header';
@@ -23,13 +21,7 @@ const linkClass =
   'inline-flex min-h-11 items-center text-sm font-medium text-brand hover:underline';
 
 export default function SystemOverviewPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="SUPER_ADMIN">
-        <SystemOverviewContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <SystemOverviewContent />;
 }
 
 function SystemOverviewContent() {
@@ -69,7 +61,7 @@ function SystemOverviewContent() {
           title="โครงสร้างหน่วยงาน"
           description="นับเฉพาะหน่วยงานที่เปิดใช้งานอยู่"
           actions={
-            <Link href="/admin/organization" className={linkClass}>
+            <Link href="/superadmin/organization" className={linkClass}>
               ไปที่โครงสร้างองค์กร
             </Link>
           }
@@ -118,7 +110,7 @@ function SystemOverviewContent() {
               : 'นับเฉพาะบัญชีที่ยังใช้งานได้ (ไม่รวมนิสิต)'
           }
           actions={
-            <Link href="/admin/users" className={linkClass}>
+            <Link href="/superadmin/users" className={linkClass}>
               จัดการผู้ใช้งาน
             </Link>
           }

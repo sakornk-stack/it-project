@@ -19,10 +19,10 @@ const PINNED: Record<string, [string, string][]> = {
     ['ภาพรวมชั้นปี', '/instructor/year-levels'],
   ],
   SUPER_ADMIN: [
-    ['ภาพรวมระบบ', '/admin/system-overview'],
-    ['ผู้ใช้งาน', '/admin/users'],
-    ['โครงสร้างองค์กร', '/admin/organization'],
-    ['ปีการศึกษา', '/admin/academic-years'],
+    ['ภาพรวมระบบ', '/superadmin/system-overview'],
+    ['ผู้ใช้งาน', '/superadmin/users'],
+    ['โครงสร้างองค์กร', '/superadmin/organization'],
+    ['ปีการศึกษา', '/superadmin/academic-years'],
   ],
 };
 
@@ -38,8 +38,10 @@ describe('navItemsForRole', () => {
   it.each(Object.entries(PINNED))('leaves the %s menu as it was', (role, expected) => {
     const items = navItemsForRole(role as never);
     expect(items.map((i) => [i.label, i.href])).toEqual(expected);
-    // Only the Staff menu uses prefix matching.
-    expect(items.every((i) => i.matchPrefixes === undefined)).toBe(true);
+    // Only the Staff, Admin and Super Admin menus use prefix matching.
+    if (role !== 'SUPER_ADMIN') {
+      expect(items.every((i) => i.matchPrefixes === undefined)).toBe(true);
+    }
   });
 
   it('gives Staff three items', () => {
@@ -65,14 +67,16 @@ describe('isNavItemActive', () => {
     expect(active('ADMIN', '/admin/curriculum/abc')).toEqual(['คุณภาพหลักสูตร']);
   });
 
-  it('does not light SUPER_ADMIN items on Admin-only prefixes', () => {
+  it('keeps the Super Admin menu lit below a user, and never on /admin paths', () => {
+    expect(active('SUPER_ADMIN', '/superadmin/users/abc')).toEqual(['ผู้ใช้งาน']);
     expect(active('SUPER_ADMIN', '/admin/curriculum/abc')).toEqual([]);
+    expect(active('SUPER_ADMIN', '/admin/users/abc')).toEqual([]);
+    expect(active('ADMIN', '/superadmin/users/abc')).toEqual([]);
   });
 
   it('still matches other roles on the exact path only', () => {
     expect(active('STUDENT', '/dashboard')).toEqual(['แดชบอร์ด']);
     expect(active('STUDENT', '/dashboard/extra')).toEqual([]);
-    expect(active('SUPER_ADMIN', '/admin/users/abc')).toEqual([]);
     expect(active('INSTRUCTOR', '/instructor/students')).toEqual(['นิสิต']);
   });
 

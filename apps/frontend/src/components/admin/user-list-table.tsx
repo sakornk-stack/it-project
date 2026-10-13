@@ -114,14 +114,21 @@ function ScopeBadges({
 }
 
 function DetailLink({
+  basePath,
   id,
   className,
   label = 'ดูรายละเอียด',
   arrow = true,
-}: Readonly<{ id: string; className?: string; label?: string; arrow?: boolean }>) {
+}: Readonly<{
+  basePath: string;
+  id: string;
+  className?: string;
+  label?: string;
+  arrow?: boolean;
+}>) {
   return (
     <Link
-      href={`/admin/users/${id}`}
+      href={`${basePath}/users/${id}`}
       className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5', className)}
     >
       {label}
@@ -133,19 +140,22 @@ function DetailLink({
 // An Admin only opens the detail page; a Super Admin gets the fixed pair
 // "แก้ไข" + "⋯" on every manageable row (resend and suspend live in the menu).
 function RowActions({
+  basePath,
   user,
   superAdminId,
   showReason = false,
   className,
 }: Readonly<{
+  basePath: string;
   user: AdminUserSummary;
   superAdminId?: string;
   showReason?: boolean;
   className?: string;
 }>) {
-  if (!superAdminId) return <DetailLink id={user.id} className={className} />;
+  if (!superAdminId) return <DetailLink basePath={basePath} id={user.id} className={className} />;
   return (
     <SuperAdminRowActions
+      basePath={basePath}
       user={user}
       superAdminId={superAdminId}
       showReason={showReason}
@@ -155,11 +165,13 @@ function RowActions({
 }
 
 function SuperAdminRowActions({
+  basePath,
   user,
   superAdminId,
   showReason,
   className,
 }: Readonly<{
+  basePath: string;
   user: AdminUserSummary;
   superAdminId: string;
   showReason: boolean;
@@ -190,7 +202,7 @@ function SuperAdminRowActions({
     <div className={cn('flex flex-col gap-1', className)}>
       <div className="flex items-center gap-2 xl:justify-end">
         {!locked && (
-          <DetailLink id={user.id} label="แก้ไข" arrow={false} className="flex-1 xl:flex-none" />
+          <DetailLink basePath={basePath} id={user.id} label="แก้ไข" arrow={false} className="flex-1 xl:flex-none" />
         )}
         {status.blockReason && <UserManageBlocked reason={status.blockReason} />}
         <UserRowMenu userName={user.fullName} items={menuItems} />
@@ -205,9 +217,12 @@ function SuperAdminRowActions({
 }
 
 export function UserListTable({
+  basePath,
   users,
   superAdminId,
 }: {
+  // Route tree the detail links point into: /admin or /superadmin.
+  basePath: string;
   users: AdminUserSummary[];
   // Set only for a Super Admin: turns on editing and suspending from each row.
   superAdminId?: string;
@@ -345,7 +360,7 @@ export function UserListTable({
                   <p className="text-xs text-muted-foreground">
                     สร้างเมื่อ {formatThaiDate(user.createdAt)}
                   </p>
-                  <RowActions user={user} superAdminId={superAdminId} showReason />
+                  <RowActions basePath={basePath} user={user} superAdminId={superAdminId} showReason />
                 </li>
               ))}
             </ul>
@@ -406,7 +421,7 @@ export function UserListTable({
                         <StatusColumn user={user} />
                       </td>
                       <td className="px-3 py-2">
-                        <RowActions user={user} superAdminId={superAdminId} />
+                        <RowActions basePath={basePath} user={user} superAdminId={superAdminId} />
                       </td>
                     </tr>
                   ))}

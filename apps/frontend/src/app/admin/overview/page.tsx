@@ -10,8 +10,6 @@ import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { useScopeTargetName } from '@/lib/use-scope-target-name';
 import { countByTab, filterCurricula, type CurriculumTab } from '@/lib/admin-curricula';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { AdminCurriculumCards, CurriculumTabs } from '@/components/admin/admin-curriculum-cards';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -27,13 +25,7 @@ import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 const PREVIEW_LIMIT = 6;
 
 export default function AdminOverviewPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="ADMIN">
-        <AdminOverviewContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <AdminOverviewContent />;
 }
 
 function AdminOverviewContent() {

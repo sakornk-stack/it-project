@@ -5,8 +5,6 @@ import { Search, ShieldCheck } from 'lucide-react';
 import { countByTab, filterCurricula, type CurriculumTab } from '@/lib/admin-curricula';
 import { useAuth } from '@/lib/auth-context';
 import { useCurriculumDirectory } from '@/lib/use-curriculum-directory';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { AdminCurriculumCards, CurriculumTabs } from '@/components/admin/admin-curriculum-cards';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
@@ -17,13 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function AdminCurriculumListPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="ADMIN">
-        <AdminCurriculumListContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <AdminCurriculumListContent />;
 }
 
 function AdminCurriculumListContent() {

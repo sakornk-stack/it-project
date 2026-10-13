@@ -30,7 +30,7 @@ export const ROLE_BADGE_TONE: Record<Role, SemanticTone> = {
 // STUDENT page (e.g. app/dashboard/page.tsx's `isStudent` check) as a
 // shared component, for pages restricted to a role other than STUDENT.
 // `role` accepts either one role or several (any-of) — e.g. /admin/users
-// is reachable by both SUPER_ADMIN and ADMIN, unlike /admin/academic-years
+// is reachable by both SUPER_ADMIN and ADMIN, unlike /superadmin/academic-years
 // which is SUPER_ADMIN-only.
 export function RequireRole({
   role,

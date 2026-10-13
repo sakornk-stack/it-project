@@ -1,8 +1,6 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
@@ -10,13 +8,7 @@ import { OrgTree } from '@/components/admin/organization/org-tree';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OrganizationAdminPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="SUPER_ADMIN">
-        <OrganizationAdminContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <OrganizationAdminContent />;
 }
 
 function OrganizationAdminContent() {

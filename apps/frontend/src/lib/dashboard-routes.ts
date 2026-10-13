@@ -6,7 +6,7 @@ import { sanitizeNextPath } from '@/lib/safe-next-path';
 // redirect and the landing-page "go to dashboard" button never disagree
 // on where a given account's home is.
 const ROLE_HOME: Record<Role, string> = {
-  SUPER_ADMIN: '/admin/system-overview',
+  SUPER_ADMIN: '/superadmin/system-overview',
   ADMIN: '/admin/overview',
   STAFF: '/staff/dashboard',
   INSTRUCTOR: '/instructor/dashboard',

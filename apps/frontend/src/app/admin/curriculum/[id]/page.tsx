@@ -16,8 +16,6 @@ import {
 } from '@/lib/admin-curriculum-quality';
 import { useAuth } from '@/lib/auth-context';
 import { useCurriculumDirectory } from '@/lib/use-curriculum-directory';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import {
   CohortComparison,
   LowestSection,
@@ -37,13 +35,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function AdminCurriculumQualityPage({ params }: { params: { id: string } }) {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="ADMIN">
-        <AdminCurriculumQualityContent curriculumId={params.id} />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <AdminCurriculumQualityContent curriculumId={params.id} />;
 }
 
 function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId: string }>) {
@@ -84,9 +76,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
         กลับไปรายการหลักสูตร
       </Link>
 
-      {outOfScope && (
-        <PageLoadError message="ไม่พบหลักสูตรนี้ในขอบเขตที่คุณดูแล" />
-      )}
+      {outOfScope && <PageLoadError message="ไม่พบหลักสูตรนี้ในขอบเขตที่คุณดูแล" />}
       {!outOfScope && qualityQuery.isError && (
         <PageLoadError
           message="ไม่พบหลักสูตร หรือไม่มีสิทธิ์เข้าถึงข้อมูลคุณภาพของหลักสูตรนี้"
@@ -152,9 +142,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 value={<AnimatedNumber value={report.studentCount} />}
                 suffix="คน"
                 footer={
-                  <p className="text-xs text-muted-foreground">
-                    นิสิตที่ใช้งานอยู่ในหลักสูตรนี้
-                  </p>
+                  <p className="text-xs text-muted-foreground">นิสิตที่ใช้งานอยู่ในหลักสูตรนี้</p>
                 }
               />
               <StatCard

@@ -6,6 +6,14 @@ const nextConfig = {
   // with dev's (unhashed) ones in the same .next folder was the actual
   // root cause of repeated chunk-404/stuck-loading dev-server incidents.
   // `next dev` always keeps using the default `.next`.
+  // Super Admin pages used to live under /admin; keep old bookmarks and ?next= links working.
+  async redirects() {
+    return ['system-overview', 'organization', 'academic-years'].map((page) => ({
+      source: `/admin/${page}`,
+      destination: `/superadmin/${page}`,
+      permanent: false,
+    }));
+  },
   distDir: process.env.NEXT_BUILD_MODE === 'production' ? '.next-build' : '.next',
 };
 

@@ -5,8 +5,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Info, Plus } from 'lucide-react';
 import { fetchAcademicYears, fetchSemesters } from '@/lib/api/academic-record';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -22,13 +20,7 @@ import { EmptyState, InlineNotice } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AcademicYearsAdminPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="SUPER_ADMIN">
-        <AcademicYearsAdminContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <AcademicYearsAdminContent />;
 }
 
 function AcademicYearsAdminContent() {
