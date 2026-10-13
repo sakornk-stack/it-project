@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, GraduationCap } from 'lucide-react';
 import type { CourseSummary, GraduationReadiness } from '@eduanalyze-ai/shared-types';
+import { graduationBlockerText } from '@/lib/learning-path-plan';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Button } from '@/components/ui/button';
 
@@ -24,17 +25,22 @@ export function MissingRequiredSummary({
       suffix="วิชา"
       badge={
         readiness.isReady
-          ? { text: 'พร้อมสำเร็จการศึกษา', tone: 'positive' }
-          : { text: 'ยังไม่พร้อม', tone: 'neutral' }
+          ? { text: 'ครบเงื่อนไขการจบ', tone: 'positive' }
+          : { text: 'ยังไม่ครบเงื่อนไขการจบ', tone: 'neutral' }
       }
       footer={
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             {courses.length === 0
-              ? 'ผ่านวิชาบังคับครบตามเกณฑ์แล้ว'
+              ? (graduationBlockerText(readiness) ?? 'ผ่านวิชาบังคับครบตามเกณฑ์แล้ว')
               : `ลงทะเบียนได้เลย ${available} วิชา · ติดวิชาก่อนหน้า ${locked} วิชา`}
           </p>
-          <Button asChild variant="outline" size="sm" className="h-auto w-full gap-1.5 whitespace-normal py-1.5">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-auto w-full gap-1.5 whitespace-normal py-1.5"
+          >
             <Link href="/credit-checker">
               ดูรายละเอียดที่หน้าตรวจสอบหน่วยกิต
               <ArrowRight size={14} aria-hidden="true" />

@@ -14,6 +14,7 @@ import {
 import { UNSAVED_PLAN_RESET_CONFIRM_MESSAGE } from '@/lib/learning-path-plan';
 import { useConfirm } from '@/lib/use-confirm';
 import { useToast } from '@/lib/toast-context';
+import { fetchCreditCheck } from '@/lib/api/credit-checker';
 import { fetchMyCreditLimitRequest } from '@/lib/api/credit-limit-request';
 import { CREDIT_LIMIT_PRESETS, MIN_CREDITS_WARNING } from '@/lib/credit-limit-presets';
 import { useAuth } from '@/lib/auth-context';
@@ -71,6 +72,14 @@ function LearningPathContent() {
   const creditLimitRequestQuery = useQuery({
     queryKey: ['credit-limit-request-me'],
     queryFn: fetchMyCreditLimitRequest,
+    enabled: !!studentProfileId,
+  });
+
+  // Only used to know how many credits remain for the degree; a failure just means
+  // "unknown" (the planner then keeps its plain warning), so it never blocks the page.
+  const creditCheckQuery = useQuery({
+    queryKey: ['credit-check', studentProfileId],
+    queryFn: () => fetchCreditCheck(studentProfileId!),
     enabled: !!studentProfileId,
   });
 
@@ -238,6 +247,15 @@ function LearningPathContent() {
             maxCreditsPerSemester={effectiveMaxCredits}
             minCreditsWarning={effectiveMinCredits}
             savedPlanIds={savedPlanQuery.data?.courseIds ?? null}
+            graduationGap={
+              creditCheckQuery.data
+                ? {
+                    creditsRemaining: creditCheckQuery.data.creditsRemaining,
+                    missingRequiredCourses: path.missingRequiredCourses,
+                    incompleteElectiveCategories: path.incompleteElectiveCategories,
+                  }
+                : null
+            }
             onSaved={() => queryClient.invalidateQueries({ queryKey: ['learning-path-plan-me'] })}
             onDirtyChange={setPlannerDirty}
           />

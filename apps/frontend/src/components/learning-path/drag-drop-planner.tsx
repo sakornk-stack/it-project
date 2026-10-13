@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AvailableCourse } from '@eduanalyze-ai/shared-types';
+import type { AvailableCourse, CourseSummary, IncompleteElectiveCategory } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
 import { saveMyLearningPathPlan } from '@/lib/api/learning-path';
-import { isPlanDirty, resolveInitialPlan } from '@/lib/learning-path-plan';
+import { isPlanDirty, planCoversGraduation, resolveInitialPlan } from '@/lib/learning-path-plan';
 import { useToast } from '@/lib/toast-context';
 import { Button } from '@/components/ui/button';
+import { BADGE_TONE_CLASSES } from '@/lib/tone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CourseDragCard } from './course-drag-card';
 
@@ -18,6 +19,7 @@ export function DragDropPlanner({
   maxCreditsPerSemester,
   minCreditsWarning,
   savedPlanIds,
+  graduationGap,
   onSaved,
   onDirtyChange,
 }: Readonly<{
@@ -26,6 +28,12 @@ export function DragDropPlanner({
   maxCreditsPerSemester: number;
   minCreditsWarning: number;
   savedPlanIds: string[] | null;
+  // What is still missing for the degree; null while unknown (never guessed).
+  graduationGap: {
+    creditsRemaining: number | null;
+    missingRequiredCourses: CourseSummary[];
+    incompleteElectiveCategories: IncompleteElectiveCategory[];
+  } | null;
   onSaved: () => Promise<unknown> | void;
   onDirtyChange: (isDirty: boolean) => void;
 }>) {
@@ -91,7 +99,19 @@ export function DragDropPlanner({
 
   const totalCredits = planCourses.reduce((sum, c) => sum + c.credits, 0);
   const isOverLimit = totalCredits > maxCreditsPerSemester;
-  const isUnderMin = totalCredits < minCreditsWarning;
+  const isBelowMin = totalCredits < minCreditsWarning;
+  // A final-semester plan may legitimately be below the recommended minimum when it
+  // already covers everything left for the degree, so the warning is dropped then.
+  const coverage = graduationGap
+    ? planCoversGraduation({
+        planCourses,
+        creditsRemaining: graduationGap.creditsRemaining,
+        missingRequiredCourseIds: graduationGap.missingRequiredCourses.map((c) => c.courseId),
+        incompleteCategories: graduationGap.incompleteElectiveCategories,
+      })
+    : 'unknown';
+  const isCoveringPlan = isBelowMin && planCourses.length > 0 && coverage === 'covered';
+  const isUnderMin = isBelowMin && !isCoveringPlan;
 
   // Which column is currently being dragged over, for the highlight
   // border/background below. A plain enter/leave state flickers because
@@ -165,7 +185,7 @@ export function DragDropPlanner({
             <span
               className={cn(
                 'text-sm font-medium tabular-nums',
-                isOverLimit || isUnderMin ? 'text-destructive' : 'text-emerald-700',
+                isOverLimit ? 'text-destructive' : isUnderMin ? 'text-amber-700' : 'text-emerald-700',
               )}
             >
               {totalCredits} / {maxCreditsPerSemester} หน่วยกิต
@@ -188,8 +208,23 @@ export function DragDropPlanner({
             </p>
           )}
           {isUnderMin && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-destructive">
+            <p
+              className={cn(
+                'rounded-md border px-3 py-2 text-xs font-medium',
+                BADGE_TONE_CLASSES.warning,
+              )}
+            >
               ต่ำกว่าหน่วยกิตขั้นต่ำแนะนำ ({minCreditsWarning} หน่วยกิต)
+            </p>
+          )}
+          {isCoveringPlan && (
+            <p
+              className={cn(
+                'rounded-md border px-3 py-2 text-xs font-medium',
+                BADGE_TONE_CLASSES.neutral,
+              )}
+            >
+              แผนนี้ครอบคลุมหน่วยกิตที่เหลือเพื่อสำเร็จการศึกษา จึงต่ำกว่าขั้นต่ำแนะนำได้
             </p>
           )}
           {planCourses.length === 0 && (
