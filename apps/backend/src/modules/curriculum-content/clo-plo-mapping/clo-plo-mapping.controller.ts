@@ -33,7 +33,7 @@ export class CloPloMappingController {
   // not just by omission in the frontend.
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active CLO-PLO mappings' })
   @ApiResponse({ status: 200, description: 'List of active CLO-PLO mappings' })
@@ -43,7 +43,7 @@ export class CloPloMappingController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get a CLO-PLO mapping by id' })
   @ApiResponse({ status: 200, description: 'CLO-PLO mapping found' })
@@ -54,7 +54,7 @@ export class CloPloMappingController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('plo', { from: 'body', key: 'ploId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a CLO-PLO mapping' })
@@ -69,7 +69,7 @@ export class CloPloMappingController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('cloPloMapping', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update a CLO-PLO mapping (weight only)' })
@@ -82,7 +82,7 @@ export class CloPloMappingController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('cloPloMapping', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Soft-delete a CLO-PLO mapping' })

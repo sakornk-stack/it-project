@@ -93,14 +93,12 @@ export class UserScopeService {
   ) {
     await this.assertUserVisible(targetUserId, requester);
 
+    // Separation-of-duties: nobody widens (or touches at all) their own scope.
+    if (requester.userId === targetUserId) {
+      throw new ForbiddenException(SELF_SCOPE_MESSAGE);
+    }
+
     if (!requester.roles.includes('SUPER_ADMIN')) {
-      // Separation-of-duties: an ADMIN must not be able to widen (or
-      // touch at all) their own scope — SUPER_ADMIN is exempt because
-      // their access is role-gated, not scope-gated, so this check would
-      // be a no-op restriction for them regardless.
-      if (requester.userId === targetUserId) {
-        throw new ForbiddenException(SELF_SCOPE_MESSAGE);
-      }
       await this.assertTargetManageable(targetUserId, requester);
 
       const ancestry = await this.scopeResolverService.resolveAncestryForLevel(

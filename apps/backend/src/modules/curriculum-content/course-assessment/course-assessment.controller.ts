@@ -100,7 +100,7 @@ export class CourseAssessmentController {
 
   @Get('course/:courseId/aggregate')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({

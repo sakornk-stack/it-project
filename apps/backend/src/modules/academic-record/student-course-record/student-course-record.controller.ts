@@ -32,7 +32,7 @@ export class StudentCourseRecordController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('STUDENT', 'ADMIN', 'STAFF')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:
@@ -45,7 +45,7 @@ export class StudentCourseRecordController {
 
   @Get('gpa/:studentProfileId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('STUDENT', 'ADMIN', 'STAFF')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Calculate GPA for a student profile (deterministic, computed live)',
@@ -61,7 +61,7 @@ export class StudentCourseRecordController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('STUDENT', 'ADMIN', 'STAFF')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get a student course record by id' })
   @ApiResponse({ status: 200, description: 'Student course record found' })

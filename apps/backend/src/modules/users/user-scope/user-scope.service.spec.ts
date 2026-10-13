@@ -91,4 +91,16 @@ describe('UserScopeService own-scope protection', () => {
       expect(revokeScope).not.toHaveBeenCalled();
     },
   );
+
+  it.each(['SUPER_ADMIN', 'ADMIN'] as Role[])(
+    '%s cannot grant a scope to themselves (Thai 403)',
+    async (role) => {
+      const { service, assign } = setup(['STAFF']);
+      const self = { ...admin, userId: 'target', roles: [role] };
+      const call = service.grantScope('target', 'PROGRAM', 'p1', self);
+      await expect(call).rejects.toThrow(ForbiddenException);
+      await expect(call).rejects.toThrow('ขอบเขตของตัวเอง');
+      expect(assign).not.toHaveBeenCalled();
+    },
+  );
 });

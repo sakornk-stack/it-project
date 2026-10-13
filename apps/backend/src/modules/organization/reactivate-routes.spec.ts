@@ -11,12 +11,21 @@ describe.each([
   ['faculties', FacultyController],
   ['departments', DepartmentController],
   ['programs', ProgramController],
-  ['curricula', CurriculumController],
   ['academic years', AcademicYearController],
   ['semesters', SemesterController],
 ])('%s reactivation routes', (_name, controller) => {
   it.each(['findInactive', 'reactivate'])('%s is SUPER_ADMIN only', (method) => {
     const handler = (controller.prototype as unknown as Record<string, () => void>)[method];
     expect(Reflect.getMetadata(ROLES_KEY, handler)).toEqual(['SUPER_ADMIN']);
+  });
+});
+
+// Curricula are academic content, so reactivating one belongs to ADMIN, not SUPER_ADMIN.
+describe('curricula reactivation routes', () => {
+  it.each(['findInactive', 'reactivate'])('%s is ADMIN only', (method) => {
+    const handler = (CurriculumController.prototype as unknown as Record<string, () => void>)[
+      method
+    ];
+    expect(Reflect.getMetadata(ROLES_KEY, handler)).toEqual(['ADMIN']);
   });
 });

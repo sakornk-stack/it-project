@@ -33,7 +33,7 @@ export class PloController {
   // not just by omission in the frontend.
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active PLOs' })
   @ApiResponse({ status: 200, description: 'List of active PLOs' })
@@ -43,7 +43,7 @@ export class PloController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get a PLO by id' })
   @ApiResponse({ status: 200, description: 'PLO found' })
@@ -54,7 +54,7 @@ export class PloController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('curriculum', { from: 'body', key: 'curriculumId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a PLO' })
@@ -71,7 +71,7 @@ export class PloController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('plo', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update a PLO' })
@@ -88,7 +88,7 @@ export class PloController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('plo', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Soft-delete a PLO' })

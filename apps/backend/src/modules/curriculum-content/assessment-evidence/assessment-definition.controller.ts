@@ -15,7 +15,7 @@ export class AssessmentDefinitionController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -30,7 +30,7 @@ export class AssessmentDefinitionController {
 
   @Get('course/:courseId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active assessment definitions for a course' })

@@ -19,7 +19,7 @@ export class LearningPathController {
 
   @Get(':studentProfileId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT', 'SUPER_ADMIN')
+  @Roles('STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:

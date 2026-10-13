@@ -45,10 +45,6 @@ export class InstructorOrScopeGuard implements CanActivate {
     }>();
     const user = request.user!;
 
-    if (user.roles.includes('SUPER_ADMIN')) {
-      return true;
-    }
-
     const courseId = (
       source.from === 'param'
         ? request.params[source.key]

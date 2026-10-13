@@ -29,6 +29,7 @@ const PASSWORD_ALREADY_SET_MESSAGE =
 const RESEND_EMAIL_FAILED_MESSAGE =
   'ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่อีกครั้งภายหลัง หากยังไม่สำเร็จให้ตรวจสอบการตั้งค่าอีเมลของระบบ';
 const SELF_ROLE_MESSAGE = 'ไม่สามารถถอดบทบาทของตัวเองได้';
+const SELF_ASSIGN_ROLE_MESSAGE = 'ไม่สามารถกำหนดบทบาทให้ตัวเองได้';
 
 @Injectable()
 export class UserManagementService {
@@ -282,6 +283,11 @@ export class UserManagementService {
   }
 
   async assignRole(id: string, role: Role, requester: RequestUser) {
+    // Nobody grants themselves a role — otherwise an account whose own role has no access to
+    // academic data could hand itself a role that does.
+    if (id === requester.userId) {
+      throw new ForbiddenException(SELF_ASSIGN_ROLE_MESSAGE);
+    }
     await this.assertRoleActionAllowed(id, role, requester);
     return this.userRoleService.assignRole(id, role);
   }

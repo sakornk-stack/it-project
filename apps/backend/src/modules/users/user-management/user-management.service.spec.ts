@@ -220,6 +220,23 @@ describe('UserManagementService SUPER_ADMIN safeguards', () => {
     },
   );
 
+  it.each(['SUPER_ADMIN', 'ADMIN'] as Role[])(
+    '%s cannot grant a role to their own account (Thai 403)',
+    async (role) => {
+      const { service, userRoleService } = setup({ target: staff('p1') });
+      const call = service.assignRole('me', 'STAFF', requester('me', [role]));
+      await expect(call).rejects.toThrow(ForbiddenException);
+      await expect(call).rejects.toThrow('กำหนดบทบาทให้ตัวเอง');
+      expect(userRoleService.assignRole).not.toHaveBeenCalled();
+    },
+  );
+
+  it('SUPER_ADMIN can still grant a role to someone else', async () => {
+    const { service, userRoleService } = setup({ target: staff('p1') });
+    await service.assignRole('target', 'ADMIN', sa);
+    expect(userRoleService.assignRole).toHaveBeenCalledWith('target', 'ADMIN');
+  });
+
   it('SUPER_ADMIN can still revoke a role from someone else', async () => {
     const { service, userRoleService } = setup({ target: staff('p1') });
     await service.revokeRole('target', 'STAFF', sa);

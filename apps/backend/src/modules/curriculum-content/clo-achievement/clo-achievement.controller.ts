@@ -19,7 +19,7 @@ export class CloAchievementController {
 
   @Get('course/:courseId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorGuard)
-  @Roles('SUPER_ADMIN', 'INSTRUCTOR')
+  @Roles('INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({

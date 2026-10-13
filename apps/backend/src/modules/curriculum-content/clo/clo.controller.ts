@@ -33,7 +33,7 @@ export class CloController {
   // not just by omission in the frontend.
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active CLOs' })
   @ApiResponse({ status: 200, description: 'List of active CLOs' })
@@ -43,7 +43,7 @@ export class CloController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STUDENT')
+  @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get a CLO by id' })
   @ApiResponse({ status: 200, description: 'CLO found' })
@@ -54,7 +54,7 @@ export class CloController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('course', { from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a CLO' })
@@ -71,7 +71,7 @@ export class CloController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('clo', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update a CLO' })
@@ -88,7 +88,7 @@ export class CloController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('clo', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Soft-delete a CLO' })

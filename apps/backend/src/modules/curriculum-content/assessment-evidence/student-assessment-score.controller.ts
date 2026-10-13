@@ -20,7 +20,7 @@ export class StudentAssessmentScoreController {
 
   @Put()
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -35,7 +35,7 @@ export class StudentAssessmentScoreController {
 
   @Put('bulk')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -51,7 +51,7 @@ export class StudentAssessmentScoreController {
 
   @Get('clo-mapping/:assessmentCloMappingId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'query', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List every student score recorded for one assessment-CLO mapping' })

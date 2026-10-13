@@ -16,7 +16,7 @@ export class ActualAchievementController {
 
   @Get('actual-clo-achievement/course/:courseId/student-course-record/:studentCourseRecordId/clo/:cloId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -38,7 +38,7 @@ export class ActualAchievementController {
 
   @Get('actual-clo-achievement/course/:courseId/student-course-record/:studentCourseRecordId/clo/:cloId/gap')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -66,7 +66,7 @@ export class ActualAchievementController {
 
   @Get('actual-plo-achievement/student/:studentProfileId/plo/:ploId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'STUDENT')
+  @Roles('ADMIN', 'INSTRUCTOR', 'STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:

@@ -273,3 +273,9 @@ Three commits delivered (2026-09-30):
 - เทสต์ backend (`npx jest` ใน `apps/backend`, ปัจจุบัน 159 ข้อ) และ `npx tsc --noEmit` ต้องผ่านก่อนคอมมิตทุกครั้ง; ฝั่ง frontend `tsc`/`lint`/`jest`/`next build` ผ่านด้วยเมื่อแก้ UI
 - เปลี่ยน endpoint/ชนิดข้อมูลที่ frontend ใช้ ให้แก้ `packages/shared-types/src/index.ts` ในคอมมิตเดียวกัน และอัปเดต TODO.md ลบรายการที่ทำเสร็จ
 - ห้าม push และห้ามรัน `cleanup-demo` จนกว่าผู้ใช้สั่ง; แยกคอมมิตเป็นชุดย่อยที่ย้อนกลับได้
+
+### SUPER_ADMIN จัดการบัญชีเท่านั้น: งานค้าง (Phase 3)
+- UI เขียนหลักสูตรสำหรับ ADMIN ยังไม่มี: ตอนนี้ `POST/PATCH/DELETE /curricula` เป็นของ ADMIN (ตาม scope) แต่หน้า `/admin/organization` (SUPER_ADMIN) แสดงหลักสูตรแบบอ่านอย่างเดียว (`CurriculumPanel readOnly`) ต้องทำหน้าให้ ADMIN แล้วส่ง `readOnly={false}`
+- CLO/PLO/CLO-PLO mapping เขียนผ่าน API/seed เท่านั้น (ไม่มี UI) และสิทธิ์เขียนย้ายเป็น ADMIN แล้ว
+- ตรวจข้อมูลจริงแบบอ่านอย่างเดียว: บัญชี SUPER_ADMIN ที่ถือบทบาทอื่นด้วย (ADMIN/STAFF/INSTRUCTOR) ยังเข้าข้อมูลวิชาการผ่านบทบาทนั้น
+- `GET /curricula/inactive` ของ ADMIN ไม่กรองตาม scope (ไม่มี `@ScopeTarget` สำหรับรายการ)

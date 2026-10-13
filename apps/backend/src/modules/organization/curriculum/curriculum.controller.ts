@@ -39,19 +39,20 @@ export class CurriculumController {
   // Registered before `:id` so "inactive" is never read as an id.
   @Get('inactive')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List deactivated curriculum records (SUPER_ADMIN)' })
+  @ApiOperation({ summary: 'List deactivated curriculum records (ADMIN)' })
   @ApiResponse({ status: 200, description: 'Deactivated curriculum records' })
   findInactive() {
     return this.curriculumService.findInactive();
   }
 
   @Post(':id/reactivate')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('ADMIN')
+  @ScopeTarget('curriculum', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Restore a deactivated curriculum (SUPER_ADMIN)' })
+  @ApiOperation({ summary: 'Restore a deactivated curriculum (ADMIN)' })
   @ApiResponse({ status: 201, description: 'Curriculum reactivated' })
   @ApiResponse({ status: 404, description: 'Curriculum not found' })
   @ApiResponse({
@@ -72,7 +73,7 @@ export class CurriculumController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('program', { from: 'body', key: 'programId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a curriculum' })
@@ -89,7 +90,7 @@ export class CurriculumController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('curriculum', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update a curriculum' })
@@ -106,7 +107,7 @@ export class CurriculumController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles('ADMIN')
   @ScopeTarget('curriculum', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Soft-delete a curriculum' })

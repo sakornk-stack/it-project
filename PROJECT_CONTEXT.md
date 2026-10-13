@@ -192,13 +192,13 @@ Account Status, Security/Audit, System configuration ที่จำเป็น
 
 SUPER_ADMIN เป็น Role ที่มีสิทธิ์ระดับระบบ
 
-Implementation ปัจจุบัน (2026-09-19): เพิ่ม `/admin/curriculum-dashboard` — ภาพรวม
-นักศึกษา/PLO/CLO ข้ามทุกหลักสูตรในระบบ (ไม่จำกัด scope ต่างจาก STAFF/INSTRUCTOR โดย
-เจตนา) ครอบคลุม requirement ข้อ 29-31 ส่วน "Curriculum/Program Analytics Dashboard"
-เท่าที่ไม่ต้องมี AI Curriculum Summary (ดู Module 7 — ยังไม่มี curriculum-level AI
-endpoint) — ดูรายละเอียด N+1 fix + known limitation (14/16 หลักสูตรยังไม่มีข้อมูล,
-กราฟเปรียบเทียบยังไม่เคยถูกทดสอบด้วยข้อมูลจริง) ที่ root `TODO.md` หัวข้อ "SUPER_ADMIN
-Curriculum Dashboard" แทนการเขียนซ้ำที่นี่
+นโยบายล่าสุด: SUPER_ADMIN จัดการเฉพาะบัญชีผู้ใช้ (สร้าง/ระงับ/กำหนดบทบาท/จัดการ scope)
+โครงสร้างองค์กร (คณะ/ภาควิชา/สาขา) และปฏิทิน (ปีการศึกษา/ภาคเรียน) เท่านั้น
+ไม่เข้าถึงข้อมูลวิชาการ (หลักสูตร, รายวิชา, CLO/PLO, ผลการเรียน, การวิเคราะห์ทุกชนิด)
+การเขียนหลักสูตร/CLO/PLO/CLO-PLO mapping เป็นของ ADMIN ตาม scope (`@ScopeTarget`)
+ไม่มีใครกำหนดบทบาท (หรือ scope) ให้ตัวเองได้ — เทสต์ `src/common/roles-table.spec.ts`
+ล็อกว่าไม่มี handler วิชาการใดมี SUPER_ADMIN ใน `@Roles`
+(`/admin/curriculum-dashboard` และ `GET /dashboard/curricula` ถูกลบแล้ว)
 
 ==================================================
 13. DATA SCOPE / DATA ISOLATION

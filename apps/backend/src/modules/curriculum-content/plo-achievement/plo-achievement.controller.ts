@@ -17,6 +17,8 @@ import { InstructorCourseTarget } from '../../../common/decorators/instructor-co
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { InstructorGuard } from '../../../common/guards/instructor.guard';
+import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { RequestUser } from '../../auth/request-user.interface';
 import { PloAchievementService } from './plo-achievement.service';
 
@@ -27,7 +29,7 @@ export class PloAchievementController {
 
   @Get('student/:studentProfileId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT', 'SUPER_ADMIN')
+  @Roles('STUDENT')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:
@@ -47,7 +49,7 @@ export class PloAchievementController {
 
   @Get('course/:courseId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorGuard)
-  @Roles('SUPER_ADMIN', 'INSTRUCTOR')
+  @Roles('INSTRUCTOR')
   @InstructorCourseTarget({ from: 'param', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -62,8 +64,9 @@ export class PloAchievementController {
   }
 
   @Get('cohort/:curriculumId/:admissionYear')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('ADMIN')
+  @ScopeTarget('curriculum', { from: 'param', key: 'curriculumId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:
@@ -82,8 +85,9 @@ export class PloAchievementController {
   }
 
   @Get('curriculum/:curriculumId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('ADMIN')
+  @ScopeTarget('curriculum', { from: 'param', key: 'curriculumId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:

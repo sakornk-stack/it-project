@@ -27,7 +27,7 @@ export class StudentProfilesController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('ADMIN', 'STAFF')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:
@@ -40,7 +40,7 @@ export class StudentProfilesController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('ADMIN', 'STAFF')
   @ScopeTarget('studentProfile', { from: 'param', key: 'id' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get a student profile by id' })

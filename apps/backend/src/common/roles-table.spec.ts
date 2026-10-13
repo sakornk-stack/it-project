@@ -1,6 +1,19 @@
 import 'reflect-metadata';
 import { Role } from '@prisma/client';
 import { ROLES_KEY } from './decorators/roles.decorator';
+import { AiAnalysisController } from '../modules/ai-analysis/ai-analysis.controller';
+import { CreditCheckerController } from '../modules/academic-record/credit-checker/credit-checker.controller';
+import { LearningPathController } from '../modules/academic-record/learning-path/learning-path.controller';
+import { CourseStudentsController } from '../modules/academic-record/student-course-record/course-students.controller';
+import { CloAchievementController } from '../modules/curriculum-content/clo-achievement/clo-achievement.controller';
+import { PloAchievementController } from '../modules/curriculum-content/plo-achievement/plo-achievement.controller';
+import { ActualAchievementController } from '../modules/curriculum-content/assessment-evidence/actual-achievement.controller';
+import { AssessmentCloMappingController } from '../modules/curriculum-content/assessment-evidence/assessment-clo-mapping.controller';
+import { AssessmentDefinitionController } from '../modules/curriculum-content/assessment-evidence/assessment-definition.controller';
+import { StudentAssessmentScoreController } from '../modules/curriculum-content/assessment-evidence/student-assessment-score.controller';
+import { CourseAssessmentController } from '../modules/curriculum-content/course-assessment/course-assessment.controller';
+import { DashboardController } from '../modules/dashboard/dashboard.controller';
+import { StudentProfilesController } from '../modules/users/student-profile/student-profiles.controller';
 import { StudentInvitationController } from '../modules/auth/student-invitation.controller';
 import { CloPloMappingController } from '../modules/curriculum-content/clo-plo-mapping/clo-plo-mapping.controller';
 import { CloController } from '../modules/curriculum-content/clo/clo.controller';
@@ -30,6 +43,13 @@ const WRITE_SUPER_ADMIN: Handlers = {
   update: ['SUPER_ADMIN'],
   remove: ['SUPER_ADMIN'],
 };
+// Academic content (curricula, CLO, PLO, mappings) is written by ADMIN within their scope;
+// SUPER_ADMIN only manages accounts, organisation structure and the academic calendar.
+const WRITE_ADMIN: Handlers = {
+  create: ['ADMIN'],
+  update: ['ADMIN'],
+  remove: ['ADMIN'],
+};
 
 const TABLE: [string, { prototype: object }, Handlers][] = [
   ['CourseController', CourseController, WRITE_STAFF],
@@ -41,12 +61,12 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
     CourseInstructorController,
     { findAll: ['STAFF'], create: ['STAFF'], remove: ['STAFF'] },
   ],
-  ['CloController', CloController, WRITE_SUPER_ADMIN],
-  ['PloController', PloController, WRITE_SUPER_ADMIN],
-  ['CloPloMappingController', CloPloMappingController, WRITE_SUPER_ADMIN],
+  ['CloController', CloController, WRITE_ADMIN],
+  ['PloController', PloController, WRITE_ADMIN],
+  ['CloPloMappingController', CloPloMappingController, WRITE_ADMIN],
   ['DepartmentController', DepartmentController, WRITE_SUPER_ADMIN],
   ['ProgramController', ProgramController, WRITE_SUPER_ADMIN],
-  ['CurriculumController', CurriculumController, WRITE_SUPER_ADMIN],
+  ['CurriculumController', CurriculumController, WRITE_ADMIN],
   [
     'StudentInvitationController',
     StudentInvitationController,
@@ -59,9 +79,9 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       create: ['STUDENT', 'STAFF'],
       update: ['STUDENT', 'STAFF', 'INSTRUCTOR'],
       remove: ['STUDENT', 'STAFF', 'INSTRUCTOR'],
-      // Reads stay open to SUPER_ADMIN/ADMIN.
-      findAll: ['STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF'],
-      findOne: ['STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF'],
+      // Reads stay open to ADMIN/STAFF; SUPER_ADMIN has no access to grades.
+      findAll: ['STUDENT', 'ADMIN', 'STAFF'],
+      findOne: ['STUDENT', 'ADMIN', 'STAFF'],
     },
   ],
   ['CareerFitController', CareerFitController, { getMyCareerFit: ['STUDENT'] }],
@@ -74,6 +94,44 @@ describe('role permission table', () => {
       expect(handler).toBeDefined();
       const roles = Reflect.getMetadata(ROLES_KEY, handler) as Role[];
       expect([...roles].sort()).toEqual([...expected].sort());
+    });
+  });
+});
+
+// SUPER_ADMIN manages accounts only: no handler of an academic-content controller may list it.
+const ACADEMIC_CONTROLLERS: [string, { prototype: object }][] = [
+  ['AiAnalysisController', AiAnalysisController],
+  ['CreditCheckerController', CreditCheckerController],
+  ['LearningPathController', LearningPathController],
+  ['CourseStudentsController', CourseStudentsController],
+  ['CloAchievementController', CloAchievementController],
+  ['PloAchievementController', PloAchievementController],
+  ['ActualAchievementController', ActualAchievementController],
+  ['AssessmentCloMappingController', AssessmentCloMappingController],
+  ['AssessmentDefinitionController', AssessmentDefinitionController],
+  ['StudentAssessmentScoreController', StudentAssessmentScoreController],
+  ['CourseAssessmentController', CourseAssessmentController],
+  ['DashboardController', DashboardController],
+  ['StudentProfilesController', StudentProfilesController],
+  ['StudentCourseRecordController', StudentCourseRecordController],
+  ['CloController', CloController],
+  ['PloController', PloController],
+  ['CloPloMappingController', CloPloMappingController],
+  ['CurriculumController', CurriculumController],
+  ['CareerFitController', CareerFitController],
+];
+
+describe('SUPER_ADMIN has no access to academic data', () => {
+  describe.each(ACADEMIC_CONTROLLERS)('%s', (_name, controller) => {
+    it('lists no handler with SUPER_ADMIN', () => {
+      const proto = controller.prototype as Record<string, unknown>;
+      const offenders = Object.getOwnPropertyNames(proto).filter((key) => {
+        const handler = proto[key];
+        if (typeof handler !== 'function') return false;
+        const roles = Reflect.getMetadata(ROLES_KEY, handler as object) as Role[] | undefined;
+        return !!roles?.includes('SUPER_ADMIN');
+      });
+      expect(offenders).toEqual([]);
     });
   });
 });

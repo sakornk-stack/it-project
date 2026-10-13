@@ -15,7 +15,7 @@ export class AssessmentCloMappingController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -31,7 +31,7 @@ export class AssessmentCloMappingController {
 
   @Get('assessment-definition/:assessmentDefinitionId')
   @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR')
+  @Roles('ADMIN', 'INSTRUCTOR')
   @InstructorCourseTarget({ from: 'query', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active CLO mappings for an assessment definition' })
