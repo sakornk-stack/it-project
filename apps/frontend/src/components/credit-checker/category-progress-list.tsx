@@ -13,6 +13,30 @@ const unfinishedFirst = (categories: CategoryProgress[]) => [
   ...categories.filter((c) => c.isComplete),
 ];
 
+// Subtitle for the section: how many categories are done and how many still are not.
+export function CategoryProgressSummary({
+  categories,
+}: Readonly<{ categories: CategoryProgress[] }>) {
+  const total = categories.length;
+  if (total === 0) return null;
+  const done = categories.filter((c) => c.isComplete).length;
+  const remaining = total - done;
+  if (remaining === 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-emerald-700">
+        <Check size={14} aria-hidden="true" />
+        ครบทุกหมวดแล้ว ({done} จาก {total})
+      </span>
+    );
+  }
+  if (done === 0) return <>ยังไม่ครบ {total} หมวด</>;
+  return (
+    <>
+      ครบแล้ว {done} จาก {total} หมวด · ยังไม่ครบ {remaining} หมวด
+    </>
+  );
+}
+
 export function CategoryProgressList({ categories }: Readonly<{ categories: CategoryProgress[] }>) {
   return (
     <Card>

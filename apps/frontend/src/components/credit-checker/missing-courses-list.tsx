@@ -44,7 +44,7 @@ function CourseTile({
         )}
       />
       <div className="min-w-0">
-        <p className="text-sm font-medium text-primary">
+        <p className="course-name-break text-sm font-medium text-primary">
           {course.code}: {course.name}
         </p>
         <p className="text-xs text-muted-foreground">

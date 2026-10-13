@@ -88,6 +88,16 @@
    Sits at z-index -1 inside an isolated stacking context: above the button
    background, below its label. On release the size is held for 400ms while the
    opacity fades, so even a quick tap shows a fading ripple. */
+/* Course names: let the browser pick phrase-level line breaks where it supports
+   it (word-break: auto-phrase), and only split inside a word when a single token
+   is wider than its box, so codes and English words stay whole. */
+@layer utilities {
+  .course-name-break {
+    word-break: auto-phrase;
+    overflow-wrap: break-word;
+  }
+}
+
 @layer components {
   .btn-ripple {
     position: relative;

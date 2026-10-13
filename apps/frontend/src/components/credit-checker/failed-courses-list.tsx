@@ -8,7 +8,7 @@ export function FailedCoursesList({ courses }: Readonly<{ courses: CourseSummary
   if (courses.length === 0) return null;
 
   return (
-    <Card>
+    <Card className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto">
       <CardHeader>
         <CardTitle>วิชาที่สอบตก (ต้องลงทะเบียนใหม่)</CardTitle>
       </CardHeader>
@@ -18,8 +18,8 @@ export function FailedCoursesList({ courses }: Readonly<{ courses: CourseSummary
             key={course.courseId}
             className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
           >
-            <div>
-              <p className="text-sm font-medium text-primary">
+            <div className="min-w-0">
+              <p className="course-name-break text-sm font-medium text-primary">
                 {course.code}: {course.name}
               </p>
               <p className="text-xs text-muted-foreground">{course.credits} หน่วยกิต</p>

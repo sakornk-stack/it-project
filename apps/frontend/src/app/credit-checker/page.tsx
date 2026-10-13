@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Award, Check, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
+import { Award, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
 import type { CourseSummary, CreditCheckReport } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchCreditCheck } from '@/lib/api/credit-checker';
@@ -18,7 +18,10 @@ import { Reveal } from '@/components/layout/reveal';
 import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
 import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { CategoryProgressList } from '@/components/credit-checker/category-progress-list';
+import {
+  CategoryProgressList,
+  CategoryProgressSummary,
+} from '@/components/credit-checker/category-progress-list';
 import { MissingCoursesList } from '@/components/credit-checker/missing-courses-list';
 import { FailedCoursesList } from '@/components/credit-checker/failed-courses-list';
 import { Button } from '@/components/ui/button';
@@ -137,9 +140,6 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
     return new Map(all.map((c) => [c.courseId, c]));
   }, [report.passedCourses, report.failedCourses, report.notYetStudiedCourses, report.missingRequiredCourses]);
   const hasFailed = report.failedCourses.length > 0;
-  const completeCategories = report.categoryProgress.filter((c) => c.isComplete).length;
-  const allCategoriesComplete =
-    report.categoryProgress.length > 0 && completeCategories === report.categoryProgress.length;
   const creditsOverRequired = Math.max(0, report.creditsPassed - report.totalCreditsRequired);
   const celebrateReady = useCelebrateOnce(
     `celebrate:credit-ready:${report.studentProfileId}`,
@@ -253,16 +253,7 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
       <RevealOnScroll>
         <PageSection
           title="ความคืบหน้าตามหมวด"
-          description={
-            allCategoriesComplete ? (
-              <span className="inline-flex items-center gap-1.5 text-emerald-700">
-                <Check size={14} aria-hidden="true" />
-                ครบทุกหมวดแล้ว ({completeCategories} จาก {report.categoryProgress.length})
-              </span>
-            ) : (
-              `ครบแล้ว ${completeCategories} จาก ${report.categoryProgress.length} หมวด`
-            )
-          }
+          description={<CategoryProgressSummary categories={report.categoryProgress} />}
         >
           <CategoryProgressList categories={report.categoryProgress} />
         </PageSection>
