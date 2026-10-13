@@ -23,4 +23,24 @@ describe('userMenuEntries', () => {
       userMenuEntries({ canResend: true, statusBlocked: true, isActive: true }).map((e) => e.key),
     ).toEqual(['resend']);
   });
+
+  it('puts a destructive permanent delete last, after reactivate', () => {
+    expect(
+      userMenuEntries({ canResend: false, statusBlocked: false, isActive: false, canDelete: true }),
+    ).toEqual([
+      { key: 'reactivate', label: 'เปิดใช้งานอีกครั้ง' },
+      { key: 'delete', label: 'ลบถาวร', destructive: true },
+    ]);
+  });
+
+  it('can offer delete even when the status change is blocked', () => {
+    expect(
+      userMenuEntries({
+        canResend: false,
+        statusBlocked: true,
+        isActive: false,
+        canDelete: true,
+      }).map((e) => e.key),
+    ).toEqual(['delete']);
+  });
 });

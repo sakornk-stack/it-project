@@ -76,3 +76,24 @@ export function suspendBlockReason(input: {
   const allCovered = input.targetScopes.every((s) => isScopeCovered(s, ownScopes, org));
   return allCovered ? null : OUTSIDE_SCOPE_REASON;
 }
+
+export const PERMANENT_DELETE_BASE_PATH = '/superadmin';
+
+// Whether the screen offers "ลบถาวร" on an account: only for a Super Admin on
+// their own route tree, only once the account is suspended, never for yourself,
+// another Super Admin or a student account. The API enforces the same rules.
+export function canPermanentlyDelete(input: {
+  basePath: string;
+  requesterIsSuperAdmin: boolean;
+  isSelf: boolean;
+  target: { isActive: boolean; roles: Role[] };
+}): boolean {
+  return (
+    input.requesterIsSuperAdmin &&
+    input.basePath === PERMANENT_DELETE_BASE_PATH &&
+    !input.isSelf &&
+    !input.target.isActive &&
+    !input.target.roles.includes('SUPER_ADMIN') &&
+    !input.target.roles.includes('STUDENT')
+  );
+}

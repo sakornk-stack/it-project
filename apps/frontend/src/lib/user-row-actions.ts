@@ -1,5 +1,5 @@
 export interface UserMenuEntry {
-  key: 'resend' | 'suspend' | 'reactivate';
+  key: 'resend' | 'suspend' | 'reactivate' | 'delete';
   label: string;
   destructive?: boolean;
 }
@@ -11,6 +11,8 @@ export function userMenuEntries(input: {
   canResend: boolean;
   statusBlocked: boolean;
   isActive: boolean;
+  // Permanent delete: a suspended account the Super Admin may remove for good.
+  canDelete?: boolean;
 }): UserMenuEntry[] {
   const entries: UserMenuEntry[] = [];
   if (input.canResend) entries.push({ key: 'resend', label: 'ส่งคำเชิญซ้ำ' });
@@ -21,5 +23,6 @@ export function userMenuEntries(input: {
         : { key: 'reactivate', label: 'เปิดใช้งานอีกครั้ง' },
     );
   }
+  if (input.canDelete) entries.push({ key: 'delete', label: 'ลบถาวร', destructive: true });
   return entries;
 }

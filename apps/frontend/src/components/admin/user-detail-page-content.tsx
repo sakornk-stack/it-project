@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarDays, Info, Mail } from 'lucide-react';
 import { formatThaiDate } from '@/lib/admin-users';
@@ -18,6 +19,7 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { ResendInvitationButton } from '@/components/admin/resend-invitation-button';
+import { UserPermanentDeleteButton } from '@/components/admin/user-permanent-delete';
 import { UserRolesSection } from '@/components/admin/user-roles-section';
 import { UserScopesSection } from '@/components/admin/user-scopes-section';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +38,7 @@ export function UserDetailPageContent({
 }: Readonly<{ userId: string; basePath: string }>) {
   const { user: requester } = useAuth();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmingSuspend, setConfirmingSuspend] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -236,24 +239,35 @@ export function UserDetailPageContent({
                       ? 'บัญชีนี้เข้าสู่ระบบได้ตามปกติ'
                       : 'บัญชีนี้ถูกระงับ ไม่สามารถเข้าสู่ระบบได้'}
                   </span>
-                  {suspendBlocked ? (
-                    suspendBlocked !== SELF_LOCK_REASON && (
-                      <span className="max-w-md text-xs text-muted-foreground" role="note">
-                        {suspendBlocked}
-                      </span>
-                    )
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        userQuery.data.isActive ? setConfirmingSuspend(true) : handleToggleActive()
-                      }
-                    >
-                      {userQuery.data.isActive ? 'ระงับการใช้งาน' : 'เปิดใช้งานอีกครั้ง'}
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {suspendBlocked ? (
+                      suspendBlocked !== SELF_LOCK_REASON && (
+                        <span className="max-w-md text-xs text-muted-foreground" role="note">
+                          {suspendBlocked}
+                        </span>
+                      )
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          userQuery.data.isActive
+                            ? setConfirmingSuspend(true)
+                            : handleToggleActive()
+                        }
+                      >
+                        {userQuery.data.isActive ? 'ระงับการใช้งาน' : 'เปิดใช้งานอีกครั้ง'}
+                      </Button>
+                    )}
+                    <UserPermanentDeleteButton
+                      user={userQuery.data}
+                      requesterId={requester.userId}
+                      requesterIsSuperAdmin={requesterIsSuperAdmin}
+                      basePath={basePath}
+                      onDeleted={() => router.push(`${basePath}/users`)}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

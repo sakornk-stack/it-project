@@ -28,6 +28,7 @@ import {
 import { SortHeader } from '@/components/ui/sort-header';
 import { useResendInvitation } from '@/components/admin/resend-invitation-button';
 import { UserRowMenu } from '@/components/admin/user-row-menu';
+import { useUserPermanentDelete } from '@/components/admin/user-permanent-delete';
 import { UserManageBlocked, useUserStatusToggle } from '@/components/admin/user-status-action';
 import { userMenuEntries } from '@/lib/user-row-actions';
 
@@ -206,11 +207,24 @@ function SuperAdminRowActions({
   // Other Super Admins and your own account cannot be edited or suspended here.
   const locked = user.roles.includes('SUPER_ADMIN');
 
-  const actions = { resend: resend.request, suspend: status.request, reactivate: status.request };
+  const remove = useUserPermanentDelete({
+    user,
+    requesterId: superAdminId,
+    requesterIsSuperAdmin: true,
+    basePath,
+  });
+
+  const actions = {
+    resend: resend.request,
+    suspend: status.request,
+    reactivate: status.request,
+    delete: remove.request,
+  };
   const menuItems = userMenuEntries({
     canResend: resend.canResend,
     statusBlocked: status.blockReason !== null,
     isActive: user.isActive,
+    canDelete: remove.canDelete,
   }).map((entry) => ({
     ...entry,
     onSelect: actions[entry.key],
@@ -238,6 +252,7 @@ function SuperAdminRowActions({
       )}
       {status.dialog}
       {resend.dialog}
+      {remove.dialog}
     </div>
   );
 }

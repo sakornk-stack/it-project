@@ -1,9 +1,10 @@
-import type { UserScope } from '@eduanalyze-ai/shared-types';
+import type { Role, UserScope } from '@eduanalyze-ai/shared-types';
 import {
   OUTSIDE_SCOPE_REASON,
   SELF_LOCK_REASON,
   STAFF_ONLY_REASON,
   SUPER_ADMIN_PEER_REASON,
+  canPermanentlyDelete,
   suspendBlockReason,
   manageLockReason,
   type OrgIndex,
@@ -115,5 +116,29 @@ describe('manageLockReason', () => {
     expect(
       manageLockReason({ isSelf: false, requesterIsSuperAdmin: false, targetRoles: ['STAFF'] }),
     ).toBeNull();
+  });
+});
+
+describe('canPermanentlyDelete', () => {
+  const base = {
+    basePath: '/superadmin',
+    requesterIsSuperAdmin: true,
+    isSelf: false,
+    target: { isActive: false, roles: ['STAFF'] as Role[] },
+  };
+
+  it('is offered for a suspended staff account to a Super Admin on /superadmin', () => {
+    expect(canPermanentlyDelete(base)).toBe(true);
+  });
+
+  it.each([
+    ['the /admin route tree', { basePath: '/admin' }],
+    ['an Admin viewer', { requesterIsSuperAdmin: false }],
+    ['your own account', { isSelf: true }],
+    ['an account that is still active', { target: { isActive: true, roles: ['STAFF'] as Role[] } }],
+    ['a Super Admin account', { target: { isActive: false, roles: ['SUPER_ADMIN'] as Role[] } }],
+    ['a student account', { target: { isActive: false, roles: ['STUDENT'] as Role[] } }],
+  ])('is not offered for %s', (_label, change) => {
+    expect(canPermanentlyDelete({ ...base, ...change })).toBe(false);
   });
 });

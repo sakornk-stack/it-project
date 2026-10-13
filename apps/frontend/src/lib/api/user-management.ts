@@ -46,3 +46,7 @@ export async function deleteUserScope(userId: string, scopeId: string) {
 export async function resendInvitation(id: string) {
   await apiClient.post(`/users/${id}/resend-invitation`);
 }
+
+export async function deleteUserPermanently(id: string) {
+  await apiClient.delete(`/users/${id}/permanent`);
+}
