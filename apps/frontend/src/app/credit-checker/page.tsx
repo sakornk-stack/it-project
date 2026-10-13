@@ -1,17 +1,15 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
-import { Award, ChevronDown, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
+import { Award, CheckCircle2, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
 import type { CourseSummary, CreditCheckReport } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchCreditCheck } from '@/lib/api/credit-checker';
 import { useAuth } from '@/lib/auth-context';
 import { useCelebrateOnce } from '@/lib/use-celebrate-once';
 import { useCountUp } from '@/lib/use-count-up';
-import { cn } from '@/lib/utils';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
@@ -27,13 +25,6 @@ import { Button } from '@/components/ui/button';
 import { ConfettiBurst } from '@/components/ui/confetti-burst';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { ListSkeleton, Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
-
-// React Flow is the heaviest dependency on this page and the chart starts
-// collapsed, so it is only fetched once the student opens it.
-const PrerequisiteFlowChart = dynamic(
-  () => import('@/components/credit-checker/prerequisite-flow-chart').then((m) => m.PrerequisiteFlowChart),
-  { ssr: false, loading: () => <Skeleton className="h-[600px] w-full" /> },
-);
 
 export default function CreditCheckerPage() {
   return (
@@ -124,9 +115,6 @@ function CreditCheckerContent() {
 }
 
 function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport }>) {
-  const [showFlowChart, setShowFlowChart] = useState(false);
-  const flowChartId = useId();
-
   const failedCourseIds = useMemo(
     () => new Set(report.failedCourses.map((c) => c.courseId)),
     [report.failedCourses],
@@ -149,8 +137,7 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
   }, [report.passedCourses, report.failedCourses, report.notYetStudiedCourses, report.missingRequiredCourses]);
   const hasFailed = report.failedCourses.length > 0;
   const completeCategories = report.categoryProgress.filter((c) => c.isComplete).length;
-  const curriculumCourseCount =
-    report.passedCourses.length + report.failedCourses.length + report.notYetStudiedCourses.length;
+  const creditsOverRequired = Math.max(0, report.creditsPassed - report.totalCreditsRequired);
   const celebrateReady = useCelebrateOnce(
     `celebrate:credit-ready:${report.studentProfileId}`,
     report.graduationReadiness.isReady,
@@ -186,10 +173,22 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
             label="หน่วยกิตสะสม"
             value={report.creditsPassed}
             suffix={`/ ${report.totalCreditsRequired}`}
+            footer={
+              creditsOverRequired > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  เกินเกณฑ์ {creditsOverRequired} หน่วยกิต
+                </p>
+              ) : undefined
+            }
           />
         </Reveal>
         <Reveal index={3}>
-          <StatCard icon={Award} label="หน่วยกิตที่เหลือ" value={report.creditsRemaining} />
+          <StatCard
+            icon={Award}
+            label="หน่วยกิตที่เหลือ"
+            value={report.creditsRemaining}
+            suffix="หน่วยกิต"
+          />
         </Reveal>
         <Reveal index={4} className="relative">
           <StatCard
@@ -199,8 +198,8 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
             suffix="วิชา"
             badge={
               report.graduationReadiness.isReady
-                ? { text: 'พร้อมสำเร็จการศึกษา', tone: 'positive' }
-                : { text: 'ยังไม่พร้อม', tone: 'neutral' }
+                ? { text: 'วิชาบังคับครบแล้ว', tone: 'positive' }
+                : { text: 'ยังขาดวิชาบังคับ', tone: 'neutral' }
             }
           />
           {celebrateReady && <ConfettiBurst delayMs={500} />}
@@ -208,29 +207,47 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
       </div>
 
       <Reveal index={5}>
-        <PageSection
-          title="ต้องจัดการ"
-          actions={
-            <Button asChild variant="outline" size="sm" className="gap-1.5">
+        {report.missingRequiredCourses.length === 0 && !hasFailed ? (
+          <section
+            aria-label="ต้องจัดการ"
+            className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+              <CheckCircle2 size={18} aria-hidden="true" className="shrink-0" />
+              คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว
+            </p>
+            <Button asChild variant="ghost" size="sm" className="gap-1.5 self-start sm:self-auto">
               <Link href="/learning-path">
                 <MapIcon size={14} aria-hidden="true" />
                 ไปที่แผนการเรียน
               </Link>
             </Button>
-          }
-        >
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-            <div className={hasFailed ? 'lg:col-span-2' : 'lg:col-span-3'}>
-              <MissingCoursesList
-                courses={report.missingRequiredCourses}
-                failedCourseIds={failedCourseIds}
-                courseById={courseById}
-                passedCourseIds={passedCourseIds}
-              />
+          </section>
+        ) : (
+          <PageSection
+            title="ต้องจัดการ"
+            actions={
+              <Button asChild variant="outline" size="sm" className="gap-1.5">
+                <Link href="/learning-path">
+                  <MapIcon size={14} aria-hidden="true" />
+                  ไปที่แผนการเรียน
+                </Link>
+              </Button>
+            }
+          >
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+              <div className={hasFailed ? 'lg:col-span-2' : 'lg:col-span-3'}>
+                <MissingCoursesList
+                  courses={report.missingRequiredCourses}
+                  failedCourseIds={failedCourseIds}
+                  courseById={courseById}
+                  passedCourseIds={passedCourseIds}
+                />
+              </div>
+              {hasFailed && <FailedCoursesList courses={report.failedCourses} />}
             </div>
-            {hasFailed && <FailedCoursesList courses={report.failedCourses} />}
-          </div>
-        </PageSection>
+          </PageSection>
+        )}
       </Reveal>
 
       <RevealOnScroll>
@@ -239,33 +256,6 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
           description={`ครบแล้ว ${completeCategories} จาก ${report.categoryProgress.length} หมวด`}
         >
           <CategoryProgressList categories={report.categoryProgress} />
-        </PageSection>
-      </RevealOnScroll>
-
-      <RevealOnScroll>
-        <PageSection
-          title="แผนผังวิชาต่อเนื่อง"
-          description={`ลำดับวิชาก่อน-หลังของทุกวิชาในหลักสูตร (${curriculumCourseCount} วิชา)`}
-          actions={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFlowChart((v) => !v)}
-              aria-expanded={showFlowChart}
-              aria-controls={flowChartId}
-              className="gap-1.5"
-            >
-              {showFlowChart ? 'ซ่อนแผนผัง' : 'แสดงแผนผัง'}
-              <ChevronDown size={14} className={cn('transition-transform', showFlowChart && 'rotate-180')} />
-            </Button>
-          }
-        >
-          {showFlowChart && (
-            <div id={flowChartId}>
-              <PrerequisiteFlowChart report={report} />
-            </div>
-          )}
         </PageSection>
       </RevealOnScroll>
     </>

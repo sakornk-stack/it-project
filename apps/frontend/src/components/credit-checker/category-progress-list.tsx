@@ -1,5 +1,6 @@
 import type { CategoryProgress } from '@eduanalyze-ai/shared-types';
-import { cn } from '@/lib/utils';
+import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
@@ -19,21 +20,18 @@ export function CategoryProgressList({ categories }: Readonly<{ categories: Cate
                   <div className="flex items-center gap-2">
                     <span className="tabular-nums text-muted-foreground">
                       {category.creditsEarned} / {category.minCredits} หน่วยกิต
+                      {category.creditsEarned > category.minCredits &&
+                        ` · เกิน ${category.creditsEarned - category.minCredits}`}
                     </span>
-                    <span
-                      className={cn(
-                        'rounded-full px-2 py-0.5 text-xs font-medium',
-                        category.isComplete
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-slate-100 text-slate-600',
-                      )}
-                    >
+                    <Badge tone={category.isComplete ? 'success' : 'warning'}>
                       {category.isComplete ? 'ครบแล้ว' : 'ยังไม่ครบ'}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
                 <Progress
                   label={category.name}
+                  className={category.isComplete ? 'h-1.5' : undefined}
+                  barClassName={category.isComplete ? BAR_TONE_CLASSES.success : undefined}
                   value={category.minCredits > 0 ? (category.creditsEarned / category.minCredits) * 100 : 0}
                 />
               </li>

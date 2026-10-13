@@ -6,7 +6,6 @@ import type { CourseSummary } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
 
 type MissingCourse = CourseSummary & { isPrerequisiteSatisfied: boolean };
 
@@ -81,15 +80,8 @@ export function MissingCoursesList({
   const [showLocked, setShowLocked] = useState(available.length === 0);
   const lockedListId = useId();
 
-  if (courses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <EmptyState illustration="all-done" description="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว" />
-        </CardContent>
-      </Card>
-    );
-  }
+  // The page shows its own compact success bar when nothing is missing.
+  if (courses.length === 0) return null;
 
   const isFailed = (c: MissingCourse) => failedCourseIds?.has(c.courseId) ?? false;
 
