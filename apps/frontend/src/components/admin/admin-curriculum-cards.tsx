@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FolderOpen, Search } from 'lucide-react';
+import { ArrowRight, FolderOpen, Search } from 'lucide-react';
 import type { AdminScopeCurriculumEntry } from '@eduanalyze-ai/shared-types';
 import {
   CURRICULUM_TAB_LABELS,
@@ -55,7 +55,7 @@ export function CurriculumTabs({
           aria-selected={value === tab}
           onClick={() => onChange(tab)}
           className={cn(
-            'min-h-11 rounded-md px-3.5 text-sm font-semibold transition motion-reduce:transition-none',
+            'min-h-11 rounded-md px-3.5 text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none',
             value === tab
               ? 'bg-brand text-brand-foreground'
               : 'text-muted-foreground hover:bg-slate-50',
@@ -68,6 +68,16 @@ export function CurriculumTabs({
   );
 }
 
+// Card weight follows how much there is to look at: a curriculum with students leads,
+// one with only structure is plain, an empty one is quieter (soft fill, dashed edge).
+const CARD_EMPHASIS: Record<AdminScopeCurriculumEntry['dataState'], string> = {
+  HAS_STUDENTS: 'border-brand/40 shadow-sm',
+  STRUCTURE_ONLY: '',
+  EMPTY: 'border-dashed bg-muted/40 shadow-none',
+};
+
+// The whole card is one link: the "ดูคุณภาพหลักสูตร" link stretches over it, so there is a
+// single tab stop and a single accessible name, and no link nests inside another.
 function CurriculumCard({
   entry,
   programs,
@@ -75,7 +85,12 @@ function CurriculumCard({
   const place = placeOf(entry, programs);
   const badge = STATE_BADGE[entry.dataState];
   return (
-    <Card className="flex h-full flex-col">
+    <Card
+      className={cn(
+        'relative flex h-full flex-col transition-[transform,box-shadow] duration-200 ease-out focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2 md:hover:-translate-y-0.5 md:hover:shadow-md motion-reduce:transition-none motion-reduce:md:hover:translate-y-0',
+        CARD_EMPHASIS[entry.dataState],
+      )}
+    >
       <CardContent className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <Badge tone="neutral">
@@ -83,7 +98,14 @@ function CurriculumCard({
           </Badge>
           <Badge tone={badge.tone}>{badge.label(entry)}</Badge>
         </div>
-        <h3 className="text-base font-semibold leading-snug text-primary">{entry.programName}</h3>
+        <h3
+          className={cn(
+            'text-base font-semibold leading-snug',
+            entry.dataState === 'EMPTY' ? 'text-muted-foreground' : 'text-primary',
+          )}
+        >
+          {entry.programName}
+        </h3>
         {place && (
           <p className="text-sm text-muted-foreground">
             {place.departmentName} · {place.facultyName}
@@ -97,9 +119,14 @@ function CurriculumCard({
         </div>
         <Link
           href={`/admin/curriculum/${entry.curriculumId}`}
-          className={cn(buttonVariants({ variant: 'default' }), 'mt-2 w-full')}
+          aria-label={`ดูคุณภาพหลักสูตร ${entry.programName} ฉบับ ${entry.version}`}
+          className={cn(
+            buttonVariants({ variant: 'outline' }),
+            'mt-2 w-full gap-1.5 after:absolute after:inset-0 after:content-[""] focus-visible:ring-0 focus-visible:ring-offset-0',
+          )}
         >
           ดูคุณภาพหลักสูตร
+          <ArrowRight size={14} aria-hidden="true" />
         </Link>
       </CardContent>
     </Card>
@@ -134,7 +161,11 @@ export function AdminCurriculumCards({
     );
   }
   return (
-    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    // Keyed by the shown set so a tab change fades the new cards in (off under reduced motion).
+    <ul
+      key={entries.map((entry) => entry.curriculumId).join()}
+      className="grid grid-cols-1 gap-4 duration-200 animate-in fade-in-0 motion-reduce:animate-none md:grid-cols-2 xl:grid-cols-3"
+    >
       {entries.map((entry) => (
         <li key={entry.curriculumId}>
           <CurriculumCard entry={entry} programs={programs} />

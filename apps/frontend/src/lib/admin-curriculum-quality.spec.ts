@@ -8,6 +8,7 @@ import {
   formatGpa,
   formatPloScore,
   gpaBarPercent,
+  gpaStatus,
   hasAnyPloData,
   hasLittleData,
   lowestPlos,
@@ -94,10 +95,10 @@ describe('gpaBarPercent', () => {
 });
 
 describe('sortCohorts', () => {
-  it('orders oldest intake first without mutating', () => {
+  it('orders newest intake first without mutating', () => {
     const cohort = (admissionYear: number) => ({ admissionYear }) as CohortPloAchievementReport;
     const input = [cohort(2567), cohort(2565)];
-    expect(sortCohorts(input).map((c) => c.admissionYear)).toEqual([2565, 2567]);
+    expect(sortCohorts(input).map((c) => c.admissionYear)).toEqual([2567, 2565]);
     expect(input[0].admissionYear).toBe(2567);
   });
 });
@@ -155,5 +156,18 @@ describe('ploScoresAreClose', () => {
   });
   it('has the note text the page shows', () => {
     expect(CLOSE_SCORES_NOTE).toContain('ใกล้เคียงกัน');
+  });
+});
+
+describe('gpaStatus', () => {
+  it('names the band with a tone and a word', () => {
+    expect(gpaStatus(1.49)).toEqual({ tone: 'danger', label: 'ต่ำกว่าเกณฑ์' });
+    expect(gpaStatus(1.5)).toEqual({ tone: 'warning', label: 'เฝ้าระวัง' });
+    expect(gpaStatus(1.74)).toEqual({ tone: 'warning', label: 'เฝ้าระวัง' });
+    expect(gpaStatus(1.75)).toEqual({ tone: 'success', label: 'ตามเกณฑ์' });
+  });
+
+  it('gives no verdict when nobody has a GPA', () => {
+    expect(gpaStatus(null)).toBeNull();
   });
 });

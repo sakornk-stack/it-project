@@ -4,6 +4,7 @@ import type {
   RadarPoint,
 } from '@eduanalyze-ai/shared-types';
 import { INSUFFICIENT_BELOW } from '@/lib/course-snapshot';
+import type { SemanticTone } from '@/lib/tone';
 
 // What the Admin curriculum quality page works out from
 // GET /dashboard/curriculum/:id, apart from React so it can be tested alone.
@@ -46,11 +47,30 @@ export function gpaBarPercent(gpa: number | null): number {
   return Math.max(0, Math.min(100, (gpa / GPA_SCALE_MAX) * 100));
 }
 
-// Oldest intake first, the order the page reads as "older to newer".
+// Newest intake first: the latest cohort is the one an Admin looks at before the older ones.
 export function sortCohorts(
   cohorts: readonly CohortPloAchievementReport[],
 ): CohortPloAchievementReport[] {
-  return [...cohorts].sort((a, b) => a.admissionYear - b.admissionYear);
+  return [...cohorts].sort((a, b) => b.admissionYear - a.admissionYear);
+}
+
+// A GPA read against the system-wide status bands (the wording of STATUS_RULES in
+// staff-status.ts: below 1.50 / 1.50-1.74 / 1.75 and up). The server decides each
+// student's band; this only names where an average falls, so a bar can carry a colour
+// AND a word. null = nobody graded, no verdict.
+export interface GpaStatus {
+  tone: SemanticTone;
+  label: string;
+}
+
+const GPA_CRITICAL_BELOW = 1.5;
+const GPA_WATCH_BELOW = 1.75;
+
+export function gpaStatus(gpa: number | null): GpaStatus | null {
+  if (gpa === null) return null;
+  if (gpa < GPA_CRITICAL_BELOW) return { tone: 'danger', label: 'ต่ำกว่าเกณฑ์' };
+  if (gpa < GPA_WATCH_BELOW) return { tone: 'warning', label: 'เฝ้าระวัง' };
+  return { tone: 'success', label: 'ตามเกณฑ์' };
 }
 
 export function hasAnyPloData(radar: readonly RadarPoint[]): boolean {

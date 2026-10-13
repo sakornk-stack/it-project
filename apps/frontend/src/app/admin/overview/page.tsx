@@ -3,13 +3,14 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, GraduationCap, Landmark, ShieldCheck, UserCog } from 'lucide-react';
+import { GraduationCap, ShieldCheck, UserCog } from 'lucide-react';
 import { fetchAdminScopeOverview } from '@/lib/api/admin';
 import { fetchUser } from '@/lib/api/user-management';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { useScopeTargetName } from '@/lib/use-scope-target-name';
 import { countByTab, filterCurricula, type CurriculumTab } from '@/lib/admin-curricula';
 import { useAuth } from '@/lib/auth-context';
+import { ScopeBreadcrumb } from '@/components/admin/scope-breadcrumb';
 import { AdminCurriculumCards, CurriculumTabs } from '@/components/admin/admin-curriculum-cards';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -65,7 +66,7 @@ function AdminOverviewContent() {
       <Reveal index={0}>
         <PageHeader
           title="ภาพรวมขอบเขต"
-          description="คณะ ภาควิชา และสาขาที่คุณดูแล จำนวนผู้ใช้งานแยกตามบทบาท และหลักสูตรในความดูแล"
+          description="หน่วยงาน ผู้ใช้งาน และหลักสูตรในขอบเขตที่คุณดูแล"
           actions={
             ownScopes.length > 0 && (
               <div className="rounded-lg border bg-card px-4 py-2 text-sm">
@@ -99,51 +100,41 @@ function AdminOverviewContent() {
         <>
           <Reveal index={1}>
             <PageSection
-              title="หน่วยงานที่เกี่ยวข้องกับขอบเขตของคุณ"
-              description="นับคณะและภาควิชาต้นสังกัดของสาขาที่อยู่ในขอบเขตของคุณ ไม่ใช่ขอบเขตที่คุณถือโดยตรง"
+              title="หน่วยงานในขอบเขตของคุณ"
+              description="นับคณะและภาควิชาต้นสังกัดของสาขาในขอบเขต"
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <StatCard
-                  icon={Landmark}
-                  label="คณะที่เกี่ยวข้อง"
-                  value={<AnimatedNumber value={data.scope.facultyCount} />}
-                  suffix="คณะ"
-                />
-                <StatCard
-                  icon={Building2}
-                  label="ภาควิชาที่เกี่ยวข้อง"
-                  value={<AnimatedNumber value={data.scope.departmentCount} />}
-                  suffix="ภาควิชา"
-                />
-                <StatCard
-                  icon={GraduationCap}
-                  label="สาขาที่เกี่ยวข้อง"
-                  value={<AnimatedNumber value={data.scope.programCount} />}
-                  suffix="สาขา"
-                />
-              </div>
+              <ScopeBreadcrumb
+                counts={{
+                  faculty: data.scope.facultyCount,
+                  department: data.scope.departmentCount,
+                  program: data.scope.programCount,
+                }}
+              />
             </PageSection>
           </Reveal>
 
           <Reveal index={2}>
             <PageSection
               title="สรุปจำนวนผู้ใช้งานแยกตามบทบาท"
-              description="นับเฉพาะบัญชีที่ใช้งานอยู่ภายในขอบเขตของคุณ"
+              description="เฉพาะบัญชีที่ใช้งานอยู่ในขอบเขตของคุณ"
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <StatCard
+                  compact
                   icon={UserCog}
                   label="เจ้าหน้าที่"
                   value={<AnimatedNumber value={data.userCounts.staff} />}
                   suffix="คน"
                 />
                 <StatCard
+                  compact
                   icon={ShieldCheck}
                   label="ผู้ดูแลระบบ"
                   value={<AnimatedNumber value={data.userCounts.admin} />}
                   suffix="คน"
                 />
                 <StatCard
+                  compact
                   icon={GraduationCap}
                   label="นิสิต"
                   value={<AnimatedNumber value={data.userCounts.student} />}
@@ -156,7 +147,7 @@ function AdminOverviewContent() {
           <Reveal index={3}>
             <PageSection
               title="หลักสูตรในความดูแล"
-              description={`ทั้งหมด ${data.curricula.totalCount} หลักสูตร — เลือกดูคุณภาพรายหลักสูตรได้จากการ์ด`}
+              description={`ทั้งหมด ${data.curricula.totalCount} หลักสูตร`}
               actions={
                 <Link
                   href="/admin/curriculum"

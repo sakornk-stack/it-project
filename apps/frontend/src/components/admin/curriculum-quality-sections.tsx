@@ -9,13 +9,16 @@ import {
   CLOSE_SCORES_NOTE,
   LITTLE_DATA_LABEL,
   formatGpa,
-  formatPloScore,
+  gpaStatus,
   ploScoresAreClose,
   gpaBarPercent,
   hasLittleData,
   sortCohorts,
   summarizeLowestClos,
 } from '@/lib/admin-curriculum-quality';
+import { formatFiveScaleAgainstThreshold } from '@/lib/five-scale';
+import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { STATUS_RULES } from '@/components/staff/staff-status';
 import { NO_DATA_LABEL } from '@/components/staff/student-reading';
 import { Badge } from '@/components/ui/badge';
@@ -82,7 +85,13 @@ export function StatusCriteria() {
 export function LowestSection({
   plos,
   clos,
-}: Readonly<{ plos: RadarPoint[]; clos: LowestCloEntry[] }>) {
+  threshold = null,
+}: Readonly<{
+  plos: RadarPoint[];
+  clos: LowestCloEntry[];
+  // Pass bar (0-100) so a score just under it is never rounded up to look like it.
+  threshold?: number | null;
+}>) {
   const { shown, hiddenCount } = summarizeLowestClos(clos);
   const none = plos.length === 0 && clos.length === 0;
   return (
@@ -117,7 +126,13 @@ export function LowestSection({
                         {plo.name}
                       </span>
                       <Badge tone="warning" className="tabular-nums">
-                        เฉลี่ย {formatPloScore(plo.value)} / 5.00
+                        เฉลี่ย{' '}
+                        {formatFiveScaleAgainstThreshold(
+                          plo.value,
+                          threshold,
+                          plo.value !== null && threshold !== null && plo.value >= threshold,
+                        )}{' '}
+                        / 5.0
                       </Badge>
                     </li>
                   ))}
@@ -162,6 +177,7 @@ export function LowestSection({
 
 function CohortRow({ cohort }: Readonly<{ cohort: CohortPloAchievementReport }>) {
   const little = hasLittleData(cohort.gpaSampleSize);
+  const status = gpaStatus(cohort.averageGpa);
   return (
     <li className="space-y-2 rounded-lg bg-slate-50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -173,18 +189,27 @@ function CohortRow({ cohort }: Readonly<{ cohort: CohortPloAchievementReport }>)
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="text-muted-foreground">GPA เฉลี่ยรุ่น</span>
         <span className="font-semibold tabular-nums text-primary">
-          {cohort.averageGpa === null ? NO_DATA_LABEL : `${formatGpa(cohort.averageGpa)} / 4.00`}
+          {cohort.averageGpa === null ? (
+            NO_DATA_LABEL
+          ) : (
+            <>
+              <AnimatedNumber value={cohort.averageGpa} decimals={2} format={formatGpa} /> / 4.00
+            </>
+          )}
         </span>
       </div>
       <Progress
         value={gpaBarPercent(cohort.averageGpa)}
         label={`GPA เฉลี่ยรุ่นปี ${cohort.admissionYear}`}
-        barClassName="bg-brand"
+        barClassName={status ? BAR_TONE_CLASSES[status.tone] : 'bg-slate-300'}
       />
+      <div className="flex flex-wrap items-center gap-2">
+        {status && <Badge tone={status.tone}>{status.label}</Badge>}
+        {little && <Badge tone="warning">{LITTLE_DATA_LABEL}</Badge>}
+      </div>
       <p className="text-xs text-muted-foreground tabular-nums">
         คำนวณจากนิสิตที่มีเกรด {cohort.gpaSampleSize} จาก {cohort.studentCount} คน
       </p>
-      {little && <Badge tone="warning">{LITTLE_DATA_LABEL}</Badge>}
     </li>
   );
 }
@@ -195,6 +220,7 @@ export function CohortComparison({ cohorts }: Readonly<{ cohorts: CohortPloAchie
     <Card>
       <CardHeader>
         <CardTitle>เทียบรุ่น (ปีที่เข้าศึกษา)</CardTitle>
+        <p className="text-sm text-muted-foreground">เรียงจากรุ่นล่าสุด</p>
       </CardHeader>
       <CardContent>
         {sorted.length === 0 ? (

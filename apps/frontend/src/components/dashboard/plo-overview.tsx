@@ -36,7 +36,7 @@ function Highlight({
   );
 }
 
-function RadarLegend() {
+export function RadarLegend() {
   return (
     <ul className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
       <li className="flex items-center gap-2">

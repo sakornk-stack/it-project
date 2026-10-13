@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, CheckCircle2, GraduationCap, Sigma, Users } from 'lucide-react';
 import { fetchCurriculumQuality } from '@/lib/api/admin';
+import { fetchCurriculum } from '@/lib/api/plo-achievement';
 import { findCurriculum, placeOf } from '@/lib/admin-curricula';
 import {
   LITTLE_DATA_LABEL,
   GPA_SCALE_MAX,
   formatGpa,
-  formatPloScore,
+  gpaStatus,
   hasAnyPloData,
   hasLittleData,
   lowestPlos,
@@ -22,7 +23,7 @@ import {
   StatusCriteria,
 } from '@/components/admin/curriculum-quality-sections';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { PloRadarCard } from '@/components/dashboard/plo-radar-card';
+import { CurriculumRadarCard } from '@/components/admin/curriculum-radar-card';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { PageLoadError } from '@/components/layout/page-states';
 import { PageHeader } from '@/components/layout/page-header';
@@ -33,6 +34,17 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+
+// The GPA card's status pill: a word and an icon as well as a colour.
+function gpaBadge(gpa: number | null) {
+  const status = gpaStatus(gpa);
+  if (!status) return undefined;
+  return {
+    text: status.label,
+    tone: status.tone,
+    icon: status.tone === 'success' ? CheckCircle2 : AlertTriangle,
+  };
+}
 
 export default function AdminCurriculumQualityPage({ params }: { params: { id: string } }) {
   return <AdminCurriculumQualityContent curriculumId={params.id} />;
@@ -46,6 +58,13 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
     queryFn: () => fetchCurriculumQuality(curriculumId),
     retry: false,
   });
+
+  // The pass bar for the radar; the radar still draws without it while this loads or fails.
+  const curriculumQuery = useQuery({
+    queryKey: ['curriculum', curriculumId],
+    queryFn: () => fetchCurriculum(curriculumId),
+  });
+  const threshold = curriculumQuery.data?.defaultAchievementThreshold ?? null;
 
   if (!user) {
     return (
@@ -156,6 +175,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                   )
                 }
                 suffix={report.averageGpa === null ? undefined : `/ ${GPA_SCALE_MAX.toFixed(2)}`}
+                badge={gpaBadge(report.averageGpa)}
                 footer={
                   <p className="text-xs text-muted-foreground tabular-nums">
                     คำนวณจากนิสิตที่มีเกรด {report.gpaSampleSize} จาก {report.studentCount} คน
@@ -180,6 +200,11 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 label="ต้องติดตาม"
                 value={<AnimatedNumber value={report.studentsAtRiskCount} />}
                 suffix="คน"
+                badge={
+                  report.studentsAtRiskCount > 0
+                    ? { text: 'ควรติดตาม', tone: 'danger', icon: AlertTriangle }
+                    : { text: 'ปกติ', tone: 'success', icon: CheckCircle2 }
+                }
                 footer={
                   <p className="text-xs text-muted-foreground">
                     {report.studentsAtRiskCount > 0
@@ -199,12 +224,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
             <div className="space-y-4 xl:col-span-2">
               <RevealOnScroll>
                 {hasAnyPloData(report.radar) ? (
-                  <PloRadarCard
-                    radar={report.radar}
-                    size={440}
-                    formatValue={formatPloScore}
-                    labelClassName="fill-primary text-[13px] font-medium"
-                  />
+                  <CurriculumRadarCard radar={report.radar} threshold={threshold} />
                 ) : (
                   <Card>
                     <CardContent className="pt-6">
@@ -217,7 +237,11 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 )}
               </RevealOnScroll>
               <RevealOnScroll>
-                <LowestSection plos={lowestPlos(report.radar)} clos={report.lowestClos} />
+                <LowestSection
+                  plos={lowestPlos(report.radar)}
+                  clos={report.lowestClos}
+                  threshold={threshold}
+                />
               </RevealOnScroll>
             </div>
             <RevealOnScroll>
