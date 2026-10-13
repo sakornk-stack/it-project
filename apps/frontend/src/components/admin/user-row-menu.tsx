@@ -23,7 +23,8 @@ export interface UserRowMenuItem {
 export function UserRowMenu({
   userName,
   items,
-}: Readonly<{ userName: string; items: UserRowMenuItem[] }>) {
+  triggerLabel = 'เมนูเพิ่มเติม',
+}: Readonly<{ userName: string; items: UserRowMenuItem[]; triggerLabel?: string }>) {
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +58,8 @@ export function UserRowMenu({
           size="icon"
           className="shrink-0"
           aria-haspopup="menu"
-          aria-label="เมนูเพิ่มเติม"
-          title="เมนูเพิ่มเติม"
+          aria-label={triggerLabel}
+          title={triggerLabel}
         >
           <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
         </Button>

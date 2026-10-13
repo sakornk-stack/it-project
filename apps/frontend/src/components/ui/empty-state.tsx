@@ -50,15 +50,19 @@ export function InlineNotice({
   icon: Icon,
   children,
   className,
+  solid = false,
 }: {
   icon: LucideIcon;
   children: ReactNode;
   className?: string;
+  // Neutral solid border instead of the dashed one.
+  solid?: boolean;
 }) {
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-sm text-muted-foreground',
+        'flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-muted-foreground',
+        !solid && 'border-dashed',
         className,
       )}
     >
