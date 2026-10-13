@@ -1,4 +1,4 @@
-import { formatFiveScale, percentToFiveScale } from '@/lib/five-scale';
+import { formatFiveScaleAgainstThreshold, percentToFiveScale } from '@/lib/five-scale';
 import { SCORE_BANDS, type ScoreBandKey } from '@/lib/plo-score-bands';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -25,11 +25,13 @@ function bandThresholdText(band: (typeof SCORE_BANDS)[number]) {
 export function OverallAchievementCard({
   percent,
   isAchieved,
+  threshold,
   bandCounts,
   noDataCount,
 }: Readonly<{
   percent: number | null;
   isAchieved: boolean;
+  threshold: number | null;
   bandCounts: Record<ScoreBandKey, number>;
   noDataCount: number;
 }>) {
@@ -80,7 +82,7 @@ export function OverallAchievementCard({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
                 <span className="text-3xl font-semibold tabular-nums text-primary">
-                  {formatFiveScale(percent)}
+                  {formatFiveScaleAgainstThreshold(percent, threshold, isAchieved)}
                 </span>
                 {percent !== null && (
                   <span className="mt-1 text-xs text-muted-foreground">/ 5.0</span>

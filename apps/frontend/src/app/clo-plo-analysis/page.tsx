@@ -217,6 +217,7 @@ function CloPloAnalysisContent() {
           <OverallAchievementCard
             percent={overallPercent}
             isAchieved={overallAchieved}
+            threshold={threshold}
             bandCounts={statusCounts.counts}
             noDataCount={statusCounts.noDataCount}
           />

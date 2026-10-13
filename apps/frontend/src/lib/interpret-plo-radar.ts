@@ -1,5 +1,5 @@
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
-import { percentToFiveScale } from './five-scale';
+import { formatFiveScaleAgainstThreshold, percentToFiveScale } from './five-scale';
 
 // Fully deterministic, rule-based replacement for the real AI call
 // (GET /ai-analysis/student/:id) — no network, no cost, same output shape
@@ -82,7 +82,7 @@ export function interpretPloRadar(radar: RadarPoint[], threshold: number): PloIn
   const avg = graded.reduce((sum, p) => sum + p.value, 0) / graded.length;
   const band = avg >= threshold + 15 ? 'excellent' : avg >= threshold ? 'good' : avg >= 40 ? 'average' : 'needsWork';
   const summary = fill(pick(SUMMARY_TEMPLATES[band], 0), {
-    avg: percentToFiveScale(avg).toFixed(1),
+    avg: formatFiveScaleAgainstThreshold(avg, threshold, avg >= threshold),
     count: radar.length.toString(),
   });
 
@@ -99,7 +99,10 @@ export function interpretPloRadar(radar: RadarPoint[], threshold: number): PloIn
     if (p.value === null) {
       return fill(NO_DATA_WEAKNESS, { name: p.name });
     }
-    return fill(pick(WEAKNESS_TEMPLATES, i), { name: p.name, value: percentToFiveScale(p.value).toFixed(1) });
+    return fill(pick(WEAKNESS_TEMPLATES, i), {
+      name: p.name,
+      value: formatFiveScaleAgainstThreshold(p.value, threshold, false),
+    });
   });
 
   const recommendations = weakGraded

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
-import { formatFiveScale } from '@/lib/five-scale';
+import { formatFiveScaleAgainstThreshold } from '@/lib/five-scale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -27,7 +27,7 @@ export function PloRadarChart({
   footer,
   selectedPloId,
   onSelectPlo,
-  formatValue = formatFiveScale,
+  formatValue,
   labelClassName = 'fill-primary text-[11px] font-medium',
 }: {
   radar: RadarPoint[];
@@ -46,12 +46,21 @@ export function PloRadarChart({
   // click target alongside its pill-row selector.
   selectedPloId?: string | null;
   onSelectPlo?: (ploId: string) => void;
-  // How a PLO value is written in the labels and tooltips; the student pages
-  // keep the one-decimal five-point scale.
+  // How a PLO value is written in the labels and tooltips. Omitted on the student pages, which
+  // use the one-decimal five-point scale (two decimals for an axis just under the threshold).
   formatValue?: (percent: number | null, noDataLabel?: string) => string;
   labelClassName?: string;
 }) {
   const total = radar.length;
+  const valueText = (plo: RadarPoint) =>
+    formatValue
+      ? formatValue(plo.value, 'ไม่มีข้อมูล')
+      : formatFiveScaleAgainstThreshold(
+          plo.value,
+          threshold ?? null,
+          plo.value !== null && threshold != null && plo.value >= threshold,
+          'ไม่มีข้อมูล',
+        );
   const center = size / 2;
   const maxRadius = size * (110 / DEFAULT_SIZE);
   const labelRadius = size * (140 / DEFAULT_SIZE);
@@ -173,7 +182,7 @@ export function PloRadarChart({
                 />
               </TooltipTrigger>
               <TooltipContent>
-                {radar[i].code}: {formatValue(radar[i].value, 'ไม่มีข้อมูล')}
+                {radar[i].code}: {valueText(radar[i])}
               </TooltipContent>
             </Tooltip>
           ))}
@@ -218,7 +227,7 @@ export function PloRadarChart({
                   {plo.code}
                 </tspan>
                 <tspan x={labelPos.x} dy="1.2em">
-                  {formatValue(plo.value, 'ไม่มีข้อมูล')}
+                  {valueText(plo)}
                 </tspan>
               </text>
             );
