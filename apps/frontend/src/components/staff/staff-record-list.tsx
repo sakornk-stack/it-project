@@ -170,10 +170,7 @@ export function StaffRecordList({
           </thead>
           <tbody>
             {pagination.pageRows.map((record) => (
-              <tr
-                key={record.id}
-                className="border-b border-slate-100 align-middle transition-colors hover:bg-slate-50 motion-reduce:transition-none"
-              >
+              <tr key={record.id} className="border-b border-slate-100 align-middle">
                 <td className="px-3 py-3 font-semibold tabular-nums">
                   {courseMap.get(record.courseId)?.code ?? '—'}
                 </td>
@@ -192,10 +189,7 @@ export function StaffRecordList({
 
       <ul className="space-y-3 md:hidden">
         {pagination.pageRows.map((record) => (
-          <li
-            key={record.id}
-            className="space-y-3 rounded-lg border border-slate-200 bg-card p-4 transition hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none motion-reduce:transition-none"
-          >
+          <li key={record.id} className="space-y-3 rounded-lg border border-slate-200 bg-card p-4">
             <div>
               <p className="font-semibold tabular-nums">
                 {courseMap.get(record.courseId)?.code ?? '—'}

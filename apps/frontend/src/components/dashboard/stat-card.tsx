@@ -4,6 +4,25 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { BADGE_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
 
+// What the figure means: tints the icon tile and the number. 'primary' is the
+// brand look; the SemanticTone values follow the shared tone palette.
+export type StatCardTone = 'primary' | SemanticTone;
+
+const TONE_ICON_TILE: Record<StatCardTone, string> = {
+  primary: 'bg-brand-light text-brand',
+  success: BADGE_TONE_CLASSES.success,
+  warning: BADGE_TONE_CLASSES.warning,
+  danger: BADGE_TONE_CLASSES.danger,
+  neutral: BADGE_TONE_CLASSES.neutral,
+};
+const TONE_VALUE: Record<StatCardTone, string> = {
+  primary: 'text-primary',
+  success: 'text-emerald-700',
+  warning: 'text-amber-700',
+  danger: 'text-red-700',
+  neutral: 'text-primary',
+};
+
 interface StatCardProps {
   icon: LucideIcon;
   label: string;
@@ -23,6 +42,9 @@ interface StatCardProps {
   compact?: boolean;
   // Shortest card: icon and label share one row, figure below. For summary rows of 3-4 cards.
   dense?: boolean;
+  tone?: StatCardTone;
+  // false = no lift on hover, for a card that goes nowhere.
+  interactive?: boolean;
 }
 
 // Deliberately no percentile/trend badges — the Figma mockup had "Top
@@ -41,6 +63,8 @@ export function StatCard({
   href,
   compact = false,
   dense = false,
+  tone,
+  interactive = true,
 }: Readonly<StatCardProps>) {
   const BadgeIcon = badge?.icon;
   // The original pill (no tone, 'positive' or 'neutral', no icon) keeps its exact classes; the
@@ -79,8 +103,13 @@ export function StatCard({
     ));
   const heading = dense ? (
     <div className="mb-1 flex items-center gap-2">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-light">
-        <Icon size={14} className="text-brand" />
+      <div
+        className={cn(
+          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+          tone ? TONE_ICON_TILE[tone] : 'bg-brand-light text-brand',
+        )}
+      >
+        <Icon size={14} className={tone ? undefined : 'text-brand'} />
       </div>
       <p className="min-w-0 text-sm text-muted-foreground">{label}</p>
       {badgeNode && <span className="ml-auto">{badgeNode}</span>}
@@ -88,8 +117,13 @@ export function StatCard({
   ) : (
     <>
       <div className={cn(compact ? 'mb-2' : 'mb-3', 'flex items-start justify-between')}>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light">
-          <Icon size={18} className="text-brand" />
+        <div
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-lg',
+            tone ? TONE_ICON_TILE[tone] : 'bg-brand-light text-brand',
+          )}
+        >
+          <Icon size={18} className={tone ? undefined : 'text-brand'} />
         </div>
         {badgeNode}
       </div>
@@ -98,7 +132,13 @@ export function StatCard({
   );
 
   const card = (
-    <Card className="h-full transition-[transform,box-shadow] duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-md">
+    <Card
+      className={cn(
+        'h-full',
+        interactive &&
+          'transition-[transform,box-shadow] duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-md',
+      )}
+    >
       <CardContent className={dense ? 'p-3' : compact ? 'p-4' : 'pt-6'}>
         {visual ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -111,7 +151,8 @@ export function StatCard({
             <p
               className={cn(
                 compact || dense ? 'text-2xl' : 'text-3xl',
-                'font-semibold text-primary',
+                'font-semibold',
+                tone ? TONE_VALUE[tone] : 'text-primary',
               )}
             >
               {value}

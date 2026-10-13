@@ -19,6 +19,14 @@ export const BADGE_TONE_CLASSES: Record<SemanticTone, string> = {
   neutral: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
+// A soft background alone, for tinting a table cell or a row by meaning.
+export const TINT_TONE_CLASSES: Record<SemanticTone, string> = {
+  success: 'bg-emerald-50',
+  warning: 'bg-amber-50',
+  danger: 'bg-red-50',
+  neutral: 'bg-slate-50',
+};
+
 export const BAR_TONE_CLASSES: Record<SemanticTone, string> = {
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',

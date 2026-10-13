@@ -30,7 +30,15 @@ export const CHECK_ICONS = {
 };
 
 const ROW_BASE =
-  'flex min-h-11 items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 transition motion-reduce:transition-none';
+  'flex min-h-11 items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 outline-none';
+
+// The border takes the row's own level on hover and on keyboard focus.
+const BORDER_ON_HOVER: Record<SemanticTone, string> = {
+  danger: '[@media(hover:hover)]:hover:border-red-300 focus-visible:border-red-300',
+  warning: '[@media(hover:hover)]:hover:border-amber-300 focus-visible:border-amber-300',
+  success: '[@media(hover:hover)]:hover:border-emerald-300 focus-visible:border-emerald-300',
+  neutral: '[@media(hover:hover)]:hover:border-slate-300 focus-visible:border-slate-300',
+};
 
 // Rows with a count of zero are not passed in, so an empty list means there is
 // nothing to check. A row without an action is information only: it names
@@ -75,11 +83,11 @@ export function OverviewChecklist({ items }: Readonly<{ items: ChecklistItem[] }
                     </span>
                   </span>
                   {action ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors group-hover:text-primary">
+                    <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors [@media(hover:hover)]:group-hover:text-primary group-focus-visible:text-primary">
                       <span className="hidden sm:inline">{action.label}</span>
                       <ChevronRight
                         aria-hidden="true"
-                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+                        className="h-4 w-4 transition-transform [@media(hover:hover)]:group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5 motion-reduce:translate-x-0 motion-reduce:transition-none"
                       />
                     </span>
                   ) : (
@@ -98,7 +106,8 @@ export function OverviewChecklist({ items }: Readonly<{ items: ChecklistItem[] }
                       aria-label={`${title} ${action.label}`}
                       className={cn(
                         ROW_BASE,
-                        'group hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-sm motion-reduce:transform-none',
+                        'group interactive-row border border-transparent',
+                        BORDER_ON_HOVER[tone],
                       )}
                     >
                       {body}

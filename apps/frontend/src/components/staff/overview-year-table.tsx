@@ -23,6 +23,11 @@ function GpaCell({
   );
 }
 
+// Both bars sit in a fixed 12px box and are centred in it, so thickening on row
+// hover changes the bar alone and the row never moves.
+const BAR =
+  'absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 transition-[height] duration-200 [@media(hover:hover)]:group-hover/row:h-3 group-has-[:focus-visible]/row:h-3';
+
 // One bar per row: the amber part is every student at "watch" or worse, the red
 // part drawn over it is the "critical" ones, so the bar reads as the share of
 // the year that needs follow-up. The counts are written under it in words.
@@ -34,15 +39,15 @@ function RiskCell({ row }: { row: Pick<YearRow, 'summary'> }) {
   return (
     <div className="min-w-32 space-y-1.5">
       <div
-        className="relative"
+        className="relative h-3"
         role="img"
         aria-label={`เร่งด่วน ${CRITICAL} คน เฝ้าระวัง ${WATCH} คน จากนิสิต ${active} คน`}
       >
-        <Progress value={share(CRITICAL + WATCH)} barClassName="bg-amber-500" className="h-2" />
+        <Progress value={share(CRITICAL + WATCH)} barClassName="bg-amber-500" className={BAR} />
         <Progress
           value={share(CRITICAL)}
           barClassName="bg-red-500"
-          className="absolute inset-0 h-2 bg-transparent"
+          className={`${BAR} bg-transparent`}
         />
       </div>
       <p className="text-xs tabular-nums text-muted-foreground">
@@ -94,12 +99,12 @@ export function OverviewYearTable({
             {populated.map((row) => (
               <tr
                 key={row.yearLevel}
-                className="border-b border-slate-100 align-top transition-colors hover:bg-slate-50 motion-reduce:transition-none"
+                className="interactive-row group/row relative border-b border-slate-100 align-top"
               >
                 <td className="py-1 pr-3">
                   <Link
                     href={`/staff/students?level=${row.yearLevel}`}
-                    className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap font-semibold text-primary hover:underline"
+                    className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap font-semibold text-primary outline-none after:absolute after:inset-0 after:content-[''] hover:underline"
                   >
                     {yearLevelTitle(row.yearLevel)}
                     <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
@@ -156,7 +161,7 @@ export function OverviewYearTable({
               behind: totalBehind,
             },
           ].map(({ row, title, href, behind }) => (
-            <li key={title} className="rounded-lg border border-slate-200 p-3 transition hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none motion-reduce:transition-none">
+            <li key={title} className="rounded-lg border border-slate-200 p-3">
               {href ? (
                 <Link
                   href={href}

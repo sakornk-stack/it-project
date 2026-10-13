@@ -99,6 +99,83 @@
 }
 
 @layer components {
+  /* Hover for things that are really clickable (a Link or a button inside).
+     interactive-card lifts and takes a brand border; interactive-row only
+     tints. Keyboard focus gets the same state as hover, hover itself is
+     limited to devices that have it so a tap never leaves it stuck, and
+     reduced motion keeps the colour/shadow change but drops the lift. */
+  .interactive-card,
+  .interactive-row {
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out,
+      border-color 180ms ease-out, background-color 180ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .interactive-card:hover {
+      transform: translateY(-2px);
+      border-color: hsl(var(--brand) / 0.45);
+      box-shadow: 0 6px 16px hsl(var(--foreground) / 0.1);
+    }
+
+    .interactive-row:hover {
+      background-color: hsl(var(--brand) / 0.07);
+    }
+  }
+
+  .interactive-card:focus-visible,
+  .interactive-card:has(:focus-visible) {
+    transform: translateY(-2px);
+    border-color: hsl(var(--brand) / 0.45);
+    box-shadow: 0 6px 16px hsl(var(--foreground) / 0.1);
+  }
+
+  .interactive-row:focus-visible,
+  .interactive-row:has(:focus-visible) {
+    background-color: hsl(var(--brand) / 0.07);
+  }
+
+  /* The "go" arrow inside an interactive-card: slides in on hover or keyboard
+     focus; always shown where there is no hover (touch). */
+  .interactive-card .go-arrow {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 180ms ease-out, transform 180ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .interactive-card:hover .go-arrow {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .interactive-card:focus-visible .go-arrow,
+  .interactive-card:has(:focus-visible) .go-arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (hover: none) {
+    .interactive-card .go-arrow {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-card .go-arrow {
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-card:hover,
+    .interactive-card:focus-visible,
+    .interactive-card:has(:focus-visible) {
+      transform: none;
+    }
+  }
+
   .btn-ripple {
     position: relative;
     overflow: hidden;

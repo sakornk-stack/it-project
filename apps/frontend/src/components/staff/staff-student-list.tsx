@@ -13,8 +13,6 @@ const LOCKED_BUTTON =
 // link; the focus ring is drawn on the row because the link itself has no box.
 const ROW_LINK =
   'font-semibold text-primary outline-none after:absolute after:inset-0 after:content-[""]';
-const ROW_FOCUS =
-  'focus-within:outline focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-ring';
 
 // A suspended student's detail page answers 404, so the action is a note
 // instead of a link.
@@ -28,11 +26,11 @@ function Action({ row }: { row: StaffStudentRow }) {
     );
   }
   return (
-    <span className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground transition-colors group-hover:text-primary">
+    <span className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground transition-colors [@media(hover:hover)]:group-hover:text-primary group-has-[:focus-visible]:text-primary">
       ดูรายละเอียด
       <ChevronRight
         aria-hidden="true"
-        className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+        className="h-4 w-4 transition-transform [@media(hover:hover)]:group-hover:translate-x-0.5 group-has-[:focus-visible]:translate-x-0.5 motion-reduce:transition-none"
       />
     </span>
   );
@@ -96,8 +94,8 @@ export function StaffStudentList({
             <tr
               key={row.studentProfileId}
               className={cn(
-                'group relative border-b border-slate-100 align-middle transition-colors motion-reduce:transition-none',
-                row.isActive ? cn('hover:bg-slate-50', ROW_FOCUS) : 'text-muted-foreground',
+                'group relative border-b border-slate-100 align-middle',
+                row.isActive ? 'interactive-row' : 'text-muted-foreground',
               )}
             >
               <td className="px-3 py-3 font-semibold tabular-nums">{row.studentCode}</td>
@@ -128,10 +126,8 @@ export function StaffStudentList({
           <li
             key={row.studentProfileId}
             className={cn(
-              'group relative space-y-3 rounded-lg border border-slate-200 bg-card p-4 transition motion-reduce:transition-none',
-              row.isActive
-                ? cn('hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none', ROW_FOCUS)
-                : 'text-muted-foreground',
+              'group relative space-y-3 rounded-lg border border-slate-200 bg-card p-4',
+              row.isActive ? 'interactive-card' : 'text-muted-foreground',
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">

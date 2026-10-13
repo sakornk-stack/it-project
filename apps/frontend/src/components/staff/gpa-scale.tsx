@@ -4,7 +4,15 @@ import { BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
 const GPA_MAX = 4;
 // The same two cut-offs STATUS_RULES words: below 1.50 critical, 1.50-1.74
 // watch, 1.75 and up normal.
-const CUTOFFS = [1.5, 1.75] as const;
+export const GPA_CUTOFFS = [1.5, 1.75] as const;
+const CUTOFFS = GPA_CUTOFFS;
+
+// The band a GPA falls in, for tinting: below 1.50 danger, 1.50-1.74 warning,
+// 1.75 and up success.
+export function gpaTone(gpa: number): SemanticTone {
+  if (gpa < GPA_CUTOFFS[0]) return 'danger';
+  return gpa < GPA_CUTOFFS[1] ? 'warning' : 'success';
+}
 const at = (gpa: number) => `${(gpa / GPA_MAX) * 100}%`;
 
 // A 0-4 track with the two status cut-offs marked, so a GPA reads against the

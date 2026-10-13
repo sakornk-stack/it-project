@@ -254,6 +254,7 @@ function StaffDashboardContent() {
                 value={<AnimatedNumber value={view.summary.active} />}
                 unit="คน"
                 note={`ไม่นับนิสิตที่ระงับ ${view.summary.suspended} คน`}
+                href="/staff/students"
               />
             </Reveal>
             <Reveal index={2} className="h-full">
