@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { StudentPloRadarPoint } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
@@ -16,19 +16,25 @@ export function PloCard({
   description,
   isAchieved,
   threshold,
+  expanded,
+  onExpandedChange,
 }: {
   plo: StudentPloRadarPoint;
   description: string | null;
   isAchieved: boolean;
   threshold: number | null;
+  // Controlled by the page, which is the single owner of which cards are open (it also
+  // switches the grid out of stretch mode while any card is open).
+  expanded: boolean;
+  onExpandedChange: (ploId: string, expanded: boolean) => void;
 }) {
   const hasValue = plo.value !== null;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpanded = expanded;
   const hasBreakdown = plo.cloBreakdown.length > 0;
   const breakdownId = useId();
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card className="flex flex-col">
       <CardContent className="flex flex-1 flex-col gap-4 pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
@@ -82,7 +88,7 @@ export function PloCard({
         {hasBreakdown && (
           <Button
             type="button"
-            onClick={() => setIsExpanded((v) => !v)}
+            onClick={() => onExpandedChange(plo.ploId, !isExpanded)}
             aria-expanded={isExpanded}
             aria-controls={breakdownId}
             variant="outline"

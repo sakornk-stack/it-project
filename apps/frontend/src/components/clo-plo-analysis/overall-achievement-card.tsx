@@ -108,9 +108,9 @@ export function OverallAchievementCard({
                 )}
               </div>
             )}
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
               {SCORE_BANDS.map((band) => (
-                <li key={band.key} className="flex items-center justify-between gap-2">
+                <li key={band.key} className="flex items-center gap-2">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <span
                       className={cn('h-2 w-2 shrink-0 rounded-full', band.indicatorClassName)}

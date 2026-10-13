@@ -38,6 +38,16 @@ function CloPloAnalysisContent() {
   const { user } = useAuth();
   const isStudent = !!user?.roles.includes('STUDENT');
   const [sortMode, setSortMode] = useState<SortMode>('lowest');
+  // PLO cards currently expanded. While any is open the grid stops stretching rows,
+  // so an open card grows in its own column without stretching its neighbour.
+  const [expandedPloIds, setExpandedPloIds] = useState<ReadonlySet<string>>(new Set());
+  const handleExpandedChange = (ploId: string, expanded: boolean) =>
+    setExpandedPloIds((prev) => {
+      const next = new Set(prev);
+      if (expanded) next.add(ploId);
+      else next.delete(ploId);
+      return next;
+    });
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
@@ -229,7 +239,11 @@ function CloPloAnalysisContent() {
               </Select>
             }
           >
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div
+                className={`grid grid-cols-1 gap-4 lg:grid-cols-2 ${
+                  expandedPloIds.size > 0 ? 'items-start' : 'items-stretch'
+                }`}
+              >
               {sortedRadar.map((plo) => (
                 <PloCard
                   key={plo.ploId}
@@ -237,6 +251,8 @@ function CloPloAnalysisContent() {
                   description={descriptionByPloId.get(plo.ploId) ?? null}
                   isAchieved={threshold !== null && plo.value !== null && plo.value >= threshold}
                   threshold={threshold}
+                  expanded={expandedPloIds.has(plo.ploId)}
+                  onExpandedChange={handleExpandedChange}
                 />
               ))}
             </div>
