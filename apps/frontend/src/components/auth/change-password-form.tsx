@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
@@ -40,11 +41,16 @@ export function ChangePasswordForm({
   title = 'เปลี่ยนรหัสผ่าน',
   description,
   onSuccess,
+  variant = 'card',
 }: {
   title?: string;
   description?: string;
   onSuccess?: () => void;
+  // 'inline' drops the Card chrome and title so the form can sit inside another section; it
+  // is also narrower, keeps the submit button content-width and carries the forgot-password link.
+  variant?: 'card' | 'inline';
 }) {
+  const inline = variant === 'inline';
   const { refreshUser } = useAuth();
   const toast = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -74,6 +80,83 @@ export function ChangePasswordForm({
     }
   }
 
+  const fields = (
+    <>
+      {serverError && (
+        <Alert variant="destructive">
+          <AlertDescription>{serverError}</AlertDescription>
+        </Alert>
+      )}
+      <FormField
+        control={form.control}
+        name="oldPassword"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>รหัสผ่านปัจจุบัน</FormLabel>
+            <FormControl>
+              <PasswordInput autoComplete="current-password" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {inline && (
+        <p className="text-xs text-muted-foreground">
+          จำรหัสผ่านปัจจุบันไม่ได้?{' '}
+          <Link
+            href="/forgot-password"
+            className="inline-flex min-h-11 items-center text-primary hover:underline"
+          >
+            ไปที่หน้าลืมรหัสผ่าน
+          </Link>
+        </p>
+      )}
+      <FormField
+        control={form.control}
+        name="newPassword"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>รหัสผ่านใหม่</FormLabel>
+            <FormControl>
+              <PasswordInput autoComplete="new-password" showStrength {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="confirmNewPassword"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>ยืนยันรหัสผ่านใหม่อีกครั้ง</FormLabel>
+            <FormControl>
+              <PasswordInput autoComplete="new-password" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <Button
+        type="submit"
+        className={inline ? 'w-full sm:w-auto' : 'w-full'}
+        disabled={form.formState.isSubmitting}
+      >
+        {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
+      </Button>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[480px] space-y-4">
+          {fields}
+        </form>
+      </Form>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -82,55 +165,7 @@ export function ChangePasswordForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {serverError && (
-              <Alert variant="destructive">
-                <AlertDescription>{serverError}</AlertDescription>
-              </Alert>
-            )}
-            <FormField
-              control={form.control}
-              name="oldPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>รหัสผ่านปัจจุบัน</FormLabel>
-                  <FormControl>
-                    <PasswordInput autoComplete="current-password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>รหัสผ่านใหม่</FormLabel>
-                  <FormControl>
-                    <PasswordInput autoComplete="new-password" showStrength {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmNewPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ยืนยันรหัสผ่านใหม่อีกครั้ง</FormLabel>
-                  <FormControl>
-                    <PasswordInput autoComplete="new-password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
-            </Button>
-          </CardContent>
+          <CardContent className="space-y-4">{fields}</CardContent>
         </form>
       </Form>
     </Card>

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -20,16 +19,16 @@ import type {
   StudentProfileMeResponse,
 } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
-import { ChangePasswordForm } from '@/components/auth/change-password-form';
 import {
   fetchCurricula,
   fetchDepartments,
   fetchFaculties,
   fetchPrograms,
 } from '@/lib/api/organization';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { TwoFactorSection } from '@/components/auth/two-factor-section';
+import { AccountSecurityCard } from '@/components/profile/account-security-card';
 import { primaryRoleFor, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
@@ -51,13 +50,15 @@ function ProfileItem({
   icon: Icon,
   label,
   value,
+  className,
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
+  className?: string;
 }) {
   return (
-    <div className="flex min-w-0 items-start gap-3 py-1">
+    <div className={cn('flex min-w-0 items-start gap-3 py-1', className)}>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand">
         <Icon size={17} aria-hidden="true" />
       </div>
@@ -98,7 +99,7 @@ function ProfileEducationCard({
           <CardDescription className="mt-1">หลักสูตรและหน่วยงานการศึกษาปัจจุบัน</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
         <ProfileItem icon={Landmark} label="คณะ" value={faculty?.name ?? '—'} />
         <ProfileItem icon={Building2} label="ภาควิชา" value={department?.name ?? '—'} />
         <ProfileItem icon={GraduationCap} label="สาขา" value={program?.name ?? '—'} />
@@ -107,7 +108,11 @@ function ProfileEducationCard({
           label="หลักสูตร"
           value={curriculum ? `${curriculum.version} (พ.ศ. ${curriculum.effectiveYear})` : '—'}
         />
-        <ProfileItem icon={CalendarDays} label="ปีที่เข้าศึกษา" value={`${profile.admissionYear}`} />
+        <ProfileItem
+          icon={CalendarDays}
+          label="ปีที่เข้าศึกษา"
+          value={`${profile.admissionYear}`}
+        />
       </CardContent>
     </Card>
   );
@@ -215,7 +220,6 @@ function ProfileContent() {
                 {initial}
               </div>
               <div className="min-w-0">
-                <p className="mb-1 text-sm font-medium text-brand">ข้อมูลส่วนตัว</p>
                 <h1 className="break-words text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
                   {user.fullName}
                 </h1>
@@ -263,15 +267,8 @@ function ProfileContent() {
           </Reveal>
         )}
 
-      <Reveal index={3} className="space-y-3">
-        <ChangePasswordForm description="ยืนยันรหัสผ่านปัจจุบันก่อนตั้งรหัสผ่านใหม่" />
-        <p className="text-xs text-muted-foreground">
-          จำรหัสผ่านปัจจุบันไม่ได้?{' '}
-          <Link href="/forgot-password" className="text-primary hover:underline">
-            ไปที่หน้าลืมรหัสผ่าน
-          </Link>
-        </p>
-        <TwoFactorSection />
+      <Reveal index={3}>
+        <AccountSecurityCard />
       </Reveal>
     </DashboardShell>
   );

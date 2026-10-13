@@ -37,7 +37,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // section swap within one Card rather than a modal.
 type Mode = 'view' | 'setup' | 'recoveryCodes' | 'disable';
 
-export function TwoFactorSection() {
+export function TwoFactorSection({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const { user, refreshUser } = useAuth();
   const [mode, setMode] = useState<Mode>('view');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
@@ -50,12 +50,14 @@ export function TwoFactorSection() {
     await refreshUser();
   }
 
-  return (
-    <Card>
-      <CardHeader>
+  const content = (
+    <>
+      <CardHeader className={embedded ? 'p-0' : undefined}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle>ยืนยันตัวตนสองขั้นตอน (2FA)</CardTitle>
+            <CardTitle className={embedded ? 'text-base' : undefined}>
+              ยืนยันตัวตนสองขั้นตอน (2FA)
+            </CardTitle>
             <CardDescription>ใช้แอปยืนยันตัวตน (เช่น Google Authenticator, Authy) เพิ่มความปลอดภัยตอนเข้าสู่ระบบ</CardDescription>
           </div>
           {mode === 'view' && (
@@ -63,7 +65,7 @@ export function TwoFactorSection() {
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={cn('space-y-4', embedded && 'p-0 pt-4')}>
         {mode === 'view' && (
           <div>
             {enabled ? (
@@ -71,7 +73,7 @@ export function TwoFactorSection() {
                 ปิดใช้งาน 2FA
               </Button>
             ) : (
-              <Button type="button" onClick={() => setMode('setup')}>
+              <Button type="button" variant="outline" onClick={() => setMode('setup')}>
                 เปิดใช้งาน 2FA
               </Button>
             )}
@@ -98,8 +100,10 @@ export function TwoFactorSection() {
           <TwoFactorDisableFlow onCancel={() => setMode('view')} onDisabled={handleDone} />
         )}
       </CardContent>
-    </Card>
+    </>
   );
+
+  return embedded ? <div>{content}</div> : <Card>{content}</Card>;
 }
 
 // Purely derived from the existing `mode` state — no new state, no prop
