@@ -5,7 +5,11 @@ import { ChevronDown } from 'lucide-react';
 import type { StudentPloRadarPoint } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
 import { ploProgressBarColorClassName, ploStatusTone } from '@/lib/plo-color';
-import { formatFiveScale, percentToFiveScale } from '@/lib/five-scale';
+import {
+  formatFiveScale,
+  formatFiveScaleAgainstThreshold,
+  percentToFiveScale,
+} from '@/lib/five-scale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,7 +63,7 @@ export function PloCard({
         <div className="mt-auto space-y-2">
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-semibold tabular-nums text-primary">
-              {formatFiveScale(plo.value)}
+              {formatFiveScaleAgainstThreshold(plo.value, threshold, isAchieved)}
             </span>
             {hasValue && <span className="text-xs text-muted-foreground">/ 5.0</span>}
             <span className="ml-auto text-xs text-muted-foreground">ความสำเร็จ</span>

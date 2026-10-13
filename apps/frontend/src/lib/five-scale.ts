@@ -16,3 +16,25 @@ export function percentToFiveScale(percent: number): number {
 export function formatFiveScale(percent: number | null, noDataLabel = '—'): string {
   return percent === null ? noDataLabel : percentToFiveScale(percent).toFixed(1);
 }
+
+// For a card that shows a score next to a pass/fail badge: when the raw percent is below the
+// threshold but both round to the same one-decimal value (e.g. 69.4% vs 70% → "3.5" vs "3.5"),
+// the one-decimal score contradicts the "not passed" badge. Show two decimals, rounded down so
+// it can never reach the threshold (3.47), and keep one decimal in every other case.
+export function formatFiveScaleAgainstThreshold(
+  percent: number | null,
+  threshold: number | null,
+  isAchieved: boolean,
+  noDataLabel = '—',
+): string {
+  if (percent === null) return noDataLabel;
+  const needsPrecision =
+    !isAchieved &&
+    threshold !== null &&
+    percent < threshold &&
+    percentToFiveScale(percent) >= percentToFiveScale(threshold);
+  // +1e-9 guards float error on exact hundredths before flooring.
+  return needsPrecision
+    ? (Math.floor(percent * 5 + 1e-9) / 100).toFixed(2)
+    : percentToFiveScale(percent).toFixed(1);
+}
