@@ -90,6 +90,11 @@ const config: Config = {
           from: { fillOpacity: '0' },
           to: { fillOpacity: '0.2' },
         },
+        // Whole-chart entrance: grows out from its centre (see origin-center on the user).
+        'radar-grow': {
+          from: { transform: 'scale(0.6)', opacity: '0' },
+          to: { transform: 'scale(1)', opacity: '1' },
+        },
         'radar-dot': {
           from: { opacity: '0' },
           to: { opacity: '1' },
@@ -121,6 +126,7 @@ const config: Config = {
         pop: 'pop 400ms ease-out 200ms both',
         // Outline draws first, then the fill and vertex dots settle in.
         'radar-shape': 'radar-draw 900ms ease-out both, radar-fill 500ms ease-out 600ms both',
+        'radar-grow': 'radar-grow 600ms ease-out both',
         'radar-dot': 'radar-dot 300ms ease-out 800ms both',
         'spark-line': 'radar-draw 900ms ease-out both',
         'otp-digit-pop': 'otp-digit-pop 220ms ease-out',

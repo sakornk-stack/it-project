@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Award, CheckCircle2, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
+import { Award, FileCheck2, GraduationCap, Map as MapIcon } from 'lucide-react';
 import type { CourseSummary, CreditCheckReport } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchCreditCheck } from '@/lib/api/credit-checker';
@@ -24,6 +24,7 @@ import { FailedCoursesList } from '@/components/credit-checker/failed-courses-li
 import { Button } from '@/components/ui/button';
 import { ConfettiBurst } from '@/components/ui/confetti-burst';
 import { ProgressRing } from '@/components/ui/progress-ring';
+import { SuccessStrip } from '@/components/ui/success-strip';
 import { ListSkeleton, Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function CreditCheckerPage() {
@@ -208,21 +209,18 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
 
       <Reveal index={5}>
         {report.missingRequiredCourses.length === 0 && !hasFailed ? (
-          <section
-            aria-label="ต้องจัดการ"
-            className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-              <CheckCircle2 size={18} aria-hidden="true" className="shrink-0" />
-              คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว
-            </p>
-            <Button asChild variant="ghost" size="sm" className="gap-1.5 self-start sm:self-auto">
-              <Link href="/learning-path">
-                <MapIcon size={14} aria-hidden="true" />
-                ไปที่แผนการเรียน
-              </Link>
-            </Button>
-          </section>
+          <SuccessStrip
+            label="ต้องจัดการ"
+            message="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว"
+            action={
+              <Button asChild variant="ghost" size="sm" className="gap-1.5 self-start sm:self-auto">
+                <Link href="/learning-path">
+                  <MapIcon size={14} aria-hidden="true" />
+                  ไปที่แผนการเรียน
+                </Link>
+              </Button>
+            }
+          />
         ) : (
           <PageSection
             title="ต้องจัดการ"

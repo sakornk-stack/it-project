@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Award, FileCheck2, Star } from 'lucide-react';
+import { Award, FileCheck2, GraduationCap, Star } from 'lucide-react';
 import type { StudentDashboardResponse } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile, fetchStudentDashboard } from '@/lib/api/dashboard';
+import { fetchCurriculum } from '@/lib/api/plo-achievement';
 import { useAuth } from '@/lib/auth-context';
 import { buildDashboardSummary } from '@/lib/dashboard-summary';
 import { computeGpaChange } from '@/lib/gpa-change';
@@ -25,10 +26,15 @@ import { GpaChangeBadge } from '@/components/dashboard/gpa-change-badge';
 import { CreditCheckerPanel } from '@/components/dashboard/credit-checker-panel';
 import { PendingAssessmentPanel } from '@/components/dashboard/pending-assessment-panel';
 import { ElectiveProgressPanel } from '@/components/dashboard/elective-progress-panel';
-import { PloRadarCard } from '@/components/dashboard/plo-radar-card';
+import { CareerFitSummary } from '@/components/dashboard/career-fit-summary';
+import { PloOverview } from '@/components/dashboard/plo-overview';
+import { ReadinessChecklist } from '@/components/dashboard/readiness-checklist';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BAR_TONE_CLASSES } from '@/lib/tone';
 
 export default function DashboardPage() {
   return (
@@ -58,6 +64,16 @@ function DashboardContent() {
     queryFn: () => fetchStudentDashboard(profileQuery.data!.id),
     enabled: !!profileQuery.data?.id,
   });
+
+  // Same key/fn as /clo-plo-analysis so the cache is shared. A failed load just leaves the
+  // threshold unknown (null) and the PLO section shows scores without pass/fail.
+  const curriculumId = profileQuery.data?.curriculumId;
+  const curriculumQuery = useQuery({
+    queryKey: ['curriculum', curriculumId],
+    queryFn: () => fetchCurriculum(curriculumId!),
+    enabled: !!curriculumId,
+  });
+  const threshold = curriculumQuery.data?.defaultAchievementThreshold ?? null;
 
   if (!user) {
     return (
@@ -99,7 +115,9 @@ function DashboardContent() {
       skeleton={<DashboardSkeleton />}
       ready={!isLoading}
     >
-      {dashboard && <DashboardCards fullName={user.fullName} dashboard={dashboard} />}
+      {dashboard && (
+        <DashboardCards fullName={user.fullName} dashboard={dashboard} threshold={threshold} />
+      )}
     </DashboardShell>
   );
 }
@@ -107,30 +125,34 @@ function DashboardContent() {
 function DashboardCards({
   fullName,
   dashboard,
+  threshold,
 }: Readonly<{
   fullName: string;
   dashboard: StudentDashboardResponse;
+  threshold: number | null;
 }>) {
   const animatedGpa = useCountUp(dashboard.gpa ?? 0, {
-    duration: 1200,
+    duration: 800,
     decimals: 2,
-    easing: 'elastic',
-    clampMin: 0,
-    clampMax: 4,
   });
   const animatedCredits = useCountUp(dashboard.creditsEarned, {
-    duration: 1200,
+    duration: 800,
     decimals: 0,
-    easing: 'elastic',
-    clampMin: 0,
-    clampMax: Math.max(dashboard.totalCreditsRequired, dashboard.creditsEarned),
   });
   const animatedProgress = useCountUp(dashboard.curriculumProgressPercent, {
-    duration: 900,
+    duration: 800,
     decimals: 0,
   });
   const gpaChange = computeGpaChange(dashboard.gpaTrend);
-  const summary = buildDashboardSummary(dashboard);
+  const isReady = dashboard.graduationReadiness.isReady;
+  // When ready, the congratulation is a badge under the title and GPA/credits
+  // live in the cards below, so the summary line is not repeated.
+  const summary = isReady ? null : buildDashboardSummary(dashboard);
+  const creditsPercent =
+    dashboard.totalCreditsRequired > 0
+      ? Math.min(100, (dashboard.creditsEarned / dashboard.totalCreditsRequired) * 100)
+      : 0;
+  const creditsOver = Math.max(0, dashboard.creditsEarned - dashboard.totalCreditsRequired);
 
   return (
     <>
@@ -143,6 +165,12 @@ function DashboardCards({
           title={`สวัสดี, ${fullName}`}
           description={summary ?? 'แผนการเรียนวิชาการและตัวชี้วัดความพร้อมของคุณ'}
         />
+        {isReady && (
+          <Badge tone="success" className="mt-3 gap-1.5 px-3 py-1 text-sm">
+            <GraduationCap size={16} aria-hidden="true" />
+            ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา
+          </Badge>
+        )}
       </Reveal>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -178,19 +206,33 @@ function DashboardCards({
                 : { text: `เหลืออีก ${dashboard.creditsRemaining} หน่วยกิต`, tone: 'neutral' }
             }
             footer={
-              dashboard.onTrackStatus && (
-                <p
-                  className={
-                    dashboard.onTrackStatus === 'behind'
-                      ? 'text-xs font-medium text-amber-600'
-                      : 'text-xs font-medium text-emerald-600'
+              <div className="space-y-2">
+                <Progress
+                  value={creditsPercent}
+                  label="หน่วยกิตสะสมเทียบกับเกณฑ์"
+                  className="h-1.5"
+                  animateOnView
+                  barClassName={
+                    dashboard.graduationReadiness.creditsMet ? BAR_TONE_CLASSES.success : undefined
                   }
-                >
-                  {dashboard.onTrackStatus === 'behind'
-                    ? `ตามหลังแผน — ปีการศึกษานี้ควรมีอย่างน้อย ${dashboard.expectedCredits} หน่วยกิต`
-                    : 'ตามแผน'}
-                </p>
-              )
+                />
+                {creditsOver > 0 && (
+                  <p className="text-xs text-muted-foreground">เกินเกณฑ์ {creditsOver} หน่วยกิต</p>
+                )}
+                {dashboard.onTrackStatus && (
+                  <p
+                    className={
+                      dashboard.onTrackStatus === 'behind'
+                        ? 'text-xs font-medium text-amber-600'
+                        : 'text-xs font-medium text-emerald-600'
+                    }
+                  >
+                    {dashboard.onTrackStatus === 'behind'
+                      ? `ตามหลังแผน — ปีการศึกษานี้ควรมีอย่างน้อย ${dashboard.expectedCredits} หน่วยกิต`
+                      : 'ตามแผน'}
+                  </p>
+                )}
+              </div>
             }
           />
         </Reveal>
@@ -201,10 +243,10 @@ function DashboardCards({
               label="ความพร้อมสำหรับการสำเร็จการศึกษา"
               href="/learning-path"
               visual={
-                <ProgressRing
-                  value={animatedProgress}
-                  label="ความพร้อมสำหรับการสำเร็จการศึกษา"
-                />
+                <div className="flex w-full items-center gap-4">
+                  <ProgressRing value={animatedProgress} label="ความพร้อมสำหรับการสำเร็จการศึกษา" />
+                  <ReadinessChecklist readiness={dashboard.graduationReadiness} />
+                </div>
               }
             />
           </TiltCard>
@@ -236,8 +278,17 @@ function DashboardCards({
             </div>
           }
         >
-          <PloRadarCard radar={dashboard.radar} />
+          <PloOverview
+            radar={dashboard.radar}
+            strengths={dashboard.strengths}
+            areasForImprovement={dashboard.areasForImprovement}
+            threshold={threshold}
+          />
         </PageSection>
+      </RevealOnScroll>
+
+      <RevealOnScroll>
+        <CareerFitSummary />
       </RevealOnScroll>
     </>
   );

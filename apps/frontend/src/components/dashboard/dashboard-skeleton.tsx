@@ -1,3 +1,4 @@
+import { CareerFitSummarySkeleton } from './career-fit-summary';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
@@ -37,12 +38,28 @@ export function DashboardSkeleton() {
 
       <div className="space-y-4">
         <Skeleton className="h-6 w-52" />
-        <Card>
-          <CardContent className="pt-6">
-            <Skeleton className="mx-auto h-64 w-64 rounded-full" />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card>
+            <CardContent className="pt-6">
+              <Skeleton className="mx-auto h-64 w-64 max-w-full rounded-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-3 pt-6">
+              <Skeleton className="h-5 w-32" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <CareerFitSummarySkeleton />
     </div>
   );
 }

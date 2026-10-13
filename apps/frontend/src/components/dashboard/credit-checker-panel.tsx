@@ -3,7 +3,7 @@ import { AlertTriangle, BookOpen } from 'lucide-react';
 import type { MissingRequiredCourse } from '@eduanalyze-ai/shared-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { SuccessStrip } from '@/components/ui/success-strip';
 
 const PREVIEW_COUNT = 3;
 
@@ -11,13 +11,7 @@ const PREVIEW_COUNT = 3;
 // otherwise (the Figma text said "ระบบ AI ได้วิเคราะห์...").
 export function CreditCheckerPanel({ courses }: Readonly<{ courses: MissingRequiredCourse[] }>) {
   if (courses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <EmptyState illustration="all-done" size="sm" description="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว" />
-        </CardContent>
-      </Card>
-    );
+    return <SuccessStrip label="วิชาบังคับ" message="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว" />;
   }
 
   const hiddenCount = courses.length - PREVIEW_COUNT;

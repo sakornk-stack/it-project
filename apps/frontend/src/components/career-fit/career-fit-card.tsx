@@ -36,13 +36,13 @@ const RING_LEVEL_TEXT: Record<CareerFitLevel, string> = {
 };
 
 // Short pill text for the secondary cards; the full sentence stays in aria-label.
-const LEVEL_SHORT: Record<CareerFitLevel, { text: string; icon: LucideIcon }> = {
+export const LEVEL_SHORT: Record<CareerFitLevel, { text: string; icon: LucideIcon }> = {
   HIGH: { text: 'สอดคล้องมาก', icon: CircleCheck },
   MEDIUM: { text: 'สอดคล้องปานกลาง', icon: CircleDot },
   LOW: { text: 'สอดคล้องน้อย', icon: CircleDashed },
 };
 
-function RankBadge({ rank, primary }: Readonly<{ rank: number; primary?: boolean }>) {
+export function RankBadge({ rank, primary }: Readonly<{ rank: number; primary?: boolean }>) {
   return (
     <span
       aria-label={`อันดับที่ ${rank}`}
