@@ -19,7 +19,7 @@ import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 export default function AdminCurriculumListPage() {
   return (
     <ProtectedRoute>
-      <RequireRole role={['ADMIN', 'SUPER_ADMIN']}>
+      <RequireRole role="ADMIN">
         <AdminCurriculumListContent />
       </RequireRole>
     </ProtectedRoute>
@@ -30,8 +30,7 @@ function AdminCurriculumListContent() {
   const { user } = useAuth();
   const [tab, setTab] = useState<CurriculumTab>('ALL');
   const [search, setSearch] = useState('');
-  const isSuperAdmin = user?.roles.includes('SUPER_ADMIN') ?? false;
-  const overviewQuery = useCurriculumDirectory(isSuperAdmin);
+  const overviewQuery = useCurriculumDirectory();
   const data = overviewQuery.data;
   const entries = data?.entries;
   const tabCounts = useMemo(() => countByTab(entries ?? []), [entries]);
@@ -52,19 +51,11 @@ function AdminCurriculumListContent() {
   }
 
   return (
-    <DashboardShell
-      role={isSuperAdmin ? 'SUPER_ADMIN' : 'ADMIN'}
-      identityLabel={user.email}
-      fullName={user.fullName}
-    >
+    <DashboardShell role="ADMIN" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
         <PageHeader
           title="คุณภาพหลักสูตร"
-          description={
-            isSuperAdmin
-              ? 'เลือกหลักสูตรเพื่อดูผลลัพธ์การเรียนรู้ (PLO) และสถานะนักศึกษา'
-              : 'เลือกหลักสูตรในขอบเขตที่คุณดูแลเพื่อดูผลลัพธ์การเรียนรู้ (PLO) และสถานะนักศึกษา'
-          }
+          description="เลือกหลักสูตรในขอบเขตที่คุณดูแลเพื่อดูผลลัพธ์การเรียนรู้ (PLO) และสถานะนักศึกษา"
         />
       </Reveal>
 
@@ -74,11 +65,7 @@ function AdminCurriculumListContent() {
       {data?.isEmpty && (
         <EmptyState
           icon={ShieldCheck}
-          description={
-            isSuperAdmin
-              ? 'ยังไม่มีหลักสูตรในระบบ'
-              : 'บัญชีนี้ยังไม่ได้รับมอบขอบเขต (คณะ/ภาควิชา/สาขา) ใดๆ — ติดต่อผู้ดูแลระบบสูงสุดเพื่อขอมอบขอบเขต'
-          }
+          description="บัญชีนี้ยังไม่ได้รับมอบขอบเขต (คณะ/ภาควิชา/สาขา) ใดๆ — ติดต่อผู้ดูแลระบบสูงสุดเพื่อขอมอบขอบเขต"
         />
       )}
 

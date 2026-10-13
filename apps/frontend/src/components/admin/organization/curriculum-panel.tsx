@@ -43,10 +43,14 @@ export function CurriculumPanel({
   programId,
   curricula,
   onChanged,
+  readOnly = false,
 }: {
   programId: string;
   curricula: CurriculumListItem[];
   onChanged: () => void;
+  // Curricula are academic content written by ADMIN; the organisation page (SUPER_ADMIN)
+  // only lists them.
+  readOnly?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const toast = useToast();
@@ -58,9 +62,14 @@ export function CurriculumPanel({
         <p className="text-sm text-muted-foreground">ยังไม่มีหลักสูตรในสาขานี้</p>
       )}
       {sorted.map((curriculum) => (
-        <CurriculumCard key={curriculum.id} curriculum={curriculum} onChanged={onChanged} />
+        <CurriculumCard
+          key={curriculum.id}
+          curriculum={curriculum}
+          onChanged={onChanged}
+          readOnly={readOnly}
+        />
       ))}
-      {adding ? (
+      {readOnly ? null : adding ? (
         <CurriculumForm
           submitLabel="เพิ่มหลักสูตร"
           defaultValues={{
@@ -91,9 +100,11 @@ export function CurriculumPanel({
 function CurriculumCard({
   curriculum,
   onChanged,
+  readOnly,
 }: {
   curriculum: CurriculumListItem;
   onChanged: () => void;
+  readOnly: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -155,33 +166,35 @@ function CurriculumCard({
             {curriculum.defaultAchievementThreshold}%
           </p>
         </div>
-        <div className="flex items-start gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={toggling}
-            onClick={toggleRegistration}
-          >
-            {curriculum.isOpenForRegistration ? 'ปิดรับลงทะเบียน' : 'ตั้งเป็นฉบับที่เปิดรับ'}
-          </Button>
-          {!editing && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              แก้ไข
+        {!readOnly && (
+          <div className="flex items-start gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={toggling}
+              onClick={toggleRegistration}
+            >
+              {curriculum.isOpenForRegistration ? 'ปิดรับลงทะเบียน' : 'ตั้งเป็นฉบับที่เปิดรับ'}
             </Button>
-          )}
-          <DeactivateButton
-            itemLabel={`หลักสูตรฉบับ ${curriculum.version} (ปี ${curriculum.effectiveYear})`}
-            conflictMessage="ปิดใช้งานไม่ได้ เพราะยังมีนักศึกษา รายวิชา หมวดวิชา หรือ PLO ที่ใช้งานอยู่ในหลักสูตรนี้"
-            onConfirm={async () => {
-              await deleteCurriculum(curriculum.id);
-              toast.success('ปิดใช้งานหลักสูตรแล้ว');
-              onChanged();
-            }}
-          />
-        </div>
+            {!editing && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+                แก้ไข
+              </Button>
+            )}
+            <DeactivateButton
+              itemLabel={`หลักสูตรฉบับ ${curriculum.version} (ปี ${curriculum.effectiveYear})`}
+              conflictMessage="ปิดใช้งานไม่ได้ เพราะยังมีนักศึกษา รายวิชา หมวดวิชา หรือ PLO ที่ใช้งานอยู่ในหลักสูตรนี้"
+              onConfirm={async () => {
+                await deleteCurriculum(curriculum.id);
+                toast.success('ปิดใช้งานหลักสูตรแล้ว');
+                onChanged();
+              }}
+            />
+          </div>
+        )}
       </div>
-      {!curriculum.isOpenForRegistration && (
+      {!readOnly && !curriculum.isOpenForRegistration && (
         <p className="mt-1 text-xs text-amber-700">
           การเปิดรับลงทะเบียนจะปิดรับหลักสูตรอื่นในสาขานี้โดยอัตโนมัติ
         </p>

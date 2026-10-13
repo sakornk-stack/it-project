@@ -39,7 +39,7 @@ import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 export default function AdminCurriculumQualityPage({ params }: { params: { id: string } }) {
   return (
     <ProtectedRoute>
-      <RequireRole role={['ADMIN', 'SUPER_ADMIN']}>
+      <RequireRole role="ADMIN">
         <AdminCurriculumQualityContent curriculumId={params.id} />
       </RequireRole>
     </ProtectedRoute>
@@ -48,8 +48,7 @@ export default function AdminCurriculumQualityPage({ params }: { params: { id: s
 
 function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId: string }>) {
   const { user } = useAuth();
-  const isSuperAdmin = user?.roles.includes('SUPER_ADMIN') ?? false;
-  const overviewQuery = useCurriculumDirectory(isSuperAdmin);
+  const overviewQuery = useCurriculumDirectory();
   const qualityQuery = useQuery({
     queryKey: ['admin-curriculum-quality', curriculumId],
     queryFn: () => fetchCurriculumQuality(curriculumId),
@@ -76,7 +75,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
   const outOfScope = overview !== undefined && entry === null;
 
   return (
-    <DashboardShell role={isSuperAdmin ? 'SUPER_ADMIN' : 'ADMIN'} identityLabel={user.email} fullName={user.fullName}>
+    <DashboardShell role="ADMIN" identityLabel={user.email} fullName={user.fullName}>
       <Link
         href="/admin/curriculum"
         className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
@@ -86,9 +85,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
       </Link>
 
       {outOfScope && (
-        <PageLoadError
-          message={isSuperAdmin ? 'ไม่พบหลักสูตรนี้' : 'ไม่พบหลักสูตรนี้ในขอบเขตที่คุณดูแล'}
-        />
+        <PageLoadError message="ไม่พบหลักสูตรนี้ในขอบเขตที่คุณดูแล" />
       )}
       {!outOfScope && qualityQuery.isError && (
         <PageLoadError

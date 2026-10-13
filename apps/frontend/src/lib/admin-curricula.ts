@@ -3,7 +3,6 @@ import type {
   AdminScopeOverviewReport,
   AdminScopeProgram,
   CurriculumDataState,
-  SystemCurriculumOverviewReport,
 } from '@eduanalyze-ai/shared-types';
 
 // What the Admin curriculum pages derive from GET /dashboard/admin/scope-overview,
@@ -95,33 +94,5 @@ export function directoryFromScopeOverview(report: AdminScopeOverviewReport): Cu
     entries: report.curricula.entries,
     programs: report.scope.programs,
     isEmpty: report.scope.programCount === 0,
-  };
-}
-
-export function directoryFromSystemOverview(
-  report: SystemCurriculumOverviewReport,
-): CurriculumDirectory {
-  const places = new Map<string, ProgramPlace>();
-  for (const c of report.curricula) {
-    places.set(c.programCode, {
-      code: c.programCode,
-      departmentName: c.departmentName,
-      facultyName: c.facultyName,
-    });
-  }
-  return {
-    entries: report.curricula.map((c) => ({
-      curriculumId: c.curriculumId,
-      version: c.version,
-      effectiveYear: c.effectiveYear,
-      programCode: c.programCode,
-      programName: c.programName,
-      dataState: c.dataState,
-      studentCount: c.studentCount,
-      courseCount: c.courseCount,
-      ploCount: c.ploCount,
-    })),
-    programs: [...places.values()],
-    isEmpty: report.curricula.length === 0,
   };
 }

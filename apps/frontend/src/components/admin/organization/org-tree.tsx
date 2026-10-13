@@ -370,6 +370,7 @@ export function OrgTree() {
                             programId={program.id}
                             curricula={curricula}
                             onChanged={refetchAll}
+                            readOnly
                           />
                         </OrgNodeRow>
                       );

@@ -1,12 +1,8 @@
 import type { AdminScopeCurriculumEntry, AdminScopeProgram } from '@eduanalyze-ai/shared-types';
-import type {
-  AdminScopeOverviewReport,
-  SystemCurriculumOverviewReport,
-} from '@eduanalyze-ai/shared-types';
+import type { AdminScopeOverviewReport } from '@eduanalyze-ai/shared-types';
 import {
   countByTab,
   directoryFromScopeOverview,
-  directoryFromSystemOverview,
   filterCurricula,
   findCurriculum,
   placeOf,
@@ -94,40 +90,6 @@ describe('findCurriculum', () => {
 });
 
 describe('curriculum directory', () => {
-  const systemEntry = {
-    ...entry('s1', 'HAS_STUDENTS'),
-    cloCount: 4,
-    averageGpa: 3.1,
-    studentsAtRiskCount: 1,
-    graduationReadyCount: 2,
-    averagePloValue: 70,
-    radar: [],
-    departmentName: 'ภาควิชา',
-    facultyName: 'คณะ',
-  };
-
-  it('lists every curriculum of the system report for a Super Admin, once per program place', () => {
-    const report = {
-      totals: {},
-      curricula: [systemEntry, { ...systemEntry, curriculumId: 's2' }],
-      problematicPlos: [],
-      problematicClos: [],
-    } as unknown as SystemCurriculumOverviewReport;
-    const directory = directoryFromSystemOverview(report);
-    expect(directory.entries.map((e) => e.curriculumId)).toEqual(['s1', 's2']);
-    expect(directory.entries[0]).not.toHaveProperty('radar');
-    expect(directory.programs).toEqual([
-      { code: 'CPE', departmentName: 'ภาควิชา', facultyName: 'คณะ' },
-    ]);
-    expect(directory.isEmpty).toBe(false);
-    expect(findCurriculum(directory.entries, 's2')).not.toBeNull();
-  });
-
-  it('is empty only when the system has no curricula', () => {
-    const report = { curricula: [] } as unknown as SystemCurriculumOverviewReport;
-    expect(directoryFromSystemOverview(report).isEmpty).toBe(true);
-  });
-
   it('keeps the Admin scope list, programs and no-scope flag as they were', () => {
     const program: AdminScopeProgram = {
       programId: 'p',

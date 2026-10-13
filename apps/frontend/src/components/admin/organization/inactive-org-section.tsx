@@ -6,7 +6,6 @@ import {
   fetchCurricula,
   fetchDepartments,
   fetchFaculties,
-  fetchInactiveCurricula,
   fetchInactiveDepartments,
   fetchInactiveFaculties,
   fetchInactivePrograms,
@@ -23,7 +22,6 @@ const RESOURCE_OF: Partial<Record<InactiveLevel, ReactivatableOrgResource>> = {
   คณะ: 'faculties',
   ภาควิชา: 'departments',
   สาขา: 'programs',
-  หลักสูตร: 'curricula',
 };
 
 // Same query keys as OrgTree for the active lists, so nothing is fetched twice.
@@ -49,10 +47,6 @@ export function InactiveOrgSection() {
       queryKey: ['inactive-org', 'programs'],
       queryFn: fetchInactivePrograms,
     }),
-    inactiveCurricula: useQuery({
-      queryKey: ['inactive-org', 'curricula'],
-      queryFn: fetchInactiveCurricula,
-    }),
   };
   const all = Object.values(queries);
 
@@ -63,7 +57,6 @@ export function InactiveOrgSection() {
   const inactiveFaculties = queries.inactiveFaculties.data;
   const inactiveDepartments = queries.inactiveDepartments.data;
   const inactivePrograms = queries.inactivePrograms.data;
-  const inactiveCurricula = queries.inactiveCurricula.data;
 
   const rows = useMemo(() => {
     if (
@@ -73,8 +66,7 @@ export function InactiveOrgSection() {
       !curricula ||
       !inactiveFaculties ||
       !inactiveDepartments ||
-      !inactivePrograms ||
-      !inactiveCurricula
+      !inactivePrograms
     ) {
       return [];
     }
@@ -84,7 +76,8 @@ export function InactiveOrgSection() {
         faculties: inactiveFaculties,
         departments: inactiveDepartments,
         programs: inactivePrograms,
-        curricula: inactiveCurricula,
+        // Curricula are managed by ADMIN, so this page never lists or restores them.
+        curricula: [],
       },
     );
   }, [
@@ -95,7 +88,6 @@ export function InactiveOrgSection() {
     inactiveFaculties,
     inactiveDepartments,
     inactivePrograms,
-    inactiveCurricula,
   ]);
 
   if (all.some((q) => q.isError)) {
