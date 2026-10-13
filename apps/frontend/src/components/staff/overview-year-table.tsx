@@ -1,13 +1,20 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { readGroupGpa, type YearRow } from './staff-status';
 import { BEHIND_PLAN_FORMULA, describeEmptyYears, yearLevelTitle } from './year-info';
 
-function GpaCell({ row }: { row: Pick<YearRow, 'summary'> }) {
+function GpaCell({
+  row,
+  align = 'right',
+}: {
+  row: Pick<YearRow, 'summary'>;
+  align?: 'left' | 'right';
+}) {
   const reading = readGroupGpa(row.summary.averageGpa, row.summary.withGpa);
   return (
-    <div>
+    <div className={align === 'right' ? 'text-right' : undefined}>
       {reading.value && (
         <p className="text-base font-semibold tabular-nums text-primary">{reading.value}</p>
       )}
@@ -16,21 +23,32 @@ function GpaCell({ row }: { row: Pick<YearRow, 'summary'> }) {
   );
 }
 
+// One bar per row: the amber part is every student at "watch" or worse, the red
+// part drawn over it is the "critical" ones, so the bar reads as the share of
+// the year that needs follow-up. The counts are written under it in words.
 function RiskCell({ row }: { row: Pick<YearRow, 'summary'> }) {
   const { CRITICAL, WATCH } = row.summary.byStatus;
   if (CRITICAL === 0 && WATCH === 0) return <span className="text-muted-foreground">ไม่มี</span>;
+  const { active } = row.summary;
+  const share = (count: number) => (active === 0 ? 0 : (count / active) * 100);
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {CRITICAL > 0 && (
-        <span className="rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-red-700">
-          เร่งด่วน {CRITICAL}
-        </span>
-      )}
-      {WATCH > 0 && (
-        <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-700">
-          เฝ้าระวัง {WATCH}
-        </span>
-      )}
+    <div className="min-w-32 space-y-1.5">
+      <div
+        className="relative"
+        role="img"
+        aria-label={`เร่งด่วน ${CRITICAL} คน เฝ้าระวัง ${WATCH} คน จากนิสิต ${active} คน`}
+      >
+        <Progress value={share(CRITICAL + WATCH)} barClassName="bg-amber-500" className="h-2" />
+        <Progress
+          value={share(CRITICAL)}
+          barClassName="bg-red-500"
+          className="absolute inset-0 h-2 bg-transparent"
+        />
+      </div>
+      <p className="text-xs tabular-nums text-muted-foreground">
+        เร่งด่วน <span className="font-semibold text-red-700">{CRITICAL}</span> · เฝ้าระวัง{' '}
+        <span className="font-semibold text-amber-700">{WATCH}</span>
+      </p>
     </div>
   );
 }
@@ -67,15 +85,18 @@ export function OverviewYearTable({
               <th className="py-2 pr-3 font-semibold">ชั้นปี</th>
               <th className="py-2 pr-3 text-right font-semibold">นิสิต (คน)</th>
               <th className="py-2 pr-3 text-right font-semibold">มีผลการเรียน (คน)</th>
-              <th className="py-2 pr-3 font-semibold">GPA เฉลี่ย</th>
-              <th className="py-2 pr-3 font-semibold">ระดับความเสี่ยง</th>
+              <th className="py-2 pr-3 text-right font-semibold">GPA เฉลี่ย</th>
+              <th className="py-2 pr-3 font-semibold">สัดส่วนเร่งด่วน / เฝ้าระวัง</th>
               <th className="py-2 text-right font-semibold">ตามหลังแผน (คน)</th>
             </tr>
           </thead>
           <tbody>
             {populated.map((row) => (
-              <tr key={row.yearLevel} className="border-b border-slate-100 align-top">
-                <td className="py-2 pr-3">
+              <tr
+                key={row.yearLevel}
+                className="border-b border-slate-100 align-top transition-colors hover:bg-slate-50 motion-reduce:transition-none"
+              >
+                <td className="py-1 pr-3">
                   <Link
                     href={`/staff/students?level=${row.yearLevel}`}
                     className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap font-semibold text-primary hover:underline"
@@ -105,7 +126,7 @@ export function OverviewYearTable({
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 align-top font-semibold">
-              <td className="px-2 py-3">รวมทั้งสิ้น</td>
+              <td className="py-3 pr-3">รวมทั้งสิ้น</td>
               <td className="py-3 pr-3 text-right tabular-nums">{total.active} คน</td>
               <td className="py-3 pr-3 text-right tabular-nums">{total.withRecords} คน</td>
               <td className="py-3 pr-3">
@@ -135,7 +156,7 @@ export function OverviewYearTable({
               behind: totalBehind,
             },
           ].map(({ row, title, href, behind }) => (
-            <li key={title} className="rounded-lg border border-slate-200 p-3">
+            <li key={title} className="rounded-lg border border-slate-200 p-3 transition hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none motion-reduce:transition-none">
               {href ? (
                 <Link
                   href={href}
@@ -159,11 +180,11 @@ export function OverviewYearTable({
                 <div>
                   <dt className="text-xs text-muted-foreground">GPA เฉลี่ย</dt>
                   <dd>
-                    <GpaCell row={row} />
+                    <GpaCell row={row} align="left" />
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">ระดับความเสี่ยง</dt>
+                  <dt className="text-xs text-muted-foreground">สัดส่วนเร่งด่วน / เฝ้าระวัง</dt>
                   <dd>
                     <RiskCell row={row} />
                   </dd>

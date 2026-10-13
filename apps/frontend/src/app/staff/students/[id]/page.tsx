@@ -27,6 +27,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
+import { GpaScale } from '@/components/staff/gpa-scale';
 import { MetricCard } from '@/components/staff/metric-card';
 import {
   GRADE_SAVES_NOW_DETAIL,
@@ -37,10 +38,20 @@ import { StaffAddRecordForm } from '@/components/staff/staff-add-record-form';
 import { StaffRecordList } from '@/components/staff/staff-record-list';
 import { staffStatus } from '@/components/staff/staff-status';
 import { StatusBadge } from '@/components/staff/status-badge';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NO_DATA_LABEL } from '@/components/staff/student-reading';
 import { Skeleton, TableSkeleton } from '@/components/ui/skeleton';
+import { BADGE_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
+import { cn } from '@/lib/utils';
+
+// Colour of the GPA track: follows the student's status, grey when there is none.
+const STATUS_TONE: Record<string, SemanticTone> = {
+  CRITICAL: 'danger',
+  WATCH: 'warning',
+  NORMAL: 'success',
+};
 
 const TERM_ORDER: Record<string, number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
 
@@ -233,20 +244,30 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               actions={risk && <StatusBadge status={staffStatus(risk)} />}
             />
             {risk && risk.lowGradeCount > 0 && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                มีรายวิชา D+/D/F/U อยู่ <span className="tabular-nums">{risk.lowGradeCount}</span>{' '}
-                วิชา
+              <p
+                role="note"
+                className={cn(
+                  'mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm',
+                  BADGE_TONE_CLASSES.warning,
+                )}
+              >
+                <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  มีรายวิชา D+/D/F/U อยู่{' '}
+                  <span className="font-semibold tabular-nums">{risk.lowGradeCount}</span> วิชา
+                  ควรติดตามผลการเรียนของนิสิต
+                </span>
               </p>
             )}
           </Reveal>
 
           <Reveal index={1} className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Card className="md:col-span-2">
+            <Card className="flex h-full flex-col md:col-span-2">
               <CardHeader>
                 <CardTitle>ข้อมูลนิสิต</CardTitle>
               </CardHeader>
-              <CardContent>
-                <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+              <CardContent className="flex-1">
+                <dl className="grid h-full grid-cols-1 content-evenly gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
                   <div>
                     <dt className="text-xs text-muted-foreground">สาขา</dt>
                     <dd className="break-words text-primary">{program?.name ?? '—'}</dd>
@@ -259,6 +280,14 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                     <dt className="text-xs text-muted-foreground">ปีเข้าศึกษา</dt>
                     <dd className="tabular-nums text-primary">{profile.admissionYear}</dd>
                   </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">รหัสนิสิต</dt>
+                    <dd className="tabular-nums text-primary">{profile.studentCode}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">อีเมล</dt>
+                    <dd className="break-all text-primary">{profile.user.email}</dd>
+                  </div>
                 </dl>
               </CardContent>
             </Card>
@@ -267,7 +296,23 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               <MetricCard
                 icon={Star}
                 label="GPA สะสม"
-                value={gpa.gpa !== null ? gpa.gpa.toFixed(2) : NO_DATA_LABEL}
+                value={
+                  gpa.gpa !== null ? (
+                    <AnimatedNumber value={gpa.gpa} decimals={2} format={(n) => n.toFixed(2)} />
+                  ) : (
+                    NO_DATA_LABEL
+                  )
+                }
+                unit={gpa.gpa !== null ? '/ 4.00' : undefined}
+                footer={
+                  <div className="space-y-2">
+                    {risk && <StatusBadge status={staffStatus(risk)} />}
+                    <GpaScale
+                      gpa={gpa.gpa}
+                      tone={risk ? (STATUS_TONE[staffStatus(risk)] ?? 'neutral') : 'neutral'}
+                    />
+                  </div>
+                }
                 note={`${gpa.creditsCounted} หน่วยกิตสะสม`}
               />
             ) : (

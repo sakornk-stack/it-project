@@ -48,10 +48,10 @@ export function Pagination({
       <div className="flex flex-wrap items-center gap-3">
         <p>{paginationSummary(rangeStart, rangeEnd, total, unit)}</p>
         {pageSize !== undefined && onPageSizeChange && (
-          <label className="flex items-center gap-2">
+          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             แสดงแถว
             <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-              <SelectTrigger className="w-24" aria-label="จำนวนแถวต่อหน้า">
+              <SelectTrigger className="w-28" aria-label="จำนวนแถวต่อหน้า">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

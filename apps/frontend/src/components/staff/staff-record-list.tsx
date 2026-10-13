@@ -8,7 +8,7 @@ import { useToast } from '@/lib/toast-context';
 import { ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { GRADE_LABELS } from '@/lib/grade-label';
+import { GradeBadge } from './grade-badge';
 import { recordModeView } from './record-edit-mode';
 import { StaffGradeSelect } from './staff-grade-select';
 import { Pagination } from '@/components/ui/pagination';
@@ -103,7 +103,7 @@ export function StaffRecordList({
 
   const gradeControl = (record: StudentCourseRecord) =>
     mode.gradeAs === 'text' ? (
-      <span className="font-semibold tabular-nums">{GRADE_LABELS[record.grade]}</span>
+      <GradeBadge grade={record.grade} />
     ) : (
       <StaffGradeSelect
         value={record.grade}
@@ -172,7 +172,7 @@ export function StaffRecordList({
             {pagination.pageRows.map((record) => (
               <tr
                 key={record.id}
-                className="border-b border-slate-100 align-middle hover:bg-slate-50"
+                className="border-b border-slate-100 align-middle transition-colors hover:bg-slate-50 motion-reduce:transition-none"
               >
                 <td className="px-3 py-3 font-semibold tabular-nums">
                   {courseMap.get(record.courseId)?.code ?? '—'}
@@ -192,7 +192,10 @@ export function StaffRecordList({
 
       <ul className="space-y-3 md:hidden">
         {pagination.pageRows.map((record) => (
-          <li key={record.id} className="space-y-3 rounded-lg border border-slate-200 bg-card p-4">
+          <li
+            key={record.id}
+            className="space-y-3 rounded-lg border border-slate-200 bg-card p-4 transition hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none motion-reduce:transition-none"
+          >
             <div>
               <p className="font-semibold tabular-nums">
                 {courseMap.get(record.courseId)?.code ?? '—'}

@@ -21,6 +21,10 @@ export function statusLabel(status: StaffStatusKey) {
   return STATUS_VIEW[status].label;
 }
 
+export function statusIcon(status: StaffStatusKey) {
+  return STATUS_VIEW[status].Icon;
+}
+
 // Icon + words on every badge, so the status never rests on colour alone.
 export function StatusBadge({
   status,

@@ -135,6 +135,7 @@ function StaffDashboardContent() {
       checklist.push({
         key: 'no-data',
         icon: CHECK_ICONS.noData,
+        tone: 'neutral',
         title: `นิสิตที่ยังไม่มีข้อมูลผลการเรียน ${summary.byStatus.NO_DATA} คน`,
         description: 'ดูรายชื่อเพื่อตรวจว่ายังไม่ได้บันทึกผลการเรียน',
         action: { href: '/staff/students?risk=NO_DATA', label: 'ดูรายชื่อ' },
@@ -144,6 +145,7 @@ function StaffDashboardContent() {
       checklist.push({
         key: 'critical',
         icon: CHECK_ICONS.critical,
+        tone: 'danger',
         title: `นิสิตที่อยู่ในระดับเร่งด่วน ${summary.byStatus.CRITICAL} คน`,
         description: 'GPA สะสมต่ำกว่า 1.50',
         action: { href: '/staff/students?risk=CRITICAL', label: 'ดูรายชื่อ' },
@@ -158,6 +160,7 @@ function StaffDashboardContent() {
       checklist.push({
         key: 'no-instructor',
         icon: CHECK_ICONS.noInstructor,
+        tone: 'warning',
         title: `วิชาที่ยังไม่มีอาจารย์ผู้รับผิดชอบ ${missing.length} วิชา`,
         description:
           inCurricula > 1
@@ -178,6 +181,7 @@ function StaffDashboardContent() {
     checklist.push({
       key: 'no-clo',
       icon: CHECK_ICONS.noClo,
+      tone: 'neutral',
       title: `วิชาที่ยังไม่มี CLO ${withoutClo} วิชา`,
       description:
         'CLO ของรายวิชากำหนดโดยผู้ดูแลระบบ (ADMIN) หากมีวิชาที่ยังไม่มี CLO กรุณาแจ้งผู้ดูแลระบบให้เพิ่ม',
@@ -242,55 +246,61 @@ function StaffDashboardContent() {
 
       {view && group && (
         <>
-          <Reveal index={1} className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <MetricCard
-              icon={Users}
-              label="นิสิตในความดูแล"
-              value={<AnimatedNumber value={view.summary.active} />}
-              unit="คน"
-              note={`ระงับ ${view.summary.suspended} คน (ไม่นับรวม)`}
-            />
-            <MetricCard
-              icon={Star}
-              label="GPA เฉลี่ย"
-              value={
-                group.kind === 'ok' ? (
-                  <AnimatedNumber
-                    value={view.summary.averageGpa}
-                    decimals={2}
-                    format={(n) => n.toFixed(2)}
-                  />
-                ) : (
-                  '—'
-                )
-              }
-              unit={group.value ? '/ 4.00' : undefined}
-              note={group.note}
-            />
-            <MetricCard
-              icon={ClipboardCheck}
-              label="มีผลการเรียน"
-              value={<AnimatedNumber value={view.summary.withRecords} />}
-              unit={`คน จาก ${view.summary.active} คน`}
-              visual={
-                countShare(view.summary.withRecords, view.summary.active) === null ? undefined : (
-                  <AnimatedRing
-                    percent={countShare(view.summary.withRecords, view.summary.active) ?? 0}
-                    size={64}
-                    strokeWidth={7}
-                  >
-                    <span className="text-[11px] font-semibold tabular-nums text-primary">
-                      {view.summary.withRecords}/{view.summary.active}
-                    </span>
-                  </AnimatedRing>
-                )
-              }
-              note={`ยังไม่มีข้อมูล ${view.summary.byStatus.NO_DATA} คน (${sharePercent(view.summary.byStatus.NO_DATA, view.summary.active)})`}
-            />
-          </Reveal>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <Reveal index={1} className="h-full">
+              <MetricCard
+                icon={Users}
+                label="นิสิตในความดูแล"
+                value={<AnimatedNumber value={view.summary.active} />}
+                unit="คน"
+                note={`ไม่นับนิสิตที่ระงับ ${view.summary.suspended} คน`}
+              />
+            </Reveal>
+            <Reveal index={2} className="h-full">
+              <MetricCard
+                icon={Star}
+                label="GPA เฉลี่ย"
+                value={
+                  group.kind === 'ok' ? (
+                    <AnimatedNumber
+                      value={view.summary.averageGpa}
+                      decimals={2}
+                      format={(n) => n.toFixed(2)}
+                    />
+                  ) : (
+                    '—'
+                  )
+                }
+                unit={group.value ? '/ 4.00' : undefined}
+                note={group.note}
+              />
+            </Reveal>
+            <Reveal index={3} className="h-full">
+              <MetricCard
+                icon={ClipboardCheck}
+                label="มีผลการเรียน"
+                value={<AnimatedNumber value={view.summary.withRecords} />}
+                unit={`คน จาก ${view.summary.active} คน`}
+                visual={
+                  countShare(view.summary.withRecords, view.summary.active) === null ? undefined : (
+                    <AnimatedRing
+                      percent={countShare(view.summary.withRecords, view.summary.active) ?? 0}
+                      size={64}
+                      strokeWidth={7}
+                    >
+                      <span className="text-[11px] font-semibold tabular-nums text-primary">
+                        {view.summary.withRecords}/{view.summary.active}
+                      </span>
+                    </AnimatedRing>
+                  )
+                }
+                note={`คิดเป็น ${sharePercent(view.summary.withRecords, view.summary.active)} ของนิสิตที่ใช้งานอยู่`}
+              />
+            </Reveal>
+          </div>
 
           {view.summary.active === 0 ? (
-            <Reveal index={2}>
+            <Reveal index={4}>
               <Card>
                 <CardContent className="pt-6">
                   <EmptyState
@@ -315,7 +325,7 @@ function StaffDashboardContent() {
               </Card>
             </Reveal>
           ) : (
-            <Reveal index={2} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Reveal index={4} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <OverviewYearTable
                   years={view.years}
