@@ -1,7 +1,8 @@
 'use client';
 
+import { useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CircleCheck, CircleDashed, CircleDot, Compass } from 'lucide-react';
+import { ChevronDown, CircleCheck, CircleDashed, CircleDot, Compass } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { CareerFitEntry, CareerFitLevel } from '@eduanalyze-ai/shared-types';
 import { ApiErrorAlert } from '@/components/admin/api-error-alert';
@@ -18,7 +19,9 @@ import {
   CAREER_FIT_INSUFFICIENT_TEXT,
   CAREER_FIT_LEVEL_TEXT,
   CAREER_FIT_LEVEL_TONE,
+  CAREER_FIT_FEW_COURSES_TEXT,
   careerCoverageText,
+  isFewCourseCareer,
 } from '@/lib/career-fit';
 import { describeApiError } from '@/lib/describe-api-error';
 import { GRADE_LABELS } from '@/lib/grade-label';
@@ -149,7 +152,7 @@ function SecondaryCareer({ career, rank }: Readonly<{ career: CareerFitEntry; ra
         role="img"
         aria-label={CAREER_FIT_LEVEL_TEXT[level]}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+          'inline-flex w-fit items-center gap-1 self-start rounded-full border px-2.5 py-0.5 text-xs font-medium',
           BADGE_TONE_CLASSES[tone],
         )}
       >
@@ -179,6 +182,67 @@ function SecondaryCareer({ career, rank }: Readonly<{ career: CareerFitEntry; ra
           ))}
         </ChipGroup>
       )}
+    </li>
+  );
+}
+
+function OtherCareerRow({ career, rank }: Readonly<{ career: CareerFitEntry; rank: number }>) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const level = career.level!;
+  const { text, icon: Icon } = LEVEL_SHORT[level];
+  return (
+    <li className="rounded-lg border bg-card">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-11 w-full items-center gap-3 rounded-lg p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <RankBadge rank={rank} />
+        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="min-w-0 break-words text-sm font-medium leading-snug">
+            {career.careerName}
+          </span>
+          <span
+            role="img"
+            aria-label={CAREER_FIT_LEVEL_TEXT[level]}
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+              BADGE_TONE_CLASSES[CAREER_FIT_LEVEL_TONE[level]],
+            )}
+          >
+            <Icon size={12} aria-hidden="true" />
+            {text}
+          </span>
+        </span>
+        <ChevronDown
+          size={16}
+          aria-hidden="true"
+          className={cn(
+            'shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+      <div id={panelId} hidden={!open} className="space-y-3 px-3 pb-3">
+        {career.topCourses.length > 0 && (
+          <ChipGroup title="วิชาเด่นของคุณ">
+            {career.topCourses.map((c) => (
+              <CourseChip key={c.code} code={c.code} name={c.name} grade={GRADE_LABELS[c.grade]} />
+            ))}
+          </ChipGroup>
+        )}
+        {career.recommendedCourses.length > 0 && (
+          <ChipGroup title="วิชาที่ยังไม่ได้เรียนซึ่งช่วยเสริม">
+            {career.recommendedCourses.map((c) => (
+              <CourseChip key={c.code} code={c.code} name={c.name} />
+            ))}
+          </ChipGroup>
+        )}
+        <p className="text-xs text-muted-foreground">{careerCoverageText(career)}</p>
+      </div>
     </li>
   );
 }
@@ -226,6 +290,9 @@ export function CareerFitCard() {
     } else {
       body = (
         <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            วิเคราะห์ได้ {view.analyzedCount} จาก {view.totalCount} สาย
+          </p>
           {view.ranked.length > 0 ? (
             <ol className="space-y-3">
               <FeaturedCareer career={view.ranked[0]} />
@@ -245,14 +312,33 @@ export function CareerFitCard() {
               description="ยังมีผลการเรียนในแต่ละสายไม่เพียงพอสำหรับการประเมิน"
             />
           )}
+          {view.others.length > 0 && (
+            <CollapsibleSection
+              title={`สายอื่นที่วิเคราะห์ได้ (${view.others.length} สาย)`}
+              framed={false}
+            >
+              <ul className="space-y-2">
+                {view.others.map((c, i) => (
+                  <OtherCareerRow key={c.careerId} career={c} rank={view.ranked.length + i + 1} />
+                ))}
+              </ul>
+            </CollapsibleSection>
+          )}
           {view.insufficient.length > 0 && (
-            <CollapsibleSection title="สายที่ข้อมูลยังไม่เพียงพอ" framed={false}>
-              <p className="text-sm text-muted-foreground">{CAREER_FIT_INSUFFICIENT_TEXT}</p>
+            <CollapsibleSection
+              title={`สายที่ข้อมูลยังไม่เพียงพอ (${view.insufficient.length} สาย)`}
+              framed={false}
+            >
+              {view.insufficient.some((c) => !isFewCourseCareer(c)) && (
+                <p className="text-sm text-muted-foreground">{CAREER_FIT_INSUFFICIENT_TEXT}</p>
+              )}
               <ul className="space-y-2">
                 {view.insufficient.map((c) => (
                   <li key={c.careerId} className="rounded-lg border p-3 text-sm">
                     <p className="font-medium">{c.careerName}</p>
-                    <p className="text-xs text-muted-foreground">{careerCoverageText(c)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isFewCourseCareer(c) ? CAREER_FIT_FEW_COURSES_TEXT : careerCoverageText(c)}
+                    </p>
                   </li>
                 ))}
               </ul>

@@ -25,6 +25,13 @@ export const CAREER_FIT_NO_CAREERS_TEXT = 'หลักสูตรของค�
 export const CAREER_FIT_INSUFFICIENT_TEXT =
   'ต้องมีผลการเรียนอย่างน้อย 3 วิชาของสายนั้น จึงจะประเมินได้';
 
+// Fewer linked courses than this can never reach the 3-graded-course minimum.
+export const CAREER_FIT_MIN_COURSES = 3;
+export const CAREER_FIT_FEW_COURSES_TEXT = 'หลักสูตรของคุณมีวิชาในสายนี้น้อย จึงยังประเมินไม่ได้';
+
+export const isFewCourseCareer = (c: Pick<CareerFitEntry, 'totalCourseCount'>) =>
+  c.totalCourseCount < CAREER_FIT_MIN_COURSES;
+
 export const careerCoverageText = (
   c: Pick<CareerFitEntry, 'gradedCourseCount' | 'totalCourseCount'>,
 ) => `ใช้ข้อมูลจาก ${c.gradedCourseCount} จาก ${c.totalCourseCount} วิชาของสายนี้`;
@@ -33,22 +40,44 @@ export interface CareerFitView {
   kind: 'ranked' | 'empty';
   emptyText?: string;
   ranked: CareerFitEntry[];
+  // Analysable careers beyond the top MAX_RANKED_CAREERS, in rank order.
+  others: CareerFitEntry[];
   insufficient: CareerFitEntry[];
+  analyzedCount: number;
+  totalCount: number;
 }
 
-// Pure: the API already orders ranked-first; this only splits and trims.
+// Pure: the API already orders ranked-first; this only splits it into top / others / insufficient.
 export function buildCareerFitView(report: CareerFitReport): CareerFitView {
   if (report.status === 'NO_GRADES') {
-    return { kind: 'empty', emptyText: CAREER_FIT_NO_GRADES_TEXT, ranked: [], insufficient: [] };
+    return {
+      kind: 'empty',
+      emptyText: CAREER_FIT_NO_GRADES_TEXT,
+      ranked: [],
+      others: [],
+      insufficient: [],
+      analyzedCount: 0,
+      totalCount: 0,
+    };
   }
   if (report.status === 'NO_CAREERS') {
-    return { kind: 'empty', emptyText: CAREER_FIT_NO_CAREERS_TEXT, ranked: [], insufficient: [] };
+    return {
+      kind: 'empty',
+      emptyText: CAREER_FIT_NO_CAREERS_TEXT,
+      ranked: [],
+      others: [],
+      insufficient: [],
+      analyzedCount: 0,
+      totalCount: 0,
+    };
   }
   const ok = report.careers.filter((c) => c.status === 'OK' && c.level !== null);
   return {
     kind: 'ranked',
     ranked: ok.slice(0, MAX_RANKED_CAREERS),
-    // Ranked careers beyond the top 3 are not "insufficient"; they stay hidden.
+    others: ok.slice(MAX_RANKED_CAREERS),
     insufficient: report.careers.filter((c) => c.status === 'INSUFFICIENT_DATA'),
+    analyzedCount: ok.length,
+    totalCount: report.careers.length,
   };
 }

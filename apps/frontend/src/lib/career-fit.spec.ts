@@ -1,5 +1,11 @@
 import type { CareerFitEntry, CareerFitReport } from '@eduanalyze-ai/shared-types';
-import { buildCareerFitView, careerCoverageText, MAX_RANKED_CAREERS } from './career-fit';
+import {
+  buildCareerFitView,
+  CAREER_FIT_FEW_COURSES_TEXT,
+  careerCoverageText,
+  isFewCourseCareer,
+  MAX_RANKED_CAREERS,
+} from './career-fit';
 
 const entry = (id: string, over: Partial<CareerFitEntry> = {}): CareerFitEntry => ({
   careerId: id,
@@ -33,6 +39,42 @@ describe('buildCareerFitView', () => {
     expect(v.insufficient.map((c) => c.careerId)).toEqual(['x']);
   });
 
+  it('keeps analysable careers beyond the top 3 in `others`, not hidden', () => {
+    const med = (id: string) => entry(id, { level: 'MEDIUM', score: 70 });
+    const v = buildCareerFitView(
+      report('OK', [entry('a'), entry('b'), entry('c'), med('d'), med('e'), med('f'), med('g')]),
+    );
+    expect(v.ranked.map((c) => c.careerId)).toEqual(['a', 'b', 'c']);
+    expect(v.others.map((c) => c.careerId)).toEqual(['d', 'e', 'f', 'g']);
+    expect(v.insufficient).toHaveLength(0);
+    expect(v.analyzedCount).toBe(7);
+    expect(v.totalCount).toBe(7);
+  });
+
+  it('mixes others and insufficient and counts only analysable ones', () => {
+    const v = buildCareerFitView(
+      report('OK', [
+        entry('a'),
+        entry('b'),
+        entry('c'),
+        entry('d'),
+        insufficient('x'),
+        insufficient('y'),
+      ]),
+    );
+    expect(v.others.map((c) => c.careerId)).toEqual(['d']);
+    expect(v.insufficient.map((c) => c.careerId)).toEqual(['x', 'y']);
+    expect(v.analyzedCount).toBe(4);
+    expect(v.totalCount).toBe(6);
+  });
+
+  it('has no others with fewer than 3 analysable careers', () => {
+    const v = buildCareerFitView(report('OK', [entry('a'), entry('b'), insufficient('x')]));
+    expect(v.ranked).toHaveLength(2);
+    expect(v.others).toEqual([]);
+    expect(v.analyzedCount).toBe(2);
+  });
+
   it('turns NO_GRADES and NO_CAREERS into a polite empty state, not an error', () => {
     expect(buildCareerFitView(report('NO_GRADES', [])).emptyText).toMatch(/ยังไม่มีผลการเรียน/);
     expect(buildCareerFitView(report('NO_CAREERS', [])).emptyText).toMatch(
@@ -44,6 +86,29 @@ describe('buildCareerFitView', () => {
     const v = buildCareerFitView(report('OK', [insufficient('x'), insufficient('y')]));
     expect(v.ranked).toEqual([]);
     expect(v.insufficient).toHaveLength(2);
+  });
+});
+
+describe('isFewCourseCareer', () => {
+  it('is true only when the curriculum links fewer than 3 courses to the career', () => {
+    expect(isFewCourseCareer({ totalCourseCount: 2 })).toBe(true);
+    expect(isFewCourseCareer({ totalCourseCount: 3 })).toBe(false);
+    expect(CAREER_FIT_FEW_COURSES_TEXT).toMatch(/วิชาในสายนี้น้อย/);
+  });
+
+  it('keeps a few-course career in the insufficient list', () => {
+    const v = buildCareerFitView(
+      report('OK', [
+        entry('a'),
+        entry('few', {
+          status: 'INSUFFICIENT_DATA',
+          score: null,
+          level: null,
+          totalCourseCount: 2,
+        }),
+      ]),
+    );
+    expect(v.insufficient.map((c) => c.careerId)).toEqual(['few']);
   });
 });
 
