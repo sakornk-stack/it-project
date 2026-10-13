@@ -25,6 +25,7 @@ import { CareerFitController } from '../modules/career-fit/career-fit.controller
 import { PloController } from '../modules/curriculum-content/plo/plo.controller';
 import { PrerequisiteController } from '../modules/curriculum-content/prerequisite/prerequisite.controller';
 import { StudentCourseRecordController } from '../modules/academic-record/student-course-record/student-course-record.controller';
+import { UserManagementController } from '../modules/users/user-management/user-management.controller';
 import { CurriculumController } from '../modules/organization/curriculum/curriculum.controller';
 import { DepartmentController } from '../modules/organization/department/department.controller';
 import { ProgramController } from '../modules/organization/program/program.controller';
@@ -85,6 +86,8 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
     },
   ],
   ['CareerFitController', CareerFitController, { getMyCareerFit: ['STUDENT'] }],
+  // Permanent delete of an account: SUPER_ADMIN only, never ADMIN.
+  ['UserManagementController', UserManagementController, { hardDelete: ['SUPER_ADMIN'] }],
 ];
 
 describe('role permission table', () => {

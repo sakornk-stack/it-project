@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseEnumPipe,
   Patch,
@@ -82,7 +83,7 @@ export class UserManagementController {
   @ApiResponse({ status: 200, description: 'User found' })
   @ApiResponse({ status: 404, description: 'User not found or outside your scope' })
   findOne(@Param('id') id: string, @CurrentUser() user: RequestUser) {
-    return this.userManagementService.findOne(id, user);
+    return this.userManagementService.getOne(id, user);
   }
 
   @Patch(':id/active-status')
@@ -151,5 +152,26 @@ export class UserManagementController {
     @CurrentUser() user: RequestUser,
   ) {
     return this.userManagementService.revokeRole(id, role, user);
+  }
+
+  @Delete(':id/permanent')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Permanently delete a suspended, unreferenced account (SUPER_ADMIN). Never your own, a SUPER_ADMIN or a STUDENT account. Login data is deleted with it.',
+  })
+  @ApiResponse({ status: 204, description: 'User deleted' })
+  @ApiResponse({ status: 403, description: 'Own account, a SUPER_ADMIN or a STUDENT account' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Account is still active, or still referenced (course instructor, grade entries, invitations)',
+  })
+  hardDelete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.userManagementService.hardDelete(id, user);
   }
 }

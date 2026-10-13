@@ -1255,6 +1255,13 @@ export interface UserScope {
   createdAt: string;
 }
 
+// What still points at a suspended account and so blocks a permanent delete.
+export interface UserReferences {
+  courseInstructors: number;
+  enteredRecords: number;
+  studentInvitations: number;
+}
+
 export interface AdminUserSummary {
   id: string;
   email: string;
@@ -1265,6 +1272,8 @@ export interface AdminUserSummary {
   updatedAt: string;
   roles: Role[];
   scopes: UserScope[];
+  // Only on a suspended, non-student account.
+  references?: UserReferences;
 }
 
 export interface InitialScope {

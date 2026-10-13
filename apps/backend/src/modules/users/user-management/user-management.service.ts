@@ -4,6 +4,7 @@ import {
   Injectable,
   ConflictException,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
@@ -21,6 +22,13 @@ import { UserRoleService } from '../user-role/user-role.service';
 import { UserScopeService } from '../user-scope/user-scope.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { assertMayManageTarget } from './admin-manage-target.util';
+import { conflictOnReferenced } from '../../academic-record/semester/semester-references.util';
+import {
+  countUserReferences,
+  hasUserReferences,
+  userReferencesBlockMessage,
+  type UserReferences,
+} from './user-references.util';
 
 const SUPER_ADMIN_PEER_MESSAGE = 'ไม่สามารถระงับหรือเปลี่ยนสถานะบัญชีผู้ดูแลระบบสูงสุดคนอื่นได้';
 const SELF_RESEND_MESSAGE = 'ไม่สามารถส่งคำเชิญให้บัญชีของตัวเองได้';
@@ -28,6 +36,12 @@ const PASSWORD_ALREADY_SET_MESSAGE =
   'ผู้ใช้นี้ตั้งรหัสผ่านแล้ว จึงส่งคำเชิญซ้ำไม่ได้ หากลืมรหัสผ่านให้ใช้ "ลืมรหัสผ่าน" ที่หน้าเข้าสู่ระบบ';
 const RESEND_EMAIL_FAILED_MESSAGE =
   'ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่อีกครั้งภายหลัง หากยังไม่สำเร็จให้ตรวจสอบการตั้งค่าอีเมลของระบบ';
+const SELF_DELETE_MESSAGE = 'ไม่สามารถลบบัญชีของตัวเองได้';
+const SUPER_ADMIN_DELETE_MESSAGE = 'ไม่สามารถลบบัญชีผู้ดูแลระบบสูงสุดได้';
+const STUDENT_DELETE_MESSAGE = 'ไม่สามารถลบบัญชีนิสิตถาวรได้';
+const NOT_SUSPENDED_MESSAGE = 'ลบถาวรได้เฉพาะบัญชีที่ระงับการใช้งานแล้ว';
+const LAST_SUPER_ADMIN_MESSAGE = 'ลบถาวรไม่ได้ เพราะจะไม่เหลือผู้ดูแลระบบสูงสุดที่ใช้งานอยู่';
+const DELETE_RACE_MESSAGE = 'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงบัญชีนี้เพิ่มขึ้นระหว่างดำเนินการ';
 const SELF_ROLE_MESSAGE = 'ไม่สามารถถอดบทบาทของตัวเองได้';
 const SELF_ASSIGN_ROLE_MESSAGE = 'ไม่สามารถกำหนดบทบาทให้ตัวเองได้';
 
@@ -152,14 +166,34 @@ export class UserManagementService {
       const users = await this.userService.findAll({
         userRoles: { none: { role: 'STUDENT' } },
       });
-      return users.map((user) => this.toSummary(user));
+      return this.withReferences(users.map((user) => this.toSummary(user)));
     }
 
     const users = await this.userService.findAll({
       userRoles: { none: { role: 'STUDENT' } },
       scopes: { some: { OR: await this.scopeResolverService.buildUserScopeOrFilter(requester.userId) } },
     });
-    return users.map((user) => this.toSummary(user));
+    return this.withReferences(users.map((user) => this.toSummary(user)));
+  }
+
+  // GET /users/:id: findOne plus the references, so the screen can say why a
+  // permanent delete is refused. findOne itself stays cheap for the other callers.
+  async getOne(id: string, requester: RequestUser) {
+    const [summary] = await this.withReferences([await this.findOne(id, requester)]);
+    return summary;
+  }
+
+  // `references` only for a suspended account: nothing else can be permanently
+  // deleted, and one grouped query serves the whole list.
+  private async withReferences<T extends { id: string; isActive: boolean; roles: Role[] }>(
+    summaries: T[],
+  ): Promise<(T & { references?: UserReferences })[]> {
+    const suspended = summaries.filter((u) => !u.isActive && !u.roles.includes('STUDENT'));
+    const counts = await countUserReferences(
+      this.prisma,
+      suspended.map((u) => u.id),
+    );
+    return summaries.map((u) => (counts.has(u.id) ? { ...u, references: counts.get(u.id) } : u));
   }
 
   // Narrow, STAFF-reachable alternative to GET /users (which stays
@@ -327,4 +361,60 @@ export class UserManagementService {
     }
   }
 
+  // Permanent delete (SUPER_ADMIN only, enforced on the route): only a suspended,
+  // non-student, non-SUPER_ADMIN account that nothing else points at. The login
+  // data goes with it in one transaction. Logs the actor and row counts only.
+  async hardDelete(id: string, requester: RequestUser) {
+    if (id === requester.userId) throw new ForbiddenException(SELF_DELETE_MESSAGE);
+    const target = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        userRoles: { select: { role: true } },
+        studentProfile: { select: { id: true } },
+      },
+    });
+    if (!target) throw new NotFoundException('User not found');
+    const roles = target.userRoles.map((r) => r.role);
+    if (roles.includes('SUPER_ADMIN')) throw new ForbiddenException(SUPER_ADMIN_DELETE_MESSAGE);
+    if (roles.includes('STUDENT') || target.studentProfile) {
+      throw new ForbiddenException(STUDENT_DELETE_MESSAGE);
+    }
+    if (target.isActive) throw new ConflictException(NOT_SUSPENDED_MESSAGE);
+
+    const deleted = await conflictOnReferenced(
+      this.prisma.$transaction(async (tx) => {
+        const refs = (await countUserReferences(tx, [id])).get(id)!;
+        if (hasUserReferences(refs)) {
+          throw new ConflictException(userReferencesBlockMessage(refs));
+        }
+        const otherSuperAdmins = await tx.user.count({
+          where: { id: { not: id }, isActive: true, userRoles: { some: { role: 'SUPER_ADMIN' } } },
+        });
+        if (otherSuperAdmins < 1) throw new ConflictException(LAST_SUPER_ADMIN_MESSAGE);
+
+        const byUser = { where: { userId: id } };
+        const counts = {
+          pendingInvitations: (await tx.pendingInvitation.deleteMany(byUser)).count,
+          passwordResetTokens: (await tx.passwordResetToken.deleteMany(byUser)).count,
+          twoFactorCredentials: (await tx.twoFactorCredential.deleteMany(byUser)).count,
+          authMethods: (await tx.userAuthMethod.deleteMany(byUser)).count,
+          // No foreign key: a Google sign-up in progress is tied to the account by email.
+          googlePending: (
+            await tx.googlePendingRegistration.deleteMany({ where: { email: target.email } })
+          ).count,
+          scopes: (await tx.userScope.deleteMany(byUser)).count,
+          roles: (await tx.userRole.deleteMany(byUser)).count,
+        };
+        await tx.user.delete({ where: { id } });
+        return { ...counts, users: 1 };
+      }),
+      DELETE_RACE_MESSAGE,
+    );
+    this.logger.warn(
+      `Permanently deleted user ${id} by user ${requester.userId}: ${JSON.stringify(deleted)}`,
+    );
+  }
 }
