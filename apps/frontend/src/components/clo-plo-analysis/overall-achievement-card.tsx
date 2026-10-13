@@ -1,18 +1,19 @@
-import { cn } from '@/lib/utils';
 import { formatFiveScale } from '@/lib/five-scale';
 import { SCORE_BANDS, type ScoreBandKey } from '@/lib/plo-score-bands';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CollapsibleSection } from '@/components/ui/collapsible-section';
 
 const RADIUS = 52;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const RING_SIZE = 112;
 
 // No chart library in this project (confirmed — plain SVG ring, same
 // no-dependency style as the hand-rolled linear Progress component).
 //
-// Ring and status breakdown were two separate Cards — same data (both
-// summarize the radar's PLO values), so a student had to read them as two
-// unrelated widgets. Now one Card, two halves.
+// Ring and status breakdown are one Card, two halves; the long explanation of
+// the bands lives in a collapsed "how to read" section below the Card.
 export function OverallAchievementCard({
   percent,
   isAchieved,
@@ -26,75 +27,127 @@ export function OverallAchievementCard({
 }>) {
   const clamped = percent === null ? 0 : Math.max(0, Math.min(100, percent));
   const offset = CIRCUMFERENCE * (1 - clamped / 100);
-  const badgeTone =
-    percent === null
-      ? 'neutral'
-      : isAchieved
-        ? 'success'
-        : 'neutral';
-  const badgeLabel = percent === null ? 'ไม่มีข้อมูล' : isAchieved ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์';
+  const badgeTone = percent !== null && isAchieved ? 'success' : 'neutral';
+  const badgeLabel =
+    percent === null ? 'ไม่มีข้อมูล' : isAchieved ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์';
+  const total = SCORE_BANDS.reduce((sum, band) => sum + bandCounts[band.key], 0);
+  const summary = SCORE_BANDS.map((band) => `${band.label} ${bandCounts[band.key]} PLO`).join(' ');
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>ภาพรวมความสำเร็จของ PLO</CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:divide-x sm:divide-slate-100">
-        <div className="flex flex-col items-center justify-center gap-3">
-          <div className="relative h-[132px] w-[132px]">
-            <svg width={132} height={132} viewBox="0 0 140 140" className="-rotate-90">
-              <circle cx={70} cy={70} r={RADIUS} strokeWidth={12} className="fill-none stroke-slate-100" />
-              {percent !== null && (
+    <div className="space-y-3">
+      <Card>
+        <CardHeader>
+          <CardTitle>ภาพรวมความสำเร็จของ PLO</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 items-center gap-8 sm:grid-cols-[auto_1fr] sm:gap-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative" style={{ width: RING_SIZE, height: RING_SIZE }}>
+              <svg
+                width={RING_SIZE}
+                height={RING_SIZE}
+                viewBox="0 0 140 140"
+                className="-rotate-90"
+                aria-hidden="true"
+                focusable="false"
+              >
                 <circle
                   cx={70}
                   cy={70}
                   r={RADIUS}
-                  strokeWidth={12}
-                  strokeLinecap="round"
-                  strokeDasharray={CIRCUMFERENCE}
-                  strokeDashoffset={offset}
-                  className="fill-none stroke-brand transition-all"
+                  strokeWidth={8}
+                  className="fill-none stroke-slate-100"
                 />
-              )}
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center leading-tight">
-                <p className="text-2xl font-semibold text-primary">
-                  {percent === null ? '—' : `${formatFiveScale(percent)} / 5.0`}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">คะแนนเฉลี่ย</p>
+                {percent !== null && (
+                  <circle
+                    cx={70}
+                    cy={70}
+                    r={RADIUS}
+                    strokeWidth={8}
+                    strokeLinecap="round"
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={offset}
+                    className="fill-none stroke-brand transition-all motion-reduce:transition-none"
+                  />
+                )}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+                <span className="text-3xl font-semibold tabular-nums text-primary">
+                  {formatFiveScale(percent)}
+                </span>
+                {percent !== null && (
+                  <span className="mt-1 text-xs text-muted-foreground">/ 5.0</span>
+                )}
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">คะแนนเฉลี่ย</p>
+            <Badge tone={badgeTone} className="px-3 py-1 text-sm">
+              {badgeLabel}
+            </Badge>
           </div>
-          <Badge tone={badgeTone} className="px-3 py-1 text-sm">
-            {badgeLabel}
-          </Badge>
-        </div>
 
-        <div className="space-y-3 sm:pl-6">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">สรุปตามคะแนน</h3>
-            <p className="text-xs text-muted-foreground">
-              จัดกลุ่มตามเกณฑ์ทั่วไป (80/60/40) แยกจาก &quot;ผ่านเกณฑ์&quot; ของแต่ละ PLO ด้านล่าง
-              ซึ่งเทียบกับเกณฑ์ที่หลักสูตรนี้กำหนดเอง
-            </p>
-          </div>
-          {SCORE_BANDS.map((band) => (
-            <div key={band.key} className="flex items-center justify-between gap-3 text-sm">
-              <span className="flex items-center gap-2 text-muted-foreground">
-                <span className={cn('h-2 w-2 rounded-full', band.indicatorClassName)} aria-hidden="true" />
-                {band.label}
-              </span>
-              <span className="font-medium text-primary">{bandCounts[band.key]} PLO</span>
+          <div className="min-w-0 space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">สรุปตามคะแนน</h3>
+              <p className="text-xs text-muted-foreground">จำนวน PLO ในแต่ละระดับคะแนน</p>
             </div>
-          ))}
-          {noDataCount > 0 && (
-            <p className="border-t border-slate-100 pt-3 text-xs text-muted-foreground">
-              ไม่มีข้อมูล {noDataCount} PLO
-            </p>
-          )}
+            {total > 0 && (
+              <div
+                role="img"
+                aria-label={`สัดส่วน PLO ตามระดับคะแนน: ${summary}`}
+                className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100"
+              >
+                {SCORE_BANDS.map(
+                  (band) =>
+                    bandCounts[band.key] > 0 && (
+                      <div
+                        key={band.key}
+                        className={band.indicatorClassName}
+                        style={{ width: `${(bandCounts[band.key] / total) * 100}%` }}
+                      />
+                    ),
+                )}
+              </div>
+            )}
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {SCORE_BANDS.map((band) => (
+                <li key={band.key} className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <span
+                      className={cn('h-2 w-2 shrink-0 rounded-full', band.indicatorClassName)}
+                      aria-hidden="true"
+                    />
+                    {band.label}
+                  </span>
+                  <span className="font-medium tabular-nums text-primary">
+                    {bandCounts[band.key]} PLO
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {noDataCount > 0 && (
+              <p className="border-t border-slate-100 pt-3 text-xs text-muted-foreground">
+                ไม่มีข้อมูล {noDataCount} PLO
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <CollapsibleSection title="วิธีอ่านผล" framed={false}>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            การสรุปตามคะแนนจัดกลุ่มตามเกณฑ์ทั่วไป (
+            {SCORE_BANDS.map((b) => b.minimum)
+              .slice(0, 3)
+              .join('/')}
+            ) ได้แก่ {SCORE_BANDS.map((b) => `${b.label} (ตั้งแต่ ${b.minimum}%)`).join(', ')}
+          </p>
+          <p>
+            การจัดกลุ่มนี้แยกจาก &quot;ผ่านเกณฑ์&quot; ของแต่ละ PLO ด้านล่าง
+            ซึ่งเทียบกับเกณฑ์ที่หลักสูตรนี้กำหนดเอง
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </CollapsibleSection>
+    </div>
   );
 }
