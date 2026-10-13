@@ -20,7 +20,7 @@
 | `app/aptitude-analysis/page.tsx` | PLO radar chart + rule-based interpretation (ไม่ใช้ AI live) |
 | `app/clo-plo-analysis/page.tsx` | CLO/PLO achievement cards |
 | `app/course-assessment/[courseId]/page.tsx` | Self-assessment form ต่อ course |
-| `app/credit-checker/page.tsx` | Credit check + prerequisite flow chart (ใช้ `@xyflow/react`) |
+| `app/credit-checker/page.tsx` | Credit check (สรุปหน่วยกิต, วิชาที่ต้องจัดการ, ความคืบหน้าตามหมวด) |
 | `app/learning-path/page.tsx` | Drag-and-drop planner (client-only, ไม่มี persist) |
 | `app/profile/page.tsx` | Profile/org info + เปลี่ยนรหัสผ่าน — **เปิดให้ทุก role แล้ว** (เดิม STUDENT-only), non-STUDENT เห็นแค่ identity card + role badge + change-password (ไม่มี "ข้อมูลการศึกษา") |
 
@@ -53,14 +53,14 @@
 
 ## 2. Animation patterns
 
-- **ห้ามใช้ framer-motion / recharts** — เป็น convention ที่ตั้งใจ (มี comment อธิบายไว้หลายที่) ชาร์ตสถิติทุกตัว (instructor, PLO radar) hand-roll เป็น DOM/SVG ล้วน ยกเว้น prerequisite flow chart ที่ใช้ `@xyflow/react` — ดูข้อยกเว้นใน §4
+- **ห้ามใช้ framer-motion / recharts** — เป็น convention ที่ตั้งใจ (มี comment อธิบายไว้หลายที่) ชาร์ตสถิติทุกตัว (instructor, PLO radar) hand-roll เป็น DOM/SVG ล้วน ไม่มีข้อยกเว้น (แผนผังวิชาต่อเนื่องที่เคยใช้ `@xyflow/react` ถูกเอาออกและถอด dependency แล้ว)
 - **Count-up ตัวเลข**: hook `src/lib/use-count-up.ts` → `useCountUp(target, { duration, decimals, replayKey })` (hand-rolled rAF + ease-out-cubic)
 - **Entrance/exit**: Tailwind plugin `tailwindcss-animate` (ใน `tailwind.config.ts`)
   - เข้า: `animate-in fade-in-0 slide-in-from-bottom-4 duration-500` (ใช้ใน dashboard, academic-record)
   - ออก: `animate-out fade-out-0 slide-out-to-top-4 duration-500` (ใช้ใน `record-timeline.tsx`)
   - Loading skeleton: `animate-pulse` (`dashboard-skeleton.tsx`)
 - ไม่มี custom `@keyframes` ใน `globals.css` — ใช้แค่ tailwindcss-animate + useCountUp
-- radar ใน aptitude-analysis + ชาร์ตทุกตัวใน instructor = SVG/DOM hand-rolled · prerequisite flow chart ใน credit-checker = `@xyflow/react` (ข้อยกเว้นเดียว)
+- radar ใน aptitude-analysis + ชาร์ตทุกตัวใน instructor = SVG/DOM hand-rolled
 
 ## 3. Reusable UI components (`src/components/ui/`)
 
@@ -72,7 +72,7 @@ shadcn-style — ส่วนใหญ่ hand-rolled แต่ **มี Radix �
 ## 4. Convention ที่ตกลงกันไว้
 
 - **ห้าม** framer-motion, recharts, dnd-library
-- ⚠️ `@xyflow/react` (react-flow) **ถูกติดตั้งและใช้งานจริงแล้ว** ใน `components/credit-checker/prerequisite-flow-chart.tsx` — เดิมเอกสารนี้ระบุว่าห้าม แต่ขัดกับของจริง ถือว่าเป็นข้อยกเว้นที่ยอมรับแล้ว ไม่ใช่ของที่ต้องถอด
+- แผนผังวิชาต่อเนื่อง (prerequisite flow chart) และ `@xyflow/react` ถูกเอาออกจาก /credit-checker และถอด dependency แล้ว — ไม่มีไลบรารีแผนผังในโปรเจกต์
 - Animation ทั้งหมด hand-roll ก่อนเสมอ (Tailwind utilities + custom hook) — ใช้ library เฉพาะกรณีจำเป็นจริงมากๆ เท่านั้น (ปัจจุบันยังไม่มีข้อยกเว้น)
 - Drag-and-drop ใช้ native HTML5 DnD + ปุ่ม move fallback สำหรับ touch device
 - ตอบ user เป็นภาษาไทย (โค้ด/comment เป็นอังกฤษ) — ดู `apps/CLAUDE.md`
