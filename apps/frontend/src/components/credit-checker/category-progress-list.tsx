@@ -1,9 +1,17 @@
+import { Check } from 'lucide-react';
 import type { CategoryProgress } from '@eduanalyze-ai/shared-types';
+import { cn } from '@/lib/utils';
 import { BAR_TONE_CLASSES } from '@/lib/tone';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
+
+// Unfinished categories first (they need attention), each group keeping the API order.
+const unfinishedFirst = (categories: CategoryProgress[]) => [
+  ...categories.filter((c) => !c.isComplete),
+  ...categories.filter((c) => c.isComplete),
+];
 
 export function CategoryProgressList({ categories }: Readonly<{ categories: CategoryProgress[] }>) {
   return (
@@ -13,29 +21,54 @@ export function CategoryProgressList({ categories }: Readonly<{ categories: Cate
           <EmptyState illustration="no-data" description="ยังไม่มีข้อมูลหมวดวิชา" />
         ) : (
           <ul className="grid grid-cols-1 gap-x-10 gap-y-5 lg:grid-cols-2">
-            {categories.map((category) => (
-              <li key={category.categoryId} className="space-y-1.5">
-                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 text-sm">
-                  <span className="min-w-0 font-medium text-primary">{category.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="tabular-nums text-muted-foreground">
-                      {category.creditsEarned} / {category.minCredits} หน่วยกิต
-                      {category.creditsEarned > category.minCredits &&
-                        ` · เกิน ${category.creditsEarned - category.minCredits}`}
+            {unfinishedFirst(categories).map((category) => {
+              const shortage = category.minCredits - category.creditsEarned;
+              const over = category.creditsEarned - category.minCredits;
+              return (
+                <li key={category.categoryId} className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 text-sm">
+                    <span
+                      className={cn(
+                        'min-w-0 break-words',
+                        category.isComplete
+                          ? 'text-muted-foreground'
+                          : 'font-medium text-primary',
+                      )}
+                    >
+                      {category.name}
                     </span>
-                    <Badge tone={category.isComplete ? 'success' : 'warning'}>
-                      {category.isComplete ? 'ครบแล้ว' : 'ยังไม่ครบ'}
-                    </Badge>
+                    <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                      <span className="tabular-nums text-muted-foreground">
+                        {category.creditsEarned} / {category.minCredits} หน่วยกิต
+                        {over > 0 && ` · เกิน ${over}`}
+                      </span>
+                      {category.isComplete ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                          <Check size={12} aria-hidden="true" />
+                          ครบแล้ว
+                        </span>
+                      ) : (
+                        <Badge tone="warning">
+                          {shortage > 0 ? `ขาด ${shortage} หน่วยกิต` : 'ยังไม่ครบเงื่อนไข'}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <Progress
-                  label={category.name}
-                  className={category.isComplete ? 'h-1.5' : undefined}
-                  barClassName={category.isComplete ? BAR_TONE_CLASSES.success : undefined}
-                  value={category.minCredits > 0 ? (category.creditsEarned / category.minCredits) * 100 : 0}
-                />
-              </li>
-            ))}
+                  <Progress
+                    label={category.name}
+                    className={cn('mt-auto', category.isComplete && 'h-1')}
+                    barClassName={
+                      category.isComplete ? cn(BAR_TONE_CLASSES.success, 'opacity-60') : undefined
+                    }
+                    value={
+                      category.minCredits > 0
+                        ? (category.creditsEarned / category.minCredits) * 100
+                        : 0
+                    }
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </CardContent>
