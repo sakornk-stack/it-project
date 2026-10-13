@@ -12,6 +12,8 @@ export interface UserSummary {
   byRole: Record<Exclude<Role, 'STUDENT'>, number>;
   // People holding ADMIN or STAFF (or both), each counted once.
   adminOrStaff: number;
+  // Active accounts that have not set a password yet (the "รอตั้งรหัสผ่าน" badge).
+  pendingPassword: number;
   // STAFF/ADMIN accounts with no scope: they can see nothing yet.
   withoutScope: number;
 }
@@ -23,6 +25,7 @@ export function summarizeUsers(users: readonly AdminUserSummary[]): UserSummary 
     suspended: 0,
     byRole: { INSTRUCTOR: 0, STAFF: 0, ADMIN: 0, SUPER_ADMIN: 0 },
     adminOrStaff: 0,
+    pendingPassword: 0,
     withoutScope: 0,
   };
   for (const user of users) {
@@ -31,10 +34,29 @@ export function summarizeUsers(users: readonly AdminUserSummary[]): UserSummary 
     for (const role of user.roles) {
       if (role !== 'STUDENT') summary.byRole[role] += 1;
     }
+    if (user.isActive && user.mustChangePassword) summary.pendingPassword += 1;
     if (user.roles.includes('ADMIN') || user.roles.includes('STAFF')) summary.adminOrStaff += 1;
     if (roleNeedsScope(user.roles) && user.scopes.length === 0) summary.withoutScope += 1;
   }
   return summary;
+}
+
+// Highest privilege first; a person with several roles sorts by their top one.
+const ROLE_ORDER: Role[] = ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'INSTRUCTOR', 'STUDENT'];
+
+function roleRank(roles: readonly Role[]): number {
+  const ranks = roles.map((role) => ROLE_ORDER.indexOf(role));
+  return ranks.length === 0 ? ROLE_ORDER.length : Math.min(...ranks);
+}
+
+// The list's fixed base order: role, then name, then email. Column sorting
+// is stable, so rows that tie on the chosen column keep this order.
+export function compareUsersDefault(a: AdminUserSummary, b: AdminUserSummary): number {
+  return (
+    roleRank(a.roles) - roleRank(b.roles) ||
+    a.fullName.localeCompare(b.fullName, 'th') ||
+    a.email.localeCompare(b.email, 'th')
+  );
 }
 
 // One decimal, null when there is nothing to divide by.

@@ -298,6 +298,7 @@ function AdminUserDetailContent({ userId }: { userId: string }) {
             <div id="user-scopes" className="scroll-mt-6">
               <UserScopesSection
                 userId={userId}
+                roles={userQuery.data.roles}
                 scopes={userQuery.data.scopes}
                 lockedReason={roleScopeLockReason}
                 requesterIsSuperAdmin={requesterIsSuperAdmin}

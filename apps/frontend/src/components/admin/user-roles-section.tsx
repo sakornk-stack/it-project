@@ -6,9 +6,10 @@ import { assignUserRole, revokeUserRole } from '@/lib/api/user-management';
 import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { useToast } from '@/lib/toast-context';
 import { MISSING_SCOPE_WARNING, roleNeedsScope } from '@/lib/user-scope-requirement';
+import { isLastRole, revokeRoleDescription } from '@/lib/user-role-revoke';
 import { useConfirm } from '@/lib/use-confirm';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { AddButton } from '@/components/admin/add-button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RevokeButton } from './revoke-button';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -152,14 +153,18 @@ export function UserRolesSection({
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              variant="outline"
+            <AddButton
               disabled={!selectedRole || busy}
               onClick={handleAssign}
+              aria-describedby={selectedRole ? undefined : 'role-add-hint'}
             >
               เพิ่มบทบาท
-            </Button>
+            </AddButton>
+            {!selectedRole && (
+              <p id="role-add-hint" className="w-full text-xs text-muted-foreground">
+                เลือกบทบาทก่อน จึงจะเพิ่มได้
+              </p>
+            )}
           </div>
         )}
         {warnMissingScope && (
@@ -175,7 +180,10 @@ export function UserRolesSection({
         title={confirmingRole ? `ถอดบทบาท${ROLE_LABEL_TH[confirmingRole]}?` : ''}
         description={
           confirmingRole
-            ? `ผู้ใช้นี้จะไม่มีบทบาท${ROLE_LABEL_TH[confirmingRole]}อีกต่อไป และใช้งานส่วนของบทบาทนี้ไม่ได้ทันที`
+            ? revokeRoleDescription(
+                ROLE_LABEL_TH[confirmingRole],
+                isLastRole(roles, confirmingRole),
+              )
             : ''
         }
         confirmLabel="ถอดบทบาท"

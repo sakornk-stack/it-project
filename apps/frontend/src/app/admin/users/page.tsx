@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, ShieldCheck, ShieldOff, UserCheck, UserCog, UsersRound } from 'lucide-react';
+import { KeyRound, Plus, ShieldOff, UserCheck, UserCog, UsersRound } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateUserResponse } from '@eduanalyze-ai/shared-types';
 import { activeShare, summarizeUsers } from '@/lib/admin-users';
@@ -113,10 +113,10 @@ function AdminUsersContent() {
               {requesterIsSuperAdmin ? (
                 <StatCard
                   compact
-                  icon={ShieldCheck}
-                  label="ผู้ดูแลระบบและเจ้าหน้าที่"
-                  value={<AnimatedNumber value={summary.adminOrStaff} />}
-                  suffix="คน"
+                  icon={KeyRound}
+                  label="รอตั้งรหัสผ่าน"
+                  value={<AnimatedNumber value={summary.pendingPassword} />}
+                  suffix="บัญชี"
                 />
               ) : (
                 <StatCard
@@ -133,14 +133,7 @@ function AdminUsersContent() {
                   icon={UserCheck}
                   label="ใช้งานอยู่"
                   value={<AnimatedNumber value={summary.active} />}
-                  suffix="บัญชี"
-                  footer={
-                    share === null ? undefined : (
-                      <p className="text-sm text-muted-foreground">
-                        คิดเป็น {share.toFixed(1)}% ของทั้งหมด
-                      </p>
-                    )
-                  }
+                  suffix={share === null ? 'บัญชี' : `บัญชี (${share.toFixed(1)}%)`}
                 />
               )}
               <StatCard

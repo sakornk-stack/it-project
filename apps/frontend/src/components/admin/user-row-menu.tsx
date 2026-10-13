@@ -57,7 +57,8 @@ export function UserRowMenu({
           size="icon"
           className="shrink-0"
           aria-haspopup="menu"
-          aria-label={label}
+          aria-label="เมนูเพิ่มเติม"
+          title="เมนูเพิ่มเติม"
         >
           <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
         </Button>

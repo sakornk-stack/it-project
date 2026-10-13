@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { UserScope } from '@eduanalyze-ai/shared-types';
+import type { Role, UserScope } from '@eduanalyze-ai/shared-types';
 import {
   allActiveScopeTargets,
   allowedLevels,
@@ -16,7 +16,10 @@ import { createUserScope, deleteUserScope } from '@/lib/api/user-management';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { useScopeTargetName } from '@/lib/use-scope-target-name';
 import { scopeSchema, type ScopeFormValues } from '@/lib/validation/scope.schema';
-import { Button } from '@/components/ui/button';
+import { AddButton } from '@/components/admin/add-button';
+import { WARNING_ALERT_CLASS } from '@/components/admin/api-error-alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { roleNeedsScope } from '@/lib/user-scope-requirement';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RevokeButton } from './revoke-button';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -29,6 +32,7 @@ import { ScopeSelector } from './scope-selector';
 
 export function UserScopesSection({
   userId,
+  roles,
   scopes,
   lockedReason,
   requesterIsSuperAdmin,
@@ -36,6 +40,7 @@ export function UserScopesSection({
   onChanged,
 }: {
   userId: string;
+  roles: Role[];
   scopes: UserScope[];
   lockedReason: string | null;
   requesterIsSuperAdmin: boolean;
@@ -141,7 +146,16 @@ export function UserScopesSection({
         {serverError && <ApiErrorAlert message={serverError} />}
 
         {scopes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">ยังไม่มีขอบเขตความรับผิดชอบ</p>
+          roleNeedsScope(roles) ? (
+            <Alert className={WARNING_ALERT_CLASS}>
+              <AlertDescription>
+                ยังไม่มีขอบเขตความรับผิดชอบ —
+                เจ้าหน้าที่และผู้ดูแลระบบจะเข้าถึงข้อมูลของหน่วยงานใดไม่ได้ จนกว่าจะเพิ่มขอบเขต
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <p className="text-sm text-muted-foreground">ยังไม่มีขอบเขตความรับผิดชอบ</p>
+          )
         ) : (
           <ul className="space-y-2">
             {scopes.map((scope) => (
@@ -186,18 +200,23 @@ export function UserScopesSection({
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="flex flex-col gap-3 border-t border-border pt-3 md:flex-row md:items-end"
+                className="flex flex-col gap-3 border-t border-border pt-3 md:flex-row md:flex-wrap md:items-end"
               >
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <ScopeSelector allowed={allowed} limitedToOwnScope={limitedToOneUnit} />
                 </div>
-                <Button
+                <AddButton
                   type="submit"
-                  variant="outline"
                   disabled={form.formState.isSubmitting || !pickedLevel || !pickedTarget}
+                  aria-describedby={pickedLevel && pickedTarget ? undefined : 'scope-add-hint'}
                 >
                   เพิ่มขอบเขต
-                </Button>
+                </AddButton>
+                {!(pickedLevel && pickedTarget) && (
+                  <p id="scope-add-hint" className="text-xs text-muted-foreground md:basis-full">
+                    เลือกระดับและหน่วยงานก่อน จึงจะเพิ่มขอบเขตได้
+                  </p>
+                )}
               </form>
             </Form>
           ))}

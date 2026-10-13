@@ -1,5 +1,5 @@
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
-import { activeShare, formatThaiDate, summarizeUsers } from './admin-users';
+import { activeShare, compareUsersDefault, formatThaiDate, summarizeUsers } from './admin-users';
 
 function user(roles: Role[], opts: { isActive?: boolean; scopes?: number } = {}): AdminUserSummary {
   return {
@@ -77,5 +77,44 @@ describe('formatThaiDate', () => {
   });
   it('returns a dash for a bad date', () => {
     expect(formatThaiDate('nope')).toBe('—');
+  });
+});
+
+describe('pendingPassword', () => {
+  it('counts only active accounts that have not set a password', () => {
+    const pending = { ...user(['STAFF'], { scopes: 1 }), mustChangePassword: true };
+    const suspended = { ...user(['STAFF'], { isActive: false }), mustChangePassword: true };
+    expect(summarizeUsers([pending, suspended, user(['ADMIN'])]).pendingPassword).toBe(1);
+  });
+});
+
+describe('compareUsersDefault', () => {
+  const named = (roles: Role[], fullName: string, email: string) => ({
+    ...user(roles),
+    fullName,
+    email,
+  });
+
+  it('orders by role, then name, then email', () => {
+    const rows = [
+      named(['INSTRUCTOR'], 'กอ', 'a@x.c'),
+      named(['STAFF'], 'ขอ', 'b@x.c'),
+      named(['ADMIN'], 'ขอ', 'z@x.c'),
+      named(['ADMIN'], 'ขอ', 'a@x.c'),
+      named(['SUPER_ADMIN'], 'ซอ', 'c@x.c'),
+    ];
+    const order = [...rows].sort(compareUsersDefault).map((u) => `${u.roles[0]}:${u.email}`);
+    expect(order).toEqual([
+      'SUPER_ADMIN:c@x.c',
+      'ADMIN:a@x.c',
+      'ADMIN:z@x.c',
+      'STAFF:b@x.c',
+      'INSTRUCTOR:a@x.c',
+    ]);
+  });
+
+  it('ranks a multi-role person by their highest role', () => {
+    const both = named(['INSTRUCTOR', 'ADMIN'], 'กอ', 'a@x.c');
+    expect(compareUsersDefault(both, named(['STAFF'], 'กอ', 'a@x.c'))).toBeLessThan(0);
   });
 });

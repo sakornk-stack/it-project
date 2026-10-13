@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, UserRound } from 'lucide-react';
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
-import { formatThaiDate } from '@/lib/admin-users';
+import { compareUsersDefault, formatThaiDate } from '@/lib/admin-users';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { usePagination } from '@/lib/use-pagination';
 import { useScopeTargetName } from '@/lib/use-scope-target-name';
@@ -41,33 +41,17 @@ const FILTERABLE_ROLES = (Object.keys(ROLE_LABEL_TH) as Role[]).filter(
   (role) => role !== 'STUDENT',
 );
 
-// The status is always written out; the dot only repeats it.
-function StatusChip({ isActive }: Readonly<{ isActive: boolean }>) {
-  return (
-    <Badge tone={isActive ? 'success' : 'neutral'} className="gap-1.5 whitespace-nowrap">
-      <span
-        aria-hidden="true"
-        className={cn(
-          'h-1.5 w-1.5 rounded-full',
-          BAR_TONE_CLASSES[isActive ? 'success' : 'neutral'],
-        )}
-      />
-      {isActive ? 'ใช้งานอยู่' : 'ระงับการใช้งาน'}
-    </Badge>
-  );
-}
-
-// Explains why "ส่งคำเชิญซ้ำ" exists; written out so it does not rely on colour.
+// One badge per account so every row is the same height. Suspended wins over
+// "waiting for a password"; the wording carries the meaning, the dot only repeats it.
 function StatusColumn({ user }: Readonly<{ user: AdminUserSummary }>) {
+  const pending = user.isActive && user.mustChangePassword;
+  const tone = pending ? 'warning' : user.isActive ? 'success' : 'neutral';
+  const text = pending ? 'รอตั้งรหัสผ่าน' : user.isActive ? 'ใช้งานอยู่' : 'ระงับการใช้งาน';
   return (
-    <div className="flex flex-col items-start gap-1.5">
-      <StatusChip isActive={user.isActive} />
-      {user.mustChangePassword && (
-        <Badge tone="warning" className="whitespace-nowrap">
-          ยังไม่ตั้งรหัสผ่าน
-        </Badge>
-      )}
-    </div>
+    <Badge tone={tone} className="gap-1.5 whitespace-nowrap">
+      <span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', BAR_TONE_CLASSES[tone])} />
+      {text}
+    </Badge>
   );
 }
 
@@ -102,13 +86,17 @@ function ScopeBadges({
   user: AdminUserSummary;
   resolveTargetName: ReturnType<typeof useScopeTargetName>;
 }>) {
+  if (user.roles.includes('SUPER_ADMIN')) {
+    return <Badge tone="neutral">ทั้งระบบ</Badge>;
+  }
   if (user.scopes.length === 0) {
-    return roleNeedsScope(user.roles) ? (
-      <Badge tone="warning" className="whitespace-normal text-left">
+    return (
+      <Badge
+        tone={roleNeedsScope(user.roles) ? 'warning' : 'neutral'}
+        className="whitespace-normal text-left"
+      >
         ยังไม่กำหนดขอบเขต
       </Badge>
-    ) : (
-      <span className="text-muted-foreground">—</span>
     );
   }
   return (
@@ -245,7 +233,8 @@ export function UserListTable({
   const isFiltered =
     search.trim() !== '' || roleFilter !== ALL || statusFilter !== ALL || scopeFilter !== ALL;
 
-  const sort = useTableSort(filtered, {
+  const ordered = useMemo(() => [...filtered].sort(compareUsersDefault), [filtered]);
+  const sort = useTableSort(ordered, {
     fullName: (u) => u.fullName,
     email: (u) => u.email,
     status: (u) => (u.isActive ? 0 : 1),
