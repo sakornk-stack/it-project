@@ -1,4 +1,4 @@
-import { formatFiveScale } from '@/lib/five-scale';
+import { formatFiveScale, percentToFiveScale } from '@/lib/five-scale';
 import { SCORE_BANDS, type ScoreBandKey } from '@/lib/plo-score-bands';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,14 @@ import { CollapsibleSection } from '@/components/ui/collapsible-section';
 const RADIUS = 52;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const RING_SIZE = 112;
+
+// The 5.0 scale is a straight conversion of the percent (percent / 20, one decimal), so each
+// band minimum has an exact equivalent; 0% needs none.
+function bandThresholdText(band: (typeof SCORE_BANDS)[number]) {
+  return band.minimum === 0
+    ? `${band.label} (ตั้งแต่ 0%)`
+    : `${band.label} (ตั้งแต่ ${band.minimum}% หรือ ${percentToFiveScale(band.minimum).toFixed(1)} จาก 5.0)`;
+}
 
 // No chart library in this project (confirmed — plain SVG ring, same
 // no-dependency style as the hand-rolled linear Progress component).
@@ -140,7 +148,7 @@ export function OverallAchievementCard({
             {SCORE_BANDS.map((b) => b.minimum)
               .slice(0, 3)
               .join('/')}
-            ) ได้แก่ {SCORE_BANDS.map((b) => `${b.label} (ตั้งแต่ ${b.minimum}%)`).join(', ')}
+            ) ได้แก่ {SCORE_BANDS.map((b) => bandThresholdText(b)).join(', ')}
           </p>
           <p>
             การจัดกลุ่มนี้แยกจาก &quot;ผ่านเกณฑ์&quot; ของแต่ละ PLO ด้านล่าง
