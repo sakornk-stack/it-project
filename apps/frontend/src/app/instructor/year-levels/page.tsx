@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Info, TrendingDown, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import {
   fetchInstructorDashboard,
@@ -19,7 +19,10 @@ import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { YearLevelMatrix } from '@/components/instructor/year-level-matrix';
 import { InstructorYearLevelOverview } from '@/components/instructor/instructor-year-level-overview';
 import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
-import { StatTile } from '@/components/instructor/stat-tile';
+import { StatCard } from '@/components/dashboard/stat-card';
+import { Progress } from '@/components/ui/progress';
+import { BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
+import { formatPercent } from '@/lib/format-percent';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
@@ -30,6 +33,33 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 import { PageSection } from '@/components/layout/page-section';
+
+// At or above this share of the students, a count is shown as danger, not warning.
+const HIGH_SHARE_PERCENT = 25;
+
+// "x% of all students" in words, with the same share as a bar.
+function ShareFooter({
+  count,
+  total,
+  tone,
+  note,
+}: Readonly<{ count: number; total: number; tone: SemanticTone; note: string }>) {
+  const percent = total > 0 ? (count / total) * 100 : 0;
+  return (
+    <div className="space-y-1.5">
+      <Progress
+        value={percent}
+        label={`${formatPercent(percent)} ของนิสิตทั้งหมด`}
+        className="h-1.5"
+        barClassName={BAR_TONE_CLASSES[tone]}
+      />
+      <p className="text-[13px] text-muted-foreground">
+        <span className="font-semibold tabular-nums text-primary">{formatPercent(percent)}</span>{' '}
+        ของนิสิตทั้งหมด · {note}
+      </p>
+    </div>
+  );
+}
 
 export default function InstructorYearLevelsPage() {
   return (
@@ -90,6 +120,16 @@ function InstructorYearLevelsContent() {
     (studentsQuery.isSuccess || studentsQuery.isError) &&
     (dashboardQuery.isSuccess || dashboardQuery.isError);
   const figures = ready ? buildYearLevelsFigures(buckets, lowIds) : null;
+  const lowShare =
+    figures && figures.lowGrade !== null && figures.total > 0
+      ? (figures.lowGrade / figures.total) * 100
+      : 0;
+  const lowTone: SemanticTone =
+    !figures || !figures.lowGrade
+      ? 'neutral'
+      : lowShare >= HIGH_SHARE_PERCENT
+        ? 'danger'
+        : 'warning';
 
   if (!user) {
     return (
@@ -145,38 +185,55 @@ function InstructorYearLevelsContent() {
 
         {figures && figures.total > 0 && (
           <Reveal index={1}>
-            <dl className="grid gap-3 sm:grid-cols-3">
-              <StatTile
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatCard
+                icon={Users}
+                tone="primary"
+                interactive={false}
                 label="นิสิต"
-                unit="คน"
                 value={<AnimatedNumber value={figures.total} />}
-                extra={
-                  <span className="text-[13px] text-muted-foreground">ที่เคยเรียนวิชาของคุณ</span>
-                }
+                suffix="คน"
+                footer={<p className="text-[13px] text-muted-foreground">ที่เคยเรียนวิชาของคุณ</p>}
               />
-              <StatTile
+              <StatCard
+                icon={AlertTriangle}
+                tone={lowTone}
+                interactive={false}
                 label={`${LOW_GRADE_LABEL}ในวิชาของคุณ`}
-                unit={figures.lowGrade === null ? undefined : 'คน'}
-                zero={figures.lowGrade === 0}
                 value={
                   figures.lowGrade === null ? '—' : <AnimatedNumber value={figures.lowGrade} />
                 }
-                extra={
-                  <span className="text-[13px] text-muted-foreground">
-                    {figures.lowGrade === null ? 'โหลดข้อมูลรายวิชาไม่ได้' : LOW_GRADE_RULE}
-                  </span>
+                suffix={figures.lowGrade === null ? undefined : 'คน'}
+                footer={
+                  figures.lowGrade === null ? (
+                    <p className="text-[13px] text-muted-foreground">โหลดข้อมูลรายวิชาไม่ได้</p>
+                  ) : (
+                    <ShareFooter
+                      count={figures.lowGrade}
+                      total={figures.total}
+                      tone={lowTone}
+                      note={LOW_GRADE_RULE}
+                    />
+                  )
                 }
               />
-              <StatTile
+              <StatCard
+                icon={TrendingDown}
+                tone={figures.behind > 0 ? 'warning' : 'neutral'}
+                interactive={false}
                 label="หน่วยกิตน้อยกว่าที่ควรมี"
-                unit="คน"
-                zero={figures.behind === 0}
                 value={<AnimatedNumber value={figures.behind} />}
-                extra={
-                  <span className="text-[13px] text-muted-foreground">เทียบกับแผนตามชั้นปี</span>
+                suffix="คน"
+                footer={
+                  <ShareFooter
+                    count={figures.behind}
+                    total={figures.total}
+                    tone={figures.behind > 0 ? 'warning' : 'neutral'}
+                    note="เทียบกับแผนตามชั้นปี"
+                  />
                 }
               />
-            </dl>
+            </div>
           </Reveal>
         )}
 
@@ -187,9 +244,12 @@ function InstructorYearLevelsContent() {
               titleClassName={TEXT_SECTION}
               description="นับเป็นที่นั่ง คนที่เรียนหลายวิชานับในแต่ละวิชา กดที่วิชาเพื่อดูรายละเอียด"
             >
-              <details className="group rounded-md border border-slate-200 bg-slate-50 px-3">
+              <details className="group rounded-lg border border-slate-200 bg-brand-light px-3">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                  วิธีอ่านตาราง
+                  <span className="inline-flex items-center gap-2">
+                    <Info size={16} aria-hidden="true" className="shrink-0 text-brand" />
+                    วิธีอ่านตาราง
+                  </span>
                   <ChevronDown
                     size={16}
                     aria-hidden="true"
@@ -197,7 +257,10 @@ function InstructorYearLevelsContent() {
                   />
                 </summary>
                 <ul className="list-disc space-y-1 pb-3 pl-5 text-sm text-muted-foreground">
-                  <li>ตัวใหญ่ในช่องคือเกรดกลางของกลุ่มนั้น พื้นหลังเข้มขึ้นเมื่อเกรดสูงขึ้น</li>
+                  <li>
+                    ตัวใหญ่ในช่องคือเกรดกลางของกลุ่มนั้น สีพื้นอ่อนตาม GPA ของกลุ่ม: แดง ต่ำกว่า
+                    1.50 เหลือง 1.50–1.74 เขียว 1.75 ขึ้นไป
+                  </li>
                   <li>
                     GPA คือค่าเฉลี่ยแต้มเกรดของวิชาในกลุ่มนั้น ส่วน F และ W คือจำนวนคนที่ได้เกรดนั้น
                   </li>

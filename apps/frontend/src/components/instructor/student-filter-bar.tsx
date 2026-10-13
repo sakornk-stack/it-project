@@ -1,5 +1,6 @@
 'use client';
 
+import { Search, X } from 'lucide-react';
 import { ALL, type GradeFilter, type PersonCounts } from '@/lib/student-directory';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -57,14 +58,30 @@ export function StudentFilterBar({
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="search"
-          placeholder="ค้นหารหัสหรือชื่อนิสิต"
-          aria-label="ค้นหารหัสหรือชื่อนิสิต"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className={cn(CONTROL_HEIGHT, 'w-full')}
-        />
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            type="text"
+            placeholder="ค้นหารหัสหรือชื่อนิสิต"
+            aria-label="ค้นหารหัสหรือชื่อนิสิต"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className={cn(CONTROL_HEIGHT, 'w-full pl-9', search !== '' && 'pr-11')}
+          />
+          {search !== '' && (
+            <button
+              type="button"
+              aria-label="ล้างคำค้นหา"
+              onClick={() => onSearchChange('')}
+              className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         {isFiltered && (
           <Button
             type="button"

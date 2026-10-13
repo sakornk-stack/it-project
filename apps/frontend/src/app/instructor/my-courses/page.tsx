@@ -139,7 +139,11 @@ function InstructorMyCoursesContent() {
                     {yearGroup.semesters.map((semester) => (
                       <div key={semester.semesterId} className="space-y-2">
                         <TermHeading term={semester.semesterTerm} count={semester.courses.length} />
-                        <TermCourseList semester={semester} academicYear={yearGroup.academicYear} />
+                        <TermCourseList
+                          semester={semester}
+                          academicYear={yearGroup.academicYear}
+                          compact
+                        />
                       </div>
                     ))}
                   </div>

@@ -1,6 +1,14 @@
 'use client';
 
-import { Suspense, useCallback, useMemo, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { fetchInstructorStudents } from '@/lib/api/instructor';
@@ -31,6 +39,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function InstructorStudentsPage() {
   return (
@@ -84,7 +93,17 @@ function InstructorStudentsContent() {
   );
   const summary = query.data ? buildStudentsSummary(entries, courses.length) : null;
   const isFiltered = studentFiltersToQuery(filters) !== '';
-  const pagination = usePagination(people, undefined, studentFiltersToQuery(filters));
+  // The cards follow the filters one beat behind and fade meanwhile, so typing
+  // never blanks the list.
+  const listPeople = useDeferredValue(people);
+  const listStale = listPeople !== people;
+  const pagination = usePagination(listPeople, undefined, studentFiltersToQuery(filters));
+  // The first cards arrive one after another on the first view only; later
+  // filtering and paging swap cards without any entrance.
+  const firstView = useRef(true);
+  useEffect(() => {
+    if (query.data) firstView.current = false;
+  }, [query.data]);
 
   if (!user) {
     return (
@@ -176,8 +195,18 @@ function InstructorStudentsContent() {
               </Reveal>
             ) : (
               <Reveal index={2}>
-                <div className="space-y-3">
-                  <StudentPersonList people={pagination.pageRows} />
+                <div
+                  aria-busy={listStale}
+                  className={cn(
+                    'space-y-3 transition-opacity duration-150 motion-reduce:transition-none',
+                    listStale && 'opacity-60',
+                  )}
+                >
+                  <StudentPersonList
+                    people={pagination.pageRows}
+                    showLowBadge={filters.grade !== 'LOW'}
+                    stagger={firstView.current}
+                  />
                   <Pagination {...pagination} unit="คน" onPageChange={pagination.setPage} />
                 </div>
               </Reveal>

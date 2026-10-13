@@ -4,11 +4,12 @@ import {
   formatCourseGpa,
   formatGradeList,
   formatMedian,
-  medianShade,
   summarizeGradeCenter,
 } from '@/lib/grade-center';
 import type { GroupStats, Matrix, MatrixCell } from '@/lib/instructor-overview';
+import { TINT_TONE_CLASSES } from '@/lib/tone';
 import { cn } from '@/lib/utils';
+import { gpaTone } from '@/components/staff/gpa-scale';
 import { CARD, TEXT_LABEL } from './instructor-ui';
 
 // One cell, two lines. First: the middle grade on a one-hue tint (darker for a
@@ -29,8 +30,10 @@ function Figure({
         {values ? (
           <>
             <span
-              className="inline-flex min-w-14 justify-center rounded-md px-2 py-0.5 text-xl font-semibold leading-tight tabular-nums text-primary"
-              style={{ backgroundColor: `rgba(37, 99, 235, ${medianShade(values.median)})` }}
+              className={cn(
+                'inline-flex min-w-14 justify-center rounded-md px-2 py-0.5 text-xl font-semibold leading-tight tabular-nums text-primary',
+                TINT_TONE_CLASSES[gpaTone(values.gpa)],
+              )}
             >
               {formatMedian(values.median)}
             </span>
@@ -39,7 +42,7 @@ function Figure({
             </span>
           </>
         ) : (
-          <span className="inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[13px] text-muted-foreground">
+          <span className="inline-flex rounded-md border border-dashed border-slate-300 px-2 py-0.5 text-[13px] text-muted-foreground">
             ข้อมูลยังน้อย
           </span>
         )}
@@ -68,18 +71,21 @@ function Cell({ cell, end = false }: Readonly<{ cell: MatrixCell | null; end?: b
 const href = (id: string) => `/instructor/courses/${id}`;
 
 // Every course against every year level that has someone, one figure in every
-// cell. A table from lg up (the course name is the link; the row is clickable
-// through it) and one card per course below, with the year levels as a list.
+// cell. One table at every width: on a narrow screen it scrolls sideways and the
+// course column stays at the left. The course name is the link.
 export function YearLevelMatrix({ matrix }: Readonly<{ matrix: Matrix }>) {
   const { levels, rows, footer } = matrix;
   return (
     <>
-      <div className={cn('hidden overflow-x-auto lg:block', CARD)}>
-        <table className="w-full text-sm">
+      <div className={cn('overflow-x-auto', CARD)}>
+        <table className="w-full min-w-[40rem] text-sm">
           <caption className="sr-only">เกรดกลาง แยกตามวิชาและชั้นปี</caption>
           <thead>
             <tr className="border-b bg-slate-50 text-left text-[13px] text-muted-foreground">
-              <th scope="col" className="px-4 py-2 font-medium">
+              <th
+                scope="col"
+                className="sticky left-0 z-10 w-44 min-w-44 bg-slate-50 px-4 py-2 font-medium"
+              >
                 วิชา
               </th>
               {levels.map((l) => (
@@ -94,8 +100,11 @@ export function YearLevelMatrix({ matrix }: Readonly<{ matrix: Matrix }>) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.course.courseId} className="relative border-b hover:bg-slate-50">
-                <th scope="row" className="px-4 py-3 text-left align-top font-normal">
+              <tr key={row.course.courseId} className="interactive-row border-b">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 w-44 min-w-44 bg-card px-4 py-3 text-left align-top font-normal"
+                >
                   <Link
                     href={href(row.course.courseId)}
                     className="inline-flex min-h-11 items-center before:absolute before:inset-0 focus-visible:outline-none focus-visible:before:ring-2 focus-visible:before:ring-ring"
@@ -119,7 +128,10 @@ export function YearLevelMatrix({ matrix }: Readonly<{ matrix: Matrix }>) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-slate-300 bg-slate-50">
-              <th scope="row" className="px-4 py-3 text-left align-top font-semibold text-primary">
+              <th
+                scope="row"
+                className="sticky left-0 z-10 w-44 min-w-44 bg-slate-50 px-4 py-3 text-left align-top font-semibold text-primary"
+              >
                 ทุกวิชารวมกัน
               </th>
               {footer.cells.map((c, i) => (
@@ -134,58 +146,6 @@ export function YearLevelMatrix({ matrix }: Readonly<{ matrix: Matrix }>) {
           </tfoot>
         </table>
       </div>
-
-      <ul className="space-y-3 lg:hidden">
-        {rows.map((row) => (
-          <li key={row.course.courseId}>
-            <Link
-              href={href(row.course.courseId)}
-              className={cn(
-                'block space-y-3 p-4 transition hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                CARD,
-              )}
-            >
-              <span className="block min-w-0">
-                <span className={cn('block', TEXT_LABEL)}>{row.course.code}</span>
-                <span className="block break-words font-semibold text-primary">
-                  {row.course.name}
-                </span>
-              </span>
-              <span className="block divide-y">
-                {levels.map((l, i) => (
-                  <span key={l} className="flex items-start justify-between gap-3 py-2">
-                    <span className="min-h-11 pt-1 text-sm text-muted-foreground">
-                      {yearLevelLabel(l)}
-                    </span>
-                    <Cell cell={row.cells[i]} end />
-                  </span>
-                ))}
-                <span className="flex items-start justify-between gap-3 pt-2">
-                  <span className="min-h-11 pt-1 text-sm font-medium text-primary">รวมวิชานี้</span>
-                  <Figure stats={row.total} end mode />
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-        <li className={cn('space-y-3 border-t-2 border-slate-300 p-4', CARD)}>
-          <span className="block font-semibold text-primary">ทุกวิชารวมกัน</span>
-          <span className="block divide-y">
-            {levels.map((l, i) => (
-              <span key={l} className="flex items-start justify-between gap-3 py-2">
-                <span className="min-h-11 pt-1 text-sm text-muted-foreground">
-                  {yearLevelLabel(l)}
-                </span>
-                <Cell cell={footer.cells[i]} end />
-              </span>
-            ))}
-            <span className="flex items-start justify-between gap-3 pt-2">
-              <span className="min-h-11 pt-1 text-sm font-medium text-primary">รวม</span>
-              <Figure stats={footer.total} end mode />
-            </span>
-          </span>
-        </li>
-      </ul>
     </>
   );
 }

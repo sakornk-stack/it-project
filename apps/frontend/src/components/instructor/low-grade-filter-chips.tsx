@@ -3,6 +3,7 @@
 import { ALL, type GradeFilter, type PersonCounts } from '@/lib/student-directory';
 import { LOW_GRADE_LABEL } from '@/lib/low-grade';
 import { cn } from '@/lib/utils';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -38,9 +39,13 @@ export function LowGradeFilterChips({
           >
             {option.label}
             {option.warn && option.count > 0 ? (
-              <Badge tone="warning">{option.count}</Badge>
+              <Badge tone="warning">
+                <AnimatedNumber value={option.count} />
+              </Badge>
             ) : (
-              <span className={selected ? undefined : 'text-muted-foreground'}>{option.count}</span>
+              <span className={selected ? undefined : 'text-muted-foreground'}>
+                <AnimatedNumber value={option.count} />
+              </span>
             )}
           </Button>
         );

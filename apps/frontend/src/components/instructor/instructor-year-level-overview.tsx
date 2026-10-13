@@ -42,10 +42,8 @@ export function InstructorYearLevelOverview({
                 aria-expanded={isExpanded}
                 onClick={() => setExpandedLevel(isExpanded ? null : bucket.yearLevel)}
                 className={cn(
-                  'flex min-h-11 flex-col rounded-lg border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  isExpanded
-                    ? 'border-brand bg-brand-light'
-                    : 'border-slate-200 hover:border-brand',
+                  'interactive-card flex min-h-11 flex-col rounded-lg border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  isExpanded ? 'border-brand bg-brand-light' : 'border-slate-200',
                 )}
               >
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
