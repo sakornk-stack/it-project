@@ -30,11 +30,39 @@ describe('CareerFitService', () => {
     expect(args.include.courses.where.course.curriculumId).toBe('cur1');
   });
 
+  const career = (id: string, courseCount: number) => ({
+    id,
+    name: `สาย ${id}`,
+    sortOrder: 0,
+    courses: Array.from({ length: courseCount }, (_, i) => ({
+      weight: 1,
+      course: { id: `${id}${i}`, code: `C${id}${i}`, name: `วิชา ${i}` },
+    })),
+  });
+
   it('returns NO_CAREERS when the curriculum has no career links', async () => {
     const { service, prisma } = build();
-    prisma.career.findMany.mockResolvedValue([{ id: 'a', name: 'ก', sortOrder: 0, courses: [] }]);
+    prisma.career.findMany.mockResolvedValue([career('a', 0)]);
     const r = await service.getMyCareerFit({ userId: 'u1' } as RequestUser);
     expect(r.status).toBe('NO_CAREERS');
+  });
+
+  it('keeps careers with 2 or 3 linked courses; fewer than 3 graded is INSUFFICIENT_DATA', async () => {
+    const { service, prisma, records } = build();
+    records.getLatestAttemptsPerCourse.mockResolvedValue(
+      new Map([
+        ['b0', { grade: 'A' }],
+        ['c0', { grade: 'A' }],
+        ['c1', { grade: 'A' }],
+        ['c2', { grade: 'A' }],
+      ]),
+    );
+    prisma.career.findMany.mockResolvedValue([career('a', 0), career('b', 2), career('c', 3)]);
+    const r = await service.getMyCareerFit({ userId: 'u1' } as RequestUser);
+    expect(r.careers.map((c) => [c.careerId, c.status, c.totalCourseCount])).toEqual([
+      ['c', 'OK', 3],
+      ['b', 'INSUFFICIENT_DATA', 2],
+    ]);
   });
 
   it('maps latest attempt grades into the score', async () => {
