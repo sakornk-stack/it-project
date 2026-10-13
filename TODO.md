@@ -138,7 +138,8 @@ Three commits delivered (2026-09-30):
 3. `npm run prisma:seed:plo-2564` (PLO1–6 ของ 2564 — ข้อความยังไม่ได้ยืนยันกับเล่ม 2564)
 4. `npx ts-node prisma/import-ict-clo-plo.ts` (PLO/CLO/mapping ของ 2569) — **ต้องมี CSV ใน `prisma/private-data/`**
 5. `npx ts-node prisma/copy-ict-clo-plo-to-2564.ts` (คัดลอก CLO/mapping 2569 ไป 2564 ตามชื่อวิชา) — อ่านจาก DB แต่รายงาน (ฉ) ใช้ `private-data/` ด้วย
-6. `npx ts-node prisma/import-career-courses.ts --exclude-career=เสนอเพิ่ม` (สาย→วิชาสำหรับฟีเจอร์ "แนวทางอาชีพ": Career/CareerCourse ของ 2569 แล้วคัดลอกไป 2564 ตามชื่อวิชา) — **ต้องมี `private-data/career-course-draft.csv`**; `--exclude-career=TEXT` ข้ามสายที่ชื่อมี TEXT (สายที่ไม่อยู่ในเล่ม); ต้องรันหลังขั้นที่ 2 (ต้องมีวิชา) ยังไม่มี endpoint/UI
+6. `npx ts-node prisma/import-career-courses.ts` (สาย→วิชาสำหรับฟีเจอร์ "แนวทางอาชีพ": Career/CareerCourse ของ 2569 แล้วคัดลอกไป 2564 ตามชื่อวิชา) — **ต้องมี `private-data/career-course-draft.csv`**; `--exclude-career=TEXT` ข้ามสายที่ชื่อมี TEXT (สายที่ไม่อยู่ในเล่ม); ต้องรันหลังขั้นที่ 2 (ต้องมีวิชา)
+   - หมายเหตุ: `--rename-file=PATH` (CSV `old,new`) ใช้เฉพาะ DB ที่สร้างก่อนเปลี่ยนชื่อสายเป็นชื่อใหม่ เพื่อเปลี่ยนชื่อสายเดิมแทนการสร้างซ้ำ; DB ใหม่ที่ใช้ CSV ชื่อใหม่ไม่ต้องใช้
 - `private-data/` (เล่มหลักสูตรและ CSV ที่แปลงแล้ว) **ไม่อยู่ใน git** ต้องเอาไฟล์มาวางเองบนเครื่องใหม่ ถ้าไม่มี ขั้นที่ 4 ใช้ไม่ได้ ขั้นที่ 5 รันได้แต่ข้ามการตรวจ (ฉ)
 
 

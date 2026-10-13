@@ -17,6 +17,7 @@ const prisma = new PrismaClient();
 //   ts-node prisma/import-career-courses.ts --apply               # one transaction, idempotent
 //   ts-node prisma/import-career-courses.ts --exclude-career=TEXT # skip careers whose name contains TEXT
 //   ts-node prisma/import-career-courses.ts --file=PATH           # default private-data/career-course-draft.csv
+//   ts-node prisma/import-career-courses.ts --rename-file=PATH    # CSV old,new: rename an existing career instead of creating a new one
 //
 // CSV columns: career, course_code, weight (1-3), reason.
 const APPLY = process.argv.includes('--apply');
@@ -25,9 +26,21 @@ const argValues = (name: string) =>
 const EXCLUDE = argValues('exclude-career');
 const FILE =
   argValues('file')[0] ?? path.join(__dirname, 'private-data', 'career-course-draft.csv');
+const RENAME_FILE = argValues('rename-file')[0];
 const PROGRAM_CODE = 'ICT';
 const SOURCE_VERSION = '2569';
 const TARGET_VERSION = '2564';
+
+// new career name -> old name (only when --rename-file is given)
+function readRenames() {
+  const renames = new Map<string, string>();
+  if (!RENAME_FILE) return renames;
+  for (const [oldName, newName] of parseCsv(fs.readFileSync(RENAME_FILE, 'utf8')).slice(1)) {
+    if (oldName?.trim() && newName?.trim()) renames.set(newName.trim(), oldName.trim());
+  }
+  return renames;
+}
+const RENAMES = readRenames();
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -141,14 +154,18 @@ async function plan(db: Db, rows: Row[], apply: boolean) {
   const careerT = tally();
   const careerIdByName = new Map<string, string | null>();
   for (const [i, name] of careerNames.entries()) {
-    const found = await db.career.findFirst({ where: { name, isActive: true } });
-    if (found && found.sortOrder === i) {
+    let found = await db.career.findFirst({ where: { name, isActive: true } });
+    const oldName = RENAMES.get(name);
+    // Renamed career: reuse the row (and its links) under its old name.
+    if (!found && oldName)
+      found = await db.career.findFirst({ where: { name: oldName, isActive: true } });
+    if (found && found.sortOrder === i && found.name === name) {
       careerT.skip++;
     } else {
       found ? careerT.update++ : careerT.create++;
       if (apply) {
         const saved = found
-          ? await db.career.update({ where: { id: found.id }, data: { sortOrder: i } })
+          ? await db.career.update({ where: { id: found.id }, data: { name, sortOrder: i } })
           : await db.career.create({ data: { name, sortOrder: i } });
         careerIdByName.set(name, saved.id);
         continue;
