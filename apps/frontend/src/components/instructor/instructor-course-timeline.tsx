@@ -43,7 +43,7 @@ function CourseCard({
       </div>
       <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
         <span>{termText}</span>
-        <span className="tabular-nums">{course.studentCount} นักศึกษา</span>
+        <span className="tabular-nums">{course.studentCount} นิสิต</span>
         <SampleTag gradedCount={course.gradedCount} />
         <span className="rounded-full bg-brand-light px-2 py-0.5 text-[13px] text-brand">
           ส่วนใหญ่ {yearLevelLabel(course.predominantYearLevel)}

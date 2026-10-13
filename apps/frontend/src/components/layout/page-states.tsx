@@ -17,7 +17,7 @@ export function StudentOnlyPage({ user }: { user: CurrentUserResponse }) {
       identityLabel={user.email}
       fullName={user.fullName}
     >
-      <EmptyState icon={Lock} description="หน้านี้สำหรับนักศึกษาเท่านั้น" />
+      <EmptyState icon={Lock} description="หน้านี้สำหรับนิสิตเท่านั้น" />
     </DashboardShell>
   );
 }

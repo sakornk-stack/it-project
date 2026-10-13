@@ -107,8 +107,8 @@ function InstructorStudentsContent() {
       <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
         <Reveal index={0}>
           <PageHeader
-            title="นักศึกษา"
-            description={summary ?? 'นักศึกษาในวิชาที่คุณสอน เรียงจากคนที่มีเกรด D+ ลงไปก่อน'}
+            title="นิสิต"
+            description={summary ?? 'นิสิตในวิชาที่คุณสอน เรียงจากคนที่มีเกรด D+ ลงไปก่อน'}
             titleClassName={TEXT_PAGE}
           />
         </Reveal>
@@ -117,7 +117,7 @@ function InstructorStudentsContent() {
 
         {query.isError && (
           <Alert variant="destructive">
-            <AlertDescription>ไม่สามารถโหลดข้อมูลนักศึกษาได้ กรุณาลองใหม่อีกครั้ง</AlertDescription>
+            <AlertDescription>ไม่สามารถโหลดข้อมูลนิสิตได้ กรุณาลองใหม่อีกครั้ง</AlertDescription>
           </Alert>
         )}
 
@@ -129,7 +129,7 @@ function InstructorStudentsContent() {
                   illustration="no-students"
                   description={
                     courses.length > 0
-                      ? 'ยังไม่มีนักศึกษาในรายวิชาที่คุณสอน รายชื่อจะขึ้นที่นี่เมื่อมีผลการเรียน'
+                      ? 'ยังไม่มีนิสิตในรายวิชาที่คุณสอน รายชื่อจะขึ้นที่นี่เมื่อมีผลการเรียน'
                       : 'ยังไม่มีวิชาที่ได้รับมอบหมายให้คุณสอน'
                   }
                 />
@@ -164,7 +164,7 @@ function InstructorStudentsContent() {
                   <CardContent className="pt-6">
                     <EmptyState
                       illustration="no-results"
-                      description="ไม่พบนักศึกษาที่ตรงกับตัวกรองที่เลือก"
+                      description="ไม่พบนิสิตที่ตรงกับตัวกรองที่เลือก"
                       action={
                         <Button type="button" variant="outline" onClick={clearFilters}>
                           ล้างตัวกรอง

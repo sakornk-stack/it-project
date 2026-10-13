@@ -15,7 +15,7 @@ const PINNED: Record<string, [string, string][]> = {
   INSTRUCTOR: [
     ['แดชบอร์ด', '/instructor/dashboard'],
     ['รายวิชาที่สอน', '/instructor/my-courses'],
-    ['นักศึกษา', '/instructor/students'],
+    ['นิสิต', '/instructor/students'],
     ['ภาพรวมชั้นปี', '/instructor/year-levels'],
   ],
   SUPER_ADMIN: [
@@ -45,7 +45,7 @@ describe('navItemsForRole', () => {
   it('gives Staff three items', () => {
     expect(navItemsForRole('STAFF').map((i) => [i.label, i.href])).toEqual([
       ['ภาพรวม', '/staff/dashboard'],
-      ['นักศึกษา', '/staff/students'],
+      ['นิสิต', '/staff/students'],
       ['หลักสูตร', '/staff/curriculum'],
     ]);
   });
@@ -73,21 +73,21 @@ describe('isNavItemActive', () => {
     expect(active('STUDENT', '/dashboard')).toEqual(['แดชบอร์ด']);
     expect(active('STUDENT', '/dashboard/extra')).toEqual([]);
     expect(active('SUPER_ADMIN', '/admin/users/abc')).toEqual([]);
-    expect(active('INSTRUCTOR', '/instructor/students')).toEqual(['นักศึกษา']);
+    expect(active('INSTRUCTOR', '/instructor/students')).toEqual(['นิสิต']);
   });
 
   it('keeps the instructor overview lit inside a course page, as before', () => {
     expect(active('INSTRUCTOR', '/instructor/courses/abc')).toEqual(['แดชบอร์ด']);
   });
 
-  it('keeps Staff นักศึกษา lit on every student tab and on a student page', () => {
+  it('keeps Staff นิสิต lit on every student tab and on a student page', () => {
     for (const path of [
       '/staff/students',
       '/staff/students/abc',
       '/staff/year-levels',
       '/staff/student-invitations',
     ]) {
-      expect(active('STAFF', path)).toEqual(['นักศึกษา']);
+      expect(active('STAFF', path)).toEqual(['นิสิต']);
     }
   });
 

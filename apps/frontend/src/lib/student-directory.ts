@@ -114,7 +114,7 @@ export function studentFiltersToQuery(filters: StudentFilters): string {
   return params.toString();
 }
 
-export const NO_STUDENTS_IN_COURSES = 'ยังไม่มีนักศึกษาในรายวิชาที่คุณสอน';
+export const NO_STUDENTS_IN_COURSES = 'ยังไม่มีนิสิตในรายวิชาที่คุณสอน';
 
 // Header line, people not rows, from the unfiltered list. null = nothing to say
 // (no data loaded yet or no courses at all).
@@ -125,7 +125,7 @@ export function buildStudentsSummary(
   if (entries.length === 0) return courseCount > 0 ? NO_STUDENTS_IN_COURSES : null;
   const counts = countPeople(groupByPerson(entries));
   const courses = new Set(entries.map((e) => e.courseId)).size;
-  const population = `นักศึกษา ${counts.total} คนใน ${courses} วิชา`;
+  const population = `นิสิต ${counts.total} คนใน ${courses} วิชา`;
   return counts.low === 0
     ? `${population} · ${NO_LOW_GRADE}`
     : `${population} · ${LOW_GRADE_LABEL} ${counts.low} คน`;

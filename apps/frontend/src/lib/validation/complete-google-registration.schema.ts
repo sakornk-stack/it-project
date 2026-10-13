@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const completeGoogleRegistrationSchema = z.object({
-  studentCode: z.string().min(1, 'กรุณากรอกรหัสนักศึกษา'),
+  studentCode: z.string().min(1, 'กรุณากรอกรหัสนิสิต'),
   facultyId: z.string().uuid('กรุณาเลือกคณะ'),
   departmentId: z.string().uuid('กรุณาเลือกภาควิชา'),
   programId: z.string().uuid('กรุณาเลือกหลักสูตร'),

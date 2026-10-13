@@ -127,7 +127,7 @@ export type SortKey = 'severity' | 'code' | 'year' | 'gpa';
 
 export const SORT_LABELS: Record<SortKey, string> = {
   severity: 'ความรุนแรง',
-  code: 'รหัสนักศึกษา',
+  code: 'รหัสนิสิต',
   year: 'ชั้นปี',
   gpa: 'GPA (น้อยไปมาก)',
 };

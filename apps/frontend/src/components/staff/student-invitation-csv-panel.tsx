@@ -28,7 +28,7 @@ function PreviewTable({ rows }: Readonly<{ rows: ParsedInvitationRow[] }>) {
         <thead className="sticky top-0 bg-slate-50">
           <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
             <th className="px-3 py-2 font-medium">แถว</th>
-            <th className="px-3 py-2 font-medium">รหัสนักศึกษา</th>
+            <th className="px-3 py-2 font-medium">รหัสนิสิต</th>
             <th className="px-3 py-2 font-medium">อีเมล</th>
             <th className="px-3 py-2 font-medium">ชื่อ-นามสกุล</th>
             <th className="px-3 py-2 font-medium">สาขา / ฉบับ</th>
@@ -168,7 +168,7 @@ export function StudentInvitationCsvPanel({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        คอลัมน์ที่ต้องมี: รหัสนักศึกษา, อีเมล, ชื่อ-นามสกุล, รหัสสาขา, ฉบับหลักสูตร, ปีเข้าศึกษา —
+        คอลัมน์ที่ต้องมี: รหัสนิสิต, อีเมล, ชื่อ-นามสกุล, รหัสสาขา, ฉบับหลักสูตร, ปีเข้าศึกษา —
         ระบบจะส่งอีเมลเชิญให้แต่ละคน ผู้ถูกเชิญยังต้องสมัครสมาชิกด้วยตนเอง
         ไม่มีการสร้างบัญชีให้ทันที
       </p>

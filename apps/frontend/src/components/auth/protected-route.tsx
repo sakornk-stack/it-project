@@ -26,7 +26,7 @@ import { ChangePasswordForm } from './change-password-form';
 const BRAND_COPY = {
   title: 'ยินดีต้อนรับสู่พื้นที่เรียนรู้ที่ใช่สำหรับคุณ',
   description:
-    'เข้าถึงระบบติดตามผลการเรียนที่ครอบคลุม การวิเคราะห์ CLO/PLO และการวิเคราะห์ศักยภาพความถนัด เพื่อขับเคลื่อนความสำเร็จของนักศึกษา',
+    'เข้าถึงระบบติดตามผลการเรียนที่ครอบคลุม การวิเคราะห์ CLO/PLO และการวิเคราะห์ศักยภาพความถนัด เพื่อขับเคลื่อนความสำเร็จของนิสิต',
 };
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {

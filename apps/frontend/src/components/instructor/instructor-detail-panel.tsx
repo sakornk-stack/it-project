@@ -30,7 +30,7 @@ export type InstructorTab = 'overview' | 'students' | 'evidence' | 'clo';
 // and 'course' (metadata/prerequisites) tabs.
 const TABS: { key: InstructorTab; label: string }[] = [
   { key: 'overview', label: 'ภาพรวม' },
-  { key: 'students', label: 'นักศึกษา' },
+  { key: 'students', label: 'นิสิต' },
   { key: 'evidence', label: 'กรอกคะแนน' },
   { key: 'clo', label: 'เป้าการเรียนรู้' },
 ];

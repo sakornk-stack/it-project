@@ -191,8 +191,8 @@ function StaffStudentsContent() {
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
         <PageHeader
-          title="นักศึกษา"
-          description="นักศึกษาในขอบเขตความรับผิดชอบของคุณ แบ่งตามสถานะทางวิชาการ"
+          title="นิสิต"
+          description="นิสิตในขอบเขตความรับผิดชอบของคุณ แบ่งตามสถานะทางวิชาการ"
         />
       </Reveal>
 
@@ -206,7 +206,7 @@ function StaffStudentsContent() {
             <div className="contents">
               <label className="order-1 block space-y-1.5 md:order-none">
                 <span className="text-xs font-medium text-muted-foreground">
-                  ค้นหาด้วยรหัสนักศึกษาหรือชื่อ-นามสกุล
+                  ค้นหาด้วยรหัสนิสิตหรือชื่อ-นามสกุล
                 </span>
                 <span className="relative block">
                   <Search
@@ -215,7 +215,7 @@ function StaffStudentsContent() {
                   />
                   <Input
                     className="pl-9"
-                    placeholder="ค้นหาด้วยรหัสนักศึกษา หรือชื่อ-นามสกุล"
+                    placeholder="ค้นหาด้วยรหัสนิสิต หรือชื่อ-นามสกุล"
                     defaultValue={search}
                     onChange={(e) => updateParams({ q: e.target.value })}
                   />

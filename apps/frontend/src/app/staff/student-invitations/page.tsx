@@ -70,8 +70,8 @@ function StaffStudentInvitationsContent() {
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
         <PageHeader
-          title="นักศึกษา"
-          description="นำเข้ารายชื่อนักศึกษาที่จะเข้าศึกษาจากไฟล์ CSV — ระบบส่งอีเมลเชิญให้แต่ละคน ผู้ถูกเชิญยังต้องสมัครสมาชิกด้วยตนเอง"
+          title="นิสิต"
+          description="นำเข้ารายชื่อนิสิตที่จะเข้าศึกษาจากไฟล์ CSV — ระบบส่งอีเมลเชิญให้แต่ละคน ผู้ถูกเชิญยังต้องสมัครสมาชิกด้วยตนเอง"
           actions={
             <Button
               type="button"

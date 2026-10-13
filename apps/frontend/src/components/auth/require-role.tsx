@@ -11,7 +11,7 @@ import type { SemanticTone } from '@/lib/tone';
 export { primaryRoleFor } from '@/lib/role-priority';
 
 export const ROLE_LABEL_TH: Record<Role, string> = {
-  STUDENT: 'นักศึกษา',
+  STUDENT: 'นิสิต',
   INSTRUCTOR: 'อาจารย์',
   STAFF: 'เจ้าหน้าที่',
   ADMIN: 'ผู้ดูแลระบบ',

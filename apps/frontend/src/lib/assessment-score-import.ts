@@ -15,9 +15,9 @@ import { ASSESSMENT_SCORE_STATUS_LABELS } from '@/lib/grade-label';
 // `maxScoreOverride ?? maxScore`, so a file that spanned several mappings
 // could silently normalize a score against the wrong maximum.
 
-export const SCORE_CSV_HEADERS = ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'คะแนน', 'สถานะ'];
+export const SCORE_CSV_HEADERS = ['รหัสนิสิต', 'ชื่อ-นามสกุล', 'คะแนน', 'สถานะ'];
 
-const STUDENT_CODE_ALIASES = ['รหัสนักศึกษา', 'studentcode', 'student code'];
+const STUDENT_CODE_ALIASES = ['รหัสนิสิต', 'รหัสนักศึกษา', 'studentcode', 'student code'];
 const SCORE_ALIASES = ['คะแนน', 'score'];
 const STATUS_ALIASES = ['สถานะ', 'status'];
 
@@ -126,11 +126,11 @@ function buildRow(
 ): ParsedScoreRow {
   const invalid = (error: string): InvalidScoreRow => ({ ...shape, verdict: 'invalid', error });
 
-  if (shape.studentCode === '') return invalid('ไม่มีรหัสนักศึกษา');
-  if (seen.has(shape.studentCode)) return invalid('รหัสนักศึกษาซ้ำในไฟล์');
+  if (shape.studentCode === '') return invalid('ไม่มีรหัสนิสิต');
+  if (seen.has(shape.studentCode)) return invalid('รหัสนิสิตซ้ำในไฟล์');
 
   const student = roster.get(shape.studentCode);
-  if (!student) return invalid('ไม่พบรหัสนักศึกษานี้ในรายชื่อของรายวิชา');
+  if (!student) return invalid('ไม่พบรหัสนิสิตนี้ในรายชื่อของรายวิชา');
 
   const status = normalizeStatus(shape.statusText);
   if (!status) {

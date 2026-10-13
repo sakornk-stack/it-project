@@ -226,7 +226,7 @@ describe('formatAchievementChange', () => {
 describe('buildInstructorSummary', () => {
   it('normal: every course passes and nobody needs following up', () => {
     expect(buildInstructorSummary(allPassing)).toBe(
-      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 74% (เทอมล่าสุด 50 คน: ▲ ดีขึ้น 10 จุดจากเทอมก่อน) · ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป',
+      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 74% (เทอมล่าสุด 50 คน: ▲ ดีขึ้น 10 จุดจากเทอมก่อน) · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
     );
   });
 
@@ -248,13 +248,13 @@ describe('buildInstructorSummary', () => {
 
   it('leaves out the arrow when there is only one term', () => {
     expect(buildInstructorSummary([course()])).toBe(
-      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป',
+      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
     );
   });
 
   it('says "with students" when some courses are still empty', () => {
     expect(buildInstructorSummary([course(), course({ courseId: 'c2', studentCount: 0 })])).toBe(
-      'ทุกวิชาที่มีนักศึกษาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป',
+      'ทุกวิชาที่มีนิสิตผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
     );
   });
 
@@ -267,7 +267,7 @@ describe('buildInstructorSummary', () => {
       }),
     ];
     const line = buildInstructorSummary(broken);
-    expect(line).toBe('ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป');
+    expect(line).toBe('ยังไม่มีนิสิตที่มีเกรด D+ ลงไป');
     expect(line).not.toMatch(/NaN|undefined|Infinity/);
   });
 });

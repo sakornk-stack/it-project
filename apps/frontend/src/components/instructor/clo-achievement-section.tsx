@@ -101,7 +101,7 @@ export function CloAchievementSection({
         )}
         {isLoading && <Skeleton className="h-3 w-40" />}
         {isError && (
-          <p className="text-xs text-destructive">ไม่สามารถโหลดจำนวนนักศึกษาที่ได้ B ขึ้นไปได้</p>
+          <p className="text-xs text-destructive">ไม่สามารถโหลดจำนวนนิสิตที่ได้ B ขึ้นไปได้</p>
         )}
         {detail && (
           <p className="text-xs text-muted-foreground">
@@ -115,7 +115,7 @@ export function CloAchievementSection({
 
       <PageSection
         title="เป้าการเรียนรู้แต่ละข้อ"
-        description="เป้าการเรียนรู้ (CLO) คือสิ่งที่นักศึกษาควรทำได้เมื่อเรียนจบวิชา ระบบยังไม่มีร้อยละรายข้อ จึงแสดงเฉพาะจำนวนคนที่มีคะแนนที่กรอกของแต่ละข้อ"
+        description="เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา ระบบยังไม่มีร้อยละรายข้อ จึงแสดงเฉพาะจำนวนคนที่มีคะแนนที่กรอกของแต่ละข้อ"
       >
         {sortedClos.map((clo) => (
           <div key={clo.cloId} className="rounded-md bg-slate-50 px-3 py-2">
@@ -157,7 +157,7 @@ export function CloAchievementSection({
           {plos.length > 0 && (
             <PageSection
               title="เป้าหมายของหลักสูตรที่เกี่ยวข้อง"
-              description="เป้าหมายของหลักสูตร (PLO) คือผลลัพธ์ที่หลักสูตรคาดหวังจากนักศึกษา"
+              description="เป้าหมายของหลักสูตร (PLO) คือผลลัพธ์ที่หลักสูตรคาดหวังจากนิสิต"
             >
               {plos.map((plo) => (
                 <div key={plo.ploId} className="space-y-1">

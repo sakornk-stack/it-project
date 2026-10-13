@@ -84,7 +84,7 @@ function CompleteGoogleRegistrationForm() {
           {
             ...RATE_LIMITED_ERROR,
             401: 'เซสชันหมดอายุ กรุณาเริ่มเข้าสู่ระบบด้วย Google ใหม่',
-            409: 'รหัสนักศึกษานี้ถูกใช้งานแล้ว',
+            409: 'รหัสนิสิตนี้ถูกใช้งานแล้ว',
           },
           undefined,
           OWN_SENTENCE_ONLY,
@@ -96,7 +96,7 @@ function CompleteGoogleRegistrationForm() {
   if (!pendingToken) {
     return (
       <AuthSplitLayout {...BRAND_COPY}>
-        <AuthHeading title="ข้อมูลนักศึกษา" />
+        <AuthHeading title="ข้อมูลนิสิต" />
         <Alert variant="destructive">
           <AlertDescription>
             ไม่พบข้อมูลการสมัคร กรุณาเริ่มเข้าสู่ระบบด้วย Google ใหม่
@@ -109,14 +109,14 @@ function CompleteGoogleRegistrationForm() {
   return (
     <AuthSplitLayout {...BRAND_COPY}>
       <AuthHeading
-        title="ข้อมูลนักศึกษา"
+        title="ข้อมูลนิสิต"
         description="กรอกข้อมูลที่เหลือเพื่อสมัครสมาชิกให้เสร็จสมบูรณ์"
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <Alert>
             <AlertDescription>
-              แบบฟอร์มนี้สำหรับนักศึกษาที่สมัครใช้งานครั้งแรกเท่านั้น หากคุณควรมีบัญชีเจ้าหน้าที่ อาจารย์
+              แบบฟอร์มนี้สำหรับนิสิตที่สมัครใช้งานครั้งแรกเท่านั้น หากคุณควรมีบัญชีเจ้าหน้าที่ อาจารย์
               หรือผู้ดูแลระบบ กรุณาติดต่อผู้ดูแลระบบเพื่อขอบัญชีแทนการกรอกแบบฟอร์มนี้
             </AlertDescription>
           </Alert>
@@ -130,7 +130,7 @@ function CompleteGoogleRegistrationForm() {
             name="studentCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>รหัสนักศึกษา</FormLabel>
+                <FormLabel>รหัสนิสิต</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

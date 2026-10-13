@@ -153,7 +153,7 @@ function AdminOverviewContent() {
                 />
                 <StatCard
                   icon={GraduationCap}
-                  label="นักศึกษา"
+                  label="นิสิต"
                   value={<AnimatedNumber value={data.userCounts.student} />}
                   suffix="คน"
                 />

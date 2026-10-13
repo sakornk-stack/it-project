@@ -231,7 +231,7 @@ function SummarySection({
             }
           />
           <StatTile
-            label="นักศึกษาที่มีเกรด"
+            label="นิสิตที่มีเกรด"
             unit="คน"
             zero={stats.seats === 0}
             value={<AnimatedNumber value={stats.seats} />}
@@ -349,7 +349,7 @@ function YearSection({
     );
   } else if (years.rows.length === 0) {
     body = (
-      <p className="text-sm text-muted-foreground">ยังไม่มีข้อมูลชั้นปีของนักศึกษาในวิชานี้</p>
+      <p className="text-sm text-muted-foreground">ยังไม่มีข้อมูลชั้นปีของนิสิตในวิชานี้</p>
     );
   } else {
     body = (
@@ -402,7 +402,7 @@ function YearSection({
   return (
     <SectionCard
       title="ภาพรวมตามชั้นปี"
-      description="ชั้นปีของนักศึกษาเทียบกับปีการศึกษาล่าสุด แสดงเฉพาะชั้นปีที่มีนักศึกษาในวิชานี้"
+      description="ชั้นปีของนิสิตเทียบกับปีการศึกษาล่าสุด แสดงเฉพาะชั้นปีที่มีนิสิตในวิชานี้"
       footer={footer}
     >
       {body}
@@ -479,7 +479,7 @@ function GradesSection({ snapshot }: Readonly<{ snapshot: CourseSnapshot }>) {
   return (
     <SectionCard
       title="การกระจายเกรด"
-      description="เกรดล่าสุดของนักศึกษาแต่ละคนในวิชานี้ (A ถึง F)"
+      description="เกรดล่าสุดของนิสิตแต่ละคนในวิชานี้ (A ถึง F)"
       aside={`รวม A ถึง F ${grades.scored} คน`}
     >
       {fewPeople ? (

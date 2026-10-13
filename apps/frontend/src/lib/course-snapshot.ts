@@ -253,7 +253,7 @@ export const SPARSE_TREND = 'ข้อมูลยังน้อย — ยั�
 export const EMPTY_SNAPSHOT = 'ยังไม่มีเกรดที่กรอก — เมื่อมีข้อมูล ระบบจะแสดงภาพรวมที่นี่';
 export const DATA_SOURCE_NOTE = 'ข้อมูลล่าสุดจากเกรดที่บันทึกในระบบ';
 export const SPARSE_YEAR_NOTE =
-  'ชั้นปีที่มีนักศึกษาที่ได้เกรดไม่ถึง 5 คน ไม่แสดงตัวเลข เพราะเปลี่ยนมากเมื่อเพิ่มหรือลดหนึ่งคน';
+  'ชั้นปีที่มีนิสิตที่ได้เกรดไม่ถึง 5 คน ไม่แสดงตัวเลข เพราะเปลี่ยนมากเมื่อเพิ่มหรือลดหนึ่งคน';
 
 // "B or above" as a plain share of the people counted; no goal beside it.
 export function summaryLine(snapshot: Pick<CourseSnapshot, 'stats'>): string {
@@ -280,7 +280,7 @@ export function excludedNote(excluded: number): string | null {
 export function gradedPeopleLine(stats: GroupStats): string {
   const { people, excluded } = gradedPeopleParts(stats);
   const note = excludedNote(excluded);
-  return `จากนักศึกษาที่มีเกรด ${people} คน${note ? ` (${note})` : ''}`;
+  return `จากนิสิตที่มีเกรด ${people} คน${note ? ` (${note})` : ''}`;
 }
 
 export function changeLine(change: TrendChange): string {

@@ -114,7 +114,7 @@ export default function Home() {
             <Reveal index={4}>
               <p className="max-w-sm text-sm leading-relaxed text-brand sm:text-base">
                 แพลตฟอร์มวิเคราะห์ข้อมูลการศึกษาที่ช่วยติดตามผลสัมฤทธิ์ CLO/PLO
-                และประเมินศักยภาพความถนัดด้วย AI เพื่อสนับสนุนการเรียนรู้ของนักศึกษาอย่างครบวงจร
+                และประเมินศักยภาพความถนัดด้วย AI เพื่อสนับสนุนการเรียนรู้ของนิสิตอย่างครบวงจร
               </p>
             </Reveal>
 

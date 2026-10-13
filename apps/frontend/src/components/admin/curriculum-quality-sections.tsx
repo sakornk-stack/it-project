@@ -61,7 +61,7 @@ export function StatusCriteria() {
     <Card>
       <CardContent className="space-y-2 p-4">
         <p className="text-sm font-semibold text-primary">
-          เกณฑ์สถานะนักศึกษา (เกณฑ์เดียวกันทั้งระบบ)
+          เกณฑ์สถานะนิสิต (เกณฑ์เดียวกันทั้งระบบ)
         </p>
         <ul className="flex flex-wrap gap-x-6 gap-y-2">
           {LEGEND_ORDER.map((level) => (
@@ -127,7 +127,7 @@ export function LowestSection({
             {shown.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-muted-foreground">
-                  CLO ที่ต่ำที่สุด (สัดส่วนนักศึกษาที่ได้ B ขึ้นไป)
+                  CLO ที่ต่ำที่สุด (สัดส่วนนิสิตที่ได้ B ขึ้นไป)
                 </h4>
                 <ul className="space-y-2">
                   {shown.map((clo) => (
@@ -182,7 +182,7 @@ function CohortRow({ cohort }: Readonly<{ cohort: CohortPloAchievementReport }>)
         barClassName="bg-brand"
       />
       <p className="text-xs text-muted-foreground tabular-nums">
-        คำนวณจากนักศึกษาที่มีเกรด {cohort.gpaSampleSize} จาก {cohort.studentCount} คน
+        คำนวณจากนิสิตที่มีเกรด {cohort.gpaSampleSize} จาก {cohort.studentCount} คน
       </p>
       {little && <Badge tone="warning">{LITTLE_DATA_LABEL}</Badge>}
     </li>
@@ -198,7 +198,7 @@ export function CohortComparison({ cohorts }: Readonly<{ cohorts: CohortPloAchie
       </CardHeader>
       <CardContent>
         {sorted.length === 0 ? (
-          <EmptyState icon={Layers} description="ยังไม่มีนักศึกษาในรุ่นใดของหลักสูตรนี้" />
+          <EmptyState icon={Layers} description="ยังไม่มีนิสิตในรุ่นใดของหลักสูตรนี้" />
         ) : (
           <ul className="space-y-3">
             {sorted.map((cohort) => (

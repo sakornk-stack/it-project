@@ -88,7 +88,7 @@ describe('deleting a course', () => {
   });
 
   it('shows the Thai 409 message from the server as is', () => {
-    const message = 'ปิดวิชานี้ไม่ได้ เพราะยังมีข้อมูลผูกอยู่: ผลการเรียนของนักศึกษา 3 รายการ';
+    const message = 'ปิดวิชานี้ไม่ได้ เพราะยังมีข้อมูลผูกอยู่: ผลการเรียนของนิสิต 3 รายการ';
     expect(describeCourseDeleteError(apiError(409, message))).toBe(message);
   });
 

@@ -70,8 +70,8 @@ function StaffYearLevelsContent() {
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
         <PageHeader
-          title="นักศึกษา"
-          description="นักศึกษาที่ใช้งานอยู่ในขอบเขตที่คุณดูแล แบ่งตามชั้นปี (ไม่รวมนักศึกษาที่ถูกระงับ)"
+          title="นิสิต"
+          description="นิสิตที่ใช้งานอยู่ในขอบเขตที่คุณดูแล แบ่งตามชั้นปี (ไม่รวมนิสิตที่ถูกระงับ)"
         />
       </Reveal>
 
@@ -102,7 +102,7 @@ function StaffYearLevelsContent() {
           <CardContent className="pt-6">
             <EmptyState
               illustration="no-students"
-              description="ยังไม่มีนักศึกษาในขอบเขตที่คุณดูแล"
+              description="ยังไม่มีนิสิตในขอบเขตที่คุณดูแล"
             />
           </CardContent>
         </Card>

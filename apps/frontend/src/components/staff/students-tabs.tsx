@@ -14,7 +14,7 @@ export type StudentsTab = (typeof TABS)[number]['key'];
 // `count` is the size of the list shown on the first tab.
 export function StudentsTabs({ active, count }: Readonly<{ active: StudentsTab; count?: number }>) {
   return (
-    <nav aria-label="หมวดนักศึกษา" className="flex flex-wrap gap-1 rounded-lg border bg-card p-1">
+    <nav aria-label="หมวดนิสิต" className="flex flex-wrap gap-1 rounded-lg border bg-card p-1">
       {TABS.map(({ key, label, href, icon: Icon }) => {
         const isActive = key === active;
         return (

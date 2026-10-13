@@ -21,15 +21,15 @@ const STATE_BADGE: Record<
   AdminScopeCurriculumEntry['dataState'],
   { tone: SemanticTone; label: (entry: AdminScopeCurriculumEntry) => string }
 > = {
-  HAS_STUDENTS: { tone: 'success', label: (e) => `มีนักศึกษา ${e.studentCount} คน` },
+  HAS_STUDENTS: { tone: 'success', label: (e) => `มีนิสิต ${e.studentCount} คน` },
   STRUCTURE_ONLY: { tone: 'warning', label: () => 'มีแต่โครงสร้าง' },
   EMPTY: { tone: 'neutral', label: () => 'ว่าง (ยังไม่มีข้อมูล)' },
 };
 
 const STATE_NOTE: Record<AdminScopeCurriculumEntry['dataState'], string> = {
-  HAS_STUDENTS: 'มีนักศึกษาในหลักสูตรนี้แล้ว',
-  STRUCTURE_ONLY: 'จัดโครงสร้างแล้ว แต่ยังไม่มีนักศึกษา',
-  EMPTY: 'ยังไม่มีรายวิชาและนักศึกษา',
+  HAS_STUDENTS: 'มีนิสิตในหลักสูตรนี้แล้ว',
+  STRUCTURE_ONLY: 'จัดโครงสร้างแล้ว แต่ยังไม่มีนิสิต',
+  EMPTY: 'ยังไม่มีรายวิชาและนิสิต',
 };
 
 export function CurriculumTabs({

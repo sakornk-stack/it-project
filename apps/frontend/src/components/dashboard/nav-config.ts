@@ -38,7 +38,7 @@ const STUDENT_NAV_ITEMS: NavItem[] = [
 const INSTRUCTOR_NAV_ITEMS: NavItem[] = [
   { label: 'แดชบอร์ด', icon: LayoutGrid, href: '/instructor/dashboard' },
   { label: 'รายวิชาที่สอน', icon: BookOpen, href: '/instructor/my-courses' },
-  { label: 'นักศึกษา', icon: Users, href: '/instructor/students' },
+  { label: 'นิสิต', icon: Users, href: '/instructor/students' },
   { label: 'ภาพรวมชั้นปี', icon: GraduationCap, href: '/instructor/year-levels' },
 ];
 
@@ -73,7 +73,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
 const STAFF_NAV_ITEMS: NavItem[] = [
   { label: 'ภาพรวม', icon: LayoutGrid, href: '/staff/dashboard' },
   {
-    label: 'นักศึกษา',
+    label: 'นิสิต',
     icon: GraduationCap,
     href: '/staff/students',
     // The student tabs are separate pages; the menu stays lit on all of them

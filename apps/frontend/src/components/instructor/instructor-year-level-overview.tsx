@@ -78,15 +78,15 @@ export function InstructorYearLevelOverview({
         <Reveal index={2}>
           <Card>
             <CardHeader>
-              <CardTitle>รายชื่อนักศึกษา — {expandedBucket.label}</CardTitle>
+              <CardTitle>รายชื่อนิสิต — {expandedBucket.label}</CardTitle>
               <p className="text-xs text-muted-foreground">
                 {LOW_GRADE_LABEL}: {LOW_GRADE_RULE} นับเฉพาะวิชาที่คุณสอน
-                กดชื่อเพื่อดูนักศึกษาคนนั้นในหน้านักศึกษา
+                กดชื่อเพื่อดูนิสิตคนนั้นในหน้านิสิต
               </p>
             </CardHeader>
             <CardContent>
               {expandedBucket.students.length === 0 ? (
-                <p className="text-sm text-muted-foreground">ไม่มีนักศึกษาในชั้นปีนี้</p>
+                <p className="text-sm text-muted-foreground">ไม่มีนิสิตในชั้นปีนี้</p>
               ) : (
                 <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
                   {[...expandedBucket.students]

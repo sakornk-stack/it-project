@@ -90,7 +90,7 @@ function InstructorMyCoursesContent() {
               <CardContent className="pt-6">
                 <EmptyState
                   illustration="no-data"
-                  description="ยังไม่มีวิชาที่ได้รับมอบหมายให้คุณสอน เมื่อมีนักศึกษาลงทะเบียน วิชาจะขึ้นที่นี่"
+                  description="ยังไม่มีวิชาที่ได้รับมอบหมายให้คุณสอน เมื่อมีนิสิตลงทะเบียน วิชาจะขึ้นที่นี่"
                 />
               </CardContent>
             </Card>
@@ -128,7 +128,7 @@ function InstructorMyCoursesContent() {
             >
               <div className="space-y-6">
                 <p className="text-xs text-muted-foreground">
-                  แสดงตามประวัติการลงทะเบียนของนักศึกษาในแต่ละวิชา หากเพิ่งได้รับมอบหมายให้สอน
+                  แสดงตามประวัติการลงทะเบียนของนิสิตในแต่ละวิชา หากเพิ่งได้รับมอบหมายให้สอน
                   อาจเห็นเทอมย้อนหลังที่คุณไม่ได้เป็นผู้สอนด้วย
                 </p>
                 {previousYears.map((yearGroup) => (

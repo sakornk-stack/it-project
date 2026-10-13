@@ -271,7 +271,7 @@ export function StudentScoreEntryPanel({
       .join(', ');
     const overwriteNote =
       changed.size > 0
-        ? ` คะแนนเดิมของนักศึกษา ${changed.size} คนในเป้าเหล่านั้นจะถูกเขียนทับ`
+        ? ` คะแนนเดิมของนิสิต ${changed.size} คนในเป้าเหล่านั้นจะถูกเขียนทับ`
         : ' ไม่มีคะแนนเดิมที่ต่างกันถูกเขียนทับ';
     return confirm({
       title: 'บันทึกคะแนนลงหลายเป้าพร้อมกัน?',
@@ -319,7 +319,7 @@ export function StudentScoreEntryPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-primary">คะแนนของนักศึกษาแต่ละคน</h3>
+        <h3 className="text-sm font-medium text-primary">คะแนนของนิสิตแต่ละคน</h3>
         {fields.length > 0 && (
           <EvidenceCoverageBadge
             coverage={{ validCount: gradedCount, totalCount: fields.length }}
@@ -404,7 +404,7 @@ export function StudentScoreEntryPanel({
         {isLoading && <TableSkeleton cols={5} rows={4} />}
         {isError && <p className="text-sm text-destructive">ไม่สามารถโหลดข้อมูลได้</p>}
         {!isLoading && !isError && fields.length === 0 && (
-          <p className="text-sm text-muted-foreground">ยังไม่มีนักศึกษาลงทะเบียนในรายวิชานี้</p>
+          <p className="text-sm text-muted-foreground">ยังไม่มีนิสิตลงทะเบียนในรายวิชานี้</p>
         )}
 
         {fields.length > 0 && (

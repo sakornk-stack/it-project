@@ -31,13 +31,13 @@ export function OverviewStatusBreakdown({ summary }: Readonly<{ summary: Student
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-lg">สัดส่วนสถานะนักศึกษา</CardTitle>
+          <CardTitle className="text-lg">สัดส่วนสถานะนิสิต</CardTitle>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             ฐาน {summary.active} คน
           </span>
         </div>
         <p className="text-sm text-muted-foreground">
-          จัดระดับจากเกรดที่แย่ที่สุดของนักศึกษาแต่ละคน
+          จัดระดับจากเกรดที่แย่ที่สุดของนิสิตแต่ละคน
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

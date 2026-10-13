@@ -133,8 +133,8 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 icon={Users}
                 description={
                   entry.dataState === 'EMPTY'
-                    ? 'หลักสูตรนี้ยังไม่มีรายวิชาและนักศึกษา จึงยังไม่มีข้อมูลคุณภาพให้แสดง'
-                    : 'หลักสูตรนี้ยังไม่มีนักศึกษา จึงยังไม่มีผลการเรียนให้วิเคราะห์ — รายวิชา PLO และ CLO ที่จัดไว้จะแสดงผลเมื่อมีนักศึกษาลงทะเบียน'
+                    ? 'หลักสูตรนี้ยังไม่มีรายวิชาและนิสิต จึงยังไม่มีข้อมูลคุณภาพให้แสดง'
+                    : 'หลักสูตรนี้ยังไม่มีนิสิต จึงยังไม่มีผลการเรียนให้วิเคราะห์ — รายวิชา PLO และ CLO ที่จัดไว้จะแสดงผลเมื่อมีนิสิตลงทะเบียน'
                 }
               />
             </CardContent>
@@ -148,12 +148,12 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 icon={Users}
-                label="จำนวนนักศึกษา"
+                label="จำนวนนิสิต"
                 value={<AnimatedNumber value={report.studentCount} />}
                 suffix="คน"
                 footer={
                   <p className="text-xs text-muted-foreground">
-                    นักศึกษาที่ใช้งานอยู่ในหลักสูตรนี้
+                    นิสิตที่ใช้งานอยู่ในหลักสูตรนี้
                   </p>
                 }
               />
@@ -170,7 +170,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 suffix={report.averageGpa === null ? undefined : `/ ${GPA_SCALE_MAX.toFixed(2)}`}
                 footer={
                   <p className="text-xs text-muted-foreground tabular-nums">
-                    คำนวณจากนักศึกษาที่มีเกรด {report.gpaSampleSize} จาก {report.studentCount} คน
+                    คำนวณจากนิสิตที่มีเกรด {report.gpaSampleSize} จาก {report.studentCount} คน
                   </p>
                 }
               />
@@ -182,7 +182,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                 footer={
                   report.graduationReadyPercent === null ? null : (
                     <p className="text-xs text-muted-foreground tabular-nums">
-                      ร้อยละ {report.graduationReadyPercent.toFixed(1)} ของนักศึกษาทั้งหมด
+                      ร้อยละ {report.graduationReadyPercent.toFixed(1)} ของนิสิตทั้งหมด
                     </p>
                   )
                 }
@@ -196,7 +196,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                   <p className="text-xs text-muted-foreground">
                     {report.studentsAtRiskCount > 0
                       ? 'เร่งด่วนและเฝ้าระวัง ตามเกณฑ์ด้านล่าง'
-                      : 'ไม่มีนักศึกษาที่ GPA ต่ำกว่าเกณฑ์'}
+                      : 'ไม่มีนิสิตที่ GPA ต่ำกว่าเกณฑ์'}
                   </p>
                 }
               />
@@ -222,7 +222,7 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
                     <CardContent className="pt-6">
                       <EmptyState
                         icon={Sigma}
-                        description="ยังไม่มีผลการประเมิน PLO ของนักศึกษาในหลักสูตรนี้ จึงยังไม่แสดงเรดาร์"
+                        description="ยังไม่มีผลการประเมิน PLO ของนิสิตในหลักสูตรนี้ จึงยังไม่แสดงเรดาร์"
                       />
                     </CardContent>
                   </Card>

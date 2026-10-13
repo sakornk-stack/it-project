@@ -26,7 +26,7 @@ export function CourseFollowUpList({
     <PageSection
       title={
         <span className="flex flex-wrap items-center gap-2">
-          นักศึกษาที่{LOW_GRADE_LABEL}
+          นิสิตที่{LOW_GRADE_LABEL}
           {sorted.length > 0 && <Badge tone="warning">{sorted.length}</Badge>}
         </span>
       }
@@ -34,7 +34,7 @@ export function CourseFollowUpList({
       description={LOW_GRADE_RULE}
     >
       {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไปในวิชานี้</p>
+        <p className="text-sm text-muted-foreground">ยังไม่มีนิสิตที่มีเกรด D+ ลงไปในวิชานี้</p>
       ) : (
         <>
           <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
@@ -62,7 +62,7 @@ export function CourseFollowUpList({
               href={`/instructor/courses/${courseId}?tab=students`}
               className="inline-flex min-h-11 items-center text-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              ดูอีก {hidden} คนในแท็บนักศึกษา
+              ดูอีก {hidden} คนในแท็บนิสิต
             </Link>
           )}
         </>

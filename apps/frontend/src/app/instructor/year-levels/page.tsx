@@ -108,7 +108,7 @@ function InstructorYearLevelsContent() {
         <Reveal index={0}>
           <PageHeader
             title="ภาพรวมชั้นปี"
-            description="นักศึกษาที่เคยเรียนวิชาของคุณ แบ่งตามชั้นปี (ไม่รวมนักศึกษาทั้งหลักสูตร)"
+            description="นิสิตที่เคยเรียนวิชาของคุณ แบ่งตามชั้นปี (ไม่รวมนิสิตทั้งหลักสูตร)"
             titleClassName={TEXT_PAGE}
           />
         </Reveal>
@@ -131,7 +131,7 @@ function InstructorYearLevelsContent() {
               <CardContent className="pt-6">
                 <EmptyState
                   illustration="no-students"
-                  description="ยังไม่มีนักศึกษาที่เกี่ยวข้องกับวิชาที่คุณสอน ชั้นปีจะขึ้นที่นี่เมื่อมีนักศึกษาลงเรียน"
+                  description="ยังไม่มีนิสิตที่เกี่ยวข้องกับวิชาที่คุณสอน ชั้นปีจะขึ้นที่นี่เมื่อมีนิสิตลงเรียน"
                   action={
                     <Button asChild variant="outline">
                       <Link href="/instructor/my-courses">ดูรายวิชาที่สอน</Link>
@@ -147,7 +147,7 @@ function InstructorYearLevelsContent() {
           <Reveal index={1}>
             <dl className="grid gap-3 sm:grid-cols-3">
               <StatTile
-                label="นักศึกษา"
+                label="นิสิต"
                 unit="คน"
                 value={<AnimatedNumber value={figures.total} />}
                 extra={
@@ -201,9 +201,9 @@ function InstructorYearLevelsContent() {
                   <li>
                     GPA คือค่าเฉลี่ยแต้มเกรดของวิชาในกลุ่มนั้น ส่วน F และ W คือจำนวนคนที่ได้เกรดนั้น
                   </li>
-                  <li>ช่อง – คือวิชานั้นไม่มีนักศึกษาในชั้นปีนั้น</li>
+                  <li>ช่อง – คือวิชานั้นไม่มีนิสิตในชั้นปีนั้น</li>
                   <li>
-                    ช่องที่มีนักศึกษาได้เกรด A ถึง F ไม่ถึง 5 ที่นั่งไม่แสดงเกรดกลาง แสดงเป็นข้อความ
+                    ช่องที่มีนิสิตได้เกรด A ถึง F ไม่ถึง 5 ที่นั่งไม่แสดงเกรดกลาง แสดงเป็นข้อความ
                     &ldquo;ข้อมูลยังน้อย&rdquo;
                   </li>
                   <li>
@@ -226,7 +226,7 @@ function InstructorYearLevelsContent() {
         {ready && totalStudents > 0 && (
           <CollapsibleSection
             framed={false}
-            title="รายชื่อนักศึกษาแต่ละชั้นปี"
+            title="รายชื่อนิสิตแต่ละชั้นปี"
             meta={
               <span className="text-sm font-normal text-muted-foreground">
                 กดชั้นปีเพื่อดูรายชื่อ

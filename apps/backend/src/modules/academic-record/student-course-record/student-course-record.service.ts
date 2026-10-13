@@ -161,7 +161,7 @@ export class StudentCourseRecordService {
     // STAFF could file a course from any other curriculum under them.
     if (course.curriculumId !== profile.curriculumId) {
       throw new BadRequestException(
-        'วิชานี้ไม่อยู่ในหลักสูตรของนักศึกษา จึงเพิ่มผลการเรียนไม่ได้',
+        'วิชานี้ไม่อยู่ในหลักสูตรของนิสิต จึงเพิ่มผลการเรียนไม่ได้',
       );
     }
     await this.semesterService.findActiveByIdOrThrow(dto.semesterId);

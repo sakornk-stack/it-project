@@ -36,7 +36,7 @@ import { StudentTimelineCard } from './student-timeline-card';
 // from a complete roster once it is off the screen.
 function exportRosterCsv(courseCode: string, rows: StudentRosterEntry[], isFiltered: boolean) {
   const csv = toCsv(
-    ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'เกรด', LOW_GRADE_LABEL],
+    ['รหัสนิสิต', 'ชื่อ-นามสกุล', 'เกรด', LOW_GRADE_LABEL],
     rows.map((student) => [
       student.studentCode,
       student.fullName,
@@ -222,7 +222,7 @@ export function StudentRosterTable({
   if (isError || !roster) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>ไม่สามารถโหลดรายชื่อนักศึกษาได้ กรุณาลองใหม่อีกครั้ง</AlertDescription>
+        <AlertDescription>ไม่สามารถโหลดรายชื่อนิสิตได้ กรุณาลองใหม่อีกครั้ง</AlertDescription>
       </Alert>
     );
   }
@@ -230,7 +230,7 @@ export function StudentRosterTable({
     return (
       <EmptyState
         illustration="no-students"
-        description="ยังไม่มีนักศึกษาลงทะเบียนในรายวิชานี้ รายชื่อจะขึ้นที่นี่เมื่อมีผู้ลงทะเบียน"
+        description="ยังไม่มีนิสิตลงทะเบียนในรายวิชานี้ รายชื่อจะขึ้นที่นี่เมื่อมีผู้ลงทะเบียน"
       />
     );
   }
@@ -271,7 +271,7 @@ export function StudentRosterTable({
 
       {editable && (
         <p className="text-xs text-muted-foreground">
-          นักศึกษาเป็นผู้บันทึกผลการเรียนเอง — ใช้โหมดนี้เพื่อแก้ไขกรณีเกรดผิดเท่านั้น
+          นิสิตเป็นผู้บันทึกผลการเรียนเอง — ใช้โหมดนี้เพื่อแก้ไขกรณีเกรดผิดเท่านั้น
           แสดงเฉพาะผลการเรียนครั้งล่าสุดของแต่ละคน
         </p>
       )}
@@ -286,8 +286,8 @@ export function StudentRosterTable({
               setSearch(e.target.value);
               updateParams({ q: e.target.value.trim() === '' ? null : e.target.value.trim() });
             }}
-            placeholder="ค้นหารหัสนักศึกษา หรือ ชื่อ"
-            aria-label="ค้นหารหัสนักศึกษา หรือ ชื่อ"
+            placeholder="ค้นหารหัสนิสิต หรือ ชื่อ"
+            aria-label="ค้นหารหัสนิสิต หรือ ชื่อ"
             className="pl-9"
           />
         </div>
@@ -324,7 +324,7 @@ export function StudentRosterTable({
           {visibleRoster.length === 0 ? (
             <EmptyState
               illustration="no-results"
-              description="ไม่พบนักศึกษาที่ตรงกับเงื่อนไขที่เลือก"
+              description="ไม่พบนิสิตที่ตรงกับเงื่อนไขที่เลือก"
               action={
                 <Button type="button" variant="outline" onClick={clearFilters}>
                   ล้างตัวกรอง

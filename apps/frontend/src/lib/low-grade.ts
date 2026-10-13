@@ -9,4 +9,4 @@ export const isLowGrade = (grade: Grade): boolean => LOW_GRADES.has(grade);
 
 export const LOW_GRADE_LABEL = 'มีเกรด D+ ลงไป';
 export const LOW_GRADE_RULE = 'เกรดล่าสุดของวิชาเป็น D+, D, F หรือ U';
-export const NO_LOW_GRADE = 'ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป';
+export const NO_LOW_GRADE = 'ยังไม่มีนิสิตที่มีเกรด D+ ลงไป';

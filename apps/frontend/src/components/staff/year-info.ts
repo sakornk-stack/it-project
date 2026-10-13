@@ -31,7 +31,7 @@ export function yearLevelTitle(level: number): string {
   return level >= 4 ? 'ชั้นปีที่ 4 ขึ้นไป' : `ชั้นปีที่ ${level}`;
 }
 
-// "ชั้นปี 1–3: ไม่มีนักศึกษา": years with nobody in them, said once instead of
+// "ชั้นปี 1–3: ไม่มีนิสิต": years with nobody in them, said once instead of
 // as one empty row each. Neighbouring years join into a range; the last year
 // is the "and above" bucket. null when every year has someone.
 export function describeEmptyYears(levels: readonly number[]): string | null {
@@ -49,7 +49,7 @@ export function describeEmptyYears(levels: readonly number[]): string | null {
     const range = from === to ? `${from}` : `${from}–${to}`;
     return to >= 4 ? `${range} ขึ้นไป` : range;
   });
-  return `ชั้นปี ${parts.join(', ')}: ไม่มีนักศึกษา`;
+  return `ชั้นปี ${parts.join(', ')}: ไม่มีนิสิต`;
 }
 
 // One line for the page, in the backend's own terms (common/academic/year-level.ts).

@@ -6,7 +6,7 @@ import { LOW_GRADE_LABEL, NO_LOW_GRADE } from './low-grade';
 // what GET /dashboard/instructor returned, so it stays inside the "courses I
 // teach" scope by construction.
 
-export const NO_STUDENTS_SUMMARY = 'ยังไม่มีนักศึกษาลงทะเบียนในรายวิชาที่คุณสอน จึงยังสรุปผลไม่ได้';
+export const NO_STUDENTS_SUMMARY = 'ยังไม่มีนิสิตลงทะเบียนในรายวิชาที่คุณสอน จึงยังสรุปผลไม่ได้';
 
 const isPositiveCount = (n: number) => Number.isFinite(n) && n > 0;
 
@@ -155,7 +155,7 @@ export function buildInstructorSummary(courses: readonly InstructorCourseSummary
       `(เป้า ${first.achievementThreshold}%)`;
   } else if (graded.length > 0) {
     coursePart =
-      graded.length < courses.length ? 'ทุกวิชาที่มีนักศึกษาผ่านเป้า' : 'ทุกวิชาผ่านเป้า';
+      graded.length < courses.length ? 'ทุกวิชาที่มีนิสิตผ่านเป้า' : 'ทุกวิชาผ่านเป้า';
   }
 
   const overall = overallAchievementPercent(courses);

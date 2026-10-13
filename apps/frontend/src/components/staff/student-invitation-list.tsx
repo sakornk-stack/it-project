@@ -59,7 +59,7 @@ export function StudentInvitationList({
               onClick={onInviteClick}
             >
               <Plus size={16} />
-              เชิญนักศึกษา
+              เชิญนิสิต
             </Button>
           )
         }
@@ -87,7 +87,7 @@ export function StudentInvitationList({
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-              <th className="px-3 py-3 font-semibold">รหัสนักศึกษา</th>
+              <th className="px-3 py-3 font-semibold">รหัสนิสิต</th>
               <th className="px-3 py-3 font-semibold">ชื่อ-นามสกุล</th>
               <th className="px-3 py-3 font-semibold">อีเมล</th>
               <th className="px-3 py-3 font-semibold">สาขา</th>

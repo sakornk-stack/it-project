@@ -364,7 +364,7 @@ describe('words', () => {
       yearLevelByStudent: null,
     });
     expect(summaryLine(s)).toBe('จากข้อมูลที่มี 80% ได้ B ขึ้นไป');
-    expect(gradedPeopleLine(s.stats)).toBe('จากนักศึกษาที่มีเกรด 10 คน');
+    expect(gradedPeopleLine(s.stats)).toBe('จากนิสิตที่มีเกรด 10 คน');
     expect(changeLine({ points: -4, fromLabel: 'ภาคต้น / 2567', toLabel: 'x' })).toBe(
       'จากข้อมูลที่มี ลดลง 4 จุด เมื่อเทียบภาคต้น / 2567',
     );
@@ -378,7 +378,7 @@ describe('words', () => {
       yearLevelByStudent: null,
     });
     expect(gradedPeopleLine(s.stats)).toBe(
-      'จากนักศึกษาที่มีเกรด 11 คน (ไม่รวมถอนหรือยังไม่สมบูรณ์ 3 คน ในร้อยละ B ขึ้นไป)',
+      'จากนิสิตที่มีเกรด 11 คน (ไม่รวมถอนหรือยังไม่สมบูรณ์ 3 คน ในร้อยละ B ขึ้นไป)',
     );
   });
 });

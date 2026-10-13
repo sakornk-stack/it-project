@@ -114,8 +114,8 @@ function SystemOverviewContent() {
           title="ผู้ใช้งานแยกตามบทบาท"
           description={
             userCounts
-              ? `นับเฉพาะบัญชีที่ยังใช้งานได้ รวมทั้งสิ้น ${userCounts.total.toLocaleString('th-TH')} คน (ไม่รวมนักศึกษา)`
-              : 'นับเฉพาะบัญชีที่ยังใช้งานได้ (ไม่รวมนักศึกษา)'
+              ? `นับเฉพาะบัญชีที่ยังใช้งานได้ รวมทั้งสิ้น ${userCounts.total.toLocaleString('th-TH')} คน (ไม่รวมนิสิต)`
+              : 'นับเฉพาะบัญชีที่ยังใช้งานได้ (ไม่รวมนิสิต)'
           }
           actions={
             <Link href="/admin/users" className={linkClass}>

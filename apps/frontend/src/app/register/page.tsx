@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/form';
 
 const BRAND_COPY = {
-  title: 'สมัครสมาชิกนักศึกษา',
+  title: 'สมัครสมาชิกนิสิต',
   description: 'สร้างบัญชีเพื่อติดตามผลการเรียน และวิเคราะห์ผลลัพธ์การเรียนรู้และความถนัดของตนเอง',
 };
 
@@ -170,7 +170,7 @@ function InvitedRegisterForm({
           <dd className="text-primary">{preview.email}</dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">รหัสนักศึกษา</dt>
+          <dt className="text-muted-foreground">รหัสนิสิต</dt>
           <dd className="text-primary">{preview.studentCode}</dd>
         </div>
         <div className="flex justify-between gap-2">
@@ -289,7 +289,7 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
           error,
           {
             ...RATE_LIMITED_ERROR,
-            409: 'อีเมลหรือรหัสนักศึกษานี้ถูกใช้งานแล้ว',
+            409: 'อีเมลหรือรหัสนิสิตนี้ถูกใช้งานแล้ว',
             400: 'ข้อมูลหลักสูตรไม่ถูกต้อง กรุณาเลือกใหม่',
           },
           undefined,
@@ -306,7 +306,7 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
           title="สมัครสมาชิก"
           description={
             <>
-              <span className="block">สำหรับนักศึกษาเท่านั้น</span>
+              <span className="block">สำหรับนิสิตเท่านั้น</span>
               <span className="block">บุคลากรและอาจารย์ให้ติดต่อผู้ดูแลระบบของหน่วยงาน</span>
             </>
           }
@@ -398,7 +398,7 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
               name="studentCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>รหัสนักศึกษา</FormLabel>
+                  <FormLabel>รหัสนิสิต</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

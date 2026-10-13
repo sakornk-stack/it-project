@@ -12,7 +12,7 @@ export type CurriculumTab = 'ALL' | CurriculumDataState;
 
 export const CURRICULUM_TAB_LABELS: Record<CurriculumTab, string> = {
   ALL: 'ทั้งหมด',
-  HAS_STUDENTS: 'มีนักศึกษา',
+  HAS_STUDENTS: 'มีนิสิต',
   STRUCTURE_ONLY: 'มีแต่โครงสร้าง',
   EMPTY: 'ว่าง',
 };

@@ -78,7 +78,7 @@ export function CourseHero({
         <Link href={`${base}?tab=evidence`}>กรอกคะแนน</Link>
       </Button>
       <Button asChild variant="outline">
-        <Link href={`${base}?tab=students`}>รายชื่อนักศึกษา ({stats.seats})</Link>
+        <Link href={`${base}?tab=students`}>รายชื่อนิสิต ({stats.seats})</Link>
       </Button>
     </div>
   );
@@ -131,7 +131,7 @@ export function CourseHero({
       {switcher}
       {people > 0 && (
         <p className={`border-t border-slate-100 pt-3 ${TEXT_LABEL}`}>
-          {DATA_SOURCE_NOTE} · จากนักศึกษาที่มีเกรด {people} คน
+          {DATA_SOURCE_NOTE} · จากนิสิตที่มีเกรด {people} คน
           {note ? ` (${note})` : ''}
         </p>
       )}

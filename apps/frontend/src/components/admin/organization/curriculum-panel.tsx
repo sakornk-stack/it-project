@@ -184,7 +184,7 @@ function CurriculumCard({
             )}
             <DeactivateButton
               itemLabel={`หลักสูตรฉบับ ${curriculum.version} (ปี ${curriculum.effectiveYear})`}
-              conflictMessage="ปิดใช้งานไม่ได้ เพราะยังมีนักศึกษา รายวิชา หมวดวิชา หรือ PLO ที่ใช้งานอยู่ในหลักสูตรนี้"
+              conflictMessage="ปิดใช้งานไม่ได้ เพราะยังมีนิสิต รายวิชา หมวดวิชา หรือ PLO ที่ใช้งานอยู่ในหลักสูตรนี้"
               onConfirm={async () => {
                 await deleteCurriculum(curriculum.id);
                 toast.success('ปิดใช้งานหลักสูตรแล้ว');

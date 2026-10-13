@@ -45,7 +45,7 @@ describe('StudentCourseRecordService.create curriculum check', () => {
     const { service, prisma } = setup('cur-B');
     const error = await service.create(dto, user(['STAFF'])).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(BadRequestException);
-    expect((error as BadRequestException).message).toContain('ไม่อยู่ในหลักสูตรของนักศึกษา');
+    expect((error as BadRequestException).message).toContain('ไม่อยู่ในหลักสูตรของนิสิต');
     expect(prisma.studentCourseRecord.create).not.toHaveBeenCalled();
   });
 

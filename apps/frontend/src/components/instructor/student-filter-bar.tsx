@@ -59,8 +59,8 @@ export function StudentFilterBar({
         </Select>
         <Input
           type="search"
-          placeholder="ค้นหารหัสหรือชื่อนักศึกษา"
-          aria-label="ค้นหารหัสหรือชื่อนักศึกษา"
+          placeholder="ค้นหารหัสหรือชื่อนิสิต"
+          aria-label="ค้นหารหัสหรือชื่อนิสิต"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className={cn(CONTROL_HEIGHT, 'w-full')}

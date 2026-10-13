@@ -43,16 +43,16 @@ describe('yearLevelTitle', () => {
 
 describe('describeEmptyYears', () => {
   it('joins neighbouring empty years into one range', () => {
-    expect(describeEmptyYears([1, 2, 3])).toBe('ชั้นปี 1–3: ไม่มีนักศึกษา');
+    expect(describeEmptyYears([1, 2, 3])).toBe('ชั้นปี 1–3: ไม่มีนิสิต');
   });
 
   it('names a single empty year', () => {
-    expect(describeEmptyYears([2])).toBe('ชั้นปี 2: ไม่มีนักศึกษา');
+    expect(describeEmptyYears([2])).toBe('ชั้นปี 2: ไม่มีนิสิต');
   });
 
   it('keeps separate runs apart and marks the last year as "and above"', () => {
-    expect(describeEmptyYears([1, 3, 4])).toBe('ชั้นปี 1, 3–4 ขึ้นไป: ไม่มีนักศึกษา');
-    expect(describeEmptyYears([4])).toBe('ชั้นปี 4 ขึ้นไป: ไม่มีนักศึกษา');
+    expect(describeEmptyYears([1, 3, 4])).toBe('ชั้นปี 1, 3–4 ขึ้นไป: ไม่มีนิสิต');
+    expect(describeEmptyYears([4])).toBe('ชั้นปี 4 ขึ้นไป: ไม่มีนิสิต');
   });
 
   it('has nothing to say when no year is empty', () => {

@@ -56,10 +56,10 @@ export function StudentTimelineCard({
             {query.data ? `${query.data.studentCode} ${query.data.fullName}` : 'ผลการเรียน'}
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            แสดงเฉพาะวิชาที่คุณสอนนักศึกษาคนนี้ ไม่ใช่ transcript ฉบับเต็ม
+            แสดงเฉพาะวิชาที่คุณสอนนิสิตคนนี้ ไม่ใช่ transcript ฉบับเต็ม
           </p>
         </div>
-        <Button type="button" variant="ghost" size="icon" aria-label="ปิดรายละเอียดนักศึกษา" onClick={onClose}>
+        <Button type="button" variant="ghost" size="icon" aria-label="ปิดรายละเอียดนิสิต" onClick={onClose}>
           <X className="h-4 w-4" aria-hidden="true" />
         </Button>
       </CardHeader>
@@ -69,7 +69,7 @@ export function StudentTimelineCard({
           <p className="text-sm text-destructive">ไม่สามารถโหลดข้อมูลได้</p>
         )}
         {query.data && query.data.entries.length === 0 && (
-          <p className="text-sm text-muted-foreground">ไม่พบวิชาที่คุณสอนนักศึกษาคนนี้</p>
+          <p className="text-sm text-muted-foreground">ไม่พบวิชาที่คุณสอนนิสิตคนนี้</p>
         )}
         {query.data && query.data.entries.length > 0 && (
           <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">

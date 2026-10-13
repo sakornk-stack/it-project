@@ -53,7 +53,7 @@ export function StaffStudentList({
         <CardContent className="pt-6">
           <EmptyState
             icon={SearchX}
-            description="ไม่พบนักศึกษาที่ตรงกับเงื่อนไขที่เลือก ลองเปลี่ยนหรือล้างตัวกรองและคำค้นหาด้านบน"
+            description="ไม่พบนิสิตที่ตรงกับเงื่อนไขที่เลือก ลองเปลี่ยนหรือล้างตัวกรองและคำค้นหาด้านบน"
           />
         </CardContent>
       </Card>
@@ -66,7 +66,7 @@ export function StaffStudentList({
         <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-            <th className="px-3 py-3 font-semibold">รหัสนักศึกษา</th>
+            <th className="px-3 py-3 font-semibold">รหัสนิสิต</th>
             <th className="px-3 py-3 font-semibold">ชื่อ-นามสกุล</th>
             <th className="px-3 py-3 font-semibold">ชั้นปี</th>
             <th className="px-3 py-3 text-right font-semibold">GPA สะสม</th>

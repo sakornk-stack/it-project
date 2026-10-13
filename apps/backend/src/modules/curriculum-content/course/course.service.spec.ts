@@ -56,12 +56,12 @@ describe('CourseService.remove', () => {
 
   it.each<[string, Counts, string]>([
     ['a prerequisite of another course', { dependents: 1 }, 'วิชาบังคับก่อน'],
-    ['a student course record', { records: 3 }, 'ผลการเรียนของนักศึกษา 3 รายการ'],
+    ['a student course record', { records: 3 }, 'ผลการเรียนของนิสิต 3 รายการ'],
     ['an assigned instructor', { instructors: 1 }, 'อาจารย์ผู้สอน 1 รายการ'],
     ['a CLO', { clos: 2 }, 'CLO 2 รายการ'],
     ['an assessment definition', { definitions: 1 }, 'รายการประเมินผล 1 รายการ'],
     ['a course assessment', { assessments: 1 }, 'การประเมินรายวิชา 1 รายการ'],
-    ['a planned course', { plans: 4 }, 'แผนการเรียนของนักศึกษา 4 รายการ'],
+    ['a planned course', { plans: 4 }, 'แผนการเรียนของนิสิต 4 รายการ'],
   ])('rejects with a Thai 409 and keeps prerequisites when it has %s', async (_n, counts, text) => {
     const { service, prisma, tx } = setup(counts);
     const error = await service.remove('c1').catch((e: unknown) => e);
@@ -75,7 +75,7 @@ describe('CourseService.remove', () => {
   it('lists every attached kind in one message', async () => {
     const { service } = setup({ records: 1, clos: 2 });
     await expect(service.remove('c1')).rejects.toThrow(
-      'ผลการเรียนของนักศึกษา 1 รายการ, CLO 2 รายการ',
+      'ผลการเรียนของนิสิต 1 รายการ, CLO 2 รายการ',
     );
   });
 });

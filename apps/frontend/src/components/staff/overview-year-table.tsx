@@ -56,7 +56,7 @@ export function OverviewYearTable({
       <CardHeader>
         <CardTitle className="text-lg">สถิติผลการเรียนจำแนกตามชั้นปี</CardTitle>
         <p className="text-sm text-muted-foreground">
-          เฉพาะนักศึกษาที่ใช้งานอยู่ เลือกชั้นปีเพื่อดูรายชื่อ
+          เฉพาะนิสิตที่ใช้งานอยู่ เลือกชั้นปีเพื่อดูรายชื่อ
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -65,7 +65,7 @@ export function OverviewYearTable({
           <thead>
             <tr className="border-b-2 border-slate-200 text-xs text-muted-foreground">
               <th className="py-2 pr-3 font-semibold">ชั้นปี</th>
-              <th className="py-2 pr-3 text-right font-semibold">นักศึกษา (คน)</th>
+              <th className="py-2 pr-3 text-right font-semibold">นิสิต (คน)</th>
               <th className="py-2 pr-3 text-right font-semibold">มีผลการเรียน (คน)</th>
               <th className="py-2 pr-3 font-semibold">GPA เฉลี่ย</th>
               <th className="py-2 pr-3 font-semibold">ระดับความเสี่ยง</th>
@@ -149,7 +149,7 @@ export function OverviewYearTable({
               )}
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
-                  <dt className="text-xs text-muted-foreground">นักศึกษา (คน)</dt>
+                  <dt className="text-xs text-muted-foreground">นิสิต (คน)</dt>
                   <dd className="tabular-nums">{row.summary.active}</dd>
                 </div>
                 <div>

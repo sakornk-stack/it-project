@@ -178,7 +178,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
         className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
       >
         <ArrowLeft size={14} />
-        กลับไปทำเนียบนักศึกษา
+        กลับไปทำเนียบนิสิต
       </Link>
 
       {profileQuery.isLoading && (
@@ -190,7 +190,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>ข้อมูลนักศึกษา</CardTitle>
+                <CardTitle>ข้อมูลนิสิต</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Skeleton className="h-4 w-full" />
@@ -216,12 +216,12 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
       )}
       {forbidden && (
         <PageLoadError
-          message="ไม่มีสิทธิ์เข้าถึงนักศึกษาคนนี้"
+          message="ไม่มีสิทธิ์เข้าถึงนิสิตคนนี้"
           onRetry={() => profileQuery.refetch()}
         />
       )}
       {profileQuery.isError && !forbidden && (
-        <PageLoadError message="ไม่พบนักศึกษา" onRetry={() => profileQuery.refetch()} />
+        <PageLoadError message="ไม่พบนิสิต" onRetry={() => profileQuery.refetch()} />
       )}
 
       {profile && (
@@ -243,7 +243,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
           <Reveal index={1} className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>ข้อมูลนักศึกษา</CardTitle>
+                <CardTitle>ข้อมูลนิสิต</CardTitle>
               </CardHeader>
               <CardContent>
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">

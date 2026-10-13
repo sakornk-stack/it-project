@@ -11,7 +11,7 @@ import { parseCsv } from '@/lib/csv';
 // resolve here (defense in depth alongside the server's own ScopeGuard).
 
 export const STUDENT_INVITATION_CSV_HEADERS = [
-  'รหัสนักศึกษา',
+  'รหัสนิสิต',
   'อีเมล',
   'ชื่อ-นามสกุล',
   'รหัสสาขา',
@@ -19,7 +19,7 @@ export const STUDENT_INVITATION_CSV_HEADERS = [
   'ปีเข้าศึกษา',
 ];
 
-const STUDENT_CODE_ALIASES = ['รหัสนักศึกษา', 'studentcode', 'student code'];
+const STUDENT_CODE_ALIASES = ['รหัสนิสิต', 'รหัสนักศึกษา', 'studentcode', 'student code'];
 const EMAIL_ALIASES = ['อีเมล', 'email'];
 const FULL_NAME_ALIASES = ['ชื่อ-นามสกุล', 'fullname', 'full name'];
 const PROGRAM_CODE_ALIASES = ['รหัสสาขา', 'programcode', 'program code'];
@@ -99,8 +99,8 @@ function buildRow(
 ): ParsedInvitationRow {
   const invalid = (error: string): InvalidInvitationRow => ({ ...shape, verdict: 'invalid', error });
 
-  if (shape.studentCode === '') return invalid('ไม่มีรหัสนักศึกษา');
-  if (seenStudentCodes.has(shape.studentCode)) return invalid('รหัสนักศึกษาซ้ำในไฟล์');
+  if (shape.studentCode === '') return invalid('ไม่มีรหัสนิสิต');
+  if (seenStudentCodes.has(shape.studentCode)) return invalid('รหัสนิสิตซ้ำในไฟล์');
 
   if (shape.email === '') return invalid('ไม่มีอีเมล');
   if (!EMAIL_PATTERN.test(shape.email)) return invalid(`อีเมล "${shape.email}" ไม่ถูกต้อง`);

@@ -17,7 +17,7 @@ function row(
   id: string,
   course: string,
   grade: Grade,
-  name = `นักศึกษา ${id}`,
+  name = `นิสิต ${id}`,
 ): InstructorStudentEntry {
   return {
     studentProfileId: id,
@@ -157,13 +157,13 @@ describe('parseStudentFilters / studentFiltersToQuery', () => {
 
 describe('buildStudentsSummary', () => {
   it('says how many people have a low grade, counted once each', () => {
-    expect(buildStudentsSummary(entries, 3)).toBe('นักศึกษา 4 คนใน 3 วิชา · มีเกรด D+ ลงไป 2 คน');
+    expect(buildStudentsSummary(entries, 3)).toBe('นิสิต 4 คนใน 3 วิชา · มีเกรด D+ ลงไป 2 คน');
   });
 
   it('says so when nobody has one', () => {
     const calm = [row('3', 'CS101', 'C'), row('4', 'CS201', 'A')];
     expect(buildStudentsSummary(calm, 2)).toBe(
-      'นักศึกษา 2 คนใน 2 วิชา · ยังไม่มีนักศึกษาที่มีเกรด D+ ลงไป',
+      'นิสิต 2 คนใน 2 วิชา · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
     );
   });
 

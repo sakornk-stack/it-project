@@ -32,7 +32,7 @@ export function LowSampleTag({ counted }: Readonly<{ counted: number }>) {
   return (
     <span
       className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-      title={`มีนักศึกษาที่ได้เกรดเพียง ${counted} คน ตัวเลขเปอร์เซ็นต์จึงเปลี่ยนมากเมื่อเพิ่มหรือลดหนึ่งคน`}
+      title={`มีนิสิตที่ได้เกรดเพียง ${counted} คน ตัวเลขเปอร์เซ็นต์จึงเปลี่ยนมากเมื่อเพิ่มหรือลดหนึ่งคน`}
     >
       ตัวอย่างน้อย
     </span>

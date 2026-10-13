@@ -141,12 +141,12 @@ export class CourseService {
       ]);
 
     const attached = [
-      [records, 'ผลการเรียนของนักศึกษา'],
+      [records, 'ผลการเรียนของนิสิต'],
       [instructors, 'อาจารย์ผู้สอน'],
       [clos, 'CLO'],
       [definitions, 'รายการประเมินผล'],
       [assessments, 'การประเมินรายวิชา'],
-      [plans, 'แผนการเรียนของนักศึกษา'],
+      [plans, 'แผนการเรียนของนิสิต'],
     ]
       .filter(([count]) => (count as number) > 0)
       .map(([count, label]) => `${label} ${count} รายการ`);

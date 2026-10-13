@@ -135,7 +135,7 @@ function StaffDashboardContent() {
       checklist.push({
         key: 'no-data',
         icon: CHECK_ICONS.noData,
-        title: `นักศึกษาที่ยังไม่มีข้อมูลผลการเรียน ${summary.byStatus.NO_DATA} คน`,
+        title: `นิสิตที่ยังไม่มีข้อมูลผลการเรียน ${summary.byStatus.NO_DATA} คน`,
         description: 'ดูรายชื่อเพื่อตรวจว่ายังไม่ได้บันทึกผลการเรียน',
         action: { href: '/staff/students?risk=NO_DATA', label: 'ดูรายชื่อ' },
       });
@@ -144,7 +144,7 @@ function StaffDashboardContent() {
       checklist.push({
         key: 'critical',
         icon: CHECK_ICONS.critical,
-        title: `นักศึกษาที่อยู่ในระดับเร่งด่วน ${summary.byStatus.CRITICAL} คน`,
+        title: `นิสิตที่อยู่ในระดับเร่งด่วน ${summary.byStatus.CRITICAL} คน`,
         description: 'GPA สะสมต่ำกว่า 1.50',
         action: { href: '/staff/students?risk=CRITICAL', label: 'ดูรายชื่อ' },
       });
@@ -192,7 +192,7 @@ function StaffDashboardContent() {
       <Reveal index={0}>
         <PageHeader
           title="ภาพรวมการศึกษาและผลการเรียน"
-          description="สรุปผลการเรียนและนักศึกษาที่ต้องติดตามในขอบเขตที่คุณดูแล"
+          description="สรุปผลการเรียนและนิสิตที่ต้องติดตามในขอบเขตที่คุณดูแล"
           actions={
             <label className="block space-y-1.5 sm:w-80">
               <span className="text-xs font-medium text-muted-foreground">
@@ -245,7 +245,7 @@ function StaffDashboardContent() {
           <Reveal index={1} className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <MetricCard
               icon={Users}
-              label="นักศึกษาในความดูแล"
+              label="นิสิตในความดูแล"
               value={<AnimatedNumber value={view.summary.active} />}
               unit="คน"
               note={`ระงับ ${view.summary.suspended} คน (ไม่นับรวม)`}
@@ -297,8 +297,8 @@ function StaffDashboardContent() {
                     icon={Users}
                     description={
                       scope === ALL_CURRICULA
-                        ? 'ยังไม่มีนักศึกษาที่ใช้งานอยู่ในขอบเขตที่คุณดูแล (ไม่นับนักศึกษาที่ถูกระงับ) เชิญนักศึกษาเข้าระบบ หรือติดต่อผู้ดูแลระบบหากขอบเขตของคุณยังไม่ถูกกำหนด'
-                        : 'หลักสูตรที่เลือกยังไม่มีนักศึกษาที่ใช้งานอยู่ ลองเลือก “ทุกหลักสูตรในความดูแล” จากรายการด้านบน'
+                        ? 'ยังไม่มีนิสิตที่ใช้งานอยู่ในขอบเขตที่คุณดูแล (ไม่นับนิสิตที่ถูกระงับ) เชิญนิสิตเข้าระบบ หรือติดต่อผู้ดูแลระบบหากขอบเขตของคุณยังไม่ถูกกำหนด'
+                        : 'หลักสูตรที่เลือกยังไม่มีนิสิตที่ใช้งานอยู่ ลองเลือก “ทุกหลักสูตรในความดูแล” จากรายการด้านบน'
                     }
                     action={
                       scope === ALL_CURRICULA ? (
@@ -306,7 +306,7 @@ function StaffDashboardContent() {
                           href="/staff/student-invitations"
                           className="inline-flex min-h-11 items-center rounded border border-slate-300 px-4 text-sm font-semibold text-primary hover:bg-slate-100"
                         >
-                          ไปที่คำเชิญนักศึกษา
+                          ไปที่คำเชิญนิสิต
                         </Link>
                       ) : undefined
                     }

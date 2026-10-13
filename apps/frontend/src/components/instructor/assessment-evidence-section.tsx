@@ -156,7 +156,7 @@ export function AssessmentEvidenceSection({
       <EvidenceStep
         number={2}
         title="เลือกเป้าการเรียนรู้ที่จะกรอกคะแนน"
-        hint="เป้าการเรียนรู้ (CLO) คือสิ่งที่นักศึกษาควรทำได้เมื่อเรียนจบวิชา ถ้ามีข้อเดียวระบบเลือกให้เอง"
+        hint="เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา ถ้ามีข้อเดียวระบบเลือกให้เอง"
         done={!!selectedMappingId}
         waiting={!selectedDefinitionId}
         waitingText="เลือกการประเมินในขั้นที่ 1 ก่อน"

@@ -55,7 +55,7 @@ function AdminCurriculumListContent() {
       <Reveal index={0}>
         <PageHeader
           title="คุณภาพหลักสูตร"
-          description="เลือกหลักสูตรในขอบเขตที่คุณดูแลเพื่อดูผลลัพธ์การเรียนรู้ (PLO) และสถานะนักศึกษา"
+          description="เลือกหลักสูตรในขอบเขตที่คุณดูแลเพื่อดูผลลัพธ์การเรียนรู้ (PLO) และสถานะนิสิต"
         />
       </Reveal>
 

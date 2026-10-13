@@ -7,7 +7,7 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string().min(1, 'กรุณายืนยันรหัสผ่าน'),
     fullName: z.string().min(1, 'กรุณากรอกชื่อ-นามสกุล').max(255),
-    studentCode: z.string().min(1, 'กรุณากรอกรหัสนักศึกษา'),
+    studentCode: z.string().min(1, 'กรุณากรอกรหัสนิสิต'),
     facultyId: z.string().uuid('กรุณาเลือกคณะ'),
     departmentId: z.string().uuid('กรุณาเลือกภาควิชา'),
     programId: z.string().uuid('กรุณาเลือกหลักสูตร'),
