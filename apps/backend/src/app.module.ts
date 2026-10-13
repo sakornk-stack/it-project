@@ -12,6 +12,7 @@ import { CurriculumContentModule } from './modules/curriculum-content/curriculum
 import { AcademicRecordModule } from './modules/academic-record/academic-record.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AiAnalysisModule } from './modules/ai-analysis/ai-analysis.module';
+import { CareerFitModule } from './modules/career-fit/career-fit.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
@@ -35,6 +36,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     AcademicRecordModule,
     DashboardModule,
     AiAnalysisModule,
+    CareerFitModule,
     // Further feature modules are registered here one phase at a time.
   ],
   controllers: [],

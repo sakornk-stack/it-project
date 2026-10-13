@@ -111,3 +111,13 @@ export const GRADE_STATUS: Record<Grade, 'PASS' | 'FAIL' | 'EXCLUDED'> = {
   W: 'EXCLUDED',
   I: 'EXCLUDED',
 };
+
+// Grade -> 0-100 mastery score, shared by PLO achievement and career fit.
+// FAIL (F or U) -> 0: a definite negative outcome that must drag the
+// average down. Otherwise grade point / 4.0 * 100. S, W and I have no
+// quantifiable outcome -> null (excluded, never counted as 0).
+export function gradeToScore(grade: Grade): number | null {
+  if (GRADE_STATUS[grade] === 'FAIL') return 0;
+  const gradePoint = GRADE_POINTS[grade];
+  return gradePoint === null ? null : (gradePoint / 4.0) * 100;
+}

@@ -3,9 +3,8 @@ import { Prisma, StudentProfile } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RequestUser } from '../../auth/request-user.interface';
 import {
-  GRADE_POINTS,
-  GRADE_STATUS,
   gpaRiskLevel,
+  gradeToScore,
 } from '../../academic-record/student-course-record/grade-point.constant';
 import {
   LatestCourseAttempt,
@@ -719,11 +718,7 @@ export class PloAchievementService {
     if (!attempt) {
       return null;
     }
-    if (GRADE_STATUS[attempt.grade] === 'FAIL') {
-      return 0;
-    }
-    const gradePoint = GRADE_POINTS[attempt.grade];
-    return gradePoint === null ? null : (gradePoint / 4.0) * 100;
+    return gradeToScore(attempt.grade);
   }
 
   private rankStrengthsAndWeaknesses(radar: RadarPoint[]) {

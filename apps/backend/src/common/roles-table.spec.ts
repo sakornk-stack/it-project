@@ -8,6 +8,7 @@ import { CourseCategoryController } from '../modules/curriculum-content/course-c
 import { CourseInstructorController } from '../modules/curriculum-content/course-instructor/course-instructor.controller';
 import { CourseController } from '../modules/curriculum-content/course/course.controller';
 import { CurriculumRequirementController } from '../modules/curriculum-content/curriculum-requirement/curriculum-requirement.controller';
+import { CareerFitController } from '../modules/career-fit/career-fit.controller';
 import { PloController } from '../modules/curriculum-content/plo/plo.controller';
 import { PrerequisiteController } from '../modules/curriculum-content/prerequisite/prerequisite.controller';
 import { StudentCourseRecordController } from '../modules/academic-record/student-course-record/student-course-record.controller';
@@ -63,6 +64,7 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       findOne: ['STUDENT', 'SUPER_ADMIN', 'ADMIN', 'STAFF'],
     },
   ],
+  ['CareerFitController', CareerFitController, { getMyCareerFit: ['STUDENT'] }],
 ];
 
 describe('role permission table', () => {
