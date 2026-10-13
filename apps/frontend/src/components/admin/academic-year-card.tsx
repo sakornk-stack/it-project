@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Ban, ChevronDown, GraduationCap } from 'lucide-react';
+import { ChevronDown, GraduationCap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
@@ -27,6 +27,7 @@ import { useToast } from '@/lib/toast-context';
 import { Input } from '@/components/ui/input';
 import { describeApiError } from '@/lib/describe-api-error';
 import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { UserRowMenu } from '@/components/admin/user-row-menu';
 import { DeactivateConfirm } from '@/components/admin/deactivate-confirm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -41,6 +42,8 @@ import {
 const TERM_ORDER: Record<Semester['term'], number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
 
 // Derived from the term itself: the two main terms are regular, the summer one is special.
+const MAX_TERMS_PER_YEAR = Object.keys(SEMESTER_TERM_LABELS).length;
+
 const TERM_KIND: Record<Semester['term'], string> = {
   FIRST: 'ภาคการศึกษาปกติ',
   SECOND: 'ภาคการศึกษาปกติ',
@@ -206,7 +209,7 @@ export function AcademicYearCard({
   }
 
   return (
-    <Card>
+    <Card className={cn(isLatest && 'bg-brand-light/30')}>
       <CardHeader
         className={cn(
           'flex-row flex-wrap items-center gap-3 space-y-0',
@@ -282,22 +285,25 @@ export function AcademicYearCard({
             <div className="col-span-2 row-start-2 flex flex-wrap items-center gap-2 md:contents">
               <div className="flex flex-wrap items-center gap-2 md:flex-1">
                 {isLatest && <Badge tone="neutral">ปีล่าสุด</Badge>}
-                <Badge tone="neutral">{semesters.length} ภาคเรียน</Badge>
+                <Badge tone="neutral">
+                  {semesters.length} จาก {MAX_TERMS_PER_YEAR} ภาคเรียนใช้งาน
+                </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={startEditingYear}>
                   แก้ไข
                 </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  className="gap-1.5 font-normal"
-                  onClick={() => setConfirmingYearDelete(true)}
-                >
-                  <Ban size={16} aria-hidden="true" />
-                  ปิดใช้งานปีการศึกษา
-                </Button>
+                <UserRowMenu
+                  userName={`ปีการศึกษา ${academicYear.year}`}
+                  items={[
+                    {
+                      key: 'deactivate',
+                      label: 'ปิดใช้งานปีการศึกษา',
+                      destructive: true,
+                      onSelect: () => setConfirmingYearDelete(true),
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -314,7 +320,7 @@ export function AcademicYearCard({
           ) : (
             <div>
               <ul className="space-y-2 md:space-y-0 md:divide-y md:divide-slate-100">
-                {sortedSemesters.map((semester) => {
+                {sortedSemesters.map((semester, semesterIndex) => {
                   const editableTerms = [
                     semester.term,
                     ...availableTerms.filter((term) => term !== semester.term),
@@ -324,10 +330,8 @@ export function AcademicYearCard({
                     <li
                       key={semester.id}
                       className={cn(
-                        'rounded-md border border-slate-100 bg-slate-50 px-3 py-3 text-sm md:rounded-none md:border-0 md:bg-transparent md:py-2 md:hover:bg-slate-50',
-                        editingSemesterId === semester.id
-                          ? 'block'
-                          : 'grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-3 md:flex md:items-center md:gap-4 md:pl-[3.25rem] md:pr-14',
+                        'rounded-md border border-l-4 border-slate-100 border-l-brand/40 bg-slate-50 px-3 py-2 text-sm md:rounded-none md:border-y-0 md:border-r-0 md:bg-transparent md:hover:bg-slate-50',
+                        editingSemesterId === semester.id ? 'block' : 'flex items-center gap-3',
                       )}
                     >
                       {editingSemesterId === semester.id ? (
@@ -383,43 +387,41 @@ export function AcademicYearCard({
                         </Form>
                       ) : (
                         <>
-                          <div className="md:min-w-0 md:flex-1">
+                          <div className="min-w-0 flex-1">
                             <p className="font-semibold text-primary">
+                              <span className="mr-1.5 text-xs font-medium text-muted-foreground">
+                                ภาคที่ {semesterIndex + 1}
+                              </span>
                               {SEMESTER_TERM_LABELS[semester.term]}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {TERM_KIND[semester.term]}
                             </p>
                           </div>
-                          <span className="justify-self-end md:w-32 md:shrink-0 md:justify-self-auto">
-                            <Badge tone="success" className="gap-1.5">
-                              <span
-                                aria-hidden="true"
-                                className={cn('h-1.5 w-1.5 rounded-full', BAR_TONE_CLASSES.success)}
-                              />
-                              ใช้งาน
-                            </Badge>
-                          </span>
-                          <div className="col-span-2 flex flex-wrap gap-2 md:col-span-1 md:shrink-0 md:justify-end">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => startEditingSemester(semester)}
-                            >
-                              แก้ไข
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="sm"
-                              className="gap-1.5 font-normal"
-                              onClick={() => setConfirmingSemesterId(semester.id)}
-                            >
-                              <Ban size={16} aria-hidden="true" />
-                              ปิดใช้งาน
-                            </Button>
-                          </div>
+                          <Badge tone="success" className="gap-1.5 px-3 py-1 text-sm">
+                            <span
+                              aria-hidden="true"
+                              className={cn('h-2 w-2 rounded-full', BAR_TONE_CLASSES.success)}
+                            />
+                            ใช้งาน
+                          </Badge>
+                          <UserRowMenu
+                            userName={`${SEMESTER_TERM_LABELS[semester.term]} ปีการศึกษา ${academicYear.year}`}
+                            triggerLabel={`เมนูเพิ่มเติมของ${SEMESTER_TERM_LABELS[semester.term]} ปีการศึกษา ${academicYear.year}`}
+                            items={[
+                              {
+                                key: 'edit',
+                                label: 'แก้ไข',
+                                onSelect: () => startEditingSemester(semester),
+                              },
+                              {
+                                key: 'deactivate',
+                                label: 'ปิดใช้งานภาคเรียน',
+                                destructive: true,
+                                onSelect: () => setConfirmingSemesterId(semester.id),
+                              },
+                            ]}
+                          />
                         </>
                       )}
                     </li>

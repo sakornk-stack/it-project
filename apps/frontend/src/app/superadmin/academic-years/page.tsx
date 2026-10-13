@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Info, Plus } from 'lucide-react';
+import { CalendarDays, CalendarRange, Info, Layers, Plus } from 'lucide-react';
 import { fetchAcademicYears, fetchSemesters } from '@/lib/api/academic-record';
 import { useAuth } from '@/lib/auth-context';
+import { StatCard } from '@/components/dashboard/stat-card';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -17,7 +18,7 @@ import { AcademicYearInactiveSection } from '@/components/admin/academic-year-in
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { EmptyState, InlineNotice } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function AcademicYearsAdminPage() {
   return <AcademicYearsAdminContent />;
@@ -35,6 +36,8 @@ function AcademicYearsAdminContent() {
   // Same rule the backend uses for a student's year level (highest year on
   // file); there is no stored "current year" field.
   const latestYear = Math.max(0, ...(yearsQuery.data ?? []).map((y) => y.year));
+
+  const statsLoading = yearsQuery.isLoading || semestersQuery.isLoading;
 
   function refetchAll() {
     queryClient.invalidateQueries({ queryKey: ['academic-years'] });
@@ -109,14 +112,41 @@ function AcademicYearsAdminContent() {
       )}
 
       <Reveal index={1}>
-        <InlineNotice icon={Info}>
-          ปีการศึกษาหนึ่งมีได้สูงสุด 3 ภาคเรียน (ภาคต้น ภาคปลาย ภาคฤดูร้อน)
-          ปิดใช้งานปีการศึกษาได้เมื่อไม่มีภาคเรียนที่ใช้งานอยู่
-          และปิดใช้งานภาคเรียนได้เมื่อไม่มีผลการเรียนอ้างอิง ทั้งสองอย่างเปิดคืนจากหน้าจอไม่ได้
+        <InlineNotice icon={Info} solid>
+          ปีการศึกษาหนึ่งมีได้สูงสุด 3 ภาคเรียน การปิดใช้งานทำได้เมื่อไม่มีข้อมูลอ้างอิง
+          และไม่สามารถเปิดคืนจากหน้าจอนี้ได้
         </InlineNotice>
       </Reveal>
 
-      <Reveal index={2}>
+      {statsLoading && <StatCardsSkeleton count={3} />}
+      {yearsQuery.data && semestersQuery.data && (
+        <Reveal index={2}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard
+              compact
+              icon={CalendarDays}
+              label="ปีการศึกษาที่ใช้งาน"
+              value={yearsQuery.data.length}
+              suffix="ปี"
+            />
+            <StatCard
+              compact
+              icon={CalendarRange}
+              label="ปีล่าสุด"
+              value={yearsQuery.data.length > 0 ? latestYear : '-'}
+            />
+            <StatCard
+              compact
+              icon={Layers}
+              label="ภาคเรียนที่ใช้งานรวม"
+              value={semestersQuery.data.length}
+              suffix="ภาค"
+            />
+          </div>
+        </Reveal>
+      )}
+
+      <Reveal index={3}>
         <PageSection
           title="ปีการศึกษาทั้งหมด"
           actions={
