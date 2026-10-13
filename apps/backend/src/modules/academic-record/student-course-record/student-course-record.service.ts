@@ -454,7 +454,7 @@ export class StudentCourseRecordService {
     const latestByCourse = new Map<string, LatestCourseAttempt>();
     for (const record of records) {
       const existing = latestByCourse.get(record.courseId);
-      if (!existing || this.isLaterAttempt(record, existing)) {
+      if (!existing || this.isPreferredAttempt(record, existing)) {
         latestByCourse.set(record.courseId, record);
       }
     }
@@ -544,7 +544,7 @@ export class StudentCourseRecordService {
     const latestByStudent = new Map<string, LatestCourseAttempt>();
     for (const record of records) {
       const existing = latestByStudent.get(record.studentProfileId);
-      if (!existing || this.isLaterAttempt(record, existing)) {
+      if (!existing || this.isPreferredAttempt(record, existing)) {
         latestByStudent.set(record.studentProfileId, record);
       }
     }
@@ -770,6 +770,30 @@ export class StudentCourseRecordService {
       fullName: profile.user.fullName,
       entries,
     };
+  }
+
+  // Which of two attempts at the same course stands as "the" attempt. A W/I
+  // (EXCLUDED) never replaces an attempt that has a real outcome, even a later
+  // one: withdrawing from a retake must not erase the earlier pass or fail.
+  // Otherwise the later (year, term) wins; the same (year, term) — which the
+  // partial unique index on active records already rules out — is settled by
+  // updatedAt, createdAt, then id, so the result never depends on query order.
+  private isPreferredAttempt(
+    candidate: LatestCourseAttempt,
+    current: LatestCourseAttempt,
+  ): boolean {
+    const candidateExcluded = GRADE_STATUS[candidate.grade] === 'EXCLUDED';
+    const currentExcluded = GRADE_STATUS[current.grade] === 'EXCLUDED';
+    if (candidateExcluded !== currentExcluded) return currentExcluded;
+
+    if (this.isLaterAttempt(candidate, current)) return true;
+    if (this.isLaterAttempt(current, candidate)) return false;
+
+    const byUpdated = candidate.updatedAt.getTime() - current.updatedAt.getTime();
+    if (byUpdated !== 0) return byUpdated > 0;
+    const byCreated = candidate.createdAt.getTime() - current.createdAt.getTime();
+    if (byCreated !== 0) return byCreated > 0;
+    return candidate.id > current.id;
   }
 
   private isLaterAttempt(

@@ -2,7 +2,10 @@ import {
   CreditCheckerService,
   CreditCheckCurriculumTree,
 } from './credit-checker.service';
-import { LatestCourseAttempt } from '../student-course-record/student-course-record.service';
+import {
+  LatestCourseAttempt,
+  StudentCourseRecordService,
+} from '../student-course-record/student-course-record.service';
 
 // computeCreditCheck is pure (no I/O), so the injected services are never touched.
 const service = new CreditCheckerService({} as never, {} as never, {} as never);
@@ -81,5 +84,61 @@ describe('CreditCheckerService.computeCreditCheck — remaining credits', () => 
     );
     expect(report.creditsPassed).toBe(4);
     expect(report.creditsRemaining).toBe(0);
+  });
+});
+
+describe('CreditCheckerService.computeCreditCheck — W after an earlier outcome', () => {
+  const records = new StudentCourseRecordService(
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+  );
+  const rec = (
+    id: string,
+    courseId: string,
+    grade: string,
+    year: number,
+    term: 'FIRST' | 'SECOND',
+  ) =>
+    ({
+      id,
+      courseId,
+      grade,
+      studentProfileId: 'student',
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      semester: { term, academicYear: { year } },
+    }) as unknown as LatestCourseAttempt;
+  const courses = [course('c1', 4), course('c2', 4)];
+
+  it('keeps an earlier PASS counted when a later retake is withdrawn', () => {
+    const latest = records.dedupeLatestPerCourse([
+      rec('a', 'c1', 'B', 2565, 'FIRST'),
+      rec('b', 'c1', 'W', 2566, 'FIRST'),
+    ]);
+    const report = service.computeCreditCheck(profile, tree(8, courses), latest);
+    expect(report.passedCourses.map((c) => c.courseId)).toEqual(['c1']);
+    expect(report.creditsPassed).toBe(4);
+    expect(report.missingRequiredCourses.map((c) => c.courseId)).toEqual(['c2']);
+  });
+
+  it('keeps an earlier F in failedCourses when a later retake is withdrawn', () => {
+    const latest = records.dedupeLatestPerCourse([
+      rec('a', 'c1', 'F', 2565, 'FIRST'),
+      rec('b', 'c1', 'W', 2566, 'FIRST'),
+    ]);
+    const report = service.computeCreditCheck(profile, tree(8, courses), latest);
+    expect(report.failedCourses.map((c) => c.courseId)).toEqual(['c1']);
+    expect(report.creditsStudied).toBe(4);
+    expect(report.creditsPassed).toBe(0);
+  });
+
+  it('leaves a course with only a W in the not-yet-studied bucket', () => {
+    const latest = records.dedupeLatestPerCourse([rec('a', 'c1', 'W', 2565, 'FIRST')]);
+    const report = service.computeCreditCheck(profile, tree(8, courses), latest);
+    expect(report.notYetStudiedCourses.map((c) => c.courseId)).toContain('c1');
+    expect(report.creditsStudied).toBe(0);
   });
 });
