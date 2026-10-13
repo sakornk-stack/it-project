@@ -2,7 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { ringTick } from '@/lib/progress-ring-geometry';
+import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountOnce } from '@/lib/use-count-once';
+import { useInView } from '@/lib/use-in-view';
 import { useCountUpAllowed } from '@/components/ui/count-up-policy';
 import { ProgressRing } from '@/components/ui/progress-ring';
 
@@ -26,11 +28,23 @@ export function AnimatedRing({
   children: ReactNode;
 }>) {
   const enabled = useCountUpAllowed();
-  const arc = useCountOnce(percent, { duration: 450, decimals: 1, enabled }) ?? percent;
+  const { ref, seen } = useInView<HTMLDivElement>();
+  const arc =
+    useCountOnce(percent, {
+      duration: COUNT_UP_MS,
+      decimals: 1,
+      enabled,
+      waiting: !seen,
+    }) ?? percent;
   const tick = goal === null || goal === undefined ? null : ringTick(size, strokeWidth, goal);
 
   return (
-    <div aria-hidden="true" className="relative shrink-0" style={{ width: size, height: size }}>
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+    >
       <ProgressRing value={arc} label="" tone={tone} size={size} strokeWidth={strokeWidth}>
         {children}
       </ProgressRing>

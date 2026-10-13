@@ -17,12 +17,15 @@ const prefersReducedMotion = () => window.matchMedia(QUERY).matches;
 // real value from the first paint.
 export function useCountOnce(
   value: number | null | undefined,
-  options?: { duration?: number; decimals?: number; enabled?: boolean },
+  // waiting: hold at 0 (the count has not started) until the caller flips it off, e.g. until
+  // the figure has scrolled into view. Reduced motion ignores it and shows the real value.
+  options?: { duration?: number; decimals?: number; enabled?: boolean; waiting?: boolean },
 ): number | null {
   const countable = isCountable(value);
   const enabled = options?.enabled ?? true;
+  const waiting = options?.waiting ?? false;
   const reduced = useSyncExternalStore(subscribe, prefersReducedMotion, () => false);
-  const counted = useCountUp(countable && enabled ? value : 0, {
+  const counted = useCountUp(countable && enabled && !waiting ? value : 0, {
     duration: options?.duration ?? COUNT_UP_MS,
     decimals: options?.decimals ?? 0,
   });
@@ -33,5 +36,6 @@ export function useCountOnce(
   }, [countable, counted, value]);
 
   if (!countable) return null;
-  return reduced || settled || !enabled ? value : counted;
+  if (reduced || settled || !enabled) return value;
+  return waiting ? 0 : counted;
 }

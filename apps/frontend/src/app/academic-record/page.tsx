@@ -13,6 +13,7 @@ import {
 } from '@/lib/api/academic-record';
 import { formatSemesterLabel } from '@/lib/grade-label';
 import { gpaColorClassName } from '@/lib/gpa-color';
+import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -112,14 +113,20 @@ function AcademicRecordContent() {
   // Dashboard F2 uses, just without needing a separate child component
   // here since this page's StatCard trio is fixed, not looped).
   const animatedGpa = useCountUp(gpa?.gpa ?? 0, {
-    duration: 1200,
+    duration: COUNT_UP_MS,
     decimals: 2,
     easing: 'elastic',
     clampMin: 0,
     clampMax: 4,
   });
-  const animatedCredits = useCountUp(gpa?.creditsCounted ?? 0, { duration: 900, decimals: 0 });
-  const animatedCourseCount = useCountUp(gpa?.courseCount ?? 0, { duration: 900, decimals: 0 });
+  const animatedCredits = useCountUp(gpa?.creditsCounted ?? 0, {
+    duration: COUNT_UP_MS,
+    decimals: 0,
+  });
+  const animatedCourseCount = useCountUp(gpa?.courseCount ?? 0, {
+    duration: COUNT_UP_MS,
+    decimals: 0,
+  });
 
   function refetchAll() {
     queryClient.invalidateQueries({ queryKey: ['my-course-records'] });

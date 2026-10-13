@@ -9,6 +9,7 @@ import { fetchCurriculum } from '@/lib/api/plo-achievement';
 import { useAuth } from '@/lib/auth-context';
 import { buildDashboardSummary } from '@/lib/dashboard-summary';
 import { computeGpaChange } from '@/lib/gpa-change';
+import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
@@ -132,15 +133,15 @@ function DashboardCards({
   threshold: number | null;
 }>) {
   const animatedGpa = useCountUp(dashboard.gpa ?? 0, {
-    duration: 800,
+    duration: COUNT_UP_MS,
     decimals: 2,
   });
   const animatedCredits = useCountUp(dashboard.creditsEarned, {
-    duration: 800,
+    duration: COUNT_UP_MS,
     decimals: 0,
   });
   const animatedProgress = useCountUp(dashboard.curriculumProgressPercent, {
-    duration: 800,
+    duration: COUNT_UP_MS,
     decimals: 0,
   });
   const gpaChange = computeGpaChange(dashboard.gpaTrend);

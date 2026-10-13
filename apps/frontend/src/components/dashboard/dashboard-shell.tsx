@@ -19,6 +19,7 @@ import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
 
@@ -181,13 +182,15 @@ export function DashboardShell({
         </header>
 
         <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 pb-24 md:p-8 md:pb-24">
-          {skeleton ? (
-            <LoadingGate ready={ready} skeleton={skeleton}>
-              {children}
-            </LoadingGate>
-          ) : (
-            children
-          )}
+          <RevealOnViewProvider>
+            {skeleton ? (
+              <LoadingGate ready={ready} skeleton={skeleton}>
+                {children}
+              </LoadingGate>
+            ) : (
+              children
+            )}
+          </RevealOnViewProvider>
         </main>
       </div>
     </div>

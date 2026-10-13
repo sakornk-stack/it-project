@@ -9,8 +9,8 @@ interface ProgressProps {
   label?: string;
   className?: string;
   barClassName?: string;
-  // Hold the bar at 0 until it first scrolls into view, then fill it once. Off by default,
-  // where the bar fills right after mount as before.
+  // The bar waits at 0 until it first scrolls into view, then fills once (default). Pass
+  // false to fill right after mount instead.
   animateOnView?: boolean;
 }
 
@@ -19,7 +19,7 @@ export function Progress({
   label,
   className,
   barClassName,
-  animateOnView = false,
+  animateOnView = true,
 }: Readonly<ProgressProps>) {
   const clamped = Math.max(0, Math.min(100, value));
   // First paint at 0 so the width transition has somewhere to fill from.

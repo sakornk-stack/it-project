@@ -30,6 +30,6 @@ describe('numberText', () => {
   });
 
   it('the count is short', () => {
-    expect(COUNT_UP_MS).toBeLessThanOrEqual(500);
+    expect(COUNT_UP_MS).toBeLessThanOrEqual(800);
   });
 });

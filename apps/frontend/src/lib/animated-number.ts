@@ -1,7 +1,7 @@
 // Count-up for the figure cards of the non-student roles. Plays once, short,
 // and only for a real number: a missing value is shown as its fallback text
 // and never counted.
-export const COUNT_UP_MS = 450;
+export const COUNT_UP_MS = 700;
 
 export function isCountable(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);

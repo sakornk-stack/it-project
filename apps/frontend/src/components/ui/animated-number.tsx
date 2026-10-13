@@ -2,6 +2,7 @@
 
 import { COUNT_UP_MS, numberText } from '@/lib/animated-number';
 import { useCountOnce } from '@/lib/use-count-once';
+import { useInView } from '@/lib/use-in-view';
 import { useCountUpAllowed } from './count-up-policy';
 
 // A figure that counts up once when it first appears. After that, and for a
@@ -21,14 +22,15 @@ export function AnimatedNumber({
   duration?: number;
 }>) {
   const enabled = useCountUpAllowed();
-  const current = useCountOnce(value, { duration, decimals, enabled });
+  const { ref, seen } = useInView<HTMLSpanElement>();
+  const current = useCountOnce(value, { duration, decimals, enabled, waiting: !seen });
   const { final, shown } = numberText(value, current ?? 0, format, fallback);
 
-  if (final === shown) return <>{final}</>;
+  if (final === shown && seen) return <span ref={ref}>{final}</span>;
   return (
-    <>
+    <span ref={ref}>
       <span aria-hidden="true">{shown}</span>
       <span className="sr-only">{final}</span>
-    </>
+    </span>
   );
 }

@@ -9,6 +9,7 @@ import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchCreditCheck } from '@/lib/api/credit-checker';
 import { useAuth } from '@/lib/auth-context';
 import { useCelebrateOnce } from '@/lib/use-celebrate-once';
+import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
@@ -151,7 +152,7 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
     report.totalCreditsRequired > 0
       ? Math.min(100, (report.creditsPassed / report.totalCreditsRequired) * 100)
       : 0;
-  const animatedReadiness = useCountUp(readinessPercent, { duration: 900, decimals: 0 });
+  const animatedReadiness = useCountUp(readinessPercent, { duration: COUNT_UP_MS, decimals: 0 });
 
   return (
     <>

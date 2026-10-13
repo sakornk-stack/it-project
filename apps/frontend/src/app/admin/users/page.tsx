@@ -206,7 +206,7 @@ function AdminUsersContent() {
       )}
 
       {showCreateForm && !createdUser && (
-        <Reveal>
+        <Reveal animate={false}>
           <CreateUserForm
             requesterIsSuperAdmin={requesterIsSuperAdmin}
             onCreated={handleCreated}
