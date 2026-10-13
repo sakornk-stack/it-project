@@ -92,7 +92,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
               }
             >
               <StatCard
-                compact
+                dense
                 icon={UsersRound}
                 label={requesterIsSuperAdmin ? 'บัญชีบุคลากรทั้งหมด' : 'บัญชีทั้งหมด'}
                 value={<AnimatedNumber value={summary.total} />}
@@ -100,7 +100,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
               />
               {requesterIsSuperAdmin ? (
                 <StatCard
-                  compact
+                  dense
                   icon={KeyRound}
                   label="รอตั้งรหัสผ่าน"
                   value={<AnimatedNumber value={summary.pendingPassword} />}
@@ -108,7 +108,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
                 />
               ) : (
                 <StatCard
-                  compact
+                  dense
                   icon={UserCog}
                   label="เจ้าหน้าที่"
                   value={<AnimatedNumber value={summary.byRole.STAFF} />}
@@ -117,7 +117,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
               )}
               {requesterIsSuperAdmin && (
                 <StatCard
-                  compact
+                  dense
                   icon={UserCheck}
                   label="ใช้งานอยู่"
                   value={<AnimatedNumber value={summary.active} />}
@@ -125,7 +125,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
                 />
               )}
               <StatCard
-                compact
+                dense
                 icon={ShieldOff}
                 label="ระงับการใช้งาน"
                 value={<AnimatedNumber value={summary.suspended} />}
@@ -213,6 +213,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
             basePath={basePath}
             users={usersQuery.data}
             superAdminId={requesterIsSuperAdmin ? user.userId : undefined}
+            currentUserId={user.userId}
           />
         )}
       </Reveal>

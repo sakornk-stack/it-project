@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, UserRound } from 'lucide-react';
+import { ChevronRight, Pencil, UserRound } from 'lucide-react';
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
 import { compareUsersDefault, formatThaiDate } from '@/lib/admin-users';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
@@ -113,32 +113,39 @@ function ScopeBadges({
   );
 }
 
-function DetailLink({
-  basePath,
-  id,
+// The row's one link to the detail page. It stretches over the whole row/card (the row is
+// `relative`), so a click anywhere opens the person, while it stays a real link with one
+// tab stop and its own focus ring. Buttons inside the row sit above it (`relative z-10`).
+function NameLink({
+  href,
+  user,
+  isSelf,
   className,
-  label = 'ดูรายละเอียด',
-  arrow = true,
-}: Readonly<{
-  basePath: string;
-  id: string;
-  className?: string;
-  label?: string;
-  arrow?: boolean;
-}>) {
+}: Readonly<{ href: string | null; user: AdminUserSummary; isSelf: boolean; className?: string }>) {
+  const name = (
+    <>
+      {user.fullName}
+      {isSelf && <span className="font-normal text-muted-foreground"> (คุณ)</span>}
+    </>
+  );
+  if (!href) return <span className={className}>{name}</span>;
   return (
     <Link
-      href={`${basePath}/users/${id}`}
-      className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5', className)}
+      href={href}
+      aria-label={`ดูรายละเอียดของ ${user.fullName}${isSelf ? ' (คุณ)' : ''}`}
+      className={cn(
+        'rounded-sm outline-none after:absolute after:inset-0 after:rounded-lg after:content-[""] focus-visible:after:ring-2 focus-visible:after:ring-ring',
+        className,
+      )}
     >
-      {label}
-      {arrow && <ArrowRight size={14} aria-hidden="true" />}
+      {name}
     </Link>
   );
 }
 
-// An Admin only opens the detail page; a Super Admin gets the fixed pair
-// "แก้ไข" + "⋯" on every manageable row (resend and suspend live in the menu).
+// An Admin only opens the detail page, so the row shows a light arrow (the row link does the
+// work); a Super Admin gets a pencil + "⋯" on every manageable row (resend and suspend live
+// in the menu).
 function RowActions({
   basePath,
   user,
@@ -152,7 +159,19 @@ function RowActions({
   showReason?: boolean;
   className?: string;
 }>) {
-  if (!superAdminId) return <DetailLink basePath={basePath} id={user.id} className={className} />;
+  if (!superAdminId) {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          'ml-auto flex h-11 w-11 items-center justify-center text-muted-foreground',
+          className,
+        )}
+      >
+        <ChevronRight size={18} />
+      </span>
+    );
+  }
   return (
     <SuperAdminRowActions
       basePath={basePath}
@@ -199,10 +218,17 @@ function SuperAdminRowActions({
   }));
 
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
-      <div className="flex items-center gap-2 xl:justify-end">
+    <div className={cn('relative z-10 flex flex-col gap-1', className)}>
+      <div className="flex items-center gap-1 xl:justify-end">
         {!locked && (
-          <DetailLink basePath={basePath} id={user.id} label="แก้ไข" arrow={false} className="flex-1 xl:flex-none" />
+          <Link
+            href={`${basePath}/users/${user.id}`}
+            aria-label={`แก้ไข ${user.fullName}`}
+            title="แก้ไข"
+            className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+          >
+            <Pencil size={16} aria-hidden="true" />
+          </Link>
         )}
         {status.blockReason && <UserManageBlocked reason={status.blockReason} />}
         <UserRowMenu userName={user.fullName} items={menuItems} />
@@ -220,12 +246,15 @@ export function UserListTable({
   basePath,
   users,
   superAdminId,
+  currentUserId,
 }: {
   // Route tree the detail links point into: /admin or /superadmin.
   basePath: string;
   users: AdminUserSummary[];
   // Set only for a Super Admin: turns on editing and suspending from each row.
   superAdminId?: string;
+  // The signed-in account, so its own row can say "(คุณ)".
+  currentUserId?: string;
 }) {
   const resolveTargetName = useScopeTargetName();
   const [search, setSearch] = useState('');
@@ -247,6 +276,10 @@ export function UserListTable({
   }, [users, search, roleFilter, statusFilter, scopeFilter]);
   const isFiltered =
     search.trim() !== '' || roleFilter !== ALL || statusFilter !== ALL || scopeFilter !== ALL;
+
+  // Other Super Admins and your own Super Admin account cannot be opened from a Super Admin's list.
+  const hrefOf = (user: AdminUserSummary) =>
+    superAdminId && user.roles.includes('SUPER_ADMIN') ? null : `${basePath}/users/${user.id}`;
 
   const ordered = useMemo(() => [...filtered].sort(compareUsersDefault), [filtered]);
   const sort = useTableSort(ordered, {
@@ -341,14 +374,20 @@ export function UserListTable({
                 <li
                   key={user.id}
                   className={cn(
-                    'space-y-3 rounded-lg border p-4',
+                    'relative space-y-3 rounded-lg border p-4 transition-colors motion-reduce:transition-none hover:bg-slate-50',
                     !user.isActive && 'bg-slate-50/60',
                   )}
                 >
                   <div className="flex items-start gap-3">
                     <UserAvatar />
                     <div className="min-w-0 flex-1 space-y-1">
-                      <p className="break-words font-semibold text-primary">{user.fullName}</p>
+                      <p className="break-words font-semibold text-primary">
+                        <NameLink
+                          href={hrefOf(user)}
+                          user={user}
+                          isSelf={user.id === currentUserId}
+                        />
+                      </p>
                       <p className="break-all text-sm text-muted-foreground">{user.email}</p>
                     </div>
                     <StatusColumn user={user} />
@@ -384,7 +423,9 @@ export function UserListTable({
                     <SortHeader {...sort.sortProps('status')} className="px-3 py-3">
                       สถานะ
                     </SortHeader>
-                    <th className="px-3 py-3 text-right font-medium">การดำเนินการ</th>
+                    <th className="px-3 py-3">
+                      <span className="sr-only">การดำเนินการ</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -392,7 +433,7 @@ export function UserListTable({
                     <tr
                       key={user.id}
                       className={cn(
-                        'border-b border-slate-100 align-middle hover:bg-slate-50',
+                        'relative border-b border-slate-100 align-middle transition-colors motion-reduce:transition-none hover:bg-slate-50',
                         !user.isActive && 'bg-slate-50/60',
                       )}
                     >
@@ -401,7 +442,11 @@ export function UserListTable({
                           <UserAvatar />
                           <span className="min-w-0 space-y-0.5">
                             <span className="block break-words font-medium text-primary">
-                              {user.fullName}
+                              <NameLink
+                                href={hrefOf(user)}
+                                user={user}
+                                isSelf={user.id === currentUserId}
+                              />
                             </span>
                             <span className="block break-all text-xs text-muted-foreground">
                               {user.email}

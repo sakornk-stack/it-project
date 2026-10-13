@@ -1,5 +1,6 @@
 'use client';
 
+import { SELF_LOCK_REASON } from '@/lib/admin-user-guard';
 import { useState } from 'react';
 import type { Role } from '@eduanalyze-ai/shared-types';
 import { assignUserRole, revokeUserRole } from '@/lib/api/user-management';
@@ -128,7 +129,10 @@ export function UserRolesSection({
               >
                 <Badge tone={ROLE_BADGE_TONE[role]}>{ROLE_LABEL_TH[role]}</Badge>
                 {lockedReason ? (
-                  <span className="text-xs text-muted-foreground">{lockedReason}</span>
+                  // The page already says once that your own account is locked.
+                  lockedReason !== SELF_LOCK_REASON && (
+                    <span className="text-xs text-muted-foreground">{lockedReason}</span>
+                  )
                 ) : (
                   <RevokeButton label="ถอดบทบาท" onClick={() => setConfirmingRole(role)} />
                 )}

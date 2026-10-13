@@ -1,5 +1,6 @@
 'use client';
 
+import { SELF_LOCK_REASON } from '@/lib/admin-user-guard';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -167,7 +168,10 @@ export function UserScopesSection({
                   {SCOPE_LEVEL_LABELS[scope.level]}: {resolveTargetName(scope)}
                 </span>
                 {lockedReason ? (
-                  <span className="text-xs text-muted-foreground">{lockedReason}</span>
+                  // The page already says once that your own account is locked.
+                  lockedReason !== SELF_LOCK_REASON && (
+                    <span className="text-xs text-muted-foreground">{lockedReason}</span>
+                  )
                 ) : (
                   <RevokeButton label="ถอดขอบเขต" onClick={() => setConfirmingId(scope.id)} />
                 )}

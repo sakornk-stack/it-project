@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarDays, Mail } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Info, Mail } from 'lucide-react';
 import { formatThaiDate } from '@/lib/admin-users';
 import { fetchUser, updateUserActiveStatus } from '@/lib/api/user-management';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { fetchDepartments, fetchPrograms } from '@/lib/api/organization';
 import { canResendInvitation } from '@/lib/resend-invitation';
-import { manageLockReason, suspendBlockReason } from '@/lib/admin-user-guard';
+import { manageLockReason, SELF_LOCK_REASON, suspendBlockReason } from '@/lib/admin-user-guard';
 import { MISSING_SCOPE_WARNING, roleNeedsScope } from '@/lib/user-scope-requirement';
 import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { describeApiError } from '@/lib/describe-api-error';
 import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/admin/api-error-alert';
+import { InlineNotice } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListSkeleton, Skeleton } from '@/components/ui/skeleton';
@@ -179,6 +180,12 @@ export function UserDetailPageContent({
             />
           </Reveal>
 
+          {isSelf && (
+            <InlineNotice icon={Info} solid>
+              {SELF_LOCK_REASON}
+            </InlineNotice>
+          )}
+
           <Reveal index={1}>
             <Card>
               <CardContent className="p-5 sm:p-6">
@@ -230,9 +237,11 @@ export function UserDetailPageContent({
                       : 'บัญชีนี้ถูกระงับ ไม่สามารถเข้าสู่ระบบได้'}
                   </span>
                   {suspendBlocked ? (
-                    <span className="max-w-md text-xs text-muted-foreground" role="note">
-                      {suspendBlocked}
-                    </span>
+                    suspendBlocked !== SELF_LOCK_REASON && (
+                      <span className="max-w-md text-xs text-muted-foreground" role="note">
+                        {suspendBlocked}
+                      </span>
+                    )
                   ) : (
                     <Button
                       type="button"
