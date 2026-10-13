@@ -5,6 +5,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   fetchInactiveAcademicYears,
   fetchInactiveSemesters,
+  permanentlyDeleteAcademicYear,
+  permanentlyDeleteSemester,
   reactivateAcademicYear,
   reactivateSemester,
 } from '@/lib/api/admin';
@@ -40,17 +42,26 @@ export function AcademicYearInactiveSection() {
   }
   if (all.some((q) => q.isLoading)) return <ListSkeleton items={3} />;
 
+  async function refreshAll() {
+    await Promise.all(
+      [['inactive-calendar'], ['academic-years'], ['semesters']].map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }),
+      ),
+    );
+  }
+
   return (
     <InactiveRecordList
       rows={rows}
+      permanentDelete={async (row) => {
+        if (row.level === 'ปีการศึกษา') await permanentlyDeleteAcademicYear(row.id);
+        else await permanentlyDeleteSemester(row.id);
+        await refreshAll();
+      }}
       reactivate={async (row) => {
         if (row.level === 'ปีการศึกษา') await reactivateAcademicYear(row.id);
         else await reactivateSemester(row.id);
-        await Promise.all(
-          [['inactive-calendar'], ['academic-years'], ['semesters']].map((queryKey) =>
-            queryClient.invalidateQueries({ queryKey }),
-          ),
-        );
+        await refreshAll();
       }}
     />
   );

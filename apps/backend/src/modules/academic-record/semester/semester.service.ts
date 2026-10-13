@@ -1,16 +1,25 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { conflictOnDuplicate } from '../../../common/util/reactivate.util';
 import { AcademicYearService } from '../academic-year/academic-year.service';
+import {
+  conflictOnReferenced,
+  countSemesterReferences,
+  hasReferences,
+  referencesBlockMessage,
+} from './semester-references.util';
 import { CreateSemesterDto } from './dto/create-semester.dto';
 import { UpdateSemesterDto } from './dto/update-semester.dto';
 
 @Injectable()
 export class SemesterService {
+  private readonly logger = new Logger(SemesterService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly academicYearService: AcademicYearService,
@@ -58,11 +67,18 @@ export class SemesterService {
     return this.prisma.semester.update({ where: { id }, data: dto });
   }
 
-  findInactive() {
-    return this.prisma.semester.findMany({
+  // `references` lets the screen disable "permanent delete" with a reason
+  // before the user tries; hardDelete re-checks regardless.
+  async findInactive() {
+    const semesters = await this.prisma.semester.findMany({
       where: { isActive: false },
       orderBy: [{ academicYearId: 'asc' }, { term: 'asc' }],
     });
+    const counts = await countSemesterReferences(
+      this.prisma,
+      semesters.map((s) => s.id),
+    );
+    return semesters.map((s) => ({ ...s, references: counts.get(s.id)! }));
   }
 
   async reactivate(id: string) {
@@ -106,6 +122,28 @@ export class SemesterService {
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  // Permanent delete: only a deactivated semester that nothing references.
+  async hardDelete(id: string, actorId: string) {
+    const semester = await this.findOne(id);
+    if (semester.isActive) {
+      throw new ConflictException('ลบถาวรได้เฉพาะภาคเรียนที่ปิดใช้งานแล้ว');
+    }
+
+    await conflictOnReferenced(
+      this.prisma.$transaction(async (tx) => {
+        const refs = (await countSemesterReferences(tx, [id])).get(id)!;
+        if (hasReferences(refs)) {
+          throw new ConflictException(referencesBlockMessage('ภาคเรียนนี้', refs));
+        }
+        await tx.semester.delete({ where: { id } });
+      }),
+      'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงภาคเรียนนี้เพิ่มขึ้นระหว่างดำเนินการ',
+    );
+    this.logger.warn(
+      `Permanently deleted semester ${id} (${semester.term}, year ${semester.academicYearId}) by user ${actorId}`,
+    );
   }
 
   private async assertTermAvailable(

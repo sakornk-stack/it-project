@@ -2,17 +2,27 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, SemesterTerm } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { conflictOnDuplicate } from '../../../common/util/reactivate.util';
+import {
+  conflictOnReferenced,
+  countSemesterReferences,
+  hasReferences,
+  referencesBlockMessage,
+  sumReferences,
+} from '../semester/semester-references.util';
 import { BulkCreateAcademicYearsDto } from './dto/bulk-create-academic-years.dto';
 import { CreateAcademicYearDto } from './dto/create-academic-year.dto';
 import { UpdateAcademicYearDto } from './dto/update-academic-year.dto';
 
 @Injectable()
 export class AcademicYearService {
+  private readonly logger = new Logger(AcademicYearService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateAcademicYearDto) {
@@ -143,10 +153,30 @@ export class AcademicYearService {
     return this.prisma.academicYear.update({ where: { id }, data: dto });
   }
 
-  findInactive() {
-    return this.prisma.academicYear.findMany({
+  // `references` covers every semester under the year (active or not), so the
+  // screen can disable "permanent delete" with a reason; hardDelete re-checks.
+  async findInactive() {
+    const years = await this.prisma.academicYear.findMany({
       where: { isActive: false },
       orderBy: { year: 'desc' },
+    });
+    const semesters = await this.prisma.semester.findMany({
+      where: { academicYearId: { in: years.map((y) => y.id) } },
+      select: { id: true, academicYearId: true, isActive: true },
+    });
+    const counts = await countSemesterReferences(
+      this.prisma,
+      semesters.map((s) => s.id),
+    );
+    return years.map((y) => {
+      const own = semesters.filter((s) => s.academicYearId === y.id);
+      return {
+        ...y,
+        references: {
+          activeSemesters: own.filter((s) => s.isActive).length,
+          ...sumReferences(own.map((s) => counts.get(s.id)!)),
+        },
+      };
     });
   }
 
@@ -182,6 +212,44 @@ export class AcademicYearService {
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  // Permanent delete: only a deactivated year whose semesters are all
+  // deactivated and unreferenced. The semesters go with it, in one transaction.
+  async hardDelete(id: string, actorId: string) {
+    const academicYear = await this.findOne(id);
+    if (academicYear.isActive) {
+      throw new ConflictException('ลบถาวรได้เฉพาะปีการศึกษาที่ปิดใช้งานแล้ว');
+    }
+
+    await conflictOnReferenced(
+      this.prisma.$transaction(async (tx) => {
+        const semesters = await tx.semester.findMany({
+          where: { academicYearId: id },
+          select: { id: true, isActive: true },
+        });
+        const activeCount = semesters.filter((s) => s.isActive).length;
+        if (activeCount > 0) {
+          throw new ConflictException(
+            `ลบถาวรไม่ได้ เพราะยังมีภาคเรียนที่ใช้งานอยู่ ${activeCount} ภาค`,
+          );
+        }
+        const counts = await countSemesterReferences(
+          tx,
+          semesters.map((s) => s.id),
+        );
+        const refs = sumReferences(counts.values());
+        if (hasReferences(refs)) {
+          throw new ConflictException(referencesBlockMessage('ปีการศึกษานี้', refs));
+        }
+        await tx.semester.deleteMany({ where: { academicYearId: id } });
+        await tx.academicYear.delete({ where: { id } });
+      }),
+      'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงปีการศึกษานี้เพิ่มขึ้นระหว่างดำเนินการ',
+    );
+    this.logger.warn(
+      `Permanently deleted academic year ${id} (${academicYear.year}) by user ${actorId}`,
+    );
   }
 
   private async assertYearAvailable(year: number, excludeId?: string) {

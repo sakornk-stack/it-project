@@ -879,6 +879,21 @@ export interface Semester {
   academicYearId: string;
 }
 
+// Rows pointing at a deactivated year/semester (every row, active or not).
+// Permanent delete is only possible when all of these are 0.
+export interface SemesterReferences {
+  records: number;
+  assessments: number;
+}
+
+export interface InactiveSemester extends Semester {
+  references: SemesterReferences;
+}
+
+export interface InactiveAcademicYear extends AcademicYear {
+  references: SemesterReferences & { activeSemesters: number };
+}
+
 // ---- Admin CRUD for AcademicYear/Semester (SUPER_ADMIN only) ----
 export interface CreateAcademicYearRequest {
   year: number;

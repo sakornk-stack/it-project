@@ -17,6 +17,7 @@ export function ConfirmDialog({
   cancelLabel = 'ยกเลิก',
   confirmVariant = 'destructive',
   busy = false,
+  confirmDisabled = false,
   onConfirm,
 }: {
   open: boolean;
@@ -28,6 +29,8 @@ export function ConfirmDialog({
   // 'default' for a confirmation that is not destructive, such as restoring something.
   confirmVariant?: 'destructive' | 'default';
   busy?: boolean;
+  // Keeps the confirm button off until the caller's own condition holds (e.g. a typed name).
+  confirmDisabled?: boolean;
   onConfirm: () => void;
 }) {
   return (
@@ -59,7 +62,12 @@ export function ConfirmDialog({
                 {cancelLabel}
               </Button>
             </DialogPrimitive.Close>
-            <Button type="button" variant={confirmVariant} disabled={busy} onClick={onConfirm}>
+            <Button
+              type="button"
+              variant={confirmVariant}
+              disabled={busy || confirmDisabled}
+              onClick={onConfirm}
+            >
               {confirmLabel}
             </Button>
           </div>

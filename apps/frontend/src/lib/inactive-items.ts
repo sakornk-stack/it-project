@@ -4,6 +4,8 @@ import type {
   DepartmentListItem,
   FacultyListItem,
   ProgramListItem,
+  InactiveAcademicYear,
+  InactiveSemester,
   Semester,
 } from '@eduanalyze-ai/shared-types';
 import { SEMESTER_TERM_LABELS } from '@/lib/grade-label';
@@ -21,6 +23,22 @@ export interface InactiveRow {
   // Set when the parent is itself deactivated: the backend would refuse, so the
   // screen says what to open first instead of offering a button that cannot work.
   blockedBy: string | null;
+  // Only years and semesters can be deleted for good. `blockedReason` is why the
+  // button is off (null = allowed); the API re-checks either way.
+  permanentDelete?: { blockedReason: string | null };
+}
+
+export function permanentDeleteBlockedReason(refs: {
+  records: number;
+  assessments: number;
+  activeSemesters?: number;
+}): string | null {
+  const parts = [
+    refs.activeSemesters ? `ภาคเรียนที่ใช้งานอยู่ ${refs.activeSemesters} ภาค` : null,
+    refs.records ? `ผลการเรียน ${refs.records} รายการ` : null,
+    refs.assessments ? `การประเมิน ${refs.assessments} รายการ` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? `ลบถาวรไม่ได้: ยังมี${parts.join(' และ')} อ้างอิงอยู่` : null;
 }
 
 interface OrgLists {
@@ -104,8 +122,8 @@ export function buildInactiveOrgRows(active: OrgLists, inactive: OrgLists): Inac
 // Deactivated academic years and semesters. A semester needs its year active first.
 export function buildInactiveCalendarRows(
   activeYears: AcademicYear[],
-  inactiveYears: AcademicYear[],
-  inactiveSemesters: Semester[],
+  inactiveYears: InactiveAcademicYear[],
+  inactiveSemesters: InactiveSemester[],
 ): InactiveRow[] {
   const years = byId(activeYears, inactiveYears);
   return [
@@ -118,6 +136,7 @@ export function buildInactiveCalendarRows(
         title: `ปีการศึกษา ${y.year}`,
         path: '',
         blockedBy: null,
+        permanentDelete: { blockedReason: permanentDeleteBlockedReason(y.references) },
       })),
     ...inactiveSemesters.map((s) => {
       const year = years.get(s.academicYearId);
@@ -128,6 +147,7 @@ export function buildInactiveCalendarRows(
         title: SEMESTER_TERM_LABELS[s.term] ?? s.term,
         path: year ? `ปีการศึกษา ${year.year}` : '',
         blockedBy: year && !year.isActive ? `ปีการศึกษา ${year.year}` : null,
+        permanentDelete: { blockedReason: permanentDeleteBlockedReason(s.references) },
       };
     }),
   ];

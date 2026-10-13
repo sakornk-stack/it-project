@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -14,6 +15,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequestUser } from '../../auth/request-user.interface';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -123,5 +126,24 @@ export class AcademicYearController {
   })
   remove(@Param('id') id: string) {
     return this.academicYearService.remove(id);
+  }
+
+  @Delete(':id/permanent')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Permanently delete a deactivated academic year and its semesters when nothing references them (SUPER_ADMIN)',
+  })
+  @ApiResponse({ status: 204, description: 'Academic year deleted' })
+  @ApiResponse({ status: 404, description: 'Academic year not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Year is still active, has active semesters, or is still referenced',
+  })
+  hardDelete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.academicYearService.hardDelete(id, user.userId);
   }
 }

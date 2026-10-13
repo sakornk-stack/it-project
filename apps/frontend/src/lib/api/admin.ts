@@ -6,6 +6,8 @@ import type {
   CreateAcademicYearRequest,
   CurriculumDashboardReport,
   CreateSemesterRequest,
+  InactiveAcademicYear,
+  InactiveSemester,
   Semester,
   UpdateAcademicYearRequest,
   UpdateSemesterRequest,
@@ -62,12 +64,12 @@ export async function deleteSemester(id: string) {
 // ---- Deactivated years and semesters (SUPER_ADMIN) ----
 
 export async function fetchInactiveAcademicYears() {
-  const { data } = await apiClient.get<AcademicYear[]>('/academic-years/inactive');
+  const { data } = await apiClient.get<InactiveAcademicYear[]>('/academic-years/inactive');
   return data;
 }
 
 export async function fetchInactiveSemesters() {
-  const { data } = await apiClient.get<Semester[]>('/semesters/inactive');
+  const { data } = await apiClient.get<InactiveSemester[]>('/semesters/inactive');
   return data;
 }
 
@@ -77,4 +79,13 @@ export async function reactivateAcademicYear(id: string) {
 
 export async function reactivateSemester(id: string) {
   await apiClient.post(`/semesters/${id}/reactivate`);
+}
+
+// Irreversible: only a deactivated record with nothing referencing it (the API says 409 otherwise).
+export async function permanentlyDeleteAcademicYear(id: string) {
+  await apiClient.delete(`/academic-years/${id}/permanent`);
+}
+
+export async function permanentlyDeleteSemester(id: string) {
+  await apiClient.delete(`/semesters/${id}/permanent`);
 }

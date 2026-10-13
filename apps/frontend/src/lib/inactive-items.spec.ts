@@ -85,15 +85,17 @@ describe('buildInactiveOrgRows', () => {
   });
 });
 
+const none = { records: 0, assessments: 0, activeSemesters: 0 };
+
 describe('buildInactiveCalendarRows', () => {
   it('lists years newest first and semesters with their year', () => {
     const rows = buildInactiveCalendarRows(
       [{ id: 'y2', year: 2567, isActive: true }],
       [
-        { id: 'y1', year: 2565, isActive: false },
-        { id: 'y0', year: 2564, isActive: false },
+        { id: 'y1', year: 2565, isActive: false, references: none },
+        { id: 'y0', year: 2564, isActive: false, references: none },
       ],
-      [{ id: 's1', term: 'FIRST', isActive: false, academicYearId: 'y2' }],
+      [{ id: 's1', term: 'FIRST', isActive: false, academicYearId: 'y2', references: none }],
     );
     expect(rows.map((r) => r.title)).toEqual(['ปีการศึกษา 2565', 'ปีการศึกษา 2564', 'ภาคต้น']);
     expect(rows[2]).toMatchObject({ path: 'ปีการศึกษา 2567', blockedBy: null });
@@ -102,9 +104,28 @@ describe('buildInactiveCalendarRows', () => {
   it('a semester of a deactivated year waits for the year', () => {
     const rows = buildInactiveCalendarRows(
       [],
-      [{ id: 'y1', year: 2565, isActive: false }],
-      [{ id: 's1', term: 'SECOND', isActive: false, academicYearId: 'y1' }],
+      [{ id: 'y1', year: 2565, isActive: false, references: none }],
+      [{ id: 's1', term: 'SECOND', isActive: false, academicYearId: 'y1', references: none }],
     );
     expect(rows[1].blockedBy).toBe('ปีการศึกษา 2565');
+  });
+
+  it('turns permanent delete off with the counts when something still references it', () => {
+    const rows = buildInactiveCalendarRows(
+      [{ id: 'y2', year: 2567, isActive: true }],
+      [
+        {
+          id: 'y1',
+          year: 2565,
+          isActive: false,
+          references: { ...none, records: 12, assessments: 3 },
+        },
+      ],
+      [{ id: 's1', term: 'FIRST', isActive: false, academicYearId: 'y2', references: none }],
+    );
+    expect(rows[0].permanentDelete?.blockedReason).toBe(
+      'ลบถาวรไม่ได้: ยังมีผลการเรียน 12 รายการ และการประเมิน 3 รายการ อ้างอิงอยู่',
+    );
+    expect(rows[1].permanentDelete?.blockedReason).toBeNull();
   });
 });

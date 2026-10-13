@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -14,6 +15,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequestUser } from '../../auth/request-user.interface';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -114,5 +117,21 @@ export class SemesterController {
   })
   remove(@Param('id') id: string) {
     return this.semesterService.remove(id);
+  }
+
+  @Delete(':id/permanent')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Permanently delete a deactivated, unreferenced semester (SUPER_ADMIN)' })
+  @ApiResponse({ status: 204, description: 'Semester deleted' })
+  @ApiResponse({ status: 404, description: 'Semester not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Semester is still active or still referenced by records/assessments',
+  })
+  hardDelete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.semesterService.hardDelete(id, user.userId);
   }
 }
