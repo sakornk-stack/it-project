@@ -15,6 +15,7 @@ import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states'
 import { PloRadarChart } from '@/components/aptitude-analysis/plo-radar-chart';
 import { PloInterpretationCard } from '@/components/aptitude-analysis/plo-interpretation-card';
 import { AptitudeAnalysisSkeleton } from '@/components/aptitude-analysis/aptitude-analysis-skeleton';
+import { CareerFitCard } from '@/components/career-fit/career-fit-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AptitudeAnalysisPage() {
@@ -131,6 +132,10 @@ function AptitudeAnalysisContent() {
         <div className="lg:col-span-3">
           <PloInterpretationCard report={interpretation} />
         </div>
+      </Reveal>
+
+      <Reveal index={2} className="mt-6">
+        <CareerFitCard />
       </Reveal>
     </DashboardShell>
   );

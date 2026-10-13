@@ -600,6 +600,30 @@ export interface StudentPloAchievementResponse {
   areasForImprovement: RadarPoint[];
 }
 
+// ---- Career fit (GET /students/me/career-fit) ----
+export type CareerFitStatus = 'OK' | 'NO_GRADES' | 'NO_CAREERS';
+export type CareerFitLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface CareerFitEntry {
+  careerId: string;
+  careerName: string;
+  status: 'OK' | 'INSUFFICIENT_DATA';
+  score: number | null;
+  level: CareerFitLevel | null;
+  coverage: number;
+  gradedCourseCount: number;
+  totalCourseCount: number;
+  topCourses: { code: string; name: string; grade: Grade }[];
+  recommendedCourses: { code: string; name: string }[];
+  message?: string;
+}
+
+export interface CareerFitReport {
+  status: CareerFitStatus;
+  message: string;
+  careers: CareerFitEntry[];
+}
+
 // ---- AI Skill Analysis (GET /ai-analysis/student/:studentProfileId) ----
 // Qualitative-only by construction (PROJECT_CONTEXT.md §25/26) — the
 // Anthropic tool schema backing this has zero numeric fields, so there is
