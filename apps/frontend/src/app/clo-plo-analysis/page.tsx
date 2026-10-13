@@ -202,7 +202,7 @@ function CloPloAnalysisContent() {
       fullName={user.fullName}
       skeleton={skeleton}
     >
-      <div className="mx-auto w-full max-w-5xl space-y-8">
+      <>
         <PageHeader
           title="การวิเคราะห์ CLO/PLO"
           description="ความสำเร็จของผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLO) จากผลการเรียนของคุณ"
@@ -258,7 +258,7 @@ function CloPloAnalysisContent() {
             </div>
           </PageSection>
         </Reveal>
-      </div>
+      </>
     </DashboardShell>
   );
 }
