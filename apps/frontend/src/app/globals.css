@@ -130,40 +130,69 @@
   }
 
   .interactive-row:focus-visible,
-  .interactive-row:has(:focus-visible) {
+  .interactive-row:has(:focus-visible),
+  .interactive-row:active {
     background-color: hsl(var(--brand) / 0.07);
   }
 
-  /* The "go" arrow inside an interactive-card: slides in on hover or keyboard
-     focus; always shown where there is no hover (touch). */
-  .interactive-card .go-arrow {
+  /* A quiet action inside an interactive-row (e.g. the trash button of a scope
+     card): muted at rest, turns destructive-red when the row is hovered or
+     focused. Hover only where the device has it. */
+  .interactive-row .row-action {
+    transition: color 150ms ease-out, background-color 150ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .interactive-row:hover .row-action {
+      color: hsl(var(--destructive));
+    }
+  }
+
+  .interactive-row:has(:focus-visible) .row-action {
+    color: hsl(var(--destructive));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-row .row-action {
+      transition: none;
+    }
+  }
+
+  /* The "go" arrow inside an interactive-card or interactive-row: slides in on hover or
+     keyboard focus; always shown where there is no hover (touch). */
+  .interactive-card .go-arrow,
+  .interactive-row .go-arrow {
     opacity: 0;
     transform: translateX(-4px);
     transition: opacity 180ms ease-out, transform 180ms ease-out;
   }
 
   @media (hover: hover) {
-    .interactive-card:hover .go-arrow {
+    .interactive-card:hover .go-arrow,
+    .interactive-row:hover .go-arrow {
       opacity: 1;
       transform: none;
     }
   }
 
   .interactive-card:focus-visible .go-arrow,
-  .interactive-card:has(:focus-visible) .go-arrow {
+  .interactive-card:has(:focus-visible) .go-arrow,
+  .interactive-row:has(:focus-visible) .go-arrow {
     opacity: 1;
     transform: none;
   }
 
   @media (hover: none) {
-    .interactive-card .go-arrow {
+    .interactive-card .go-arrow,
+    .interactive-row .go-arrow {
       opacity: 1;
       transform: none;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .interactive-card .go-arrow {
+    .interactive-card .go-arrow,
+    .interactive-row .go-arrow {
       transform: none;
     }
   }
