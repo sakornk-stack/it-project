@@ -43,4 +43,22 @@ describe('userMenuEntries', () => {
       }).map((e) => e.key),
     ).toEqual(['delete']);
   });
+
+  it('puts the detail-page entries first when the row allows them', () => {
+    expect(
+      userMenuEntries({
+        canOpen: true,
+        canEdit: true,
+        canResend: true,
+        statusBlocked: false,
+        isActive: true,
+      }).map((e) => e.key),
+    ).toEqual(['view', 'edit', 'resend', 'suspend']);
+  });
+
+  it('offers only "view" on a row that cannot be managed', () => {
+    expect(
+      userMenuEntries({ canOpen: true, canResend: false, statusBlocked: true, isActive: true }),
+    ).toEqual([{ key: 'view', label: 'ดูรายละเอียด' }]);
+  });
 });

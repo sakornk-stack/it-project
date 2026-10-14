@@ -1,24 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { KeyRound, Plus, ShieldOff, UserCheck, UserCog, UsersRound } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateUserResponse } from '@eduanalyze-ai/shared-types';
-import { activeShare, summarizeUsers } from '@/lib/admin-users';
+import { summarizeUsers } from '@/lib/admin-users';
 import { fetchUsers } from '@/lib/api/user-management';
 import { useAuth } from '@/lib/auth-context';
+import { useUserFilters } from '@/lib/use-user-filters';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { StatCard } from '@/components/dashboard/stat-card';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
 import { Reveal } from '@/components/layout/reveal';
 import { CreateUserForm } from '@/components/admin/create-user-form';
+import { UserListSkeleton } from '@/components/admin/user-list-skeleton';
 import { UserListTable } from '@/components/admin/user-list-table';
+import { UserStatCards } from '@/components/admin/user-stat-cards';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnimatedNumber } from '@/components/ui/animated-number';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton, StatCardsSkeleton, TableSkeleton } from '@/components/ui/skeleton';
 
 export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
@@ -26,6 +27,15 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
   const queryClient = useQueryClient();
   const [createdUser, setCreatedUser] = useState<CreateUserResponse | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const filterControl = useUserFilters();
+
+  // /superadmin/users?create=1 (the overview's "เพิ่มผู้ใช้งาน") opens the create form straight away.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('create') === '1') {
+      setShowCreateForm(true);
+    }
+  }, []);
 
   const usersQuery = useQuery({ queryKey: ['admin-users'], queryFn: fetchUsers });
 
@@ -42,7 +52,6 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
 
   const requesterIsSuperAdmin = user.roles.includes('SUPER_ADMIN');
   const summary = usersQuery.data ? summarizeUsers(usersQuery.data) : null;
-  const share = summary ? activeShare(summary) : null;
 
   function handleCreated(result: CreateUserResponse) {
     setCreatedUser(result);
@@ -71,7 +80,11 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
           actions={
             !createdUser &&
             !showCreateForm && (
-              <Button type="button" className="gap-1.5" onClick={() => setShowCreateForm(true)}>
+              <Button
+                type="button"
+                className="w-full gap-1.5 sm:w-auto"
+                onClick={() => setShowCreateForm(true)}
+              >
                 <Plus size={16} aria-hidden="true" />
                 {requesterIsSuperAdmin ? 'เพิ่มผู้ใช้งาน' : 'สร้างบัญชีเจ้าหน้าที่'}
               </Button>
@@ -80,65 +93,20 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
         />
       </Reveal>
 
-      {usersQuery.isLoading && <StatCardsSkeleton count={3} />}
+      {usersQuery.isLoading && (
+        <StatCardsSkeleton
+          count={requesterIsSuperAdmin ? 4 : 3}
+          className={
+            requesterIsSuperAdmin ? 'sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4' : undefined
+          }
+        />
+      )}
       {summary && (
-        <Reveal index={1}>
-          <div className="space-y-3">
-            <div
-              className={
-                requesterIsSuperAdmin
-                  ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'
-                  : 'grid grid-cols-1 gap-4 sm:grid-cols-3'
-              }
-            >
-              <StatCard
-                dense
-                icon={UsersRound}
-                label={requesterIsSuperAdmin ? 'บัญชีบุคลากรทั้งหมด' : 'บัญชีทั้งหมด'}
-                value={<AnimatedNumber value={summary.total} />}
-                suffix="บัญชี"
-              />
-              {requesterIsSuperAdmin ? (
-                <StatCard
-                  dense
-                  icon={KeyRound}
-                  label="รอตั้งรหัสผ่าน"
-                  value={<AnimatedNumber value={summary.pendingPassword} />}
-                  suffix="บัญชี"
-                />
-              ) : (
-                <StatCard
-                  dense
-                  icon={UserCog}
-                  label="เจ้าหน้าที่"
-                  value={<AnimatedNumber value={summary.byRole.STAFF} />}
-                  suffix="คน"
-                />
-              )}
-              {requesterIsSuperAdmin && (
-                <StatCard
-                  dense
-                  icon={UserCheck}
-                  label="ใช้งานอยู่"
-                  value={<AnimatedNumber value={summary.active} />}
-                  suffix={share === null ? 'บัญชี' : `บัญชี (${share.toFixed(1)}%)`}
-                />
-              )}
-              <StatCard
-                dense
-                icon={ShieldOff}
-                label="ระงับการใช้งาน"
-                value={<AnimatedNumber value={summary.suspended} />}
-                suffix="บัญชี"
-              />
-            </div>
-            {summary.withoutScope > 0 && (
-              <p className="text-sm font-medium text-amber-700">
-                มี {summary.withoutScope} บัญชีที่ยังไม่กำหนดขอบเขต
-              </p>
-            )}
-          </div>
-        </Reveal>
+        <UserStatCards
+          summary={summary}
+          requesterIsSuperAdmin={requesterIsSuperAdmin}
+          control={filterControl}
+        />
       )}
 
       {createdUser && (
@@ -196,17 +164,8 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
         </Reveal>
       )}
 
-      <Reveal index={2}>
-        {usersQuery.isLoading && (
-          <Card>
-            <CardHeader>
-              <CardTitle>รายชื่อผู้ใช้งาน</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TableSkeleton cols={4} rows={6} />
-            </CardContent>
-          </Card>
-        )}
+      <Reveal index={5}>
+        {usersQuery.isLoading && <UserListSkeleton />}
         {usersQuery.isError && <PageLoadError onRetry={() => usersQuery.refetch()} />}
         {usersQuery.data && (
           <UserListTable
@@ -214,6 +173,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
             users={usersQuery.data}
             superAdminId={requesterIsSuperAdmin ? user.userId : undefined}
             currentUserId={user.userId}
+            control={filterControl}
           />
         )}
       </Reveal>

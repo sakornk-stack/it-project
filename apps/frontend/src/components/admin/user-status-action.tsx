@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { Lock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import { suspendBlockReason } from '@/lib/admin-user-guard';
 import { updateUserActiveStatus } from '@/lib/api/user-management';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useToast } from '@/lib/toast-context';
-import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -74,26 +74,26 @@ export function useUserStatusToggle(user: AdminUserSummary, requesterId: string)
 }
 
 // Shown instead of any status action when the rules forbid it, so a locked
-// account is never a button that does nothing.
+// account is never a button that does nothing: a small lock whose tooltip gives
+// the real reason.
 export function UserManageBlocked({
   reason,
   showReason = false,
 }: Readonly<{
   reason: string;
-  // Cards have room to write the reason out; table rows keep it in a tooltip.
+  // Cards have room to write the reason out (and no hover on a phone); table rows
+  // keep it in a tooltip.
   showReason?: boolean;
 }>) {
   return (
-    <span className="inline-flex flex-col items-start gap-1">
+    <span className="inline-flex items-center gap-1.5">
       <Tooltip>
         <TooltipTrigger asChild>
           <span
             tabIndex={0}
-            className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Badge tone="neutral" className="whitespace-nowrap">
-              จัดการไม่ได้
-            </Badge>
+            <Lock size={16} aria-hidden="true" />
             {!showReason && <span className="sr-only">{reason}</span>}
           </span>
         </TooltipTrigger>

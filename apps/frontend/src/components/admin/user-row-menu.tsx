@@ -54,11 +54,11 @@ export function UserRowMenu({
       <PopoverPrimitive.Trigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
           className="shrink-0"
           aria-haspopup="menu"
-          aria-label={triggerLabel}
+          aria-label={`${triggerLabel}ของ ${userName}`}
           title={triggerLabel}
         >
           <MoreHorizontal aria-hidden="true" className="h-4 w-4" />

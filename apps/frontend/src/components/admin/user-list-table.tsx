@@ -1,69 +1,73 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Pencil, UserRound } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, SearchX, UsersRound } from 'lucide-react';
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
 import { compareUsersDefault, formatThaiDate } from '@/lib/admin-users';
+import { accountStatus } from '@/lib/account-status';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { usePagination } from '@/lib/use-pagination';
+import type { UserFiltersControl } from '@/lib/use-user-filters';
 import { useScopeTargetName } from '@/lib/use-scope-target-name';
+import { filterUsers, isFiltering } from '@/lib/user-list-filter';
 import { roleNeedsScope } from '@/lib/user-scope-requirement';
 import { useTableSort } from '@/lib/use-table-sort';
-import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
+import { ROLE_BADGE_TONE, ROLE_LABEL_TH, primaryRoleFor } from '@/components/auth/require-role';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { EmptyState } from '@/components/ui/empty-state';
+import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { Pagination } from '@/components/ui/pagination';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { SortHeader } from '@/components/ui/sort-header';
 import { useResendInvitation } from '@/components/admin/resend-invitation-button';
+import { UserListFilters } from '@/components/admin/user-list-filters';
 import { UserRowMenu } from '@/components/admin/user-row-menu';
 import { useUserPermanentDelete } from '@/components/admin/user-permanent-delete';
 import { UserManageBlocked, useUserStatusToggle } from '@/components/admin/user-status-action';
 import { userMenuEntries } from '@/lib/user-row-actions';
+import { BADGE_TONE_CLASSES, BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
+import { cn } from '@/lib/utils';
 
-const ALL = 'ALL';
-const NO_SCOPE = 'NO_SCOPE';
-const ACTIVE = 'ACTIVE';
-const SUSPENDED = 'SUSPENDED';
+// Header cells stay in view while the page scrolls past a long list. Above the row
+// buttons (z-10) so a button never paints over the header.
+const TH = 'sticky top-0 z-20 bg-slate-50 px-3 py-3';
 
-// STUDENT never appears here (the list endpoint excludes them).
-const FILTERABLE_ROLES = (Object.keys(ROLE_LABEL_TH) as Role[]).filter(
-  (role) => role !== 'STUDENT',
-);
+// The avatar takes the colour of the person's top role, from the same tones as the
+// role badges, so it follows the theme.
+const AVATAR_TONE_CLASSES: Record<SemanticTone, string> = {
+  success: BADGE_TONE_CLASSES.success,
+  warning: BADGE_TONE_CLASSES.warning,
+  danger: BADGE_TONE_CLASSES.danger,
+  neutral: BADGE_TONE_CLASSES.neutral,
+};
 
-// One badge per account so every row is the same height. Suspended wins over
-// "waiting for a password"; the wording carries the meaning, the dot only repeats it.
+// One badge per account so every row is the same height. The dot pulses only for an
+// account that is fully live; the wording carries the meaning, the dot only repeats it.
+// Keeps the list's own tones: a suspended account is grey, not red.
 function StatusColumn({ user }: Readonly<{ user: AdminUserSummary }>) {
-  const pending = user.isActive && user.mustChangePassword;
-  const tone = pending ? 'warning' : user.isActive ? 'success' : 'neutral';
-  const text = pending ? 'รอตั้งรหัสผ่าน' : user.isActive ? 'ใช้งานอยู่' : 'ระงับการใช้งาน';
+  const { tone: detailTone, label, live } = accountStatus(user);
+  const tone: SemanticTone = detailTone === 'danger' ? 'neutral' : detailTone;
+  const text = live ? 'ใช้งานอยู่' : label;
   return (
     <Badge tone={tone} className="gap-1.5 whitespace-nowrap">
-      <span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', BAR_TONE_CLASSES[tone])} />
+      <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
+        {live && (
+          <span
+            className={cn(
+              'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:animate-none',
+              BAR_TONE_CLASSES[tone],
+            )}
+          />
+        )}
+        <span
+          className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', BAR_TONE_CLASSES[tone])}
+        />
+      </span>
       {text}
     </Badge>
-  );
-}
-
-function UserAvatar() {
-  return (
-    <span
-      aria-hidden="true"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-light text-brand"
-    >
-      <UserRound size={18} />
-    </span>
   );
 }
 
@@ -80,12 +84,17 @@ function RoleBadges({ roles }: Readonly<{ roles: Role[] }>) {
   );
 }
 
+// Scope: a small muted level ("สาขา") then the name in regular weight, one line each,
+// cut with an ellipsis (the full text is the tooltip).
 function ScopeBadges({
   user,
   resolveTargetName,
+  limit,
 }: Readonly<{
   user: AdminUserSummary;
   resolveTargetName: ReturnType<typeof useScopeTargetName>;
+  // Table rows keep a fixed height by showing the first few and counting the rest.
+  limit?: number;
 }>) {
   if (user.roles.includes('SUPER_ADMIN')) {
     return <Badge tone="neutral">ทั้งระบบ</Badge>;
@@ -100,103 +109,124 @@ function ScopeBadges({
       </Badge>
     );
   }
+  const shown = limit ? user.scopes.slice(0, limit) : user.scopes;
+  const hidden = user.scopes.length - shown.length;
   return (
-    <ul className="space-y-1.5">
-      {user.scopes.map((scope) => (
-        <li key={scope.id} className="text-sm leading-snug">
-          <span className="block text-xs text-muted-foreground">
-            {SCOPE_LEVEL_LABELS[scope.level]}
-          </span>
-          <span className="block break-words font-medium">{resolveTargetName(scope)}</span>
-        </li>
-      ))}
+    <ul className="space-y-1">
+      {shown.map((scope) => {
+        const level = SCOPE_LEVEL_LABELS[scope.level];
+        const name = resolveTargetName(scope);
+        return (
+          <li
+            key={scope.id}
+            title={`${level} ${name}`}
+            className="flex min-w-0 items-baseline gap-1.5 text-sm leading-snug"
+          >
+            <span className="shrink-0 text-xs text-muted-foreground">{level}</span>
+            <span className="truncate">{name}</span>
+          </li>
+        );
+      })}
+      {hidden > 0 && <li className="text-xs text-muted-foreground">และอีก {hidden} ขอบเขต</li>}
     </ul>
   );
 }
 
-// The row's one link to the detail page. It stretches over the whole row/card (the row is
-// `relative`), so a click anywhere opens the person, while it stays a real link with one
-// tab stop and its own focus ring. Buttons inside the row sit above it (`relative z-10`).
-function NameLink({
-  href,
+// Name first (strong), email under it (muted), "(คุณ)" as a small tag after the name
+// rather than part of it. The name is the row's keyboard entry: a real link, so Enter
+// opens it; the rest of the row opens it with a click (see rowClick).
+function UserIdentity({
   user,
+  href,
   isSelf,
-  className,
-}: Readonly<{ href: string | null; user: AdminUserSummary; isSelf: boolean; className?: string }>) {
-  const name = (
-    <>
-      {user.fullName}
-      {isSelf && <span className="font-normal text-muted-foreground"> (คุณ)</span>}
-    </>
-  );
-  if (!href) return <span className={className}>{name}</span>;
+}: Readonly<{ user: AdminUserSummary; href: string; isSelf: boolean }>) {
+  const tone = ROLE_BADGE_TONE[primaryRoleFor(user.roles)];
   return (
-    <Link
-      href={href}
-      aria-label={`ดูรายละเอียดของ ${user.fullName}${isSelf ? ' (คุณ)' : ''}`}
-      className={cn(
-        'rounded-sm outline-none after:absolute after:inset-0 after:rounded-lg after:content-[""] focus-visible:after:ring-2 focus-visible:after:ring-ring',
-        className,
-      )}
-    >
-      {name}
-    </Link>
+    <span className="flex min-w-0 items-center gap-3">
+      <InitialsAvatar
+        name={user.fullName}
+        className={cn('h-9 w-9 text-sm', AVATAR_TONE_CLASSES[tone])}
+      />
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <Link
+            href={href}
+            title={user.fullName}
+            aria-label={`ดูรายละเอียดของ ${user.fullName}${isSelf ? ' (คุณ)' : ''}`}
+            onClick={(event) => event.stopPropagation()}
+            className="min-w-0 truncate rounded-sm font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {user.fullName}
+          </Link>
+          {isSelf && <span className="shrink-0 text-xs text-muted-foreground">(คุณ)</span>}
+        </span>
+        <span title={user.email} className="block truncate text-xs text-muted-foreground">
+          {user.email}
+        </span>
+      </span>
+    </span>
   );
 }
 
-// An Admin only opens the detail page, so the row shows a light arrow (the row link does the
-// work); a Super Admin gets a pencil + "⋯" on every manageable row (resend and suspend live
-// in the menu).
+// The decorative end of a row: an arrow that slides in on hover/focus (always shown on
+// touch). Clicks on it fall through to the row.
+function GoArrow() {
+  return (
+    <span
+      aria-hidden="true"
+      className="go-arrow flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground"
+    >
+      <ArrowRight size={16} />
+    </span>
+  );
+}
+
+// An Admin only opens the detail page, so the row shows just the arrow (the row click
+// does the work); a Super Admin also gets a lock (when the rules forbid managing the
+// account) or the "⋯" menu (view, edit, resend, suspend).
 function RowActions({
-  basePath,
+  href,
   user,
+  basePath,
   superAdminId,
   showReason = false,
-  className,
 }: Readonly<{
-  basePath: string;
+  href: string;
   user: AdminUserSummary;
+  basePath: string;
   superAdminId?: string;
   showReason?: boolean;
-  className?: string;
 }>) {
-  if (!superAdminId) {
-    return (
-      <span
-        aria-hidden="true"
-        className={cn(
-          'ml-auto flex h-11 w-11 items-center justify-center text-muted-foreground',
-          className,
-        )}
-      >
-        <ChevronRight size={18} />
-      </span>
-    );
-  }
   return (
-    <SuperAdminRowActions
-      basePath={basePath}
-      user={user}
-      superAdminId={superAdminId}
-      showReason={showReason}
-      className={className}
-    />
+    <div className="flex items-center gap-1 xl:justify-end">
+      {superAdminId && (
+        <SuperAdminRowActions
+          href={href}
+          basePath={basePath}
+          user={user}
+          superAdminId={superAdminId}
+          showReason={showReason}
+        />
+      )}
+      <GoArrow />
+    </div>
   );
 }
 
 function SuperAdminRowActions({
+  href,
   basePath,
   user,
   superAdminId,
   showReason,
-  className,
 }: Readonly<{
+  href: string;
   basePath: string;
   user: AdminUserSummary;
   superAdminId: string;
   showReason: boolean;
-  className?: string;
 }>) {
+  const router = useRouter();
   const status = useUserStatusToggle(user, superAdminId);
   const resend = useResendInvitation({
     user,
@@ -214,42 +244,41 @@ function SuperAdminRowActions({
     basePath,
   });
 
+  const open = () => router.push(href);
   const actions = {
+    view: open,
+    edit: open,
     resend: resend.request,
     suspend: status.request,
     reactivate: status.request,
     delete: remove.request,
   };
-  const menuItems = userMenuEntries({
+  const entries = userMenuEntries({
+    canOpen: true,
+    canEdit: !locked,
     canResend: resend.canResend,
     statusBlocked: status.blockReason !== null,
     isActive: user.isActive,
     canDelete: remove.canDelete,
-  }).map((entry) => ({
-    ...entry,
-    onSelect: actions[entry.key],
-    disabled: status.busy || resend.busy,
-  }));
+  });
+  // "view" alone is what the row click already does, so a row with nothing to manage
+  // gets the lock instead of a menu.
+  const menuItems = entries.some((entry) => entry.key !== 'view')
+    ? entries.map((entry) => ({
+        ...entry,
+        onSelect: actions[entry.key],
+        disabled: status.busy || resend.busy,
+      }))
+    : [];
 
   return (
-    <div className={cn('relative z-10 flex flex-col gap-1', className)}>
-      <div className="flex items-center gap-1 xl:justify-end">
-        {!locked && (
-          <Link
-            href={`${basePath}/users/${user.id}`}
-            aria-label={`แก้ไข ${user.fullName}`}
-            title="แก้ไข"
-            className={buttonVariants({ variant: 'ghost', size: 'icon' })}
-          >
-            <Pencil size={16} aria-hidden="true" />
-          </Link>
-        )}
-        {status.blockReason && <UserManageBlocked reason={status.blockReason} />}
-        <UserRowMenu userName={user.fullName} items={menuItems} />
-      </div>
-      {showReason && status.blockReason && (
-        <span className="text-xs text-muted-foreground">{status.blockReason}</span>
+    // The menu's items and the dialogs below render inside this wrapper (in the React
+    // tree), so it also keeps their clicks from reaching the row.
+    <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+      {status.blockReason && (
+        <UserManageBlocked reason={status.blockReason} showReason={showReason} />
       )}
+      <UserRowMenu userName={user.fullName} items={menuItems} />
       {status.dialog}
       {resend.dialog}
       {remove.dialog}
@@ -257,11 +286,20 @@ function SuperAdminRowActions({
   );
 }
 
+// Click anywhere on the row to open the person, unless the click ended a text selection.
+function rowClick(router: ReturnType<typeof useRouter>, href: string) {
+  return () => {
+    if (window.getSelection()?.toString()) return;
+    router.push(href);
+  };
+}
+
 export function UserListTable({
   basePath,
   users,
   superAdminId,
   currentUserId,
+  control,
 }: {
   // Route tree the detail links point into: /admin or /superadmin.
   basePath: string;
@@ -270,43 +308,27 @@ export function UserListTable({
   superAdminId?: string;
   // The signed-in account, so its own row can say "(คุณ)".
   currentUserId?: string;
+  // Filter state, owned by the page so the stat cards can drive it too.
+  control: UserFiltersControl;
 }) {
+  const router = useRouter();
   const resolveTargetName = useScopeTargetName();
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<Role | typeof ALL>(ALL);
-  const [statusFilter, setStatusFilter] = useState<string>(ACTIVE);
-  const [scopeFilter, setScopeFilter] = useState<string>(ALL);
+  const { filters, update, clear } = control;
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return users.filter(
-      (user) =>
-        (term === '' ||
-          user.fullName.toLowerCase().includes(term) ||
-          user.email.toLowerCase().includes(term)) &&
-        (roleFilter === ALL || user.roles.includes(roleFilter)) &&
-        (statusFilter === ALL || (statusFilter === ACTIVE ? user.isActive : !user.isActive)) &&
-        (scopeFilter === ALL || (roleNeedsScope(user.roles) && user.scopes.length === 0)),
-    );
-  }, [users, search, roleFilter, statusFilter, scopeFilter]);
-  const isFiltered =
-    search.trim() !== '' || roleFilter !== ALL || statusFilter !== ALL || scopeFilter !== ALL;
+  const filtered = useMemo(() => filterUsers(users, filters), [users, filters]);
+  const isFiltered = isFiltering(filters);
 
-  // Other Super Admins and your own Super Admin account cannot be opened from a Super Admin's list.
-  const hrefOf = (user: AdminUserSummary) =>
-    superAdminId && user.roles.includes('SUPER_ADMIN') ? null : `${basePath}/users/${user.id}`;
+  const hrefOf = (user: AdminUserSummary) => `${basePath}/users/${user.id}`;
 
   const ordered = useMemo(() => [...filtered].sort(compareUsersDefault), [filtered]);
   const sort = useTableSort(ordered, {
     fullName: (u) => u.fullName,
-    email: (u) => u.email,
     status: (u) => (u.isActive ? 0 : 1),
-    createdAt: (u) => u.createdAt,
   });
   const pagination = usePagination(
     sort.sorted,
     undefined,
-    `${sort.sortKey}|${sort.direction}|${search.trim()}|${roleFilter}|${statusFilter}|${scopeFilter}`,
+    `${sort.sortKey}|${sort.direction}|${filters.search.trim()}|${filters.role}|${filters.status}|${filters.scope}`,
   );
 
   return (
@@ -315,176 +337,142 @@ export function UserListTable({
         <CardTitle>รายชื่อผู้ใช้งาน</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <Input
-            placeholder="ค้นหาชื่อหรืออีเมล..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-xs"
-          />
-          <Select
-            value={roleFilter}
-            onValueChange={(value) => setRoleFilter(value as Role | typeof ALL)}
-          >
-            <SelectTrigger className="w-full sm:w-44" aria-label="กรองตามบทบาท">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem className="min-h-11" value={ALL}>
-                ทุกบทบาท
-              </SelectItem>
-              {FILTERABLE_ROLES.map((role) => (
-                <SelectItem key={role} value={role} className="min-h-11">
-                  {ROLE_LABEL_TH[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40" aria-label="กรองตามสถานะ">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem className="min-h-11" value={ALL}>
-                ทุกสถานะ
-              </SelectItem>
-              <SelectItem className="min-h-11" value={ACTIVE}>
-                ใช้งานอยู่
-              </SelectItem>
-              <SelectItem className="min-h-11" value={SUSPENDED}>
-                ระงับการใช้งาน
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={scopeFilter} onValueChange={setScopeFilter}>
-            <SelectTrigger className="w-full sm:w-52" aria-label="กรองตามขอบเขต">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem className="min-h-11" value={ALL}>
-                ขอบเขตทั้งหมด
-              </SelectItem>
-              <SelectItem className="min-h-11" value={NO_SCOPE}>
-                ยังไม่กำหนดขอบเขต
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          {isFiltered && (
-            <span className="text-sm text-muted-foreground">
-              แสดง {filtered.length} จาก {users.length} คน
-            </span>
-          )}
-        </div>
+        <UserListFilters
+          filters={filters}
+          onChange={update}
+          onClear={clear}
+          isFiltered={isFiltered}
+          shown={filtered.length}
+          total={users.length}
+        />
         {filtered.length === 0 ? (
-          <p className="py-6 text-center text-muted-foreground">
-            {users.length === 0
-              ? 'ยังไม่มีผู้ใช้งานในขอบเขตของคุณ กด “เพิ่มผู้ใช้งาน” ที่มุมบนเพื่อสร้างบัญชีแรก'
-              : 'ไม่พบผู้ใช้งานที่ตรงกับตัวกรอง ลองเปลี่ยนหรือล้างตัวกรองด้านบน'}
-          </p>
+          users.length === 0 ? (
+            <EmptyState
+              icon={UsersRound}
+              description="ยังไม่มีผู้ใช้งานในขอบเขตของคุณ กด “เพิ่มผู้ใช้งาน” ที่มุมบนเพื่อสร้างบัญชีแรก"
+            />
+          ) : (
+            <EmptyState
+              icon={SearchX}
+              description="ไม่พบผู้ใช้งานที่ตรงกับตัวกรอง ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง"
+              action={
+                <Button type="button" variant="outline" onClick={clear}>
+                  ล้างตัวกรอง
+                </Button>
+              }
+            />
+          )
         ) : (
           <>
             {/* Narrow screens: one card per person, so the page never scrolls sideways. */}
             <ul className="grid gap-3 md:grid-cols-2 xl:hidden">
-              {pagination.pageRows.map((user) => (
-                <li
-                  key={user.id}
-                  className={cn(
-                    'relative space-y-3 rounded-lg border p-4 transition-colors motion-reduce:transition-none hover:bg-slate-50',
-                    !user.isActive && 'bg-slate-50/60',
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <UserAvatar />
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="break-words font-semibold text-primary">
-                        <NameLink
-                          href={hrefOf(user)}
-                          user={user}
-                          isSelf={user.id === currentUserId}
-                        />
-                      </p>
-                      <p className="break-all text-sm text-muted-foreground">{user.email}</p>
+              {pagination.pageRows.map((user) => {
+                const href = hrefOf(user);
+                return (
+                  <li
+                    key={user.id}
+                    onClick={rowClick(router, href)}
+                    className={cn(
+                      'interactive-row cursor-pointer space-y-3 rounded-lg border p-4',
+                      !user.isActive && 'bg-slate-50/60',
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <UserIdentity user={user} href={href} isSelf={user.id === currentUserId} />
+                      </div>
+                      <StatusColumn user={user} />
                     </div>
-                    <StatusColumn user={user} />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <RoleBadges roles={user.roles} />
-                  </div>
-                  <ScopeBadges user={user} resolveTargetName={resolveTargetName} />
-                  <p className="text-xs text-muted-foreground">
-                    สร้างเมื่อ {formatThaiDate(user.createdAt)}
-                  </p>
-                  <RowActions basePath={basePath} user={user} superAdminId={superAdminId} showReason />
-                </li>
-              ))}
+                    <div className="flex flex-wrap gap-1.5">
+                      <RoleBadges roles={user.roles} />
+                    </div>
+                    <ScopeBadges user={user} resolveTargetName={resolveTargetName} />
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        สร้างเมื่อ {formatThaiDate(user.createdAt)}
+                      </p>
+                      <RowActions
+                        href={href}
+                        user={user}
+                        basePath={basePath}
+                        superAdminId={superAdminId}
+                        showReason
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="hidden xl:block">
               <table className="w-full table-fixed text-left text-sm">
                 <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[14%]" />
-                  <col className="w-[22%]" />
+                  <col className="w-[30%]" />
                   <col className="w-[15%]" />
-                  <col className="w-48" />
+                  <col className="w-[25%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-28" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-                    <SortHeader {...sort.sortProps('fullName')} className="px-3 py-3">
+                  <tr className="border-b-2 border-slate-200 text-xs text-muted-foreground">
+                    <SortHeader {...sort.sortProps('fullName')} className={TH}>
                       ชื่อและอีเมล
                     </SortHeader>
-                    <th className="px-3 py-3 font-medium">บทบาท</th>
-                    <th className="px-3 py-3 font-medium">ขอบเขต</th>
-                    <SortHeader {...sort.sortProps('status')} className="px-3 py-3">
+                    <th className={cn(TH, 'font-medium')}>บทบาท</th>
+                    <th className={cn(TH, 'font-medium')}>ขอบเขต</th>
+                    <SortHeader {...sort.sortProps('status')} className={TH}>
                       สถานะ
                     </SortHeader>
-                    <th className="px-3 py-3">
+                    <th className={TH}>
                       <span className="sr-only">การดำเนินการ</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pagination.pageRows.map((user) => (
-                    <tr
-                      key={user.id}
-                      className={cn(
-                        'relative border-b border-slate-100 align-middle transition-colors motion-reduce:transition-none hover:bg-slate-50',
-                        !user.isActive && 'bg-slate-50/60',
-                      )}
-                    >
-                      <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
-                        <span className="flex items-start gap-3">
-                          <UserAvatar />
-                          <span className="min-w-0 space-y-0.5">
-                            <span className="block break-words font-medium text-primary">
-                              <NameLink
-                                href={hrefOf(user)}
-                                user={user}
-                                isSelf={user.id === currentUserId}
-                              />
-                            </span>
-                            <span className="block break-all text-xs text-muted-foreground">
-                              {user.email}
-                            </span>
-                          </span>
-                        </span>
-                      </td>
-                      <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
-                        <div className="flex flex-wrap gap-1.5">
-                          <RoleBadges roles={user.roles} />
-                        </div>
-                      </td>
-                      <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
-                        <ScopeBadges user={user} resolveTargetName={resolveTargetName} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <StatusColumn user={user} />
-                      </td>
-                      <td className="px-3 py-2">
-                        <RowActions basePath={basePath} user={user} superAdminId={superAdminId} />
-                      </td>
-                    </tr>
-                  ))}
+                  {pagination.pageRows.map((user) => {
+                    const href = hrefOf(user);
+                    return (
+                      <tr
+                        key={user.id}
+                        onClick={rowClick(router, href)}
+                        className={cn(
+                          'interactive-row cursor-pointer border-b border-slate-100 align-middle',
+                          !user.isActive && 'bg-slate-50/60',
+                        )}
+                      >
+                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                          <UserIdentity
+                            user={user}
+                            href={href}
+                            isSelf={user.id === currentUserId}
+                          />
+                        </td>
+                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                          <div className="flex flex-wrap gap-1.5">
+                            <RoleBadges roles={user.roles} />
+                          </div>
+                        </td>
+                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                          <ScopeBadges
+                            user={user}
+                            resolveTargetName={resolveTargetName}
+                            limit={2}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <StatusColumn user={user} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <RowActions
+                            href={href}
+                            user={user}
+                            basePath={basePath}
+                            superAdminId={superAdminId}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

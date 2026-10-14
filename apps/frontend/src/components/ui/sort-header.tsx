@@ -26,7 +26,7 @@ export function SortHeader({
       <button
         type="button"
         onClick={onToggle}
-        className="inline-flex items-center gap-1 transition-colors hover:text-primary"
+        className="group inline-flex items-center gap-1 transition-colors duration-150 hover:text-primary"
       >
         {children}
         {active ? (
@@ -35,7 +35,10 @@ export function SortHeader({
             className={cn('text-primary transition-transform', direction === 'desc' && 'rotate-180')}
           />
         ) : (
-          <ArrowUpDown size={12} className="text-slate-300" />
+          <ArrowUpDown
+            size={12}
+            className="text-slate-400 transition-colors duration-150 group-hover:text-primary"
+          />
         )}
       </button>
     </th>
