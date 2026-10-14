@@ -1,0 +1,111 @@
+# DESIGN.md — กฎดีไซน์ฝั่ง frontend
+
+สกัดจากโค้ดที่มีอยู่จริง (ไม่ใช่กฎใหม่) พาธอ้างอิงจาก `apps/frontend/src/` ข้อความ "(ตรวจสอบ)" = ยังไม่ยืนยันจากโค้ด
+
+## 1) หลักการ
+- UI ภาษาไทยทางการ เรียกผู้เรียนว่า "นิสิต" (`ROLE_LABEL_TH` ใน `components/auth/require-role.tsx`)
+- ไม่ใช้ `dark:` ซ้อน: เขียนคลาสสำหรับ Light แล้ว Dark ตามเอง (พาเลตต์ slate/emerald/amber/red/sky/violet/rose/blue ถูก mirror ใน `styles/theme-palette.css`) ใช้ `dark:` เฉพาะเมื่อขั้นสีนั้นอ่านไม่ออกจริง
+- ใช้ token กลาง ไม่ hardcode สี: `bg-brand-light text-brand`, `text-primary`, `text-muted-foreground`, `bg-card`, `border` (ตัวแปรใน `app/globals.css`)
+- ไม่เพิ่ม library: ใช้ Radix, lucide-react, tailwindcss-animate, react-query ที่มีอยู่ กราฟใช้ div/SVG
+- โค้ด/ชื่อตัวแปร/คอมเมนต์เป็นอังกฤษ ข้อความที่ผู้ใช้เห็นเป็นไทย (`apps/CLAUDE.md`)
+
+## 2) Token และสี
+- สีบทบาท: `ROLE_BADGE_TONE` ใน `components/auth/require-role.tsx` → SUPER_ADMIN=danger, ADMIN=warning, INSTRUCTOR=success, STAFF/STUDENT=neutral ใช้ผ่าน `Badge tone=…`
+- `lib/tone.ts`: `SemanticTone` = success|warning|danger|neutral; `BADGE_TONE_CLASSES` (ชิป), `TINT_TONE_CLASSES` (พื้นเซลล์/แถว), `BAR_TONE_CLASSES` (แท่ง/จุดสี), `TOAST_*`
+- StatCard (`components/dashboard/stat-card.tsx`): `tone` = `primary` | SemanticTone ย้อมไอคอนและตัวเลข; `large` ไอคอนไล่เฉด ตัวเลขคงสีหัวข้อ
+- สถานะบัญชี: `accountStatus()` ใน `lib/account-status.ts` → ระงับการใช้งาน=danger, รอตั้งรหัสผ่าน=warning, ใช้งานปกติ=success (เฉพาะบัญชีใช้งานปกติมีจุดกะพริบ)
+- สีเกรด: `lib/grade-badge-color.ts` (`gradeBadgeTone`, `gradeBadgeClassName`, `gradeBarClassName`) — A/B+/B/S=success, C+–D=warning, F/U=danger, W/I=neutral
+- สี GPA: `gpaColorClassName` (`lib/gpa-color.ts`, ≥3.5 เขียว, <2.0 แดง) และ `gpaTone` (`components/staff/gpa-scale.tsx`, <1.50 danger, <1.75 warning) ใช้คู่กับ `TINT_TONE_CLASSES`
+- Contrast: ข้อความต้องผ่าน WCAG AA ทั้ง Light/Dark (ตามคอมเมนต์ใน `globals.css` ที่ตรวจคู่สีของ `.dark`)
+
+## 3) คอมโพเนนต์กลาง
+| ชื่อ | ไฟล์ | ใช้เมื่อ | ข้อควรระวัง |
+|---|---|---|---|
+| StatCard | `components/dashboard/stat-card.tsx` | การ์ดตัวเลขสรุป | `href`/`onClick`+`showArrow` = ทั้งใบกดได้; `onSelect` = ตัวกรองแบบสลับ; ไม่ใส่ตัวเลข/เปอร์เซ็นต์ที่ API ไม่มี |
+| PageHeader / PageSection | `components/layout/page-header.tsx`, `page-section.tsx` | หัวหน้า / หัวส่วน (ชื่อ+คำอธิบาย+ปุ่มขวา) | ปุ่มหลักอยู่ `actions` |
+| PageLoadError / StudentOnlyPage | `components/layout/page-states.tsx` | error ของหน้า (มีปุ่ม "ลองใหม่") | ส่ง `onRetry` เสมอ |
+| EmptyState / InlineNotice | `components/ui/empty-state.tsx` | ไม่มีข้อมูล | `size` ใช้ได้เฉพาะคู่กับ `illustration` ไม่ใช่ `icon` |
+| Skeleton / StatCardsSkeleton / TableSkeleton / ListSkeleton | `components/ui/skeleton.tsx` | ระหว่างโหลด | รูปทรงต้องตรงของจริง |
+| Pagination | `components/ui/pagination.tsx` | ตารางยาว (`PAGE_SIZES` 10/25/50) | — |
+| ConfirmDialog | `components/ui/confirm-dialog.tsx` | ยืนยันการกระทำ | สูงไม่เกิน `100dvh-2rem` มี safe-area |
+| PermanentDeleteDialog / PermanentDeleteButton | `components/admin/permanent-delete-button.tsx` | ลบถาวร | ต้องพิมพ์ยืนยัน; ห้ามทำปุ่มลบถาวรเอง |
+| DeactivateConfirm | `components/admin/deactivate-confirm.tsx` | ปิดใช้งาน (soft delete) | 409 จาก API คือผู้ตัดสิน |
+| Input / Combobox / Select | `components/ui/input.tsx`, `combobox.tsx`, `select.tsx` | ช่องกรอก | `h-11`, `text-base md:text-sm` กัน iOS zoom |
+| Progress | `components/ui/progress.tsx` | แถบ 0–100 | `animateOnView` (ค่าเริ่มต้น) เติมครั้งเดียวตอนเข้า viewport |
+| AnimatedNumber / AnimatedRing | `components/ui/animated-number.tsx`, `animated-ring.tsx` | ตัวเลข/วงแหวนนับขึ้น | ค่าว่างแสดง fallback ไม่นับ |
+| Badge | `components/ui/badge.tsx` | ชิปสถานะ/บทบาท/รหัส | ใช้ `tone` ไม่ใส่สีเอง |
+| InitialsAvatar | `components/ui/initials-avatar.tsx` | อวาตาร์ตัวอักษรแรก | — |
+| Switch | `components/ui/switch.tsx` | สวิตช์เปิด/ปิด (`role=switch`) | สูง 44px ทั้งแถว |
+| Reveal / ScrollReveal | `components/layout/reveal.tsx` | เข้าฉากของบล็อก | ดูข้อ 5 |
+| DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
+
+## 4) คลาสกลาง (`app/globals.css`)
+- `.interactive-card`: การ์ดกดได้ ยก 2px + ขอบ brand + เงา ตอน hover/focus-visible (hover เฉพาะอุปกรณ์ที่มี hover) ใส่บนองค์ประกอบที่มีขอบจริง (เช่น `<Link class="… border bg-card">`)
+- `.interactive-row`: แถวกดได้ แค่เปลี่ยนพื้น ไม่ยก
+- `.go-arrow`: ลูกศรภายใน card/row ลื่นเข้าตอน hover/focus; แสดงตลอดบนจอสัมผัส
+- `.row-action`: ปุ่มเล็กในแถว (เช่น ถังขยะ) สีจางปกติ เป็นแดงตอน hover/focus ของแถว
+- `.course-name-break`: ตัดบรรทัดชื่อภาษาไทยแบบวลี ไม่ตัดกลางคำ
+- `.btn-ripple` (ปุ่มกด), `.reveal-pending` (สถานะเริ่มของ ScrollReveal), `.animate-shake` (รหัส 2FA ผิด)
+
+## 5) Motion
+- `Reveal index={n}`: หัวหน้า = 0 บล็อกถัดไปนับขึ้น; stagger 60ms ต่อ index สูงสุด index 6 (`lib/reveal.ts`)
+- ใน `DashboardShell` `Reveal` รอจนบล็อกเข้า viewport (`RevealOnViewProvider`, `ScrollReveal`, `useInView`); `RevealOnScroll` คงไว้ให้โค้ดเก่า
+- เล่นครั้งเดียวต่ออินสแตนซ์ ห้ามห่อแถวของรายการที่กรอง/เปลี่ยนหน้าบ่อย ใช้ `animate={false}` ถ้าห้ามขยับ
+- ตัวเลข: `AnimatedNumber` (700ms, `COUNT_UP_MS`) ควบคุมด้วย `CountUpPolicy`; แท่ง: `Progress animateOnView`
+- Transition มาตรฐาน 150–200ms (`interactive-*` 180ms, `row-action` 150ms)
+- Reduced motion: ใช้ `motion-reduce:` กับ animate/transition; คลาสกลางปิดการยกการ์ดเองใน `globals.css`; กฎ global reduced-motion ที่คอมเมนต์ `.btn-ripple` อ้างถึง (ตรวจสอบ)
+
+## 6) เลย์เอาต์
+- โครงหน้า: `DashboardShell role=… identityLabel fullName` ครอบ; เนื้อหา `main` = `mx-auto max-w-7xl space-y-6 p-4 md:p-8 pb-24`
+- เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี layout กั้นสิทธิ์)
+- หัวหน้า: `PageHeader` ชื่อ (`text-2xl font-semibold text-primary`) + คำอธิบาย 1 บรรทัด `text-sm text-muted-foreground` + ปุ่มหลักมุมขวา (มือถือเต็มความกว้าง `w-full sm:w-auto`, `min-h-11`)
+- หัวส่วน: `PageSection` (`text-lg font-semibold`) หรือหัวการ์ด `DetailSectionHeader` = ไอคอนในช่อง `h-9 w-9 rounded-lg bg-brand-light text-brand` + ชื่อ + คำอธิบาย + action ขวา
+- หน้ารายละเอียดต้นแบบ: `components/admin/user-detail-page-content.tsx` (กริด `lg:grid-cols-3`, aside ขวา sticky), `user-profile-card.tsx`, `user-access-aside.tsx`
+- ระยะ/ขอบ/มุม: ช่องว่างบล็อก `space-y-6`, การ์ด `gap-4`, ภายในส่วน `space-y-4`; `rounded-lg border bg-card shadow-sm` (`components/ui/card.tsx`); ไอคอนช่อง `rounded-lg`; ชิป `rounded-full`
+
+## 7) Responsive
+- ตรวจเสมอที่ 360 / 390 / 768 / 1280 / 1536px ห้ามมี horizontal scroll ของหน้า
+- ข้อความยาว: `min-w-0` บน flex child, `break-words` หรือ `truncate` พร้อม `title`
+- Touch target ≥ 44px (`min-h-11`, `h-11`); ช่องกรอก `text-base md:text-sm` (≥16px บนมือถือ)
+- Dialog: `max-h-[calc(100dvh-2rem)] overflow-y-auto` และ `pb-[max(1rem,env(safe-area-inset-bottom))]` (`confirm-dialog.tsx`)
+- กริดการ์ด: 1 คอลัมน์ → `sm:grid-cols-2` → `lg/xl` 3–4 คอลัมน์
+
+## 8) Accessibility
+- Focus: `focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2` (ปุ่ม `<button>` ทั่วไปได้ ring จาก `globals.css`)
+- ผลตอบกลับที่เปลี่ยนแบบไดนามิก: `role="status" aria-live="polite"` (เช่น `user-list-filters.tsx`, `org-toolbar.tsx`, `session-timeout-dialog.tsx`)
+- การ์ด/แถวกดได้เป็น `<a>`/`<button>` จริง + `aria-label` บอกปลายทางและจำนวน; ตัวกรองแบบสลับใช้ `aria-pressed`
+- เมนู: Radix Popover + `role=menu/menuitem` (`org-node-menu.tsx`); รายการที่ใช้ไม่ได้ใช้ `aria-disabled` และพิมพ์เหตุผลเป็นข้อความ
+- ต้นไม้องค์กร: ปุ่ม disclosure + `aria-expanded` ไม่ใช้ `role=tree` เพราะมีปุ่ม/ฟอร์มซ้อนในแถว
+- ไม่พึ่งสีอย่างเดียว: สถานะมีข้อความ/ไอคอนกำกับ; แถบสัดส่วนมี legend ตัวเลข + `aria-label`
+- ไอคอนตกแต่ง `aria-hidden="true"`
+
+## 9) สถานะหน้า
+- โหลด: `Skeleton`, `StatCardsSkeleton`, `TableSkeleton`, `ListSkeleton` (`components/ui/skeleton.tsx`); เฉพาะหน้า เช่น `user-list-skeleton.tsx`, `org-tree-skeleton.tsx`
+- ก่อน auth พร้อม: วงกลม + แถบ `Skeleton` กลางจอ (รูปแบบซ้ำในทุกหน้า) / `RequireRole`
+- Error: `PageLoadError` + `onRetry`; ฟอร์ม/การกระทำ: `ApiErrorAlert` (`components/admin/api-error-alert.tsx`)
+- ว่าง: `EmptyState` (มี `action` เมื่อมีทางไปต่อ); ค้นหาไม่เจอใช้ `illustration="no-results"` + ปุ่มล้างการค้นหา
+- ศูนย์: แสดง `0` ปกติ การ์ดยังกดได้ (`dimmed` ทำให้จางเมื่อเป็นศูนย์ได้)
+
+## 10) ห้ามทำ / เคยพลาด
+- ห้ามใช้สี GPA ตามช่วงของนิสิตกับค่าเฉลี่ยรายวิชา (ตรวจสอบ — ยังไม่พบคอมเมนต์ในโค้ด)
+- ห้ามสร้างปุ่มลบถาวรเอง ต้องใช้ `PermanentDeleteButton`/`PermanentDeleteDialog`; หน้าโครงสร้างองค์กรไม่มีลบถาวร (ไม่เพิ่มโดยพลการ)
+- ห้ามแต่งตัวเลข/เปอร์เซ็นต์/แนวโน้มที่ API ไม่มี (ดูคอมเมนต์ใน `stat-card.tsx`) เช่น ไม่มี "ปีการศึกษาปัจจุบัน" (`academic-years/page.tsx`)
+- ห้ามเปลี่ยนสิทธิ์/พฤติกรรมเดิมระหว่างงานดีไซน์ (เพิ่ม/แก้/ปิด/เปิดใช้งาน/ลบถาวร + dialog)
+- ห้ามค่าจาก URL (`?role=`, `?create=`) เชื่อตรง ๆ ต้องตรวจ (`parseRoleParam` ใน `lib/user-list-filter.ts`)
+- `prettier`: repo ไม่มี config ใช้ `--single-quote --print-width 100 --trailing-comma all`; ห้าม `--write` ทั้งไฟล์ที่เดิมไม่ผ่าน
+- Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `npm run db:backup -- <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
+- ห้าม commit/push หรือถ่ายภาพหน้าจอ ถ้าผู้ใช้ไม่สั่ง
+
+## 11) ขั้นตอนมาตรฐานท้ายงานดีไซน์
+1. `npx tsc --noEmit` (ใน `apps/frontend`)
+2. `npx next lint --dir src/...` เฉพาะโฟลเดอร์ที่แตะ
+3. `npx jest src/lib src/components` (หรือ spec ที่เกี่ยวข้อง)
+4. `npx prettier --check` (flags ข้อ 10) เฉพาะไฟล์ใหม่
+5. ส่งรายการให้ผู้ใช้ตรวจด้วยตา: Light/Dark, 3 ความกว้าง, กดทุกการ์ด/ปุ่มไปถูกที่, คีย์บอร์ด, reduced-motion
+
+## รูปแบบรายงานท้ายงานดีไซน์
+รายงานสั้นไม่เกิน 15 บรรทัด ไม่แปะโค้ด ประกอบด้วย:
+- ไฟล์ที่แก้/สร้าง
+- สิ่งที่เปลี่ยน (ต่อข้อ สั้น ๆ)
+- สิ่งที่ตั้งใจไม่ทำและเหตุผล
+- รายการให้ผู้ใช้ตรวจด้วยตา

@@ -8,3 +8,4 @@
 - กฎ Docker/ฐานข้อมูล (ดู apps/backend/CONVENTIONS.md §10): ห้าม `docker compose down -v` / `docker-compose down -v`, `docker volume rm/prune`, `docker system prune` ในทุกกรณี ใช้ `npm run docker:stop` เพื่อหยุดระบบ
 - ห้ามหยุด สตาร์ท หรือแตะ container/volume ของโปรเจกต์อื่น (เช่น pm25-pipeline) แม้พอร์ตจะชน ให้หาว่าอะไรจองพอร์ตแล้วรายงาน
 - ต้องรัน `npm run db:backup -- <label>` ก่อนรอบ QA/ทดสอบทุกรอบที่แตะ Docker ถ้าต้องล้างข้อมูลทดสอบให้ใช้ seed หรือ API
+- งานดีไซน์/UI ฝั่ง frontend: อ่าน frontend/DESIGN.md ก่อนเริ่มงาน
