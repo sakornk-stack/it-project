@@ -37,6 +37,18 @@ describe('expectedCreditsByNow', () => {
   });
 });
 
+describe('ICT 2564 (126 credits, 4 years)', () => {
+  it('expects 95 credits after 3 elapsed years (was 99 at 132)', () => {
+    expect(expectedCreditsByNow(126, 4, 2569, 2566)).toBe(95);
+    expect(expectedCreditsByNow(132, 4, 2569, 2566)).toBe(99);
+  });
+
+  it('is behind at 94 and on track at 95 of the expected 95', () => {
+    expect(resolveOnTrackStatus(94, 126, 95)).toBe('behind');
+    expect(resolveOnTrackStatus(95, 126, 95)).toBe('on_track');
+  });
+});
+
 describe('resolveOnTrackStatus', () => {
   it('behind only when strictly below expected', () => {
     expect(resolveOnTrackStatus(32, 132, 33)).toBe('behind');
