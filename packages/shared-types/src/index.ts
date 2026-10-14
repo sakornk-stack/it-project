@@ -132,6 +132,25 @@ export interface ProgramListItem {
   departmentId: string;
 }
 
+// GET /faculties|departments|programs/inactive — what still blocks a permanent delete
+// (every child counts, active or not, plus users scoped to the record).
+export interface InactiveFacultyListItem extends FacultyListItem {
+  references: { departments: number; userScopes: number };
+}
+
+export interface InactiveDepartmentListItem extends DepartmentListItem {
+  references: { programs: number; userScopes: number };
+}
+
+export interface InactiveProgramListItem extends ProgramListItem {
+  references: {
+    curricula: number;
+    students: number;
+    studentInvitations: number;
+    userScopes: number;
+  };
+}
+
 export interface CurriculumListItem {
   id: string;
   version: string;

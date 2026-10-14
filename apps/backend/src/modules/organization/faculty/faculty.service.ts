@@ -1,8 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { conflictOnReferenced } from '../../academic-record/semester/semester-references.util';
+import {
+  countFacultyReferences,
+  facultyBlockMessage,
+  hasOrgReferences,
+  type FacultyReferences,
+} from '../org-references.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { conflictOnDuplicate } from '../../../common/util/reactivate.util';
 import { CreateFacultyDto } from './dto/create-faculty.dto';
@@ -10,6 +18,8 @@ import { UpdateFacultyDto } from './dto/update-faculty.dto';
 
 @Injectable()
 export class FacultyService {
+  private readonly logger = new Logger(FacultyService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateFacultyDto) {
@@ -48,8 +58,19 @@ export class FacultyService {
     return this.prisma.faculty.update({ where: { id }, data: dto });
   }
 
-  findInactive() {
-    return this.prisma.faculty.findMany({ where: { isActive: false }, orderBy: { code: 'asc' } });
+  // `references` lets the screen disable "permanent delete" with a reason;
+  // hardDelete re-checks.
+  async findInactive() {
+    const rows = await this.prisma.faculty.findMany({
+      where: { isActive: false },
+      orderBy: { code: 'asc' },
+    });
+    return Promise.all(
+      rows.map(async (row) => ({
+        ...row,
+        references: await countFacultyReferences(this.prisma, row.id),
+      })),
+    );
   }
 
   // Restores the same row (its id, and everything that still points at it) — it is
@@ -86,6 +107,25 @@ export class FacultyService {
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  // Permanent delete: only a deactivated คณะ that nothing points at. The count
+  // and the delete share one transaction; a row inserted in between surfaces as
+  // P2003 and is reported like the pre-check. The log carries ids and counts only.
+  async hardDelete(id: string, actorId: string) {
+    const faculty = await this.findOne(id);
+    if (faculty.isActive) {
+      throw new ConflictException('ลบถาวรได้เฉพาะคณะที่ปิดใช้งานแล้ว');
+    }
+    await conflictOnReferenced(
+      this.prisma.$transaction(async (tx) => {
+        const refs = await countFacultyReferences(tx, id);
+        if (hasOrgReferences(refs)) throw new ConflictException(facultyBlockMessage(refs));
+        await tx.faculty.delete({ where: { id } });
+      }),
+      'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงคณะนี้เพิ่มขึ้นระหว่างดำเนินการ',
+    );
+    this.logger.warn(`Permanently deleted faculty ${id} by user ${actorId}`);
   }
 
   private async assertCodeAvailable(code: string, excludeId?: string) {

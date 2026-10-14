@@ -1,8 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { conflictOnReferenced } from '../../academic-record/semester/semester-references.util';
+import {
+  countProgramReferences,
+  programBlockMessage,
+  hasOrgReferences,
+  type ProgramReferences,
+} from '../org-references.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { conflictOnDuplicate } from '../../../common/util/reactivate.util';
 import { PrismaClientOrTx } from '../../../prisma/prisma.types';
@@ -12,6 +20,8 @@ import { UpdateProgramDto } from './dto/update-program.dto';
 
 @Injectable()
 export class ProgramService {
+  private readonly logger = new Logger(ProgramService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly departmentService: DepartmentService,
@@ -59,8 +69,19 @@ export class ProgramService {
     return this.prisma.program.update({ where: { id }, data: dto });
   }
 
-  findInactive() {
-    return this.prisma.program.findMany({ where: { isActive: false }, orderBy: { code: 'asc' } });
+  // `references` lets the screen disable "permanent delete" with a reason;
+  // hardDelete re-checks.
+  async findInactive() {
+    const rows = await this.prisma.program.findMany({
+      where: { isActive: false },
+      orderBy: { code: 'asc' },
+    });
+    return Promise.all(
+      rows.map(async (row) => ({
+        ...row,
+        references: await countProgramReferences(this.prisma, row.id),
+      })),
+    );
   }
 
   async reactivate(id: string) {
@@ -106,6 +127,25 @@ export class ProgramService {
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  // Permanent delete: only a deactivated สาขา that nothing points at. The count
+  // and the delete share one transaction; a row inserted in between surfaces as
+  // P2003 and is reported like the pre-check. The log carries ids and counts only.
+  async hardDelete(id: string, actorId: string) {
+    const program = await this.findOne(id);
+    if (program.isActive) {
+      throw new ConflictException('ลบถาวรได้เฉพาะสาขาที่ปิดใช้งานแล้ว');
+    }
+    await conflictOnReferenced(
+      this.prisma.$transaction(async (tx) => {
+        const refs = await countProgramReferences(tx, id);
+        if (hasOrgReferences(refs)) throw new ConflictException(programBlockMessage(refs));
+        await tx.program.delete({ where: { id } });
+      }),
+      'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงสาขานี้เพิ่มขึ้นระหว่างดำเนินการ',
+    );
+    this.logger.warn(`Permanently deleted program ${id} by user ${actorId}`);
   }
 
   private async assertNameAvailable(

@@ -27,6 +27,7 @@ import { PrerequisiteController } from '../modules/curriculum-content/prerequisi
 import { StudentCourseRecordController } from '../modules/academic-record/student-course-record/student-course-record.controller';
 import { UserManagementController } from '../modules/users/user-management/user-management.controller';
 import { CurriculumController } from '../modules/organization/curriculum/curriculum.controller';
+import { FacultyController } from '../modules/organization/faculty/faculty.controller';
 import { DepartmentController } from '../modules/organization/department/department.controller';
 import { ProgramController } from '../modules/organization/program/program.controller';
 
@@ -65,8 +66,10 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
   ['CloController', CloController, WRITE_ADMIN],
   ['PloController', PloController, WRITE_ADMIN],
   ['CloPloMappingController', CloPloMappingController, WRITE_ADMIN],
-  ['DepartmentController', DepartmentController, WRITE_SUPER_ADMIN],
-  ['ProgramController', ProgramController, WRITE_SUPER_ADMIN],
+  // Permanent delete of faculties/departments/programs: SUPER_ADMIN only. Curricula have none.
+  ['FacultyController', FacultyController, { ...WRITE_SUPER_ADMIN, hardDelete: ['SUPER_ADMIN'] }],
+  ['DepartmentController', DepartmentController, { ...WRITE_SUPER_ADMIN, hardDelete: ['SUPER_ADMIN'] }],
+  ['ProgramController', ProgramController, { ...WRITE_SUPER_ADMIN, hardDelete: ['SUPER_ADMIN'] }],
   ['CurriculumController', CurriculumController, WRITE_ADMIN],
   [
     'StudentInvitationController',

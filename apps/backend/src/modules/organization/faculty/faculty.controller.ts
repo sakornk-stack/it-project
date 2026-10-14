@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -14,9 +15,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
+import { RequestUser } from '../../auth/request-user.interface';
 import { FacultyService } from './faculty.service';
 import { CreateFacultyDto } from './dto/create-faculty.dto';
 import { UpdateFacultyDto } from './dto/update-faculty.dto';
@@ -106,5 +109,24 @@ export class FacultyController {
   })
   remove(@Param('id') id: string) {
     return this.facultyService.remove(id);
+  }
+
+  @Delete(':id/permanent')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Permanently delete a deactivated faculty that nothing references (SUPER_ADMIN)',
+  })
+  @ApiResponse({ status: 204, description: 'Faculty deleted' })
+  @ApiResponse({ status: 404, description: 'Faculty not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Faculty is still active or still referenced',
+  })
+  hardDelete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.facultyService.hardDelete(id, user.userId);
   }
 }
