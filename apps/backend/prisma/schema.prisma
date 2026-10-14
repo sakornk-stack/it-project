@@ -361,6 +361,20 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+// Denylist of refresh tokens revoked by POST /auth/logout, keyed by the
+// token's `jti` claim. JwtRefreshStrategy rejects any token found here.
+// Rows are only useful until the token's own `exp` — expiresAt mirrors it
+// so logout can prune stale rows. Deliberately no FK to User: the denylist
+// must not block (or be cascaded by) user deletion.
+model RevokedRefreshToken {
+  jti       String   @id
+  expiresAt DateTime
+  revokedAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("revoked_refresh_tokens")
+}
+
 // Authenticator-app (TOTP, RFC 6238) 2FA — opt-in per user, unlike the
 // email-OTP mechanism removed 2026-08-25 (see PROJECT_CONTEXT.md §"อัปเดต
 // 2026-08-25"): that one was mandatory-for-everyone and routed through an

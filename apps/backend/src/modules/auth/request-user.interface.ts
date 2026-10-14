@@ -7,4 +7,10 @@ export interface RequestUser {
   email: string;
   roles: Role[];
   mustChangePassword: boolean;
+  // Only set by JwtRefreshStrategy — see JwtPayload.authTime.
+  authTime?: number;
+  // Only set by JwtRefreshStrategy: the presented refresh token's `jti`
+  // and `exp` (unix seconds), so logout can denylist exactly that token.
+  refreshJti?: string;
+  refreshExp?: number;
 }

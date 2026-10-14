@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import { AuthProvider, Prisma, Role, User } from '@prisma/client';
 import { hashPassword } from '../../common/util/password.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,6 +30,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { CompleteGoogleRegistrationDto } from './dto/complete-google-registration.dto';
 import { JwtPayload } from './jwt-payload.interface';
+import { RequestUser } from './request-user.interface';
 import { GoogleProfile } from './google-profile.interface';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
@@ -435,9 +437,9 @@ export class AuthService {
     });
   }
 
-  private async buildJwtPayload(user: User): Promise<JwtPayload> {
+  private async buildJwtPayload(user: User, authTime: number): Promise<JwtPayload> {
     const roles = await this.userRoleService.findRolesByUserId(user.id);
-    return { sub: user.id, email: user.email, roles };
+    return { sub: user.id, email: user.email, roles, authTime };
   }
 
   private signAccessToken(payload: JwtPayload): string {
@@ -461,24 +463,55 @@ export class AuthService {
   }
 
   private async issueTokenPair(user: User) {
-    const payload = await this.buildJwtPayload(user);
+    const payload = await this.buildJwtPayload(user, Math.floor(Date.now() / 1000));
 
     const accessToken = this.signAccessToken(payload);
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.refreshSecret'),
       expiresIn: this.configService.get<string>('jwt.refreshExpiresIn'),
+      // Unique id so POST /auth/logout can denylist exactly this token.
+      jwtid: randomUUID(),
     });
 
     return { accessToken, refreshToken };
   }
 
+  // Backs POST /auth/logout — denylists the presented refresh token by jti
+  // (RevokedRefreshToken) so a copied cookie stops working. `user` is null
+  // when the cookie was missing/invalid/expired/already revoked: nothing to
+  // revoke, and the caller still gets the same success response.
+  async revokeRefreshToken(user: RequestUser | null): Promise<void> {
+    if (!user?.refreshJti || !user.refreshExp) {
+      return;
+    }
+    await this.prisma.revokedRefreshToken.upsert({
+      where: { jti: user.refreshJti },
+      create: { jti: user.refreshJti, expiresAt: new Date(user.refreshExp * 1000) },
+      update: {},
+    });
+    // Rows past their token's own exp can never matter again.
+    await this.prisma.revokedRefreshToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+  }
+
   // Backs POST /auth/refresh — reissues only a new access token. The
-  // refresh token itself is never rotated: there's no server-side
-  // revocation table for it to matter against (see the fully-stateless
-  // note on logout()), so rotation without a blacklist buys nothing.
-  async refreshAccessToken(userId: string): Promise<{ accessToken: string }> {
+  // refresh token itself is not rotated; logout revokes it via the
+  // RevokedRefreshToken denylist instead.
+  //
+  // Enforces the absolute session lifetime: authTime (original login) is
+  // carried over unchanged, and once SESSION_ABSOLUTE_MAX_HOURS has passed
+  // no new access token is minted, whatever the refresh cookie's own exp.
+  async refreshAccessToken(
+    userId: string,
+    authTime: number = Math.floor(Date.now() / 1000),
+  ): Promise<{ accessToken: string }> {
+    const maxHours = this.configService.get<number>('session.absoluteMaxHours') ?? 8;
+    if (Date.now() / 1000 - authTime > maxHours * 3600) {
+      throw new UnauthorizedException('เซสชันมีอายุครบกำหนดสูงสุด กรุณาเข้าสู่ระบบอีกครั้ง');
+    }
     const user = await this.userService.findById(userId);
-    const payload = await this.buildJwtPayload(user);
+    const payload = await this.buildJwtPayload(user, authTime);
     return { accessToken: this.signAccessToken(payload) };
   }
 }

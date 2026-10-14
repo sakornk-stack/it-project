@@ -1,4 +1,5 @@
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UserService } from '../../users/user/user.service';
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 import { JwtStrategy } from './jwt.strategy';
@@ -19,7 +20,12 @@ function service(result: unknown) {
 
 describe.each([
   ['JwtStrategy', (u: UserService) => new JwtStrategy(u)],
-  ['JwtRefreshStrategy', (u: UserService) => new JwtRefreshStrategy(u)],
+  [
+    'JwtRefreshStrategy',
+    // PAYLOAD carries no jti, so the revocation lookup is never reached here
+    // (covered in auth.service.session.spec.ts).
+    (u: UserService) => new JwtRefreshStrategy(u, {} as PrismaService),
+  ],
 ])('%s', (_name, make) => {
   it('uses the roles stored in the database, not the ones in the token', async () => {
     const { userService } = service({ isActive: true, mustChangePassword: false, roles: ['STAFF'] });

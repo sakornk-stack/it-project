@@ -19,6 +19,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SkipPasswordChangeCheck } from '../../common/decorators/skip-password-change-check.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
+import { OptionalJwtRefreshGuard } from '../../common/guards/jwt-refresh-optional.guard';
 import { Jwt2faPendingGuard } from '../../common/guards/jwt-2fa-pending.guard';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
@@ -114,7 +115,7 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'New access token issued' })
   @ApiResponse({ status: 401, description: 'Refresh cookie missing, invalid, or expired' })
   refresh(@CurrentUser() user: RequestUser) {
-    return this.authService.refreshAccessToken(user.userId);
+    return this.authService.refreshAccessToken(user.userId, user.authTime);
   }
 
   @Post('accept-invitation')
@@ -129,16 +130,22 @@ export class AuthController {
     return this.authService.acceptInvitation(dto);
   }
 
+  // Authenticates with the refresh cookie (not the 15m access token), so an
+  // idle-timeout logout still revokes server-side after the access token
+  // has expired. Always succeeds: with no/invalid cookie it only clears the
+  // caller's own cookie and reveals nothing about why.
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  @SkipPasswordChangeCheck()
-  @ApiBearerAuth('access-token')
+  @UseGuards(OptionalJwtRefreshGuard)
   @ApiOperation({
     summary:
-      'Logout — clears the refresh cookie. The access token itself is stateless and short-lived (never persisted client-side beyond memory), so there is nothing else to revoke.',
+      'Logout — revokes the refresh token from the httpOnly cookie server-side and clears the cookie. Always succeeds.',
   })
-  @ApiResponse({ status: 201, description: 'Logged out, refresh cookie cleared' })
-  logout(@Res({ passthrough: true }) response: Response) {
+  @ApiResponse({ status: 201, description: 'Refresh token revoked (if valid), cookie cleared' })
+  async logout(
+    @CurrentUser() user: RequestUser | null,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.authService.revokeRefreshToken(user);
     this.clearRefreshCookie(response);
     return { message: 'Logged out' };
   }

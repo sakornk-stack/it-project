@@ -285,3 +285,19 @@ Three commits delivered (2026-09-30):
 - ยังไม่ทำ: แก้ไขชื่อ/อีเมลของบัญชี (ยังไม่มี endpoint หรือหน้าแก้ไข)
 - ยังไม่ได้ลองกับ DB จริง/สำเนา: ทดสอบด้วย jest (mock) เท่านั้น ควรลองสร้างบัญชี `@test.local` ใหม่ → ระงับ → ลบ บนสำเนา DB ก่อนใช้จริง
 
+### Idle session timeout (เริ่ม 2026-10-14, **ยังไม่ commit/push**) — backend + frontend เขียนเสร็จ, migration รันกับ dev DB แล้ว, รอ QA มือ
+**Deploy notes (ต้องทำก่อน/ตอน deploy ฝั่ง backend)**
+- เพิ่ม `SESSION_ABSOLUTE_MAX_HOURS=8` ใน `.env` ของเซิร์ฟเวอร์จริง (ไม่ใส่ก็ได้ ค่าเริ่มต้น 8; ค่าที่ไม่ใช่ตัวเลขบวกจะถูกแทนด้วย 8) และต้องให้ตรงกับ `NEXT_PUBLIC_SESSION_MAX_HOURS` ฝั่ง frontend เมื่อทำแล้ว
+- มี migration ใหม่ `20261014090000_add_revoked_refresh_token` (ตาราง `revoked_refresh_tokens`) → ต้องรัน `prisma migrate deploy` ก่อนเปิดใช้โค้ดใหม่ และสั่ง `prisma generate` ตอน build; ยังไม่ได้รัน migration กับ DB ใดเลย (ทดสอบด้วย jest + fake prisma เท่านั้น)
+- **เซสชันเดิมจะถูกจำกัดเพดานใหม่หลัง deploy:** refresh token ที่ออกก่อนหน้านี้ไม่มี claim `authTime` ระบบใช้ `iat` แทน ดังนั้นผู้ใช้ที่ล็อกอินมานานกว่า 8 ชม. จะถูกปฏิเสธที่ `/auth/refresh` ทันทีหลัง deploy และต้องล็อกอินใหม่ (เดิมอยู่ได้ 7 วัน) ควรแจ้งผู้ใช้/เลือกช่วง deploy
+- refresh token เดิมที่ไม่มี `jti` เพิกถอนรายตัวไม่ได้ (ตายตาม `exp` / เพดาน 8 ชม.); token ที่ออกใหม่มี `jti` ทุกตัว
+**พฤติกรรมที่เปลี่ยน**
+- `POST /auth/logout` ไม่ใช้ access token แล้ว ยืนยันตัวด้วย refresh cookie (`OptionalJwtRefreshGuard`) เพิกถอน `jti` ลงตาราง denylist และล้าง cookie; ไม่มี cookie/โทเคนไม่ถูกต้อง/ถูกเพิกถอนแล้ว → ล้าง cookie แล้วตอบ 201 `{message:'Logged out'}` เหมือนกันทุกกรณี
+- `/auth/refresh` ปฏิเสธ (401 ข้อความไทย) เมื่อเกิน `SESSION_ABSOLUTE_MAX_HOURS` นับจาก `authTime` (คงค่าเดิมข้าม refresh ไม่ต่อเพดาน); ทุกเส้นทางออกโทเคนชุดแรก (register, login, 2FA verify, Google callback, Google complete-registration) ผ่าน `issueTokenPair` ตัวเดียว จึงตั้ง `authTime` ครบ ส่วน accept-invitation / reset-password ไม่ออกโทเคน
+- ลบแถว denylist ที่หมดอายุแล้วแบบ opportunistic ตอน logout (ไม่มี cron)
+**Frontend (เขียนเสร็จ 2026-10-14, ผ่าน tsc/lint/jest แต่ยังไม่ได้ลองในเบราว์เซอร์)**
+- `SessionTimeoutGuard` ติดที่ `app/layout.tsx` ครั้งเดียว (ปิดบนหน้า public ผ่าน `isPublicPath`); logic อยู่ใน `lib/session-timeout-machine.ts` (pure, ทดสอบด้วย fake timers), ข้ามแท็บผ่าน `lib/session-channel.ts` (BroadcastChannel + fallback localStorage)
+- `AuthProvider.endSession(reason)` เป็นทางเดียวที่ logout/idle/absolute/refresh-failed ผ่าน: เรียก `POST /auth/logout`, `queryClient.clear()`, broadcast `ended`, redirect `/login?reason=…` (login ธรรมดาไม่ใส่ reason)
+- env ฝั่ง frontend: `NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES=30`, `NEXT_PUBLIC_IDLE_WARNING_SECONDS=60`, `NEXT_PUBLIC_SESSION_MAX_HOURS=8` (ต้องใส่ใน `.env` ตอน deploy ถ้าต้องการค่าอื่น; ไม่ใส่ใช้ค่าเริ่มต้น และ `NEXT_PUBLIC_*` ถูกฝังตอน build)
+- **ยังค้าง:** (1) QA มือบนเบราว์เซอร์ด้วยบัญชี `@test.local` (ลด idle เป็น 1 นาที/warning 20 วินาทีชั่วคราวผ่าน env) — dialog/focus trap/Esc/aria-live/reduced-motion/Light-Dark/ข้ามแท็บ ยังไม่มี DOM test (ไม่มี jsdom) (2) สื่อที่กำลังเล่น (วิดีโอ) ไม่นับเป็นกิจกรรม — ถ้าระบบมีวิดีโอภายหลังต้องเพิ่ม (3) หน้า `/` (hub) เป็น public จึงไม่มี timeout ฝั่ง client ขณะอยู่ที่หน้านั้น (backend ยังบังคับ 15m/8h ตามปกติ)
+

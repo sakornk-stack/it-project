@@ -1,3 +1,13 @@
+const DEFAULT_SESSION_ABSOLUTE_MAX_HOURS = 8;
+
+// Falls back to the default for anything that isn't a positive finite
+// number (unset, empty, "abc", 0, negative) — a typo must not silently
+// disable or zero the cap.
+export function parseSessionAbsoluteMaxHours(raw: string | undefined): number {
+  const parsed = Number.parseFloat(raw ?? '');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_SESSION_ABSOLUTE_MAX_HOURS;
+}
+
 export default () => ({
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number.parseInt(process.env.PORT || '3001', 10),
@@ -17,6 +27,12 @@ export default () => ({
     // super() runs) — kept here too for consistency/future non-strategy use.
     twoFactorPendingSecret: process.env.JWT_2FA_PENDING_SECRET,
     twoFactorPendingExpiresIn: process.env.JWT_2FA_PENDING_EXPIRES_IN || '5m',
+  },
+  session: {
+    // Hard cap on a session measured from the original login; /auth/refresh
+    // refuses to mint new access tokens past it. The frontend mirrors the
+    // value (NEXT_PUBLIC_SESSION_MAX_HOURS) only to warn the user early.
+    absoluteMaxHours: parseSessionAbsoluteMaxHours(process.env.SESSION_ABSOLUTE_MAX_HOURS),
   },
   cors: {
     origin: process.env.CORS_ORIGIN?.split(',') ?? [],

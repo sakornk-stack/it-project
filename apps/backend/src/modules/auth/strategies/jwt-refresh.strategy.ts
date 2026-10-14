@@ -6,6 +6,7 @@ import {
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UserService } from '../../users/user/user.service';
 import { JwtPayload } from '../jwt-payload.interface';
 import { RequestUser } from '../request-user.interface';
@@ -20,7 +21,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
   Strategy,
   'jwt-refresh',
 ) {
-  constructor(private readonly userService: UserService) {
+  constructor(
+    private readonly userService: UserService,
+    private readonly prisma: PrismaService,
+  ) {
     super({
       jwtFromRequest: (req: Request) => req?.cookies?.refreshToken ?? null,
       ignoreExpiration: false,
@@ -28,7 +32,20 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: JwtPayload): Promise<RequestUser> {
+  async validate(
+    payload: JwtPayload & { iat?: number; exp?: number; jti?: string },
+  ): Promise<RequestUser> {
+    // Tokens issued before `jti` existed can't be individually revoked;
+    // they age out via `exp`.
+    if (payload.jti) {
+      const revoked = await this.prisma.revokedRefreshToken.findUnique({
+        where: { jti: payload.jti },
+      });
+      if (revoked) {
+        throw new UnauthorizedException('Session has ended');
+      }
+    }
+
     let user;
     try {
       user = await this.userService.findAuthContext(payload.sub);
@@ -47,6 +64,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
       email: payload.email,
       roles: user.roles,
       mustChangePassword: user.mustChangePassword,
+      authTime: payload.authTime ?? payload.iat,
+      refreshJti: payload.jti,
+      refreshExp: payload.exp,
     };
   }
 }
