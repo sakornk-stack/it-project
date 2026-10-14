@@ -24,3 +24,27 @@ export function systemUserCounts(users: readonly AdminUserSummary[]): SystemUser
     total: counts.superAdmin + counts.admin + counts.staff + counts.instructor,
   };
 }
+
+export type OverviewRole = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'INSTRUCTOR';
+
+export interface RoleShare {
+  role: OverviewRole;
+  count: number;
+  // 0-100 of the total; 0 when there is no account at all.
+  percent: number;
+}
+
+// Highest privilege first, the same order as the role cards.
+export function roleShares(counts: SystemUserCounts): RoleShare[] {
+  const rows: [OverviewRole, number][] = [
+    ['SUPER_ADMIN', counts.superAdmin],
+    ['ADMIN', counts.admin],
+    ['STAFF', counts.staff],
+    ['INSTRUCTOR', counts.instructor],
+  ];
+  return rows.map(([role, count]) => ({
+    role,
+    count,
+    percent: counts.total > 0 ? (count / counts.total) * 100 : 0,
+  }));
+}
