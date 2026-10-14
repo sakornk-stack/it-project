@@ -14,7 +14,7 @@ import { fetchAcademicYears } from '@/lib/api/academic-record';
 import { buildInactiveCalendarRows } from '@/lib/inactive-items';
 import { InactiveRecordList } from '@/components/admin/inactive-record-list';
 import { PageLoadError } from '@/components/layout/page-states';
-import { ListSkeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function AcademicYearInactiveSection() {
   const queryClient = useQueryClient();
@@ -40,7 +40,15 @@ export function AcademicYearInactiveSection() {
   if (all.some((q) => q.isError)) {
     return <PageLoadError onRetry={() => all.forEach((q) => void q.refetch())} />;
   }
-  if (all.some((q) => q.isLoading)) return <ListSkeleton items={3} />;
+  if (all.some((q) => q.isLoading)) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[4.5rem] w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   async function refreshAll() {
     await Promise.all(

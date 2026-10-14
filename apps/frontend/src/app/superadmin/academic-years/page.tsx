@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, CalendarRange, Info, Layers, Plus } from 'lucide-react';
+import { CalendarDays, CalendarRange, Layers, Plus } from 'lucide-react';
 import { fetchAcademicYears, fetchSemesters } from '@/lib/api/academic-record';
+import { SEMESTER_TERM_LABELS } from '@/lib/grade-label';
 import { useAuth } from '@/lib/auth-context';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
@@ -13,12 +14,16 @@ import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { AcademicYearForm } from '@/components/admin/academic-year-form';
 import { BulkAcademicYearForm } from '@/components/admin/bulk-academic-year-form';
-import { AcademicYearCard } from '@/components/admin/academic-year-card';
+import { AcademicYearCard, AcademicYearCardSkeleton } from '@/components/admin/academic-year-card';
 import { AcademicYearInactiveSection } from '@/components/admin/academic-year-inactive-section';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { EmptyState, InlineNotice } from '@/components/ui/empty-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+
+// Derived from the terms the system knows, same as the year card.
+const MAX_TERMS_PER_YEAR = Object.keys(SEMESTER_TERM_LABELS).length;
 
 export default function AcademicYearsAdminPage() {
   return <AcademicYearsAdminContent />;
@@ -71,23 +76,24 @@ function AcademicYearsAdminContent() {
           title="ปีการศึกษาและภาคเรียน"
           description="จัดการปีการศึกษาและภาคเรียนที่ใช้ทั่วทั้งระบบ"
           actions={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button
                 type="button"
-                variant={openForm === 'bulk' ? 'default' : 'outline'}
-                className="gap-1.5"
+                variant="outline"
+                className={cn('min-h-11 gap-1.5', openForm === 'bulk' && 'bg-accent')}
+                aria-expanded={openForm === 'bulk'}
                 onClick={() => toggleForm('bulk')}
               >
-                <Plus size={16} />
+                <Plus size={16} aria-hidden="true" />
                 สร้างหลายปี
               </Button>
               <Button
                 type="button"
-                variant={openForm === 'single' ? 'default' : 'outline'}
-                className="gap-1.5"
+                className="min-h-11 gap-1.5"
+                aria-expanded={openForm === 'single'}
                 onClick={() => toggleForm('single')}
               >
-                <Plus size={16} />
+                <Plus size={16} aria-hidden="true" />
                 เพิ่มปีการศึกษา
               </Button>
             </div>
@@ -111,32 +117,31 @@ function AcademicYearsAdminContent() {
         </Reveal>
       )}
 
-      <Reveal index={1}>
-        <InlineNotice icon={Info} solid>
-          ปีการศึกษาหนึ่งมีได้สูงสุด 3 ภาคเรียน การปิดใช้งานทำได้เมื่อไม่มีข้อมูลอ้างอิง
-          และไม่สามารถเปิดคืนจากหน้าจอนี้ได้
-        </InlineNotice>
-      </Reveal>
-
       {statsLoading && <StatCardsSkeleton count={3} />}
       {yearsQuery.data && semestersQuery.data && (
-        <Reveal index={2}>
+        <Reveal index={1}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard
-              compact
+              large
+              interactive={false}
+              tone="primary"
               icon={CalendarDays}
               label="ปีการศึกษาที่ใช้งาน"
               value={yearsQuery.data.length}
               suffix="ปี"
             />
             <StatCard
-              compact
+              large
+              interactive={false}
+              tone="primary"
               icon={CalendarRange}
               label="ปีล่าสุด"
               value={yearsQuery.data.length > 0 ? latestYear : '-'}
             />
             <StatCard
-              compact
+              large
+              interactive={false}
+              tone="primary"
               icon={Layers}
               label="ภาคเรียนที่ใช้งานรวม"
               value={semestersQuery.data.length}
@@ -146,34 +151,20 @@ function AcademicYearsAdminContent() {
         </Reveal>
       )}
 
-      <Reveal index={3}>
+      <Reveal index={2}>
         <PageSection
           title="ปีการศึกษาทั้งหมด"
+          description={`ปีการศึกษาหนึ่งมีได้ไม่เกิน ${MAX_TERMS_PER_YEAR} ภาคเรียน · ปิดใช้งานปีได้เมื่อไม่มีภาคเรียนที่ใช้งานอยู่`}
           actions={
-            <Button
-              type="button"
-              variant={showInactive ? 'default' : 'outline'}
-              size="sm"
-              aria-pressed={showInactive}
-              onClick={() => setShowInactive((open) => !open)}
-            >
-              {showInactive ? 'ซ่อนที่ปิดใช้งาน' : 'แสดงที่ปิดใช้งาน'}
-            </Button>
+            <Switch checked={showInactive} onCheckedChange={setShowInactive}>
+              แสดงที่ปิดใช้งาน
+            </Switch>
           }
         >
           {(yearsQuery.isLoading || semestersQuery.isLoading) && (
             <div className="space-y-4">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-5 w-32" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
+              <AcademicYearCardSkeleton rows={3} />
+              <AcademicYearCardSkeleton />
             </div>
           )}
 
@@ -193,14 +184,8 @@ function AcademicYearsAdminContent() {
                   illustration="no-data"
                   description="ยังไม่มีปีการศึกษาในระบบ"
                   action={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => setOpenForm('single')}
-                    >
-                      <Plus size={16} />
+                    <Button type="button" className="gap-1.5" onClick={() => setOpenForm('single')}>
+                      <Plus size={16} aria-hidden="true" />
                       เพิ่มปีการศึกษา
                     </Button>
                   }
