@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/lib/theme-context';
 import { THEME_INIT_SCRIPT } from '@/lib/theme-script';
 import { ToastProvider } from '@/lib/toast-context';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SessionTimeoutGuard } from '@/components/auth/session-timeout-guard';
 
 export const metadata: Metadata = {
   title: BRAND_NAME,
@@ -31,7 +32,10 @@ export default function RootLayout({
           <ToastProvider>
             <QueryProvider>
               <AuthProvider>
-                <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+                <TooltipProvider delayDuration={200}>
+                  {children}
+                  <SessionTimeoutGuard />
+                </TooltipProvider>
               </AuthProvider>
             </QueryProvider>
           </ToastProvider>

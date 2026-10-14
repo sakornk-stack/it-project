@@ -12,8 +12,19 @@ export function sanitizeNextPath(next: string | null | undefined): string | null
   // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001F\u007F]/.test(next)) return null;
   const path = next.split(/[?#]/)[0];
-  if (path === '/' || path === '/login' || path.startsWith('/register') || path === '/forgot-password' || path === '/reset-password') {
-    return null;
-  }
+  if (isPublicPath(path)) return null;
   return next;
+}
+
+// Pages that are reachable without a session: the landing hub and the auth
+// forms. Not valid post-login destinations, and the idle-timeout guard stays
+// off on them (there is no session to time out).
+export function isPublicPath(path: string): boolean {
+  return (
+    path === '/' ||
+    path === '/login' ||
+    path.startsWith('/register') ||
+    path === '/forgot-password' ||
+    path === '/reset-password'
+  );
 }

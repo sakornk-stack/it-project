@@ -15,6 +15,11 @@ import { useAuth } from '@/lib/auth-context';
 import { resolvePostLoginRoute } from '@/lib/dashboard-routes';
 import { GOOGLE_NEXT_STORAGE_KEY, NEXT_PARAM, sanitizeNextPath } from '@/lib/safe-next-path';
 import { HOVER_LIFT } from '@/lib/motion';
+import {
+  parseSessionEndReason,
+  REASON_PARAM,
+  SESSION_END_MESSAGE_TH,
+} from '@/lib/session-end-reason';
 import { verifyTwoFactor } from '@/lib/api/two-factor';
 import { loginSchema, type LoginFormValues } from '@/lib/validation/login.schema';
 import {
@@ -69,6 +74,11 @@ function LoginPageContent() {
   const [serverError, setServerError] = useState<string | null>(() =>
     searchParams.get('googleError') === 'email_exists' ? GOOGLE_EMAIL_EXISTS_MESSAGE : null,
   );
+  // Why the last session ended (?reason=idle|absolute|refresh-failed). A
+  // neutral notice rather than a destructive error: nothing the user did wrong.
+  // Whitelisted, so a crafted URL cannot put arbitrary text on the page.
+  const endReason = parseSessionEndReason(searchParams.get(REASON_PARAM));
+  const sessionEndNotice = endReason ? SESSION_END_MESSAGE_TH[endReason] : null;
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
@@ -319,6 +329,11 @@ function LoginPageContent() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitCredentials)} className="space-y-4">
+          {sessionEndNotice && (
+            <Alert role="status">
+              <AlertDescription>{sessionEndNotice}</AlertDescription>
+            </Alert>
+          )}
           {serverError && (
             <Alert variant="destructive">
               <AlertDescription>{serverError}</AlertDescription>

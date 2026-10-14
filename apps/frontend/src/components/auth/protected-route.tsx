@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { NEXT_PARAM } from '@/lib/safe-next-path';
+import { buildLoginUrl } from '@/lib/session-end-reason';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AuthSplitLayout } from './auth-split-layout';
@@ -30,7 +30,7 @@ const BRAND_COPY = {
 };
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { status, user, signedOut, logout } = useAuth();
+  const { status, user, signedOut, sessionEndReason, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -44,9 +44,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         return;
       }
       const next = `${pathname}${window.location.search}`;
-      router.replace(`/login?${NEXT_PARAM}=${encodeURIComponent(next)}`);
+      // reason: set when the session ended involuntarily (idle timeout etc.),
+      // so the login page can say why.
+      router.replace(buildLoginUrl({ next, reason: sessionEndReason }));
     }
-  }, [status, signedOut, router, pathname]);
+  }, [status, signedOut, sessionEndReason, router, pathname]);
 
   if (status === 'loading') {
     // Fires before the page shell (sidebar/topbar) mounts — the shell needs

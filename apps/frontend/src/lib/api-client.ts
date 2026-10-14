@@ -42,7 +42,9 @@ apiClient.interceptors.request.use((config) => {
 // must trigger exactly one /auth/refresh call, not one per request.
 let refreshPromise: Promise<string> | null = null;
 
-async function refreshAccessToken(): Promise<string> {
+// Exported for the idle-timeout "ต่อเวลา" button: it must renew the session
+// through the same single-flight path as the 401 interceptor.
+export async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = apiClient
       .post<AccessTokenResponse>(
