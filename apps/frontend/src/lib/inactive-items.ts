@@ -3,6 +3,9 @@ import type {
   CurriculumListItem,
   DepartmentListItem,
   FacultyListItem,
+  InactiveDepartmentListItem,
+  InactiveFacultyListItem,
+  InactiveProgramListItem,
   ProgramListItem,
   InactiveAcademicYear,
   InactiveSemester,
@@ -23,9 +26,10 @@ export interface InactiveRow {
   // Set when the parent is itself deactivated: the backend would refuse, so the
   // screen says what to open first instead of offering a button that cannot work.
   blockedBy: string | null;
-  // Only years and semesters can be deleted for good. `blockedReason` is why the
-  // button is off (null = allowed); the API re-checks either way.
-  permanentDelete?: { blockedReason: string | null };
+  // Years, semesters, faculties, departments and programs can be deleted for good.
+  // `blockedReason` is why the button is off (null = allowed); the API re-checks
+  // either way. `confirmText` is what must be typed (default: the whole label).
+  permanentDelete?: { blockedReason: string | null; confirmText?: string };
 }
 
 export function permanentDeleteBlockedReason(refs: {
@@ -41,6 +45,53 @@ export function permanentDeleteBlockedReason(refs: {
   return parts.length > 0 ? `ลบถาวรไม่ได้: ยังมี${parts.join(' และ')} อ้างอิงอยู่` : null;
 }
 
+const joinParts = (parts: (string | null)[]) => parts.filter(Boolean).join(' และ ');
+
+// Mirrors the API's refusal (org-references.util.ts) so the button can be off with
+// the reason on screen; the API stays the authority. Children count active or not,
+// so they are deleted first, lowest level first.
+export function orgPermanentDeleteBlockedReason(
+  level: 'คณะ' | 'ภาควิชา' | 'สาขา',
+  refs: Record<string, number>,
+): string | null {
+  const child =
+    level === 'คณะ'
+      ? refs.departments
+        ? `ภาควิชา ${refs.departments} รายการ`
+        : null
+      : level === 'ภาควิชา'
+        ? refs.programs
+          ? `สาขา ${refs.programs} รายการ`
+          : null
+        : refs.curricula
+          ? `หลักสูตร ${refs.curricula} รายการ`
+          : null;
+  const what = joinParts([
+    child,
+    refs.students ? `นิสิต ${refs.students} คน` : null,
+    refs.studentInvitations ? `คำเชิญนิสิต ${refs.studentInvitations} รายการ` : null,
+    refs.userScopes ? `ขอบเขตสิทธิ์ผู้ใช้ ${refs.userScopes} รายการ` : null,
+  ]);
+  if (!what) return null;
+  const todo = [
+    child ? 'ลบรายการที่ปิดใช้งานเหล่านั้นก่อน' : null,
+    refs.userScopes ? 'ถอนขอบเขตสิทธิ์ของผู้ใช้ก่อน' : null,
+  ].filter(Boolean);
+  return `ลบถาวรไม่ได้: ยังมี${what}อยู่ภายใต้${level}นี้${todo.length ? ` (${todo.join(' · ')})` : ''}`;
+}
+
+// `references` is optional so a list without it simply offers no permanent delete.
+type WithOptionalReferences<T extends { references: unknown }> = Omit<T, 'references'> &
+  Partial<Pick<T, 'references'>>;
+
+interface InactiveOrgLists {
+  faculties: WithOptionalReferences<InactiveFacultyListItem>[];
+  departments: WithOptionalReferences<InactiveDepartmentListItem>[];
+  programs: WithOptionalReferences<InactiveProgramListItem>[];
+  // Curricula are ADMIN's: listed for context only, never deletable from here.
+  curricula: CurriculumListItem[];
+}
+
 interface OrgLists {
   faculties: FacultyListItem[];
   departments: DepartmentListItem[];
@@ -53,7 +104,7 @@ const byId = <T extends { id: string }>(...lists: T[][]) =>
 
 // Deactivated organisation records, each with the chain above it. A parent may be
 // active (in `active`) or deactivated too (in `inactive`).
-export function buildInactiveOrgRows(active: OrgLists, inactive: OrgLists): InactiveRow[] {
+export function buildInactiveOrgRows(active: OrgLists, inactive: InactiveOrgLists): InactiveRow[] {
   const faculties = byId(active.faculties, inactive.faculties);
   const departments = byId(active.departments, inactive.departments);
   const programs = byId(active.programs, inactive.programs);
@@ -79,6 +130,12 @@ export function buildInactiveOrgRows(active: OrgLists, inactive: OrgLists): Inac
       code: f.code,
       path: '',
       blockedBy: null,
+      ...(f.references && {
+        permanentDelete: {
+          blockedReason: orgPermanentDeleteBlockedReason('คณะ', f.references),
+          confirmText: f.code,
+        },
+      }),
     })),
     ...inactive.departments.map((d) => {
       const parent = faculties.get(d.facultyId);
@@ -90,6 +147,12 @@ export function buildInactiveOrgRows(active: OrgLists, inactive: OrgLists): Inac
         code: d.code,
         path: parent ? `คณะ${parent.name}` : '',
         blockedBy: parent && !parent.isActive ? `คณะ${parent.name}` : null,
+        ...(d.references && {
+          permanentDelete: {
+            blockedReason: orgPermanentDeleteBlockedReason('ภาควิชา', d.references),
+            confirmText: d.code,
+          },
+        }),
       };
     }),
     ...inactive.programs.map((p) => {
@@ -102,6 +165,12 @@ export function buildInactiveOrgRows(active: OrgLists, inactive: OrgLists): Inac
         code: p.code,
         path: chainOfDepartment(p.departmentId).join(' › '),
         blockedBy: parent && !parent.isActive ? `ภาควิชา${parent.name}` : null,
+        ...(p.references && {
+          permanentDelete: {
+            blockedReason: orgPermanentDeleteBlockedReason('สาขา', p.references),
+            confirmText: p.code,
+          },
+        }),
       };
     }),
     ...inactive.curricula.map((c) => {

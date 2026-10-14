@@ -111,11 +111,14 @@ export function PermanentDeleteDialog({
 // stays the authority and is shown if it still refuses.
 export function PermanentDeleteButton({
   itemLabel,
+  confirmText = itemLabel,
   blockedReason,
   onConfirm,
   onError,
 }: Readonly<{
   itemLabel: string;
+  // Shorter than the label when the label carries a whole path (e.g. a record's code).
+  confirmText?: string;
   blockedReason: string | null;
   onConfirm: () => Promise<void>;
   onError: (message: string) => void;
@@ -140,7 +143,7 @@ export function PermanentDeleteButton({
         open={confirming}
         onOpenChange={setConfirming}
         title={`ลบถาวร${itemLabel}?`}
-        confirmText={itemLabel}
+        confirmText={confirmText}
         onConfirm={onConfirm}
         onError={onError}
       />

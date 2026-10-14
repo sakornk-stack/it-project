@@ -10,7 +10,9 @@ import {
   fetchInactiveFaculties,
   fetchInactivePrograms,
   fetchPrograms,
+  permanentlyDeleteOrgRecord,
   reactivateOrgRecord,
+  type PermanentlyDeletableOrgResource,
   type ReactivatableOrgResource,
 } from '@/lib/api/organization';
 import { buildInactiveOrgRows, type InactiveLevel } from '@/lib/inactive-items';
@@ -19,6 +21,12 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { ListSkeleton } from '@/components/ui/skeleton';
 
 const RESOURCE_OF: Partial<Record<InactiveLevel, ReactivatableOrgResource>> = {
+  คณะ: 'faculties',
+  ภาควิชา: 'departments',
+  สาขา: 'programs',
+};
+
+const DELETABLE_RESOURCE_OF: Partial<Record<InactiveLevel, PermanentlyDeletableOrgResource>> = {
   คณะ: 'faculties',
   ภาควิชา: 'departments',
   สาขา: 'programs',
@@ -95,16 +103,23 @@ export function InactiveOrgSection() {
   }
   if (all.some((q) => q.isLoading)) return <ListSkeleton items={3} />;
 
+  const refreshAll = () =>
+    Promise.all(
+      [...INACTIVE_KEYS, ...ACTIVE_KEYS].map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }),
+      ),
+    );
+
   return (
     <InactiveRecordList
       rows={rows}
+      permanentDelete={async (row) => {
+        await permanentlyDeleteOrgRecord(DELETABLE_RESOURCE_OF[row.level]!, row.id);
+        await refreshAll();
+      }}
       reactivate={async (row) => {
         await reactivateOrgRecord(RESOURCE_OF[row.level]!, row.id);
-        await Promise.all(
-          [...INACTIVE_KEYS, ...ACTIVE_KEYS].map((queryKey) =>
-            queryClient.invalidateQueries({ queryKey }),
-          ),
-        );
+        await refreshAll();
       }}
     />
   );

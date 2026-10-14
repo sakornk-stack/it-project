@@ -4,7 +4,11 @@ import type {
   FacultyListItem,
   ProgramListItem,
 } from '@eduanalyze-ai/shared-types';
-import { buildInactiveCalendarRows, buildInactiveOrgRows } from './inactive-items';
+import {
+  buildInactiveCalendarRows,
+  buildInactiveOrgRows,
+  orgPermanentDeleteBlockedReason,
+} from './inactive-items';
 
 const faculty = (id: string, name: string, isActive: boolean): FacultyListItem => ({
   id,
@@ -127,5 +131,53 @@ describe('buildInactiveCalendarRows', () => {
       'ลบถาวรไม่ได้: ยังมีผลการเรียน 12 รายการ และการประเมิน 3 รายการ อ้างอิงอยู่',
     );
     expect(rows[1].permanentDelete?.blockedReason).toBeNull();
+  });
+});
+
+describe('orgPermanentDeleteBlockedReason', () => {
+  it('allows a record nothing points at', () => {
+    expect(orgPermanentDeleteBlockedReason('คณะ', { departments: 0, userScopes: 0 })).toBeNull();
+  });
+
+  it('names the children and tells the user to delete them first', () => {
+    expect(orgPermanentDeleteBlockedReason('คณะ', { departments: 3, userScopes: 0 })).toBe(
+      'ลบถาวรไม่ได้: ยังมีภาควิชา 3 รายการอยู่ภายใต้คณะนี้ (ลบรายการที่ปิดใช้งานเหล่านั้นก่อน)',
+    );
+  });
+
+  it('adds students, invitations and user scopes for a program', () => {
+    const reason = orgPermanentDeleteBlockedReason('สาขา', {
+      curricula: 1,
+      students: 12,
+      studentInvitations: 2,
+      userScopes: 1,
+    });
+    expect(reason).toContain('หลักสูตร 1 รายการ');
+    expect(reason).toContain('นิสิต 12 คน');
+    expect(reason).toContain('คำเชิญนิสิต 2 รายการ');
+    expect(reason).toContain('ขอบเขตสิทธิ์ผู้ใช้ 1 รายการ');
+  });
+});
+
+describe('permanent delete on organisation rows', () => {
+  it('is offered with the code as the typed confirmation, and only when references came', () => {
+    const rows = buildInactiveOrgRows(empty, {
+      ...empty,
+      faculties: [
+        { ...faculty('f1', 'ก', false), references: { departments: 0, userScopes: 0 } },
+        faculty('f2', 'ข', false),
+      ],
+      programs: [
+        {
+          ...program('p1', 'd1', false),
+          references: { curricula: 2, students: 0, studentInvitations: 0, userScopes: 0 },
+        },
+      ],
+      curricula: [],
+    });
+    const byKey = Object.fromEntries(rows.map((r) => [r.key, r]));
+    expect(byKey['faculty-f1'].permanentDelete).toEqual({ blockedReason: null, confirmText: 'F1' });
+    expect(byKey['faculty-f2'].permanentDelete).toBeUndefined();
+    expect(byKey['program-p1'].permanentDelete?.blockedReason).toContain('หลักสูตร 2 รายการ');
   });
 });

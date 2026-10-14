@@ -6,6 +6,9 @@ import type {
   CurriculumListItem,
   DepartmentListItem,
   FacultyListItem,
+  InactiveDepartmentListItem,
+  InactiveFacultyListItem,
+  InactiveProgramListItem,
   ProgramListItem,
   UpdateCurriculumRequest,
   UpdateDepartmentRequest,
@@ -101,17 +104,17 @@ export async function deleteCurriculum(id: string) {
 // ---- Deactivated records (SUPER_ADMIN): list them and restore one ----
 
 export async function fetchInactiveFaculties() {
-  const { data } = await apiClient.get<FacultyListItem[]>('/faculties/inactive');
+  const { data } = await apiClient.get<InactiveFacultyListItem[]>('/faculties/inactive');
   return data;
 }
 
 export async function fetchInactiveDepartments() {
-  const { data } = await apiClient.get<DepartmentListItem[]>('/departments/inactive');
+  const { data } = await apiClient.get<InactiveDepartmentListItem[]>('/departments/inactive');
   return data;
 }
 
 export async function fetchInactivePrograms() {
-  const { data } = await apiClient.get<ProgramListItem[]>('/programs/inactive');
+  const { data } = await apiClient.get<InactiveProgramListItem[]>('/programs/inactive');
   return data;
 }
 
@@ -124,4 +127,14 @@ export type ReactivatableOrgResource = 'faculties' | 'departments' | 'programs' 
 
 export async function reactivateOrgRecord(resource: ReactivatableOrgResource, id: string) {
   await apiClient.post(`/${resource}/${id}/reactivate`);
+}
+
+// Faculties, departments and programs only: curricula have no permanent delete here.
+export type PermanentlyDeletableOrgResource = Exclude<ReactivatableOrgResource, 'curricula'>;
+
+export async function permanentlyDeleteOrgRecord(
+  resource: PermanentlyDeletableOrgResource,
+  id: string,
+) {
+  await apiClient.delete(`/${resource}/${id}/permanent`);
 }

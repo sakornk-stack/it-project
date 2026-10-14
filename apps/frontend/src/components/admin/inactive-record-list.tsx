@@ -73,6 +73,7 @@ export function InactiveRecordList({
                 {permanentDelete && row.permanentDelete && (
                   <PermanentDeleteButton
                     itemLabel={row.path ? `${row.title} ${row.path}` : row.title}
+                    confirmText={row.permanentDelete.confirmText}
                     blockedReason={row.permanentDelete.blockedReason}
                     onError={setError}
                     onConfirm={async () => {
