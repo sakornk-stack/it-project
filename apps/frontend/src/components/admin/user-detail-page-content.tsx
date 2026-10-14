@@ -4,33 +4,65 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarDays, Info, Mail } from 'lucide-react';
-import { formatThaiDate } from '@/lib/admin-users';
+import { ArrowLeft } from 'lucide-react';
 import { fetchUser, updateUserActiveStatus } from '@/lib/api/user-management';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { fetchDepartments, fetchPrograms } from '@/lib/api/organization';
-import { canResendInvitation } from '@/lib/resend-invitation';
-import { manageLockReason, SELF_LOCK_REASON, suspendBlockReason } from '@/lib/admin-user-guard';
-import { MISSING_SCOPE_WARNING, roleNeedsScope } from '@/lib/user-scope-requirement';
-import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
+import {
+  accessLimitations,
+  canPermanentlyDelete,
+  manageLockReason,
+  suspendBlockReason,
+} from '@/lib/admin-user-guard';
+import { roleNeedsScope } from '@/lib/user-scope-requirement';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageLoadError } from '@/components/layout/page-states';
-import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
-import { ResendInvitationButton } from '@/components/admin/resend-invitation-button';
-import { UserPermanentDeleteButton } from '@/components/admin/user-permanent-delete';
+import { UserAccessCard, UserAccountInfoCard } from '@/components/admin/user-access-aside';
+import { UserProfileCard } from '@/components/admin/user-profile-card';
+import { UserDangerZone, UserStatusSection } from '@/components/admin/user-status-section';
 import { UserRolesSection } from '@/components/admin/user-roles-section';
 import { UserScopesSection } from '@/components/admin/user-scopes-section';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { describeApiError } from '@/lib/describe-api-error';
-import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/admin/api-error-alert';
-import { InlineNotice } from '@/components/ui/empty-state';
+import { ApiErrorAlert } from '@/components/admin/api-error-alert';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ListSkeleton, Skeleton } from '@/components/ui/skeleton';
+
+// Same grid as the loaded page, so nothing jumps when the data arrives.
+function UserDetailSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="กำลังโหลดข้อมูลบัญชี"
+      className="grid grid-cols-1 gap-6 lg:grid-cols-3"
+    >
+      <Card className="lg:col-span-2">
+        <CardContent className="space-y-5 p-4 sm:p-6">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Skeleton className="h-16 w-16 shrink-0 rounded-full sm:h-24 sm:w-24" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <Skeleton className="h-7 w-48 max-w-full" />
+              <Skeleton className="h-5 w-40 max-w-full" />
+            </div>
+          </div>
+          <Skeleton className="h-14 w-full" />
+        </CardContent>
+      </Card>
+      <Card className="lg:col-start-3 lg:row-span-2 lg:row-start-1">
+        <CardContent className="space-y-3 p-4 sm:p-6">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+      <div className="space-y-6 lg:col-span-2">
+        <ListSkeleton items={3} />
+      </div>
+    </div>
+  );
+}
 
 export function UserDetailPageContent({
   userId,
@@ -68,7 +100,7 @@ export function UserDetailPageContent({
 
   if (!requester) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <div className="space-y-3">
           <Skeleton className="mx-auto h-10 w-10 rounded-full" />
           <Skeleton className="h-3 w-32" />
@@ -125,29 +157,47 @@ export function UserDetailPageContent({
     }
   }
 
+  const user = userQuery.data;
+  // Instructors and students have no scope rows to manage; a card with nothing in it is hidden.
+  const showScopes = !!user && (roleNeedsScope(user.roles) || user.scopes.length > 0);
+  const canDelete =
+    !!user && canPermanentlyDelete({ basePath, requesterIsSuperAdmin, isSelf, target: user });
+  const limitations = user
+    ? accessLimitations({
+        basePath,
+        isSelf,
+        requesterIsSuperAdmin,
+        target: user,
+        ownScopes: ownUserQuery.data?.scopes ?? null,
+        org,
+      })
+    : [];
+
   return (
     <DashboardShell
       role={requesterIsSuperAdmin ? 'SUPER_ADMIN' : 'ADMIN'}
       identityLabel={requester.email}
       fullName={requester.fullName}
     >
-      <Link
-        href={`${basePath}/users`}
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft size={14} />
-        กลับไปรายชื่อผู้ใช้งาน
-      </Link>
+      <nav aria-label="เส้นทางหน้า" className="text-sm text-muted-foreground">
+        <ol className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+          <li>
+            <Link
+              href={`${basePath}/users`}
+              className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 active:bg-accent transition-colors duration-150 hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              ผู้ใช้งาน
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" className="min-w-0 truncate font-medium text-foreground">
+            รายละเอียดบัญชี
+          </li>
+        </ol>
+      </nav>
 
-      {userQuery.isLoading && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-56" />
-            <Skeleton className="h-4 w-48" />
-          </div>
-          <ListSkeleton items={3} />
-        </div>
-      )}
+      {userQuery.isLoading && <UserDetailSkeleton />}
       {userQuery.isError && (
         <PageLoadError
           message="ไม่พบผู้ใช้งาน หรือไม่มีสิทธิ์เข้าถึง"
@@ -155,174 +205,85 @@ export function UserDetailPageContent({
         />
       )}
 
-      {userQuery.data && (
-        <>
-          <Reveal index={0}>
-            <PageHeader
-              title={userQuery.data.fullName}
-              description={
-                <span className="flex flex-wrap items-center gap-2">
-                  <Badge tone={userQuery.data.isActive ? 'success' : 'neutral'} className="gap-1.5">
-                    <span
-                      aria-hidden="true"
-                      className={
-                        userQuery.data.isActive
-                          ? 'h-1.5 w-1.5 rounded-full bg-emerald-500'
-                          : 'h-1.5 w-1.5 rounded-full bg-slate-400'
-                      }
-                    />
-                    {userQuery.data.isActive ? 'สถานะ: ใช้งานอยู่' : 'สถานะ: ระงับการใช้งาน'}
-                  </Badge>
-                  {userQuery.data.roles.map((role) => (
-                    <Badge key={role} tone={ROLE_BADGE_TONE[role]}>
-                      {ROLE_LABEL_TH[role]}
-                    </Badge>
-                  ))}
-                </span>
-              }
-            />
+      {user && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* One column on a phone, in reading order: profile, what you may do here, roles,
+              scopes, status, account facts, danger zone. The wrappers dissolve there
+              (`contents`) so each card takes its place by `order`; from lg up they are the
+              two real columns, the right one sticky. */}
+          <Reveal index={0} className="order-1 min-w-0 lg:order-none lg:col-span-2">
+            <UserProfileCard user={user} />
           </Reveal>
 
-          {isSelf && (
-            <InlineNotice icon={Info} solid>
-              {SELF_LOCK_REASON}
-            </InlineNotice>
-          )}
-
-          <Reveal index={1}>
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border p-4">
-                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <Mail size={14} aria-hidden="true" />
-                      อีเมลสถาบัน
-                    </dt>
-                    <dd className="mt-1 break-all font-medium">{userQuery.data.email}</dd>
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <CalendarDays size={14} aria-hidden="true" />
-                      วันที่สร้างบัญชี
-                    </dt>
-                    <dd className="mt-1 font-medium tabular-nums">
-                      {formatThaiDate(userQuery.data.createdAt)}
-                    </dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-          </Reveal>
-
-          {serverError && <ApiErrorAlert message={serverError} />}
-
-          {roleNeedsScope(userQuery.data.roles) && userQuery.data.scopes.length === 0 && (
-            <Alert className={WARNING_ALERT_CLASS}>
-              <AlertDescription>
-                ผู้ใช้นี้ยังไม่มีขอบเขตความรับผิดชอบ — {MISSING_SCOPE_WARNING}{' '}
-                <a href="#user-scopes" className="font-medium underline">
-                  ไปที่การกำหนดขอบเขต
-                </a>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Reveal index={1}>
-            <Card>
-              <CardHeader>
-                <CardTitle>สถานะบัญชี</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted px-3 py-2">
-                  <span className="text-sm text-muted-foreground">
-                    {userQuery.data.isActive
-                      ? 'บัญชีนี้เข้าสู่ระบบได้ตามปกติ'
-                      : 'บัญชีนี้ถูกระงับ ไม่สามารถเข้าสู่ระบบได้'}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {suspendBlocked ? (
-                      suspendBlocked !== SELF_LOCK_REASON && (
-                        <span className="max-w-md text-xs text-muted-foreground" role="note">
-                          {suspendBlocked}
-                        </span>
-                      )
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() =>
-                          userQuery.data.isActive
-                            ? setConfirmingSuspend(true)
-                            : handleToggleActive()
-                        }
-                      >
-                        {userQuery.data.isActive ? 'ระงับการใช้งาน' : 'เปิดใช้งานอีกครั้ง'}
-                      </Button>
-                    )}
-                    <UserPermanentDeleteButton
-                      user={userQuery.data}
-                      requesterId={requester.userId}
-                      requesterIsSuperAdmin={requesterIsSuperAdmin}
-                      basePath={basePath}
-                      onDeleted={() => router.push(`${basePath}/users`)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Reveal>
-
-          {canResendInvitation({
-            isSelf,
-            requesterIsSuperAdmin,
-            user: userQuery.data,
-          }) && (
-            <Reveal index={2}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>คำเชิญตั้งรหัสผ่าน</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    ผู้ใช้นี้ยังไม่ได้ตั้งรหัสผ่าน หากยังไม่ได้รับอีเมลหรือลิงก์หมดอายุ
-                    ส่งลิงก์ตั้งรหัสผ่านใหม่ได้ที่นี่
-                  </p>
-                  <ResendInvitationButton
-                    user={userQuery.data}
-                    requesterId={requester.userId}
-                    requesterIsSuperAdmin={requesterIsSuperAdmin}
-                  />
-                </CardContent>
-              </Card>
+          <aside className="contents lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:block lg:space-y-6 lg:self-start lg:sticky lg:top-6">
+            <Reveal index={1} className="order-2 min-w-0 lg:order-none">
+              <UserAccessCard limitations={limitations} />
             </Reveal>
-          )}
+            <Reveal index={4} className="order-6 min-w-0 lg:order-none">
+              <UserAccountInfoCard user={user} />
+            </Reveal>
+          </aside>
 
-          <Reveal index={2}>
-            <UserRolesSection
-              userId={userId}
-              roles={userQuery.data.roles}
-              hasScopes={userQuery.data.scopes.length > 0}
-              requesterIsSuperAdmin={requesterIsSuperAdmin}
-              lockedReason={roleScopeLockReason}
-              onChanged={refetch}
-            />
-          </Reveal>
+          <div className="contents lg:col-span-2 lg:block lg:min-w-0 lg:space-y-6">
+            {serverError && (
+              <div className="order-3 min-w-0 lg:order-none">
+                <ApiErrorAlert message={serverError} />
+              </div>
+            )}
 
-          <Reveal index={3}>
-            <div id="user-scopes" className="scroll-mt-6">
-              <UserScopesSection
+            <Reveal index={2} className="order-3 min-w-0 lg:order-none">
+              <UserRolesSection
                 userId={userId}
-                roles={userQuery.data.roles}
-                scopes={userQuery.data.scopes}
-                lockedReason={roleScopeLockReason}
+                roles={user.roles}
+                hasScopes={user.scopes.length > 0}
                 requesterIsSuperAdmin={requesterIsSuperAdmin}
-                requesterScopes={ownUserQuery.data?.scopes ?? null}
+                lockedReason={roleScopeLockReason}
                 onChanged={refetch}
               />
-            </div>
-          </Reveal>
-        </>
+            </Reveal>
+
+            {showScopes && (
+              <Reveal index={3} className="order-4 min-w-0 lg:order-none">
+                <div id="user-scopes" className="scroll-mt-6">
+                  <UserScopesSection
+                    userId={userId}
+                    roles={user.roles}
+                    scopes={user.scopes}
+                    lockedReason={roleScopeLockReason}
+                    requesterIsSuperAdmin={requesterIsSuperAdmin}
+                    requesterScopes={ownUserQuery.data?.scopes ?? null}
+                    onChanged={refetch}
+                  />
+                </div>
+              </Reveal>
+            )}
+
+            <Reveal index={4} className="order-5 min-w-0 lg:order-none">
+              <UserStatusSection
+                user={user}
+                requesterId={requester.userId}
+                requesterIsSuperAdmin={requesterIsSuperAdmin}
+                suspendBlocked={suspendBlocked}
+                busy={busy}
+                onToggleActive={() =>
+                  user.isActive ? setConfirmingSuspend(true) : void handleToggleActive()
+                }
+              />
+            </Reveal>
+
+            {canDelete && (
+              <Reveal index={5} className="order-7 min-w-0 lg:order-none">
+                <UserDangerZone
+                  user={user}
+                  requesterId={requester.userId}
+                  requesterIsSuperAdmin={requesterIsSuperAdmin}
+                  basePath={basePath}
+                  onDeleted={() => router.push(`${basePath}/users`)}
+                />
+              </Reveal>
+            )}
+          </div>
+        </div>
       )}
 
       {userQuery.data && (

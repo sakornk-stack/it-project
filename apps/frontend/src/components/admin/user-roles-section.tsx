@@ -1,6 +1,6 @@
 'use client';
 
-import { SELF_LOCK_REASON } from '@/lib/admin-user-guard';
+import { lockHint } from '@/lib/admin-user-guard';
 import { useState } from 'react';
 import type { Role } from '@eduanalyze-ai/shared-types';
 import { assignUserRole, revokeUserRole } from '@/lib/api/user-management';
@@ -15,7 +15,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RevokeButton } from './revoke-button';
 import { describeApiError } from '@/lib/describe-api-error';
 import { ApiErrorAlert } from '@/components/admin/api-error-alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, ShieldCheck } from 'lucide-react';
+import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -112,29 +115,36 @@ export function UserRolesSection({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>บทบาท</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <DetailSectionHeader
+        icon={ShieldCheck}
+        title="บทบาท"
+        description={
+          lockedReason ? `แก้ไขบทบาทไม่ได้ — ${lockHint(lockedReason, roles)}` : undefined
+        }
+      />
+      <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
         {serverError && <ApiErrorAlert message={serverError} />}
 
         {roles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">ยังไม่มีบทบาท</p>
+          <EmptyState
+            icon={ShieldCheck}
+            description="ยังไม่มีบทบาทที่กำหนดให้บัญชีนี้"
+            className="py-4"
+          />
         ) : (
           <ul className="space-y-2">
             {roles.map((role) => (
               <li
                 key={role}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted px-3 py-2"
+                className="flex flex-col items-start gap-3 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between sm:px-4"
               >
                 <Badge tone={ROLE_BADGE_TONE[role]}>{ROLE_LABEL_TH[role]}</Badge>
-                {lockedReason ? (
-                  // The page already says once that your own account is locked.
-                  lockedReason !== SELF_LOCK_REASON && (
-                    <span className="text-xs text-muted-foreground">{lockedReason}</span>
-                  )
-                ) : (
-                  <RevokeButton label="ถอดบทบาท" onClick={() => setConfirmingRole(role)} />
+                {!lockedReason && (
+                  <RevokeButton
+                    label="ถอดบทบาท"
+                    className="w-full sm:w-auto"
+                    onClick={() => setConfirmingRole(role)}
+                  />
                 )}
               </li>
             ))}
@@ -142,11 +152,11 @@ export function UserRolesSection({
         )}
 
         {!lockedReason && availableRoles.length > 0 && (
-          <div className="flex flex-wrap items-end gap-3 border-t border-border pt-3">
-            <div className="w-full sm:w-56">
+          <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center">
+            <div className="w-full sm:w-64">
               <Select value={selectedRole || undefined} onValueChange={setSelectedRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="เพิ่มบทบาท" />
+                <SelectTrigger aria-label="เลือกบทบาทที่ต้องการเพิ่ม">
+                  <SelectValue placeholder="เลือกบทบาทที่ต้องการเพิ่ม" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableRoles.map((role) => (
@@ -160,15 +170,11 @@ export function UserRolesSection({
             <AddButton
               disabled={!selectedRole || busy}
               onClick={handleAssign}
-              aria-describedby={selectedRole ? undefined : 'role-add-hint'}
+              className="w-full gap-1.5 sm:w-auto"
             >
+              <Plus size={16} aria-hidden="true" />
               เพิ่มบทบาท
             </AddButton>
-            {!selectedRole && (
-              <p id="role-add-hint" className="w-full text-xs text-muted-foreground">
-                เลือกบทบาทก่อน จึงจะเพิ่มได้
-              </p>
-            )}
           </div>
         )}
         {warnMissingScope && (

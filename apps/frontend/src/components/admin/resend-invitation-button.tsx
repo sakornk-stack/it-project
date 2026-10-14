@@ -95,11 +95,11 @@ export function ResendInvitationButton(
   if (!resend.canResend) return null;
 
   return (
-    <span className="inline-flex flex-col items-start gap-2">
+    <span className="flex w-full flex-col items-stretch gap-2 sm:inline-flex sm:w-auto sm:items-start">
       <Button
         type="button"
         variant="outline"
-        className="px-3"
+        className="w-full px-3 sm:w-auto"
         disabled={resend.busy}
         aria-label={`ส่งคำเชิญซ้ำให้ ${props.user.fullName}`}
         onClick={resend.request}

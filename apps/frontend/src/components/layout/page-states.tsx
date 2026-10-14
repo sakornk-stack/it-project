@@ -32,7 +32,7 @@ export function PageLoadError({
   return (
     <Alert variant="destructive">
       <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex items-center justify-between gap-3">
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
         <span>{message}</span>
         {onRetry && (
           <Button type="button" variant="outline" size="sm" onClick={onRetry}>

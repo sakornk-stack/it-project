@@ -37,7 +37,7 @@ export function ConfirmDialog({
     <DialogPrimitive.Root open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-card p-6 text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95">
+        <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-lg border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-card-foreground sm:p-6 sm:pb-6 shadow-lg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95">
           <div className="flex items-start gap-3">
             {confirmVariant === 'destructive' ? (
               <AlertTriangle
@@ -47,16 +47,16 @@ export function ConfirmDialog({
             ) : (
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
             )}
-            <div className="space-y-2">
-              <DialogPrimitive.Title className="text-lg font-semibold">
+            <div className="min-w-0 flex-1 space-y-2">
+              <DialogPrimitive.Title className="course-name-break text-lg font-semibold">
                 {title}
               </DialogPrimitive.Title>
               <DialogPrimitive.Description asChild>
-                <div className="text-sm text-muted-foreground">{description}</div>
+                <div className="course-name-break text-sm text-muted-foreground">{description}</div>
               </DialogPrimitive.Description>
             </div>
           </div>
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="mt-5 flex flex-col-reverse gap-3 sm:mt-6 sm:flex-row sm:justify-end sm:gap-2">
             <DialogPrimitive.Close asChild>
               <Button type="button" variant="ghost" disabled={busy}>
                 {cancelLabel}

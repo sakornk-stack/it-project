@@ -4,6 +4,7 @@ import {
   SELF_LOCK_REASON,
   STAFF_ONLY_REASON,
   SUPER_ADMIN_PEER_REASON,
+  accessLimitations,
   canPermanentlyDelete,
   suspendBlockReason,
   manageLockReason,
@@ -140,5 +141,120 @@ describe('canPermanentlyDelete', () => {
     ['a student account', { target: { isActive: false, roles: ['STUDENT'] as Role[] } }],
   ])('is not offered for %s', (_label, change) => {
     expect(canPermanentlyDelete({ ...base, ...change })).toBe(false);
+  });
+});
+
+describe('accessLimitations', () => {
+  const input: Parameters<typeof accessLimitations>[0] = {
+    basePath: '/admin',
+    isSelf: false,
+    requesterIsSuperAdmin: false,
+    target: {
+      isActive: true,
+      roles: ['STAFF'],
+      scopes: [scope('PROGRAM', 'p1')],
+    },
+    ownScopes: [scope('DEPARTMENT', 'd1')],
+    org,
+  };
+  const keys = (change: Partial<typeof input>) =>
+    accessLimitations({ ...input, ...change }).map((l) => l.key);
+  const superAdmin = { basePath: '/superadmin', requesterIsSuperAdmin: true };
+  const suspended = (extra: object = {}) => ({
+    target: { isActive: false, roles: ['STAFF' as Role], scopes: [], ...extra },
+  });
+
+  it('reports nothing for an Admin on a staff account inside their scope', () => {
+    expect(keys({})).toEqual([]);
+  });
+
+  it('reports your own account alone, with every action switched off', () => {
+    const [only, ...rest] = accessLimitations({ ...input, ...superAdmin, isSelf: true });
+    expect(only.key).toBe('self');
+    expect(only.disabled).toHaveLength(4);
+    expect(rest).toEqual([]);
+  });
+
+  it('reports an Admin or Super Admin account alone for an Admin', () => {
+    expect(keys({ target: { isActive: true, roles: ['ADMIN'], scopes: [] } })).toEqual([
+      'higher-level',
+    ]);
+    expect(keys({ target: { isActive: true, roles: ['SUPER_ADMIN'], scopes: [] } })).toEqual([
+      'higher-level',
+    ]);
+  });
+
+  it('reports a student account as its own case for an Admin', () => {
+    expect(keys({ target: { isActive: true, roles: ['STUDENT'], scopes: [] } })).toEqual([
+      'student',
+    ]);
+  });
+
+  it('reports a non-staff teaching account as higher-level wording, not as no-role', () => {
+    expect(keys({ target: { isActive: true, roles: ['INSTRUCTOR'], scopes: [] } })).toEqual([
+      'higher-level',
+    ]);
+  });
+
+  it('tells an Admin an account without roles needs a Super Admin, switching the actions off', () => {
+    const [only, ...rest] = accessLimitations({
+      ...input,
+      target: { isActive: true, roles: [], scopes: [] },
+    });
+    expect(only.key).toBe('no-role');
+    expect(only.reason).toContain('ผู้ดูแลระบบสูงสุดเป็นผู้กำหนดบทบาท');
+    expect(only.disabled).toHaveLength(3);
+    expect(rest).toEqual([]);
+  });
+
+  it('tells a Super Admin an account without roles can be given one, with nothing switched off', () => {
+    const [only, ...rest] = accessLimitations({
+      ...input,
+      ...superAdmin,
+      target: { isActive: true, roles: [], scopes: [] },
+    });
+    expect(only.key).toBe('no-role');
+    expect(only.reason).toContain('คุณกำหนดบทบาทให้ได้');
+    expect(only.disabled).toEqual([]);
+    expect(rest).toEqual([]);
+  });
+
+  it('reports another Super Admin to a Super Admin', () => {
+    expect(
+      keys({ ...superAdmin, target: { isActive: true, roles: ['SUPER_ADMIN'], scopes: [] } }),
+    ).toEqual(['super-admin-peer']);
+  });
+
+  it('reports a unit outside the Admin scope while the account is active', () => {
+    expect(keys({ target: { ...input.target, scopes: [scope('PROGRAM', 'p2')] } })).toEqual([
+      'outside-scope',
+    ]);
+  });
+
+  it('does not report outside-scope for a suspended account (reactivating is allowed)', () => {
+    expect(
+      keys({ target: { ...input.target, isActive: false, scopes: [scope('PROGRAM', 'p2')] } }),
+    ).toEqual([]);
+  });
+
+  it('does not report outside-scope while the Admin scopes are still loading', () => {
+    expect(
+      keys({ ownScopes: null, target: { ...input.target, scopes: [scope('PROGRAM', 'p2')] } }),
+    ).toEqual([]);
+  });
+
+  it('reports linked data on a suspended account a Super Admin may delete', () => {
+    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0 };
+    expect(keys({ ...superAdmin, ...suspended({ references }) })).toEqual(['has-references']);
+  });
+
+  it('reports nothing for a suspended account without linked data', () => {
+    const references = { courseInstructors: 0, enteredRecords: 0, studentInvitations: 0 };
+    expect(keys({ ...superAdmin, ...suspended({ references }) })).toEqual([]);
+  });
+
+  it('does not mention linked data to an Admin, who cannot delete', () => {
+    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0 };
+    expect(keys(suspended({ references }))).toEqual([]);
   });
 });

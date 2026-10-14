@@ -89,7 +89,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="w-full bg-transparent text-base outline-none md:text-sm placeholder:text-muted-foreground"
               />
             </div>
             <div className="min-h-0 max-h-64 flex-1 overflow-y-auto p-1">

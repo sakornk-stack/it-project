@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import { canPermanentlyDelete } from '@/lib/admin-user-guard';
@@ -94,7 +95,10 @@ export function useUserPermanentDelete({
 // The same action on a user's own page: a red button that opens the dialog.
 // Rendered only for a suspended account the viewer may delete, so a user who
 // cannot be deleted never sees it. Leaving the page is the caller's `onDeleted`.
-export function UserPermanentDeleteButton(props: Parameters<typeof useUserPermanentDelete>[0]) {
+export function UserPermanentDeleteButton({
+  className,
+  ...props
+}: Parameters<typeof useUserPermanentDelete>[0] & { className?: string }) {
   const { canDelete, request, dialog } = useUserPermanentDelete(props);
   if (!canDelete) return null;
   return (
@@ -102,7 +106,10 @@ export function UserPermanentDeleteButton(props: Parameters<typeof useUserPerman
       <Button
         type="button"
         variant="outline"
-        className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        className={cn(
+          'gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive active:bg-destructive/10',
+          className,
+        )}
         onClick={request}
       >
         <Trash2 size={16} aria-hidden="true" />

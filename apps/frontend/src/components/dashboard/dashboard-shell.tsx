@@ -140,7 +140,7 @@ export function DashboardShell({
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       <aside className="hidden w-64 flex-col border-r border-slate-100 p-6 md:flex">
         {sidebarContent}
       </aside>
