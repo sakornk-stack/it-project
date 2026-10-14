@@ -301,3 +301,11 @@ Three commits delivered (2026-09-30):
 - env ฝั่ง frontend: `NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES=30`, `NEXT_PUBLIC_IDLE_WARNING_SECONDS=60`, `NEXT_PUBLIC_SESSION_MAX_HOURS=8` (ต้องใส่ใน `.env` ตอน deploy ถ้าต้องการค่าอื่น; ไม่ใส่ใช้ค่าเริ่มต้น และ `NEXT_PUBLIC_*` ถูกฝังตอน build)
 - **ยังค้าง:** (1) QA มือบนเบราว์เซอร์ด้วยบัญชี `@test.local` (ลด idle เป็น 1 นาที/warning 20 วินาทีชั่วคราวผ่าน env) — dialog/focus trap/Esc/aria-live/reduced-motion/Light-Dark/ข้ามแท็บ ยังไม่มี DOM test (ไม่มี jsdom) (2) สื่อที่กำลังเล่น (วิดีโอ) ไม่นับเป็นกิจกรรม — ถ้าระบบมีวิดีโอภายหลังต้องเพิ่ม (3) หน้า `/` (hub) เป็น public จึงไม่มี timeout ฝั่ง client ขณะอยู่ที่หน้านั้น (backend ยังบังคับ 15m/8h ตามปกติ)
 
+### นิสิตจำลอง DEMO-IT66 (100 คน ICT 2564 ปีเข้า 2566) — เขียนสคริปต์+ทดสอบบนสำเนาแล้ว, **ยังไม่ได้รันกับ `eduanalyze_ai`**, ยังไม่ commit (2026-10-14)
+รอคำสั่ง "รันจริง" แล้วทำ: `npm run db:backup -- <label>` → `cd apps/backend && npx ts-node prisma/seed-demo-it66.ts` (dry-run) → `… --confirm`
+- ไฟล์: `prisma/seed-demo-it66.ts` (สร้าง), `prisma/cleanup-demo-it66.ts` (ลบ; dry-run เป็นค่าเริ่มต้น, expect เป๊ะ 100/100/4612, `--expect=U,P,R` override), `prisma/demo-it66/engine.ts` (ตรรกะบริสุทธิ์), `engine.spec.ts` (รันเฉพาะกิจ: `npx jest --rootDir=. --roots=prisma/demo-it66 --testRegex 'engine\.spec\.ts$'` ไม่อยู่ใน `npm test`), `catalog.fixture.ts` (สำเนารายวิชา ICT 2564 ใช้ในเทสต์เท่านั้น)
+- guard: ไม่ใช่ production, host local, **port 5433**, DB ∈ {eduanalyze_ai, eduanalyze_seed_test}; ปฏิเสธถ้ามี DEMO-IT66 อยู่แล้ว; insert-only ใน transaction เดียว ตรวจ 100/100/100/4612 และ protected counts ก่อน commit
+- ผลบนสำเนา (seed 20261016): records 4,612 (ฤดูร้อน 5); เกรด A 19.1 / B+ 15.5 / B 20.6 / C+ 15.7 / C 12.7 / D+ 6.4 / D 5.5 / F 4.6 %; GPAX <1.50 = 5, 1.50–1.74 = 7, 1.75–1.99 = 9, 2.00–2.49 = 22, 2.50–2.99 = 26, 3.00–3.49 = 22, ≥3.50 = 9; หน่วยกิตที่ผ่าน min/median/max = 67/120/120 → ตามหลังแผน (<99) **3 คน**; ติด F แล้วเรียนซ้ำผ่าน 36 คน, มี F ค้างไม่ได้เรียนซ้ำ 23 คน (รวมกลุ่ม GPAX ต่ำที่ผ่านไม่ครบ)
+- ข้อสมมติ: แผนภาคเรียนเป็นของเราเอง (สคีมาไม่มีข้อมูลแผนปี/ภาค), เกรดตัวอักษรทั้งหมด (สคีมาไม่มีชนิดการประเมิน S/U), หลักสูตรเก็บ 132 หน่วยกิต (126 เป็นผลรวม minCredits) จึงเกณฑ์ตามหลัง = 99
+- ผลข้างเคียงเมื่อรันจริง: หน้า INSTRUCTOR ของอาจารย์เดโมจะเห็นเกรดกลุ่มนี้ใน 5 วิชาที่มีผู้สอน (01999111, 02739111, 02739321, 02739341, 01175129) จนกว่าจะลบ
+
