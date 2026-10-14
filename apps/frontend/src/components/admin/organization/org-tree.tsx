@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Building2, GraduationCap, Landmark } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Landmark } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,22 +14,27 @@ import {
   fetchCurricula,
   fetchDepartments,
   fetchFaculties,
+  fetchInactiveDepartments,
+  fetchInactiveFaculties,
+  fetchInactivePrograms,
   fetchPrograms,
   updateDepartment,
   updateFaculty,
   updateProgram,
 } from '@/lib/api/organization';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ListSkeleton } from '@/components/ui/skeleton';
+import { PageLoadError } from '@/components/layout/page-states';
+import { Reveal } from '@/components/layout/reveal';
+import { idsToExpandForLevel, type OrgLevel } from '@/lib/org-tree-view';
 import { useToast } from '@/lib/toast-context';
 import { OrgNodeRow } from './org-node-row';
 import { InactiveOrgSection } from './inactive-org-section';
 import { OrgEntityForm } from './org-entity-form';
 import { buildOrgCounts, describeCounts } from '@/lib/org-tree-counts';
-import { StatCard } from '@/components/dashboard/stat-card';
-import { AnimatedNumber } from '@/components/ui/animated-number';
 import { CurriculumPanel } from './curriculum-panel';
+import { OrgStatRow } from './org-stat-row';
+import { OrgToolbar } from './org-toolbar';
+import { OrgTreeSkeleton } from './org-tree-skeleton';
 
 const ORG_QUERY_KEYS = [['faculties'], ['departments'], ['programs'], ['curricula']];
 
@@ -44,11 +49,31 @@ function groupBy<T>(items: T[], key: (item: T) => string) {
 
 const byCode = <T extends { code: string }>(a: T, b: T) => a.code.localeCompare(b.code);
 
-export function OrgTree() {
+// Moves keyboard focus to a row's toggle once it is on screen (a row inside a node that has just
+// opened mounts a frame or two later), then scrolls it into view.
+function focusRow(id: string) {
+  let tries = 0;
+  const tick = () => {
+    const el = document.getElementById(`org-toggle-${id}`);
+    el?.focus({ preventScroll: true });
+    if (el && document.activeElement === el) {
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
+    } else if (tries++ < 30) {
+      requestAnimationFrame(tick);
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
+// The add-faculty form is opened from the page header, so its state lives with the page.
+export function OrgTree({
+  addingFaculty,
+  onAddingFacultyChange,
+}: Readonly<{ addingFaculty: boolean; onAddingFacultyChange: (adding: boolean) => void }>) {
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
-  const [addingFaculty, setAddingFaculty] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
   const toast = useToast();
 
@@ -57,6 +82,27 @@ export function OrgTree() {
   const programsQuery = useQuery({ queryKey: ['programs'], queryFn: fetchPrograms });
   const curriculaQuery = useQuery({ queryKey: ['curricula'], queryFn: fetchCurricula });
   const queries = [facultiesQuery, departmentsQuery, programsQuery, curriculaQuery];
+  // Read only what the inactive list has already loaded; it is fetched when the switch is on.
+  const inactiveQueries = [
+    useQuery({
+      queryKey: ['inactive-org', 'faculties'],
+      queryFn: fetchInactiveFaculties,
+      enabled: false,
+    }),
+    useQuery({
+      queryKey: ['inactive-org', 'departments'],
+      queryFn: fetchInactiveDepartments,
+      enabled: false,
+    }),
+    useQuery({
+      queryKey: ['inactive-org', 'programs'],
+      queryFn: fetchInactivePrograms,
+      enabled: false,
+    }),
+  ];
+  const inactiveCount = inactiveQueries.every((q) => q.data)
+    ? inactiveQueries.reduce((sum, q) => sum + (q.data?.length ?? 0), 0)
+    : null;
 
   // Await so callers only close their form once the tree shows the new data.
   async function refetchAll() {
@@ -156,6 +202,14 @@ export function OrgTree() {
     });
   }, [filter]);
 
+  // The first level opens once, so the tree shows at a glance that it has children.
+  const openedFirstLevel = useRef(false);
+  useEffect(() => {
+    if (openedFirstLevel.current || faculties.length === 0) return;
+    openedFirstLevel.current = true;
+    setExpanded(new Set(faculties.map((f) => f.id)));
+  }, [faculties]);
+
   function expandAll() {
     setExpanded(
       new Set([
@@ -167,72 +221,67 @@ export function OrgTree() {
   }
 
   if (queries.some((q) => q.isLoading)) {
-    return <ListSkeleton items={5} />;
+    return <OrgTreeSkeleton />;
   }
   if (queries.some((q) => q.isError)) {
-    return <p className="text-sm text-destructive">ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง</p>;
+    return <PageLoadError onRetry={() => queries.forEach((q) => void q.refetch())} />;
   }
 
   const shown = (id: string) => filter === null || filter.visible.has(id);
   const visibleFaculties = faculties.filter((f) => shown(f.id));
+  const sortedDepartments = (facultyId: string) =>
+    [...(departmentsByFaculty.get(facultyId) ?? [])].sort(byCode).filter((d) => shown(d.id));
+  const sortedPrograms = (departmentId: string) =>
+    [...(programsByDepartment.get(departmentId) ?? [])].sort(byCode).filter((p) => shown(p.id));
+
+  // A stat card: open the tree down to that level and focus its first visible row.
+  function revealLevel(level: OrgLevel) {
+    setExpanded(
+      idsToExpandForLevel(level, {
+        faculties: faculties.map((f) => f.id),
+        departments: (departmentsQuery.data ?? []).map((d) => d.id),
+        programs: (programsQuery.data ?? []).map((p) => p.id),
+      }),
+    );
+    const departments = visibleFaculties.flatMap((f) => sortedDepartments(f.id));
+    const programs = departments.flatMap((d) => sortedPrograms(d.id));
+    const target =
+      level === 'faculty'
+        ? visibleFaculties[0]
+        : level === 'department'
+          ? departments[0]
+          : level === 'program'
+            ? programs[0]
+            : programs.find((p) => (curriculaByProgram.get(p.id) ?? []).length > 0);
+    if (target) focusRow(target.id);
+  }
+
+  const resultCount = filter ? filter.visible.size + filter.curriculumIds.size : null;
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Landmark}
-          label="คณะ"
-          value={<AnimatedNumber value={faculties.length} />}
-          suffix="คณะ"
-        />
-        <StatCard
-          icon={Building2}
-          label="ภาควิชา"
-          value={<AnimatedNumber value={(departmentsQuery.data ?? []).length} />}
-          suffix="ภาควิชา"
-        />
-        <StatCard
-          icon={GraduationCap}
-          label="สาขา"
-          value={<AnimatedNumber value={(programsQuery.data ?? []).length} />}
-          suffix="สาขา"
-        />
-        <StatCard
-          icon={GraduationCap}
-          label="หลักสูตร"
-          value={<AnimatedNumber value={(curriculaQuery.data ?? []).length} />}
-          suffix="หลักสูตร"
-        />
-      </div>
+      <OrgStatRow
+        counts={{
+          faculty: faculties.length,
+          department: (departmentsQuery.data ?? []).length,
+          program: (programsQuery.data ?? []).length,
+          curriculum: (curriculaQuery.data ?? []).length,
+        }}
+        onPick={revealLevel}
+      />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="ค้นหาชื่อ/รหัส คณะ ภาควิชา สาขา หรือฉบับหลักสูตร..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
+      <Reveal index={5}>
+        <OrgToolbar
+          search={search}
+          onSearchChange={setSearch}
+          resultCount={resultCount}
+          onExpandAll={expandAll}
+          onCollapseAll={() => setExpanded(new Set())}
+          showInactive={showInactive}
+          onShowInactiveChange={setShowInactive}
+          inactiveCount={inactiveCount}
         />
-        <Button type="button" variant="outline" size="sm" onClick={expandAll}>
-          ขยายทั้งหมด
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => setExpanded(new Set())}>
-          ยุบทั้งหมด
-        </Button>
-        <Button
-          type="button"
-          variant={showInactive ? 'default' : 'outline'}
-          size="sm"
-          aria-pressed={showInactive}
-          onClick={() => setShowInactive((open) => !open)}
-        >
-          {showInactive ? 'ซ่อนที่ปิดใช้งาน' : 'แสดงที่ปิดใช้งาน'}
-        </Button>
-        {!addingFaculty && (
-          <Button type="button" onClick={() => setAddingFaculty(true)}>
-            + เพิ่มคณะใหม่
-          </Button>
-        )}
-      </div>
+      </Reveal>
 
       {addingFaculty && (
         <OrgEntityForm
@@ -241,9 +290,9 @@ export function OrgTree() {
             await createFaculty(values);
             await refetchAll();
             toast.success('เพิ่มคณะแล้ว');
-            setAddingFaculty(false);
+            onAddingFacultyChange(false);
           }}
-          onCancel={() => setAddingFaculty(false)}
+          onCancel={() => onAddingFacultyChange(false)}
         />
       )}
 
@@ -252,27 +301,36 @@ export function OrgTree() {
           icon={Landmark}
           description="ยังไม่มีคณะในระบบ โครงสร้างองค์กรเริ่มจากคณะ แล้วจึงเพิ่มภาควิชา สาขา และหลักสูตรต่อ"
           action={
-            <Button type="button" onClick={() => setAddingFaculty(true)}>
-              เพิ่มคณะแรก
+            <Button type="button" onClick={() => onAddingFacultyChange(true)}>
+              เพิ่มคณะใหม่
             </Button>
           }
         />
       )}
       {faculties.length > 0 && visibleFaculties.length === 0 && (
-        <EmptyState illustration="no-results" size="sm" description="ไม่พบรายการที่ตรงกับคำค้นหา" />
+        <EmptyState
+          illustration="no-results"
+          size="sm"
+          description="ไม่พบรายการที่ตรงกับคำค้นหา ลองใช้ชื่อหรือรหัสอื่น"
+          action={
+            <Button type="button" variant="outline" onClick={() => setSearch('')}>
+              ล้างการค้นหา
+            </Button>
+          }
+        />
       )}
 
       <div className="space-y-3">
         {visibleFaculties.map((faculty) => {
           const allDepartments = [...(departmentsByFaculty.get(faculty.id) ?? [])].sort(byCode);
-          const departments = allDepartments.filter((d) => shown(d.id));
+          const departments = sortedDepartments(faculty.id);
           const facultyCounts = counts.faculty.get(faculty.id)!;
           return (
             <OrgNodeRow
               key={faculty.id}
               item={faculty}
-              icon={Landmark}
-              levelLabel="คณะ"
+              level="faculty"
+              term={term}
               summary={describeCounts(facultyCounts, ['departments', 'programs', 'curricula'])}
               childCount={allDepartments.length}
               childLabel="ภาควิชา"
@@ -301,13 +359,13 @@ export function OrgTree() {
                 const allPrograms = [...(programsByDepartment.get(department.id) ?? [])].sort(
                   byCode,
                 );
-                const programs = allPrograms.filter((p) => shown(p.id));
+                const programs = sortedPrograms(department.id);
                 return (
                   <OrgNodeRow
                     key={department.id}
                     item={department}
-                    icon={Building2}
-                    levelLabel="ภาควิชา"
+                    level="department"
+                    term={term}
                     summary={describeCounts(counts.department.get(department.id)!, [
                       'programs',
                       'curricula',
@@ -348,8 +406,8 @@ export function OrgTree() {
                         <OrgNodeRow
                           key={program.id}
                           item={program}
-                          icon={GraduationCap}
-                          levelLabel="สาขา"
+                          level="program"
+                          term={term}
                           summary={describeCounts(counts.program.get(program.id)!, ['curricula'])}
                           childCount={allCurricula.length}
                           childLabel="หลักสูตร"

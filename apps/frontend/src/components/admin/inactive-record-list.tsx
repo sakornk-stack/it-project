@@ -36,11 +36,12 @@ export function InactiveRecordList({
         {rows.map((row) => (
           <li
             key={row.key}
-            className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 rounded-lg border border-dashed bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="neutral">{row.level}</Badge>
+                <Badge tone="danger">ปิดใช้งาน</Badge>
                 {row.code && (
                   <Badge tone="neutral" className="font-mono">
                     {row.code}

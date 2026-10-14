@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { OrgTree } from '@/components/admin/organization/org-tree';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OrganizationAdminPage() {
@@ -13,6 +16,7 @@ export default function OrganizationAdminPage() {
 
 function OrganizationAdminContent() {
   const { user } = useAuth();
+  const [addingFaculty, setAddingFaculty] = useState(false);
 
   if (!user) {
     return (
@@ -30,12 +34,22 @@ function OrganizationAdminContent() {
       <Reveal index={0}>
         <PageHeader
           title="โครงสร้างองค์กร"
-          description="จัดการคณะ ภาควิชา สาขา และหลักสูตร — การปิดใช้งานทำได้เมื่อไม่มีข้อมูลที่ใช้งานอยู่ภายใต้รายการนั้น"
+          description="จัดการคณะ ภาควิชา สาขา และหลักสูตร"
+          actions={
+            !addingFaculty && (
+              <Button
+                type="button"
+                className="min-h-11 w-full gap-1.5 sm:w-auto"
+                onClick={() => setAddingFaculty(true)}
+              >
+                <Plus size={16} aria-hidden="true" />
+                เพิ่มคณะใหม่
+              </Button>
+            )
+          }
         />
       </Reveal>
-      <Reveal index={1}>
-        <OrgTree />
-      </Reveal>
+      <OrgTree addingFaculty={addingFaculty} onAddingFacultyChange={setAddingFaculty} />
     </DashboardShell>
   );
 }
