@@ -8,6 +8,9 @@ import { LowSampleTag } from './overview-parts';
 // Width one term gets before the chart scrolls sideways instead of squeezing.
 const TERM_MIN_PX = 76;
 
+// One wording for a term with too few people, here and in the overview.
+export const sparseTermText = (students: number) => `${SPARSE_LABEL} (${students} คน)`;
+
 const columnCentre = (index: number, count: number) => ((index + 0.5) / count) * 100;
 const clampPercent = (percent: number) => Math.min(100, Math.max(0, percent));
 
@@ -29,11 +32,11 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
     if (run && run[run.length - 1].i === point.i - 1) run.push(point);
     else runs.push([point]);
   }
-  const segments = visible.slice(1).map((point, k) => ({
-    from: visible[k],
-    to: point,
-    dashed: point.i - visible[k].i > 1,
-  }));
+  // The line never crosses a term that has too few people: only neighbours join.
+  const segments = visible
+    .slice(1)
+    .map((point, k) => ({ from: visible[k], to: point }))
+    .filter(({ from, to }) => to.i - from.i === 1);
 
   const latest = terms.find((t) => t.isLatest) ?? terms[terms.length - 1];
 
@@ -68,7 +71,7 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
                     opacity={0.1}
                   />
                 ))}
-              {segments.map(({ from, to, dashed }) => (
+              {segments.map(({ from, to }) => (
                 <line
                   key={`${from.t.key}-${to.t.key}`}
                   x1={x(from.i)}
@@ -78,7 +81,6 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
                   stroke="currentColor"
                   strokeWidth={2.5}
                   strokeLinecap="round"
-                  strokeDasharray={dashed ? '3 6' : undefined}
                   vectorEffect="non-scaling-stroke"
                 />
               ))}
@@ -112,10 +114,13 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
               ) : (
                 <span
                   key={term.key}
-                  className="absolute bottom-0 -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground"
+                  role="img"
+                  aria-label={`${term.label}: ${sparseTermText(term.students)}`}
+                  title={sparseTermText(term.students)}
+                  className="absolute bottom-0 flex -translate-x-1/2 translate-y-1/2 flex-col items-center"
                   style={{ left: `${columnCentre(i, count)}%` }}
                 >
-                  ไม่แสดงตัวเลข
+                  <span className="block h-2.5 w-2.5 rounded-full border-2 border-dashed border-slate-300 bg-card" />
                 </span>
               ),
             )}
@@ -135,11 +140,16 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
                 >
                   {term.label}
                 </p>
-                <p className="text-[11px] tabular-nums text-muted-foreground">{term.students} คน</p>
-                {term.level === 'low' && <LowSampleTag counted={term.graded} />}
-                {!term.showNumbers && (
-                  <p className="text-[11px] text-muted-foreground">{SPARSE_LABEL}</p>
+                {term.showNumbers ? (
+                  <p className="text-[11px] tabular-nums text-muted-foreground">
+                    {term.students} คน
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {sparseTermText(term.students)}
+                  </p>
                 )}
+                {term.level === 'low' && <LowSampleTag counted={term.graded} />}
               </li>
             ))}
           </ul>
@@ -150,28 +160,15 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
         {terms.map((term) => (
           <li key={term.key}>
             {term.label}:{' '}
-            {term.showNumbers ? `ได้ B ขึ้นไป ${formatPercent(term.percent)}` : SPARSE_LABEL} มีเกรด{' '}
-            {term.students} คน
+            {term.showNumbers
+              ? `ได้ B ขึ้นไป ${formatPercent(term.percent)} มีเกรด ${term.students} คน`
+              : sparseTermText(term.students)}
           </li>
         ))}
       </ul>
 
-      {latest && (
+      {latest?.showNumbers && latest.delta !== null && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3 text-sm">
-          <span className="text-muted-foreground">
-            {latest.label}:{' '}
-            {latest.showNumbers ? (
-              <>
-                <span className="font-semibold tabular-nums text-primary">
-                  {formatPercent(latest.percent)}
-                </span>{' '}
-                ได้ B ขึ้นไป
-              </>
-            ) : (
-              SPARSE_LABEL
-            )}{' '}
-            · มีเกรด <span className="tabular-nums">{latest.students}</span> คน
-          </span>
           <ChangeBadge delta={latest.delta} />
         </div>
       )}
@@ -182,9 +179,7 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
 // Green and up when the share rose, red and down when it fell, grey when flat or
 // when either term has too few people to compare. Arrow and words, not colour alone.
 function ChangeBadge({ delta }: Readonly<{ delta: number | null }>) {
-  if (delta === null) {
-    return <Badge tone="neutral">เทียบภาคก่อนไม่ได้ (ข้อมูลยังน้อย)</Badge>;
-  }
+  if (delta === null) return null;
   if (delta === 0) {
     return (
       <Badge tone="neutral" className="gap-1">

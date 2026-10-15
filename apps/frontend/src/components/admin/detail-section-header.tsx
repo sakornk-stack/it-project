@@ -11,12 +11,15 @@ export function DetailSectionHeader({
   description,
   action,
   className,
+  headingId,
 }: Readonly<{
   icon: LucideIcon;
-  title: string;
+  title: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
   className?: string;
+  // Lets the card around the header name itself by its title (aria-labelledby).
+  headingId?: string;
 }>) {
   return (
     <div
@@ -33,7 +36,10 @@ export function DetailSectionHeader({
           <Icon size={18} />
         </span>
         <div className="min-w-0 space-y-1">
-          <h2 className="course-name-break text-base font-semibold leading-tight text-primary">
+          <h2
+            id={headingId}
+            className="course-name-break text-base font-semibold leading-tight text-primary"
+          >
             {title}
           </h2>
           {description && (

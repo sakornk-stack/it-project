@@ -23,7 +23,7 @@ export function CourseTabStrip({
   if (others.length === 0) return null;
 
   const hrefFor = (course: InstructorCourseSummary) =>
-    `/instructor/courses/${course.courseId}${tabParam ? `?tab=${tabParam}` : ''}`;
+    `/instructor/courses/${course.courseId}${tabParam ? `?tab=${encodeURIComponent(tabParam)}` : ''}`;
 
   return (
     <>

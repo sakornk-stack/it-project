@@ -1,29 +1,24 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
 import { fetchCourseCloAchievement, fetchCourseRoster } from '@/lib/api/instructor';
 import { fetchCourseEvidenceCoverage } from '@/lib/evidence-coverage';
 import { cn } from '@/lib/utils';
 import { buildCourseOverviews } from '@/lib/instructor-overview';
-import { UNSAVED_SCORES_CONFIRM } from '@/lib/score-form-guard';
-import { useConfirm } from '@/lib/use-confirm';
-import { useUnsavedNavigationGuard } from '@/lib/use-unsaved-navigation-guard';
 import { Reveal } from '@/components/layout/reveal';
-import { Card, CardContent } from '@/components/ui/card';
-import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { CloAchievementSection } from './clo-achievement-section';
 import { StudentRosterTable } from './student-roster-table';
-import { AssessmentEvidenceSection } from './assessment-evidence-section';
 import { CourseInfoSection } from './course-info-section';
 import { CourseFollowUpList } from './course-follow-up-list';
 import { CourseHero } from './course-hero';
 import { CourseOverview } from './course-overview';
+import { SectionCard } from './section-card';
 
-export type InstructorTab = 'overview' | 'students' | 'evidence' | 'clo';
+export type InstructorTab = 'overview' | 'students' | 'clo';
 
-// Four tabs, in the order of the work done most often. The old Gradebook tab
+// Three tabs, in the order of the work done most often. The old Gradebook tab
 // was the same table as Students with grade editing switched on; that is now a
 // mode inside Students ("แก้ไขเกรด"), off until the instructor asks for it.
 // Overview absorbed the old standalone 'grades' (distribution/trend charts)
@@ -31,12 +26,12 @@ export type InstructorTab = 'overview' | 'students' | 'evidence' | 'clo';
 const TABS: { key: InstructorTab; label: string }[] = [
   { key: 'overview', label: 'ภาพรวม' },
   { key: 'students', label: 'นิสิต' },
-  { key: 'evidence', label: 'กรอกคะแนน' },
   { key: 'clo', label: 'เป้าการเรียนรู้' },
 ];
 
 // Backward-compat for bookmarked/shared links from before the restructure:
-// ?tab=grades / trend / course fall back onto Overview; ?tab=gradebook and
+// ?tab=grades / trend / course fall back onto Overview, and so does any value
+// that is not a tab (the retired score-entry tab, ?tab=evidence, included); ?tab=gradebook and
 // ?tab=roster (the editable table) land on Students in view mode, with the
 // ?student= deep link kept so the same person is opened.
 const LEGACY_TAB_ALIASES: Record<string, InstructorTab> = {
@@ -49,7 +44,9 @@ const LEGACY_TAB_ALIASES: Record<string, InstructorTab> = {
 
 export function parseInstructorTab(value: string | null): InstructorTab {
   if (value && TABS.some((tab) => tab.key === value)) return value as InstructorTab;
-  if (value && value in LEGACY_TAB_ALIASES) return LEGACY_TAB_ALIASES[value];
+  if (value && Object.prototype.hasOwnProperty.call(LEGACY_TAB_ALIASES, value)) {
+    return LEGACY_TAB_ALIASES[value];
+  }
   return 'overview';
 }
 
@@ -71,14 +68,8 @@ export function InstructorDetailPanel({
 }) {
   const queryClient = useQueryClient();
 
-  // Set by the score form while it holds edits that are not saved yet.
-  const [hasUnsavedScores, setHasUnsavedScores] = useState(false);
-  const { confirm, dialog } = useConfirm();
-  useUnsavedNavigationGuard(hasUnsavedScores, () => confirm(UNSAVED_SCORES_CONFIRM));
-  async function handleTabChange(tab: InstructorTab) {
-    if (tab === activeTab) return;
-    if (hasUnsavedScores && !(await confirm(UNSAVED_SCORES_CONFIRM))) return;
-    onTabChange(tab);
+  function handleTabChange(tab: InstructorTab) {
+    if (tab !== activeTab) onTabChange(tab);
   }
 
   const cloQuery = useQuery({
@@ -114,97 +105,82 @@ export function InstructorDetailPanel({
         <CourseHero course={course} heading="h1" />
       </Reveal>
 
+      {/* Tabs sit on the page itself; every section below is a card of its own. */}
       <Reveal index={1}>
-        <Card>
-          <CardContent className="space-y-4 pt-6">
-            <div className="flex flex-wrap gap-x-2 border-b border-slate-100">
-              {TABS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-current={activeTab === key ? 'true' : undefined}
-                  onClick={() => handleTabChange(key)}
-                  className={cn(
-                    'min-h-11 border-b-2 px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    activeTab === key
-                      ? 'border-brand text-brand'
-                      : 'border-transparent text-slate-500 hover:text-primary',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {activeTab === 'overview' && (
-              <Reveal index={0}>
-                <div className="space-y-6">
-                  <CourseOverview course={course} />
-                  <CourseFollowUpList courseId={course.courseId} students={course.atRiskStudents} />
-                  <CollapsibleSection
-                    framed={false}
-                    title="ข้อมูลรายวิชา"
-                    meta={
-                      <span className="text-sm font-normal text-muted-foreground">
-                        หน่วยกิต และวิชาที่ต้องผ่านก่อน
-                      </span>
-                    }
-                  >
-                    <CourseInfoSection course={course} />
-                  </CollapsibleSection>
-                </div>
-              </Reveal>
-            )}
-
-            {activeTab === 'clo' && (
-              <Reveal index={0}>
-                <CloAchievementSection
-                  gradedPeople={buildCourseOverviews([course])[0].stats.graded}
-                  achievementPercent={course.achievementPercent}
-                  clos={course.clos}
-                  plos={course.plos}
-                  courseAssessment={course.courseAssessment}
-                  detail={cloQuery.data}
-                  isLoading={cloQuery.isLoading}
-                  isError={cloQuery.isError}
-                  evidenceCoverage={evidenceCoverageQuery.data}
-                  evidenceTotal={rosterQuery.data?.length}
-                  evidenceError={evidenceCoverageQuery.isError}
-                />
-              </Reveal>
-            )}
-
-            {activeTab === 'students' && (
-              <Reveal index={0}>
-                <StudentRosterTable
-                  courseId={course.courseId}
-                  courseCode={course.code}
-                  clos={course.clos}
-                  roster={rosterQuery.data}
-                  isLoading={rosterQuery.isLoading}
-                  isError={rosterQuery.isError}
-                  onChanged={isInstructor ? handleGradebookChanged : undefined}
-                  initialSelectedStudentId={initialSelectedStudentId}
-                />
-              </Reveal>
-            )}
-
-            {/* Own internal queries (not the enabled-per-tab pattern above) —
-                mounting only while this tab is active already keeps it from
-                firing requests when unused, same net effect. */}
-            {activeTab === 'evidence' && isInstructor && (
-              <Reveal index={0}>
-                <AssessmentEvidenceSection
-                  courseId={course.courseId}
-                  clos={course.clos}
-                  onUnsavedChange={setHasUnsavedScores}
-                />
-              </Reveal>
-            )}
-          </CardContent>
-        </Card>
+        <nav aria-label="หัวข้อของรายวิชา" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <div className="flex min-w-max gap-x-2 border-b border-slate-200">
+            {TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                aria-current={activeTab === key ? 'true' : undefined}
+                onClick={() => handleTabChange(key)}
+                className={cn(
+                  '-mb-px min-h-11 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+                  activeTab === key
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-slate-500 hover:text-primary',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </nav>
       </Reveal>
-      {dialog}
+
+      {activeTab === 'overview' && (
+        <Reveal index={2}>
+          <CourseOverview
+            course={course}
+            aside={
+              <>
+                <CourseFollowUpList courseId={course.courseId} students={course.atRiskStudents} />
+                <CourseInfoSection course={course} />
+              </>
+            }
+          />
+        </Reveal>
+      )}
+
+      {activeTab === 'clo' && (
+        <Reveal index={2}>
+          <CloAchievementSection
+            gradedPeople={buildCourseOverviews([course])[0].stats.graded}
+            achievementPercent={course.achievementPercent}
+            clos={course.clos}
+            plos={course.plos}
+            courseAssessment={course.courseAssessment}
+            detail={cloQuery.data}
+            isLoading={cloQuery.isLoading}
+            isError={cloQuery.isError}
+            evidenceCoverage={evidenceCoverageQuery.data}
+            evidenceTotal={rosterQuery.data?.length}
+            evidenceError={evidenceCoverageQuery.isError}
+          />
+        </Reveal>
+      )}
+
+      {activeTab === 'students' && (
+        <Reveal index={2}>
+          <SectionCard
+            icon={Users}
+            title="รายชื่อนิสิต"
+            description="ค้นหา เรียงลำดับ และเปิดดูผลการเรียนของนิสิตแต่ละคนในวิชานี้"
+          >
+            <StudentRosterTable
+              courseId={course.courseId}
+              courseCode={course.code}
+              clos={course.clos}
+              roster={rosterQuery.data}
+              isLoading={rosterQuery.isLoading}
+              isError={rosterQuery.isError}
+              onChanged={isInstructor ? handleGradebookChanged : undefined}
+              initialSelectedStudentId={initialSelectedStudentId}
+            />
+          </SectionCard>
+        </Reveal>
+      )}
     </>
   );
 }

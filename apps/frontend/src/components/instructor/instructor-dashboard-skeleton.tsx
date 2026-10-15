@@ -66,8 +66,8 @@ export function InstructorCourseTimelineSkeleton() {
 }
 
 // Mirrors the loaded course page: the course switcher (a bar on phones, a
-// row of pills from sm), the header with its title and summary lines, then
-// the tab card with its four tabs and the first blocks of the content. With
+// row of pills from sm), the header card with its title and chips, then the
+// four tabs on the page and the first cards of the content. With
 // the switcher drawn up front the header does not move when the data arrives.
 // `withSwitcher` is off for the Suspense fallback, which has no shell yet.
 export function InstructorCourseSkeleton({ withSwitcher = false }: { withSwitcher?: boolean }) {
@@ -83,23 +83,27 @@ export function InstructorCourseSkeleton({ withSwitcher = false }: { withSwitche
           </div>
         </>
       )}
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-full max-w-xl" />
-        <Skeleton className="h-4 w-2/3 max-w-md sm:hidden" />
+      <div className="space-y-3 rounded-xl border border-slate-200 p-4 sm:p-6">
+        <Skeleton className="h-8 w-64 max-w-full" />
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-7 w-24 rounded-full" />
+          <Skeleton className="h-7 w-40 rounded-full" />
+        </div>
       </div>
-      <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-11 w-24" />
-            ))}
-          </div>
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-56 w-full" />
-          <Skeleton className="h-14 w-full rounded-lg" />
-        </CardContent>
-      </Card>
+      <div className="flex gap-x-4 border-b border-slate-200">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="mb-px h-11 w-24" />
+        ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 w-full rounded-xl" />
+        ))}
+      </div>
+      <div className="grid items-start gap-6 xl:grid-cols-3">
+        <Skeleton className="h-72 w-full rounded-xl xl:col-span-2" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
     </div>
   );
 }

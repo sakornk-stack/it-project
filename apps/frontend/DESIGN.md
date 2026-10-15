@@ -11,10 +11,11 @@
 
 ## 2) Token และสี
 - สีบทบาท: `ROLE_BADGE_TONE` ใน `components/auth/require-role.tsx` → SUPER_ADMIN=danger, ADMIN=warning, INSTRUCTOR=success, STAFF/STUDENT=neutral ใช้ผ่าน `Badge tone=…`
-- `lib/tone.ts`: `SemanticTone` = success|warning|danger|neutral; `BADGE_TONE_CLASSES` (ชิป), `TINT_TONE_CLASSES` (พื้นเซลล์/แถว), `BAR_TONE_CLASSES` (แท่ง/จุดสี), `TOAST_*`
+- `lib/tone.ts`: `SemanticTone` = success|warning|danger|neutral; `BADGE_TONE_CLASSES` (ชิป), `TINT_TONE_CLASSES` (พื้นเซลล์/แถว), `BAR_TONE_CLASSES` (แท่ง/จุดสี), `ACCENT_TONE_CLASSES` (เส้นเน้นซ้ายของแถว/การ์ด ใช้เฉพาะแถวที่ต้องเตือน), `TOAST_*`
 - StatCard (`components/dashboard/stat-card.tsx`): `tone` = `primary` | SemanticTone ย้อมไอคอนและตัวเลข; `large` ไอคอนไล่เฉด ตัวเลขคงสีหัวข้อ
 - สถานะบัญชี: `accountStatus()` ใน `lib/account-status.ts` → ระงับการใช้งาน=danger, รอตั้งรหัสผ่าน=warning, ใช้งานปกติ=success (เฉพาะบัญชีใช้งานปกติมีจุดกะพริบ)
-- สีเกรด: `lib/grade-badge-color.ts` (`gradeBadgeTone`, `gradeBadgeClassName`, `gradeBarClassName`) — A/B+/B/S=success, C+–D=warning, F/U=danger, W/I=neutral
+- สีเกรด: `lib/grade-badge-color.ts` (`gradeBadgeTone`, `gradeBadgeClassName`, `gradeBarClassName`) — A/B+/B/S=success, C+–D=warning, F/U=danger, W/I=neutral แท่งการกระจายเกรดไล่โทนต่อเนื่องตาม tone นี้ (เขียว→เหลือง→แดง) ห้ามใช้เทาสำหรับเกรดที่แสดงจริง เพราะดูเหมือนปิดใช้งาน
+- สถานะปกติ/ผ่านใช้สีเขียวเฉพาะจุดเล็ก (จุดสถานะ ชิป ไอคอน) ห้ามระบายเขียวเป็นพื้นที่ใหญ่เพื่อบอกว่า "ปกติ"
 - สี GPA: `gpaColorClassName` (`lib/gpa-color.ts`, ≥3.5 เขียว, <2.0 แดง) และ `gpaTone` (`components/staff/gpa-scale.tsx`, <1.50 danger, <1.75 warning) ใช้คู่กับ `TINT_TONE_CLASSES`
 - Contrast: ข้อความต้องผ่าน WCAG AA ทั้ง Light/Dark (ตามคอมเมนต์ใน `globals.css` ที่ตรวจคู่สีของ `.dark`)
 
@@ -36,6 +37,7 @@
 | Badge | `components/ui/badge.tsx` | ชิปสถานะ/บทบาท/รหัส | ใช้ `tone` ไม่ใส่สีเอง |
 | InitialsAvatar | `components/ui/initials-avatar.tsx` | อวาตาร์ตัวอักษรแรก | — |
 | Switch | `components/ui/switch.tsx` | สวิตช์เปิด/ปิด (`role=switch`) | สูง 44px ทั้งแถว |
+| SectionCard / CollapsibleCard | `components/instructor/section-card.tsx` | การ์ดส่วนของหน้ารายวิชาทุกแท็บ (หัว `DetailSectionHeader` ไอคอน+ชื่อ+คำอธิบาย) | การ์ดไม่ซ้อนการ์ด; แบบพับได้ใช้ `aria-expanded` + animate ความสูงด้วย grid-rows เนื้อหาที่พับเป็น `invisible` |
 | Reveal / ScrollReveal | `components/layout/reveal.tsx` | เข้าฉากของบล็อก | ดูข้อ 5 |
 | DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
 
@@ -60,6 +62,8 @@
 - เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี layout กั้นสิทธิ์)
 - หัวหน้า: `PageHeader` ชื่อ (`text-2xl font-semibold text-primary`) + คำอธิบาย 1 บรรทัด `text-sm text-muted-foreground` + ปุ่มหลักมุมขวา (มือถือเต็มความกว้าง `w-full sm:w-auto`, `min-h-11`)
 - หัวส่วน: `PageSection` (`text-lg font-semibold`) หรือหัวการ์ด `DetailSectionHeader` = ไอคอนในช่อง `h-9 w-9 rounded-lg bg-brand-light text-brand` + ชื่อ + คำอธิบาย + action ขวา
+- หน้าตั้งค่า/โปรไฟล์ใช้ `max-w-7xl` ชิดซ้ายเหมือนหน้าอื่น ไม่จัดกึ่งกลางด้วย `max-w` แคบ
+- หน้าที่มีหลายส่วน: แท็บอยู่บนพื้นหน้า (ไม่อยู่ในการ์ด) ทุกส่วนเป็นการ์ดระดับเดียวกัน; จอ `xl` ขึ้นไปแบ่งสองคอลัมน์ (หลัก `xl:col-span-2` + ข้าง) มือถือ/แท็บเล็ตคอลัมน์เดียว (ตัวอย่าง `course-overview.tsx`)
 - หน้ารายละเอียดต้นแบบ: `components/admin/user-detail-page-content.tsx` (กริด `lg:grid-cols-3`, aside ขวา sticky), `user-profile-card.tsx`, `user-access-aside.tsx`
 - ระยะ/ขอบ/มุม: ช่องว่างบล็อก `space-y-6`, การ์ด `gap-4`, ภายในส่วน `space-y-4`; `rounded-lg border bg-card shadow-sm` (`components/ui/card.tsx`); ไอคอนช่อง `rounded-lg`; ชิป `rounded-full`
 
@@ -88,7 +92,7 @@
 
 ## 10) ห้ามทำ / เคยพลาด
 - ห้ามใช้สี GPA ตามช่วงของนิสิตกับค่าเฉลี่ยรายวิชา (ตรวจสอบ — ยังไม่พบคอมเมนต์ในโค้ด)
-- ห้ามสร้างปุ่มลบถาวรเอง ต้องใช้ `PermanentDeleteButton`/`PermanentDeleteDialog`; หน้าโครงสร้างองค์กร (`inactive-org-section.tsx`) มีลบถาวรเฉพาะคณะ/ภาควิชา/สาขาที่ปิดใช้งาน (พิมพ์รหัสยืนยัน) — หลักสูตรไม่มีลบถาวร (เป็นสิทธิ์ ADMIN)
+- ห้ามสร้างปุ่มลบถาวรเอง ต้องใช้ `PermanentDeleteButton`/`PermanentDeleteDialog`; หน้าโครงสร้างองค์กร (`inactive-org-section.tsx`) ลบถาวรได้เฉพาะคณะ/ภาควิชา/สาขาที่ปิดใช้งาน (`PermanentlyDeletableOrgResource` ใน `lib/api/organization.ts`) หลักสูตรไม่มีลบถาวรในหน้านี้
 - ห้ามแต่งตัวเลข/เปอร์เซ็นต์/แนวโน้มที่ API ไม่มี (ดูคอมเมนต์ใน `stat-card.tsx`) เช่น ไม่มี "ปีการศึกษาปัจจุบัน" (`academic-years/page.tsx`)
 - ห้ามเปลี่ยนสิทธิ์/พฤติกรรมเดิมระหว่างงานดีไซน์ (เพิ่ม/แก้/ปิด/เปิดใช้งาน/ลบถาวร + dialog)
 - ห้ามค่าจาก URL (`?role=`, `?create=`) เชื่อตรง ๆ ต้องตรวจ (`parseRoleParam` ใน `lib/user-list-filter.ts`)

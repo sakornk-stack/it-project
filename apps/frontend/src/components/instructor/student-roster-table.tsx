@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowUpDown, ChevronUp, Download, Pencil, Search } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUpDown,
+  ChevronRight,
+  ChevronUp,
+  Download,
+  Pencil,
+  Search,
+  Users,
+  X,
+} from 'lucide-react';
 import type { CloAchievementEntry, Grade, StudentRosterEntry } from '@eduanalyze-ai/shared-types';
 import { deleteCourseRecord, updateCourseRecordGrade } from '@/lib/api/academic-record';
 import {
@@ -18,8 +28,12 @@ import { ALL, countPeople, type GradeFilter } from '@/lib/student-directory';
 import { downloadCsv, toCsv } from '@/lib/csv';
 import { useToast } from '@/lib/toast-context';
 import { usePagination } from '@/lib/use-pagination';
+import { ACCENT_TONE_CLASSES } from '@/lib/tone';
 import { useTableSort, type SortControl } from '@/lib/use-table-sort';
 import { cn } from '@/lib/utils';
+import { StatCard } from '@/components/dashboard/stat-card';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { GradeSelectConfirm } from '@/components/academic-record/grade-select-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +42,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/ui/pagination';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { LowGradeFilterChips } from './low-grade-filter-chips';
 import { StudentTimelineCard } from './student-timeline-card';
 
 // Exports what the table currently shows, not the whole class — the
@@ -236,34 +249,88 @@ export function StudentRosterTable({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <LowGradeFilterChips
-          counts={counts}
-          value={gradeFilter}
-          onChange={(grade) => updateParams({ grade: grade === ALL ? null : 'low' })}
+    <div className="space-y-4">
+      {/* Same pattern as the filter cards on the user list: each card is a toggle. */}
+      <div
+        role="group"
+        aria-label="กรองตามเกรดล่าสุด"
+        className="grid grid-cols-2 gap-3 sm:max-w-lg"
+      >
+        <StatCard
+          dense
+          icon={Users}
+          label="ทั้งหมด"
+          value={<AnimatedNumber value={counts.total} />}
+          caption="นิสิตในผลการค้นหา"
+          dimmed={counts.total === 0}
+          selected={gradeFilter === ALL}
+          onSelect={() => updateParams({ grade: null })}
         />
-        <div className="flex flex-wrap items-center gap-2">
+        <StatCard
+          dense
+          tone="warning"
+          icon={AlertTriangle}
+          label={LOW_GRADE_LABEL}
+          value={<AnimatedNumber value={counts.low} />}
+          caption="เกรดล่าสุด D+, D, F หรือ U"
+          dimmed={counts.low === 0}
+          selected={gradeFilter === 'LOW'}
+          onSelect={() => updateParams({ grade: gradeFilter === 'LOW' ? null : 'low' })}
+        />
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-52 flex-1">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+          />
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              updateParams({ q: e.target.value.trim() === '' ? null : e.target.value.trim() });
+            }}
+            placeholder="ค้นหารหัสนิสิต หรือ ชื่อ"
+            aria-label="ค้นหารหัสนิสิต หรือ ชื่อ"
+            className="px-9 [&::-webkit-search-cancel-button]:appearance-none"
+          />
+          {search !== '' && (
+            <button
+              type="button"
+              aria-label="ล้างคำค้นหา"
+              onClick={() => {
+                setSearch('');
+                updateParams({ q: null });
+              }}
+              className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           {onChanged && (
             <Button
               type="button"
               variant={editMode ? 'default' : 'outline'}
-              size="sm"
               aria-pressed={editMode}
+              className="min-h-11 w-full sm:w-auto"
               onClick={() => setEditMode((on) => !on)}
             >
-              <Pencil className="mr-1.5 h-3.5 w-3.5" />
+              <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
               {editMode ? 'เสร็จสิ้นการแก้ไข' : 'แก้ไขเกรด'}
             </Button>
           )}
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            className="min-h-11 w-full sm:w-auto"
             disabled={visibleRoster.length === 0}
             onClick={() => exportRosterCsvWithToast(courseCode, sort.sorted, isFiltered, toast)}
           >
-            <Download className="mr-1.5 h-3.5 w-3.5" />
+            <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
             ส่งออก CSV
           </Button>
         </div>
@@ -276,43 +343,28 @@ export function StudentRosterTable({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-52 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-          <Input
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              updateParams({ q: e.target.value.trim() === '' ? null : e.target.value.trim() });
-            }}
-            placeholder="ค้นหารหัสนิสิต หรือ ชื่อ"
-            aria-label="ค้นหารหัสนิสิต หรือ ชื่อ"
-            className="pl-9"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <div
+          role="group"
+          aria-label="เรียงลำดับรายชื่อ"
+          className="flex flex-wrap items-center gap-1"
+        >
+          <span className="text-xs text-muted-foreground">เรียงตาม</span>
+          <SortChip control={sort.sortProps('lowGrade')}>เกรดต่ำก่อน</SortChip>
+          <SortChip control={sort.sortProps('studentCode')}>รหัส</SortChip>
+          <SortChip control={sort.sortProps('fullName')}>ชื่อ</SortChip>
+          <SortChip control={sort.sortProps('grade')}>เกรด</SortChip>
         </div>
-        {isFiltered && (
-          <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
-            ล้างตัวกรอง
-          </Button>
-        )}
-        {isFiltered && (
-          <p className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
             แสดง {visibleRoster.length} จาก {roster.length} คน
           </p>
-        )}
-      </div>
-
-      <div
-        role="group"
-        aria-label="เรียงลำดับรายชื่อ"
-        className="flex flex-wrap items-center gap-1"
-      >
-        <span className="text-xs text-muted-foreground">เรียงตาม</span>
-        <SortChip control={sort.sortProps('lowGrade')}>เกรด D+ ลงไป</SortChip>
-        <SortChip control={sort.sortProps('studentCode')}>รหัส</SortChip>
-        <SortChip control={sort.sortProps('fullName')}>ชื่อ</SortChip>
-        <SortChip control={sort.sortProps('grade')}>เกรด</SortChip>
+          {isFiltered && (
+            <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+              ล้างตัวกรอง
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Two columns only once a student is picked, so an unselected list
@@ -338,12 +390,15 @@ export function StudentRosterTable({
                 const isBusy = busyId === recordId;
                 const isSelected = selectedStudentId === student.studentProfileId;
 
+                const low = isLowGrade(student.grade);
                 return (
                   <li
                     key={student.studentProfileId}
                     className={cn(
-                      'rounded-lg border px-3 py-2',
+                      'relative rounded-lg border border-l-4 px-3 py-2',
+                      !editable && 'interactive-row',
                       isSelected ? 'border-brand bg-brand-light' : 'border-slate-200',
+                      ACCENT_TONE_CLASSES[low ? gradeBadgeTone(student.grade) : 'neutral'],
                     )}
                   >
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -353,18 +408,25 @@ export function StudentRosterTable({
                         onClick={() =>
                           setSelectedStudentId(isSelected ? null : student.studentProfileId)
                         }
-                        className="min-h-11 min-w-0 flex-1 basis-48 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className={cn(
+                          'flex min-h-11 min-w-0 flex-1 basis-48 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+                          // View mode: the whole row is the hit area.
+                          !editable && "after:absolute after:inset-0 after:content-['']",
+                        )}
                       >
-                        <span
-                          className={cn(
-                            'block text-primary',
-                            isSelected && 'font-medium underline',
-                          )}
-                        >
-                          {student.fullName}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">
-                          {student.studentCode}
+                        <InitialsAvatar name={student.fullName} />
+                        <span className="min-w-0">
+                          <span
+                            className={cn(
+                              'block break-words font-medium text-primary',
+                              isSelected && 'underline',
+                            )}
+                          >
+                            {student.fullName}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            <span className="font-mono">{student.studentCode}</span>
+                          </span>
                         </span>
                       </button>
                       <div className="flex flex-wrap items-center gap-2">
@@ -384,12 +446,16 @@ export function StudentRosterTable({
                             />
                           </div>
                         ) : (
-                          <Badge tone={gradeBadgeTone(student.grade)}>
-                            เกรด {GRADE_LABELS[student.grade]}
-                          </Badge>
-                        )}
-                        {isLowGrade(student.grade) && (
-                          <Badge tone="warning">{LOW_GRADE_LABEL}</Badge>
+                          <>
+                            <Badge tone={gradeBadgeTone(student.grade)}>
+                              เกรด {GRADE_LABELS[student.grade]}
+                            </Badge>
+                            <ChevronRight
+                              size={16}
+                              aria-hidden="true"
+                              className="go-arrow shrink-0 text-muted-foreground"
+                            />
+                          </>
                         )}
                       </div>
                     </div>

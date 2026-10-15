@@ -23,17 +23,18 @@ const GRADE_BADGE_TONE: Record<Grade, SemanticTone> = {
   I: 'neutral',
 };
 
-// Bar colour of a grade in a distribution: the blues for A, B+ and B (strongest
-// first), a neutral for C+ and C, amber for D+ and D, red for F. Other grades
-// are not drawn as bars.
+// Bar colour of a grade in a distribution: one continuous ramp that follows the
+// badge tones above (success -> warning -> danger), darkest at the top grade and
+// lightening toward the middle, then deepening again toward F. No grade is drawn
+// grey, so a mid grade never looks disabled. Other grades are not drawn as bars.
 const GRADE_BAR_CLASS: Partial<Record<Grade, string>> = {
-  A: 'bg-blue-900',
-  B_PLUS: 'bg-blue-700',
-  B: 'bg-blue-500',
-  C_PLUS: 'bg-slate-500',
-  C: 'bg-slate-400',
+  A: 'bg-emerald-600',
+  B_PLUS: 'bg-emerald-500',
+  B: 'bg-emerald-400',
+  C_PLUS: 'bg-amber-300',
+  C: 'bg-amber-400',
   D_PLUS: 'bg-amber-500',
-  D: 'bg-amber-400',
+  D: 'bg-amber-600',
   F: 'bg-red-500',
 };
 

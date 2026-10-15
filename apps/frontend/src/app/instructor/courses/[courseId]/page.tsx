@@ -65,10 +65,8 @@ function InstructorCourseContent({ courseId }: { courseId: string }) {
   function selectTab(tab: InstructorTab, mode: 'push' | 'replace' = 'push') {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
-    if (tab !== 'evidence') {
-      params.delete('def');
-      params.delete('clo');
-    }
+    params.delete('def');
+    params.delete('clo');
     if (tab !== 'students') {
       params.delete('student');
       params.delete('risk');
@@ -95,7 +93,7 @@ function InstructorCourseContent({ courseId }: { courseId: string }) {
       <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
         <Link
           href="/instructor/dashboard"
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-h-11 w-fit items-center gap-1 self-start text-sm text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ArrowLeft size={14} />
           กลับไปภาพรวม

@@ -34,6 +34,14 @@ export const BAR_TONE_CLASSES: Record<SemanticTone, string> = {
   neutral: 'bg-slate-300',
 };
 
+// A thin left edge on a row or card that marks its meaning (warning/danger rows).
+export const ACCENT_TONE_CLASSES: Record<SemanticTone, string> = {
+  success: 'border-l-emerald-500',
+  warning: 'border-l-amber-500',
+  danger: 'border-l-red-500',
+  neutral: 'border-l-slate-200',
+};
+
 // Toasts never surface a warning today; `toast.error()` maps onto danger
 // and `toast.info()` onto neutral.
 export type ToastTone = Extract<SemanticTone, 'success' | 'danger' | 'neutral'>;

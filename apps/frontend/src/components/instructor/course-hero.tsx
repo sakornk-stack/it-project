@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, CircleDashed } from 'lucide-react';
+import { ArrowRight, CalendarDays, CircleDashed, GraduationCap } from 'lucide-react';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
 import { fetchInstructorCourseTimeline } from '@/lib/api/instructor';
 import {
@@ -43,7 +43,6 @@ export function CourseHero({
   const termInfo = timelineQuery.data
     ? courseTermInfo(timelineQuery.data.years, course.courseId)
     : null;
-  const meta = [termInfo?.termLabel, termInfo?.curriculum].filter(Boolean).join(' · ');
 
   const { stats } = buildCourseOverviews([course])[0];
   const { people, excluded } = gradedPeopleParts(stats);
@@ -72,12 +71,10 @@ export function CourseHero({
     </Heading>
   );
 
+  // Phones: stacked, full width, 44px high. From sm up they sit side by side at the right.
   const actions = (
-    <div className="flex flex-wrap gap-2 lg:shrink-0 lg:justify-end">
-      <Button asChild>
-        <Link href={`${base}?tab=evidence`}>กรอกคะแนน</Link>
-      </Button>
-      <Button asChild variant="outline">
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row lg:shrink-0 lg:justify-end">
+      <Button asChild className="min-h-11 w-full sm:w-auto">
         <Link href={`${base}?tab=students`}>รายชื่อนิสิต ({stats.seats})</Link>
       </Button>
     </div>
@@ -86,8 +83,29 @@ export function CourseHero({
   const metaPlaceholder = (
     <span role="status" className="inline-flex">
       <span className="sr-only">กำลังโหลดภาคเรียนและหลักสูตร</span>
-      <Skeleton className="h-4 w-40" />
+      <Skeleton className="h-6 w-40 rounded-full" />
     </span>
+  );
+  // Ordered by how an instructor names a course: its code, then when, then which curriculum.
+  const metaChips = (
+    <>
+      <Badge tone="neutral" className="px-2.5 py-1 font-mono text-[13px]">
+        {course.code}
+      </Badge>
+      {metaLoading && metaPlaceholder}
+      {termInfo?.termLabel && (
+        <Badge tone="neutral" className="gap-1 px-2.5 py-1 text-[13px]">
+          <CalendarDays size={14} aria-hidden="true" />
+          {termInfo.termLabel}
+        </Badge>
+      )}
+      {termInfo?.curriculum && (
+        <Badge tone="neutral" className="gap-1 px-2.5 py-1 text-[13px]">
+          <GraduationCap size={14} aria-hidden="true" />
+          {termInfo.curriculum}
+        </Badge>
+      )}
+    </>
   );
   const sparseTag = sparse && (
     <Badge tone="neutral" className="gap-1 px-2.5 py-1 text-[13px]">
@@ -97,15 +115,15 @@ export function CourseHero({
   );
 
   return (
-    <section aria-label="วิชาที่เลือก" className={`${CARD} ${CARD_PAD} space-y-4`}>
+    <section aria-label="วิชาที่เลือก" className={`${CARD} ${CARD_PAD} space-y-4 sm:p-6`}>
       {heading === 'h1' ? (
         // The course page's title is the app's one page heading.
         <PageHeader
           title={course.name}
+          titleClassName="course-name-break"
           description={
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span>{course.code}</span>
-              {metaLoading ? metaPlaceholder : meta && <span>{meta}</span>}
+            <span className="mt-2 flex flex-wrap items-center gap-2">
+              {metaChips}
               {sparseTag}
             </span>
           }
@@ -113,17 +131,12 @@ export function CourseHero({
         />
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-1">
-            <p className={TEXT_LABEL}>{course.code}</p>
+          <div className="min-w-0 space-y-2">
             {title}
-            {(meta || sparse || metaLoading) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                {metaLoading
-                  ? metaPlaceholder
-                  : meta && <p className="text-sm text-muted-foreground">{meta}</p>}
-                {sparseTag}
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {metaChips}
+              {sparseTag}
+            </div>
           </div>
           {actions}
         </div>

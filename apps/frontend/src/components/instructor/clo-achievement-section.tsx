@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { Layers, ListChecks, Target } from 'lucide-react';
 import type {
   CloAchievementEntry,
   CoursePloEntry,
@@ -17,10 +18,27 @@ import {
 } from '@/lib/clo-percent';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageSection } from '@/components/layout/page-section';
-import { CollapsibleSection } from '@/components/ui/collapsible-section';
+import { Badge } from '@/components/ui/badge';
 import { EvidenceCoverageBadge } from './evidence-coverage-badge';
 import { LowSampleTag } from './overview-parts';
+import { CollapsibleCard, SectionCard } from './section-card';
+
+// A small titled block inside a card; the card's own title is the only h2.
+function SubBlock({
+  title,
+  description,
+  children,
+}: Readonly<{ title: string; description?: string; children: ReactNode }>) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-sm font-medium text-primary">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 interface CourseAssessmentSummary {
   courseId: string;
@@ -92,9 +110,20 @@ export function CloAchievementSection({
     [scoredAssessmentClos],
   );
 
+  // Per-CLO score counts are shown only when at least one CLO has a real graded
+  // score; otherwise every row would say "no score yet" and say nothing useful.
+  const hasScores =
+    !!evidenceCoverage &&
+    evidenceTotal !== undefined &&
+    [...evidenceCoverage.values()].some((n) => n > 0);
+
   return (
-    <div className="space-y-5">
-      <PageSection title="ภาพรวมเป้าการเรียนรู้">
+    <div className="space-y-6">
+      <SectionCard
+        icon={Target}
+        title="ภาพรวมเป้าการเรียนรู้"
+        description="สัดส่วนนิสิตที่ได้ B ขึ้นไปของวิชานี้"
+      >
         {!hasCloPercent(achievementPercent) ? (
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{NO_CLO_DATA_LABEL}</p>
@@ -103,12 +132,20 @@ export function CloAchievementSection({
         ) : level === 'insufficient' ? (
           <p className="text-sm text-muted-foreground">{SPARSE_SUMMARY}</p>
         ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Progress value={achievementPercent} className="min-w-32 flex-1" barClassName="bg-brand" />
-            <span className="shrink-0 text-sm font-medium text-primary">
-              ได้ B ขึ้นไป {formatCloPercent(achievementPercent)}
-            </span>
-            {level === 'low' && <LowSampleTag counted={gradedPeople} />}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-4xl font-bold leading-none tabular-nums text-primary">
+                {formatCloPercent(achievementPercent)}
+              </span>
+              <span className="text-sm text-muted-foreground">ได้ B ขึ้นไป</span>
+              {level === 'low' && <LowSampleTag counted={gradedPeople} />}
+            </div>
+            <Progress
+              value={achievementPercent}
+              label={`ได้ B ขึ้นไป ${formatCloPercent(achievementPercent)}`}
+              className="w-full"
+              barClassName="bg-brand"
+            />
           </div>
         )}
         {isLoading && <Skeleton className="h-3 w-40" />}
@@ -121,63 +158,68 @@ export function CloAchievementSection({
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          คิดจากเกรดของวิชา (สัดส่วนคนที่ได้ B ขึ้นไป) ไม่ได้คิดจากคะแนนข้อสอบแต่ละชิ้น
+          ค่าในหน้านี้คำนวณจากเกรดของวิชา (สัดส่วนคนที่ได้ B ขึ้นไป)
+          ไม่ได้คิดจากคะแนนข้อสอบแต่ละชิ้น
         </p>
-      </PageSection>
+      </SectionCard>
 
-      <PageSection
+      <SectionCard
+        icon={ListChecks}
         title="เป้าการเรียนรู้แต่ละข้อ"
-        description="เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา ระบบยังไม่มีร้อยละรายข้อ จึงแสดงเฉพาะจำนวนคนที่มีคะแนนที่กรอกของแต่ละข้อ"
+        description={
+          hasScores
+            ? 'เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา ระบบยังไม่มีร้อยละรายข้อ จึงแสดงเฉพาะจำนวนคนที่มีคะแนนของแต่ละข้อ'
+            : 'เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา'
+        }
       >
-        {sortedClos.map((clo) => (
-          <div key={clo.cloId} className="rounded-md bg-slate-50 px-3 py-2">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-muted-foreground">{clo.code}</p>
-                <p className="break-words text-sm text-primary">{clo.description}</p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                {evidenceError ? (
-                  <span className="text-xs text-destructive">โหลดคะแนนที่กรอกไม่สำเร็จ</span>
-                ) : (
-                  evidenceTotal !== undefined &&
-                  evidenceCoverage !== undefined && (
-                    <EvidenceCoverageBadge
-                      coverage={{
-                        validCount: evidenceCoverage.get(clo.cloId) ?? 0,
-                        totalCount: evidenceTotal,
-                      }}
-                    />
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </PageSection>
+        <ul className="-my-3 divide-y divide-slate-100">
+          {sortedClos.map((clo) => (
+            <li key={clo.cloId} className="flex min-h-16 items-center gap-3 py-3">
+              <Badge tone="neutral" className="w-14 justify-center font-mono">
+                {clo.code}
+              </Badge>
+              <p
+                className="line-clamp-2 min-w-0 flex-1 break-words text-sm text-primary"
+                title={clo.description}
+              >
+                {clo.description}
+              </p>
+              {hasScores && evidenceTotal !== undefined && evidenceCoverage && (
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <EvidenceCoverageBadge
+                    coverage={{
+                      validCount: evidenceCoverage.get(clo.cloId) ?? 0,
+                      totalCount: evidenceTotal,
+                    }}
+                  />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+        {evidenceError && (
+          <p className="text-xs text-destructive">โหลดจำนวนคะแนนของแต่ละข้อไม่สำเร็จ</p>
+        )}
+      </SectionCard>
 
       {(plos.length > 0 || scoredAssessmentClos.length > 0) && (
-        <CollapsibleSection
-          framed={false}
+        <CollapsibleCard
+          icon={Layers}
           title="เป้าหมายของหลักสูตรและคะแนนประเมินตนเอง"
-          meta={
-            <span className="text-sm font-normal text-muted-foreground">
-              ข้อมูลประกอบ ไม่ต้องดูทุกครั้ง
-            </span>
-          }
+          description="ข้อมูลประกอบ ไม่ต้องดูทุกครั้ง"
         >
           {plos.length > 0 && (
-            <PageSection
+            <SubBlock
               title="เป้าหมายของหลักสูตรที่เกี่ยวข้อง"
               description="เป้าหมายของหลักสูตร (PLO) คือผลลัพธ์ที่หลักสูตรคาดหวังจากนิสิต"
             >
               {plos.map((plo) => (
                 <div key={plo.ploId} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
+                  <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="min-w-0 break-words">
                       {plo.code} · {plo.name}
                     </span>
-                    <span className="font-medium text-primary">
+                    <span className="shrink-0 font-medium text-primary">
                       {formatCloPercent(plo.achievementPercent)}
                     </span>
                   </div>
@@ -191,11 +233,11 @@ export function CloAchievementSection({
                   )}
                 </div>
               ))}
-            </PageSection>
+            </SubBlock>
           )}
 
           {scoredAssessmentClos.length > 0 && (
-            <PageSection title="คะแนนประเมินตนเองเฉลี่ยของแต่ละเป้า (เต็ม 5)">
+            <SubBlock title="คะแนนประเมินตนเองเฉลี่ยของแต่ละเป้า (เต็ม 5)">
               {scoredAssessmentClos.map((c) => (
                 <div key={c.cloId} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
@@ -207,12 +249,14 @@ export function CloAchievementSection({
                       <span className="ml-1.5 text-xs text-amber-600">(ต่ำสุด)</span>
                     )}
                   </span>
-                  <span className="font-medium text-primary">{c.averageScore!.toFixed(1)}</span>
+                  <span className="font-medium tabular-nums text-primary">
+                    {c.averageScore!.toFixed(1)}
+                  </span>
                 </div>
               ))}
-            </PageSection>
+            </SubBlock>
           )}
-        </CollapsibleSection>
+        </CollapsibleCard>
       )}
     </div>
   );

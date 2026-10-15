@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { ArrowRight, Users } from 'lucide-react';
 import type { AtRiskStudent } from '@eduanalyze-ai/shared-types';
 import { gradeBadgeTone } from '@/lib/grade-badge-color';
 import { GRADE_LABELS, formatSemesterLabel } from '@/lib/grade-label';
 import { LOW_GRADE_LABEL, LOW_GRADE_RULE, isLowGrade } from '@/lib/low-grade';
-import { PageSection } from '@/components/layout/page-section';
 import { Badge } from '@/components/ui/badge';
-import { TEXT_SECTION } from './instructor-ui';
+import { InitialsAvatar } from '@/components/ui/initials-avatar';
+import { SectionCard } from './section-card';
 
 // Keeps the overview short; the students tab lists everyone.
 const MAX_VISIBLE = 5;
@@ -23,36 +24,50 @@ export function CourseFollowUpList({
   const hidden = sorted.length - visible.length;
 
   return (
-    <PageSection
+    <SectionCard
+      icon={Users}
       title={
         <span className="flex flex-wrap items-center gap-2">
           นิสิตที่{LOW_GRADE_LABEL}
           {sorted.length > 0 && <Badge tone="warning">{sorted.length}</Badge>}
         </span>
       }
-      titleClassName={TEXT_SECTION}
       description={LOW_GRADE_RULE}
     >
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">ยังไม่มีนิสิตที่มีเกรด D+ ลงไปในวิชานี้</p>
       ) : (
         <>
-          <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+          <ul className="-mx-2 divide-y divide-slate-100">
             {visible.map((s) => (
               <li key={s.studentProfileId}>
                 <Link
                   href={`/instructor/courses/${courseId}?tab=students&student=${s.studentProfileId}`}
-                  className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 text-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="interactive-row flex min-h-14 items-center gap-3 rounded-lg px-2 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
-                  <span className="min-w-0">
-                    <span className="block text-primary">{s.fullName}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {s.studentCode} · {formatSemesterLabel(s.semesterTerm, s.academicYear)}
+                  <InitialsAvatar name={s.fullName} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline gap-2">
+                      <span
+                        className="truncate text-sm font-medium text-primary"
+                        title={s.fullName}
+                      >
+                        {s.fullName}
+                      </span>
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                        {s.studentCode}
+                      </span>
+                    </span>
+                    <span className="block truncate whitespace-nowrap text-xs text-muted-foreground">
+                      {formatSemesterLabel(s.semesterTerm, s.academicYear)}
                     </span>
                   </span>
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <Badge tone={gradeBadgeTone(s.grade)}>เกรด {GRADE_LABELS[s.grade]}</Badge>
-                  </span>
+                  <Badge tone={gradeBadgeTone(s.grade)}>เกรด {GRADE_LABELS[s.grade]}</Badge>
+                  <ArrowRight
+                    size={16}
+                    aria-hidden="true"
+                    className="go-arrow shrink-0 text-muted-foreground"
+                  />
                 </Link>
               </li>
             ))}
@@ -60,13 +75,14 @@ export function CourseFollowUpList({
           {hidden > 0 && (
             <Link
               href={`/instructor/courses/${courseId}?tab=students`}
-              className="inline-flex min-h-11 items-center text-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="interactive-row inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
               ดูอีก {hidden} คนในแท็บนิสิต
+              <ArrowRight size={16} aria-hidden="true" className="go-arrow" />
             </Link>
           )}
         </>
       )}
-    </PageSection>
+    </SectionCard>
   );
 }
