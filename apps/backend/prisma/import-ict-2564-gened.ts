@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 const prisma = new PrismaClient();
 
 const PROGRAM_CODE = 'ICT';
@@ -64,6 +66,7 @@ const COURSES: CourseSeed[] = [
 const APPLY = process.argv.includes('--apply');
 
 async function main() {
+  assertSeedAllowed('prisma/import-ict-2564-gened.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   console.log(`Total: ${COURSES.length} courses to add (0 categories/requirements touched, 0 prerequisites)`);
 

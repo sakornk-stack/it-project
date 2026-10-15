@@ -3,6 +3,8 @@ import * as path from 'path';
 
 import { Prisma, PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 import { upsertActive } from './upsert-active';
 
 const prisma = new PrismaClient();
@@ -469,6 +471,7 @@ async function report2564() {
 const fmt = (t: Tally) => `create ${t.create} / update ${t.update} / skip ${t.skip}`;
 
 async function main() {
+  assertSeedAllowed('prisma/import-ict-clo-plo.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   const src = parseSource();
 

@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 import { upsertActive } from './upsert-active';
 
 const prisma = new PrismaClient();
@@ -147,6 +149,7 @@ const PREREQUISITES: [string, string][] = [
 const APPLY = process.argv.includes('--apply');
 
 async function main() {
+  assertSeedAllowed('prisma/import-ict-2569.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
 
   // Resolved read-only, even in dry run, so the target curriculum is

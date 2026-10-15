@@ -21,8 +21,23 @@ COPY . .
 # a Docker-internal service hostname like http://backend:3001, which only
 # resolves inside the compose network and is unreachable from the
 # browser making the actual fetch calls.
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+# Must include the /api prefix (NestJS global prefix) — every backend route
+# lives under it.
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# The remaining NEXT_PUBLIC_* the code reads (apps/frontend/.env.example).
+# .dockerignore excludes .env.local, so without these ARGs they silently fall
+# back to code defaults inside the image. Defaults below match .env.example;
+# IDLE_*/SESSION_MAX_HOURS fall back to 30 / 60 / 8 in
+# src/lib/session-timeout-config.ts when unset or invalid.
+ARG NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES=30
+ARG NEXT_PUBLIC_IDLE_WARNING_SECONDS=60
+ARG NEXT_PUBLIC_SESSION_MAX_HOURS=8
+ARG NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=false
+ENV NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES=${NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES} \
+    NEXT_PUBLIC_IDLE_WARNING_SECONDS=${NEXT_PUBLIC_IDLE_WARNING_SECONDS} \
+    NEXT_PUBLIC_SESSION_MAX_HOURS=${NEXT_PUBLIC_SESSION_MAX_HOURS} \
+    NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=${NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN}
 RUN npm run build --workspace=apps/frontend
 
 FROM node:22-slim AS runtime

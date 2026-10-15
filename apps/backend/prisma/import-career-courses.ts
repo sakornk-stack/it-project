@@ -3,6 +3,8 @@ import * as path from 'path';
 
 import { Prisma, PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 import { parseCsv } from './csv-util';
 
 const prisma = new PrismaClient();
@@ -379,6 +381,7 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
 }
 
 async function main() {
+  assertSeedAllowed('prisma/import-career-courses.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   const { rows, errors, excludedRows } = readRows();
   console.log(

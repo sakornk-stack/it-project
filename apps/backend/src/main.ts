@@ -1,12 +1,31 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser = require('cookie-parser');
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { parseTrustProxyHops } from './config/configuration';
+import { assertProductionConfig } from './config/production-check';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Fail fast on a half-configured production boot; warnings name keys only.
+  const logger = new Logger('Bootstrap');
+  for (const warning of assertProductionConfig()) {
+    logger.warn(warning);
+  }
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Behind nginx/a CDN every request would otherwise appear to come from the
+  // proxy's IP, collapsing the per-IP rate limit into one shared bucket.
+  const trustProxyHops = parseTrustProxyHops(process.env.TRUST_PROXY_HOPS);
+  if (trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
+
+  // SIGTERM (docker stop) closes the app and Prisma cleanly.
+  app.enableShutdownHooks();
 
   app.use(helmet());
   app.use(cookieParser());

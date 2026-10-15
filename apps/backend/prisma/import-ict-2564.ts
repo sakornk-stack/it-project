@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 import { upsertActive } from './upsert-active';
 
 const prisma = new PrismaClient();
@@ -137,6 +139,7 @@ const PREREQUISITES: [string, string][] = [
 const APPLY = process.argv.includes('--apply');
 
 async function main() {
+  assertSeedAllowed('prisma/import-ict-2564.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   console.log('Prerequisite direction preview (first 3 pairs):');
   for (const [courseCode, prereqCode] of PREREQUISITES.slice(0, 3)) {

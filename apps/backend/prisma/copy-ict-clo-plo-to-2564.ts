@@ -3,6 +3,8 @@ import * as path from 'path';
 
 import { Prisma, PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 const prisma = new PrismaClient();
 
 // Copies the CLOs and CLO→PLO mappings of ICT 2569 (already in the DB) onto the
@@ -311,6 +313,7 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
 }
 
 async function main() {
+  assertSeedAllowed('prisma/copy-ict-clo-plo-to-2564.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   const changedCodes = readChangedCodes();
   const result = APPLY

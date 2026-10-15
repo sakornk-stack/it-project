@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
+
 import { upsertActive } from './upsert-active';
 
 const prisma = new PrismaClient();
@@ -58,6 +60,7 @@ const PLOS: PloSeed[] = [
 ];
 
 async function main() {
+  assertSeedAllowed('prisma/seed-plo-2564.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
   const program = await prisma.program.findFirstOrThrow({ where: { code: PROGRAM_CODE } });
   const curriculum = await prisma.curriculum.findFirstOrThrow({

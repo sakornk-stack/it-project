@@ -46,6 +46,12 @@ USER node
 
 EXPOSE 3001
 
+# Probes GET /api/health (public, DB `SELECT 1`). node:22-slim has no curl, so
+# it uses Node's built-in fetch. start-period covers `prisma migrate deploy`
+# running before the server starts — failures during it are not counted.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3001)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
 # prisma migrate deploy applies any pending migration on every container
 # start — safe to run repeatedly (no-op if nothing pending), and means a
 # fresh environment (new machine, CI) needs no manual migration step.

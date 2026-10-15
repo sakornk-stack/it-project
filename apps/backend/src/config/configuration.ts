@@ -8,9 +8,21 @@ export function parseSessionAbsoluteMaxHours(raw: string | undefined): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_SESSION_ABSOLUTE_MAX_HOURS;
 }
 
+// Number of reverse-proxy hops in front of the API (nginx, a CDN, ...), so
+// Express reads the real client IP from X-Forwarded-For. Anything that is not
+// a non-negative whole number means "trust no proxy" (0): trusting too many
+// hops lets a client spoof its IP and dodge the per-IP rate limit.
+export function parseTrustProxyHops(raw: string | undefined): number {
+  const trimmed = (raw ?? '').trim();
+  if (!/^\d+$/.test(trimmed)) return 0;
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isSafeInteger(parsed) ? parsed : 0;
+}
+
 export default () => ({
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number.parseInt(process.env.PORT || '3001', 10),
+  trustProxyHops: parseTrustProxyHops(process.env.TRUST_PROXY_HOPS),
   database: {
     url: process.env.DATABASE_URL,
   },

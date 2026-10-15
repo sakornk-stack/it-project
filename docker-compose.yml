@@ -61,6 +61,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # GET /api/health (public, DB ping). Mirrors the HEALTHCHECK in
+    # apps/backend/Dockerfile; start_period covers `prisma migrate deploy`.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -72,7 +86,13 @@ services:
         # Docker-internal "backend" hostname. Must include the /api
         # prefix (NestJS's global prefix, see main.ts) — every backend
         # route lives under /api, so omitting it 404s on every call.
-        NEXT_PUBLIC_API_URL: http://localhost:3001/api
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+        # Inlined at build time like API_URL; set in the shell (or a root
+        # .env) to override. Defaults match apps/frontend/.env.example.
+        NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: ${NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES:-30}
+        NEXT_PUBLIC_IDLE_WARNING_SECONDS: ${NEXT_PUBLIC_IDLE_WARNING_SECONDS:-60}
+        NEXT_PUBLIC_SESSION_MAX_HOURS: ${NEXT_PUBLIC_SESSION_MAX_HOURS:-8}
+        NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN: ${NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN:-false}
     ports:
       - '3000:3000'
     depends_on:

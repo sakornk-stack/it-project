@@ -1,5 +1,10 @@
+// Insert-only: a row that already exists (matched by its natural key among the
+// active rows) is returned untouched. Names, totalCredits and effectiveYear
+// edited by an admin after the first seed are never overwritten. Refuses to run
+// when NODE_ENV=production unless ALLOW_PROD_SEED=yes.
 import { PrismaClient } from '@prisma/client';
 
+import { assertSeedAllowed } from '../src/common/util/seed-guard';
 import { upsertActive } from './upsert-active';
 
 const prisma = new PrismaClient();
@@ -144,11 +149,12 @@ const DEPARTMENTS: DepartmentSeed[] = [
 ];
 
 async function main() {
+  assertSeedAllowed('prisma/seed.ts');
+
   const faculty = await upsertActive({
     find: () =>
       prisma.faculty.findFirst({ where: { code: FACULTY.code, isActive: true } }),
-    update: (id) =>
-      prisma.faculty.update({ where: { id }, data: { name: FACULTY.name } }),
+    update: (id) => prisma.faculty.findUniqueOrThrow({ where: { id } }),
     create: () => prisma.faculty.create({ data: FACULTY }),
   });
   console.log(`Faculty: ${faculty.name} (${faculty.code})`);
@@ -159,8 +165,7 @@ async function main() {
         prisma.department.findFirst({
           where: { facultyId: faculty.id, code: deptSeed.code, isActive: true },
         }),
-      update: (id) =>
-        prisma.department.update({ where: { id }, data: { name: deptSeed.name } }),
+      update: (id) => prisma.department.findUniqueOrThrow({ where: { id } }),
       create: () =>
         prisma.department.create({
           data: { name: deptSeed.name, code: deptSeed.code, facultyId: faculty.id },
@@ -174,8 +179,7 @@ async function main() {
           prisma.program.findFirst({
             where: { departmentId: department.id, code: progSeed.code, isActive: true },
           }),
-        update: (id) =>
-          prisma.program.update({ where: { id }, data: { name: progSeed.name } }),
+        update: (id) => prisma.program.findUniqueOrThrow({ where: { id } }),
         create: () =>
           prisma.program.create({
             data: {
@@ -197,14 +201,9 @@ async function main() {
                 isActive: true,
               },
             }),
-          update: (id) =>
-            prisma.curriculum.update({
-              where: { id },
-              data: {
-                effectiveYear: curSeed.effectiveYear,
-                totalCredits: curSeed.totalCredits,
-              },
-            }),
+          // Never overwrite totalCredits/effectiveYear of an existing row —
+          // the real values may have been corrected since the placeholder seed.
+          update: (id) => prisma.curriculum.findUniqueOrThrow({ where: { id } }),
           create: () =>
             prisma.curriculum.create({
               data: {
