@@ -146,6 +146,7 @@ export class UserManagementController {
   @ApiOperation({ summary: 'Revoke a role from a user (ADMIN: STAFF only)' })
   @ApiResponse({ status: 200, description: 'Role revoked' })
   @ApiResponse({ status: 404, description: 'User not found, outside your scope, or does not have this role' })
+  @ApiResponse({ status: 409, description: 'Cannot revoke the user’s last remaining role' })
   revokeRole(
     @Param('id') id: string,
     @Param('role', new ParseEnumPipe(Role)) role: Role,

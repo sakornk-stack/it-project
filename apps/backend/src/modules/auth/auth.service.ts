@@ -34,6 +34,8 @@ import { RequestUser } from './request-user.interface';
 import { GoogleProfile } from './google-profile.interface';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_MAX_MINUTES = 15;
 
 interface CreateStudentAccountParams {
   email: string;
@@ -271,12 +273,25 @@ export class AuthService {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
+    // Locked: same generic 401 as a wrong password and no bcrypt compare, so
+    // neither the response nor the timing reveals the lock (or the account).
+    if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+
     const passwordMatches = await bcrypt.compare(
       dto.password,
       user.passwordHash,
     );
     if (!passwordMatches) {
+      await this.recordFailedLogin(user);
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
     }
 
     // Password alone is enough UNLESS this user opted into 2FA — checked
@@ -297,6 +312,23 @@ export class AuthService {
   // Called by POST /auth/2fa/verify once TwoFactorService.verifyLoginCode
   // confirms the code — issues the exact same token pair a normal
   // login()/register() would, just reached via a different path.
+  // Exponential backoff per account: from the 5th consecutive failure the
+  // account is locked 1, 2, 4, … minutes, capped at 15.
+  private async recordFailedLogin(user: User) {
+    const attempts = user.failedLoginAttempts + 1;
+    const lockMinutes =
+      attempts >= LOCKOUT_THRESHOLD
+        ? Math.min(2 ** (attempts - LOCKOUT_THRESHOLD), LOCKOUT_MAX_MINUTES)
+        : 0;
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: attempts,
+        lockedUntil: lockMinutes ? new Date(Date.now() + lockMinutes * 60_000) : null,
+      },
+    });
+  }
+
   async completeTwoFactorLogin(userId: string) {
     const user = await this.userService.findById(userId);
     return this.issueTokenPair(user);
@@ -316,7 +348,7 @@ export class AuthService {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: pending.userId },
-        data: { passwordHash },
+        data: { passwordHash, ...this.revokeAllSessionsData() },
       });
       await this.pendingInvitationService.consume(pending.id, tx);
     });
@@ -378,10 +410,26 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(dto.newPassword);
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash, mustChangePassword: false },
+      data: {
+        passwordHash,
+        mustChangePassword: false,
+        ...this.revokeAllSessionsData(),
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
     });
+    // Every refresh token (including this device's) is now invalid; hand
+    // the caller a fresh one so only *other* sessions are signed out.
+    return this.issueTokenPair(updated);
+  }
+
+  // Refresh tokens whose iat is before this instant are rejected by
+  // JwtRefreshStrategy. Floored to the second because iat has second
+  // resolution — a token issued right after this write still passes.
+  private revokeAllSessionsData() {
+    return { tokenValidAfter: new Date(Math.floor(Date.now() / 1000) * 1000) };
   }
 
   // Always the same response whether or not the email exists — a distinct
@@ -431,7 +479,13 @@ export class AuthService {
         // this same endpoint (the "password setup" email reuses it) would
         // still carry the flag, land back on ProtectedRoute's forced gate
         // right after login, and be made to set a password a second time.
-        data: { passwordHash, mustChangePassword: false },
+        data: {
+          passwordHash,
+          mustChangePassword: false,
+          ...this.revokeAllSessionsData(),
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
       });
       await this.passwordResetService.consume(pending.id, tx);
     });

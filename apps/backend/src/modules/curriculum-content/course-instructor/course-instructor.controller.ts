@@ -35,10 +35,10 @@ export class CourseInstructorController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STAFF')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List course-instructor assignments, optionally filtered by course' })
+  @ApiOperation({ summary: 'List course-instructor assignments within the caller scope, optionally filtered by course' })
   @ApiResponse({ status: 200, description: 'List of assignments' })
-  findAll(@Query('courseId') courseId?: string) {
-    return this.courseInstructorService.findAll(courseId);
+  findAll(@CurrentUser() user: RequestUser, @Query('courseId') courseId?: string) {
+    return this.courseInstructorService.findAll(user, courseId);
   }
 
   @Post()

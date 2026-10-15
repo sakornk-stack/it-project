@@ -165,10 +165,15 @@ export class AuthController {
   @SkipPasswordChangeCheck()
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Change the current user’s password' })
-  @ApiResponse({ status: 200, description: 'Password changed' })
+  @ApiResponse({ status: 200, description: 'Password changed — all other sessions are signed out' })
   @ApiResponse({ status: 401, description: 'Current password incorrect, or no password set on this account' })
-  changePassword(@Body() dto: ChangePasswordDto, @CurrentUser() user: RequestUser) {
-    return this.authService.changePassword(user.userId, dto);
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @CurrentUser() user: RequestUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const { refreshToken } = await this.authService.changePassword(user.userId, dto);
+    this.setRefreshCookie(response, refreshToken);
   }
 
   @Post('forgot-password')
@@ -197,7 +202,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:
-      'Generate a new TOTP secret + QR code (not yet active) — call POST /auth/2fa/enable with a code from the scanned app to actually turn 2FA on. Safe to call repeatedly; each call overwrites the previous unconfirmed secret.',
+      'Generate a new TOTP secret + QR code (not yet active) — call POST /auth/2fa/enable with a code from the scanned app to actually turn 2FA on. Safe to call repeatedly while 2FA is not yet enabled (each call overwrites the previous unconfirmed secret); 409 once enabled — disable it first.',
   })
   @ApiResponse({ status: 201, description: 'QR code (data URL) + secret for manual entry' })
   twoFactorSetup(@CurrentUser() user: RequestUser) {

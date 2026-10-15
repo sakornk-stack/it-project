@@ -4,6 +4,8 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { PrismaClientOrTx } from '../../../prisma/prisma.types';
 import { UserService } from '../user/user.service';
 
+export const LAST_ROLE_MESSAGE = 'ไม่สามารถถอดบทบาทสุดท้ายของผู้ใช้ได้';
+
 @Injectable()
 export class UserRoleService {
   constructor(
@@ -56,12 +58,17 @@ export class UserRoleService {
   }
 
   async revokeRole(userId: string, role: Role) {
-    const existing = await this.prisma.userRole.findUnique({
-      where: { userId_role: { userId, role } },
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.userRole.findUnique({
+        where: { userId_role: { userId, role } },
+      });
+      if (!existing) {
+        throw new NotFoundException(`User ${userId} does not have role ${role}`);
+      }
+      if ((await tx.userRole.count({ where: { userId } })) <= 1) {
+        throw new ConflictException(LAST_ROLE_MESSAGE);
+      }
+      return tx.userRole.delete({ where: { id: existing.id } });
     });
-    if (!existing) {
-      throw new NotFoundException(`User ${userId} does not have role ${role}`);
-    }
-    return this.prisma.userRole.delete({ where: { id: existing.id } });
   }
 }

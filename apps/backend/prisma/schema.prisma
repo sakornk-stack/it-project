@@ -128,14 +128,20 @@ model Curriculum {
 }
 
 model User {
-  id                 String   @id @default(uuid())
-  email              String   @unique
-  passwordHash       String?
-  fullName           String
-  isActive           Boolean  @default(true)
-  mustChangePassword Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String?
+  fullName            String
+  isActive            Boolean   @default(true)
+  mustChangePassword  Boolean   @default(false)
+  // Refresh tokens issued before this instant are rejected (set on every
+  // password change/reset — revokes all sessions at once).
+  tokenValidAfter     DateTime?
+  // Per-account login lockout/backoff (see AuthService.login).
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   userRoles              UserRole[]
   scopes                 UserScope[]

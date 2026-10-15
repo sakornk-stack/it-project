@@ -59,6 +59,13 @@ export class JwtRefreshStrategy extends PassportStrategy(
     if (!user.isActive) {
       throw new UnauthorizedException('Account is deactivated');
     }
+    // Password changed/reset after this token was issued (iat is in seconds).
+    if (
+      user.tokenValidAfter &&
+      (payload.iat ?? 0) < Math.floor(user.tokenValidAfter.getTime() / 1000)
+    ) {
+      throw new UnauthorizedException('Session has ended');
+    }
     return {
       userId: payload.sub,
       email: payload.email,

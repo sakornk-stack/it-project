@@ -55,9 +55,16 @@ export class CourseInstructorService {
     }
   }
 
-  async findAll(courseId?: string) {
+  // Query-level scope filter (CONVENTIONS §3a): only assignments on courses
+  // of programs the caller's scopes cover. A courseId outside that scope
+  // simply yields an empty list.
+  async findAll(user: RequestUser, courseId?: string) {
+    const programIds = await this.scopeResolverService.getCoveredProgramIds(user.userId);
     return this.prisma.courseInstructor.findMany({
-      where: courseId ? { courseId } : undefined,
+      where: {
+        ...(courseId ? { courseId } : {}),
+        course: { curriculum: { programId: { in: programIds } } },
+      },
     });
   }
 

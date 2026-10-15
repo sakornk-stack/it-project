@@ -189,9 +189,13 @@ export class StudentInvitationService {
       program: { select: { code: true, name: true } },
     };
 
+    // SUPER_ADMIN gets the operational view only — the student's identity
+    // (email/name/student code) is stripped at the query level.
     if (user.roles.includes('SUPER_ADMIN')) {
+      const { email, fullName, studentCode, ...withoutPii } = select;
+      void email, fullName, studentCode;
       return this.prisma.studentInvitation.findMany({
-        select,
+        select: withoutPii,
         orderBy: { createdAt: 'desc' },
       });
     }

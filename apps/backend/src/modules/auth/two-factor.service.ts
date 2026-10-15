@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { generateSecret, generateURI, verify as verifyTotp } from 'otplib';
 import * as qrcode from 'qrcode';
@@ -14,6 +14,8 @@ import {
 
 const RECOVERY_CODE_COUNT = 8;
 const ISSUER = 'EduAnalyzeAI';
+export const TWO_FACTOR_ALREADY_ENABLED_MESSAGE =
+  'เปิดใช้งานการยืนยันตัวตนสองขั้นตอนอยู่แล้ว กรุณาปิดก่อน (ต้องยืนยันรหัสผ่าน) จึงจะตั้งค่าใหม่ได้';
 
 // Authenticator-app (TOTP) 2FA — opt-in, separate from grade-based
 // calculation/self-assessment/evidence modules entirely; this is pure
@@ -39,19 +41,24 @@ export class TwoFactorService {
 
   // Generates a fresh secret and stores it as a pending (enabled:false)
   // credential — calling this again before enable() just overwrites the
-  // pending secret, harmless. Nothing takes effect until enable() proves
+  // pending secret, harmless. Refused once 2FA is enabled: replacing an
+  // active credential needs disable() first (password-gated), otherwise a
+  // stolen bearer token could silently switch 2FA off. Nothing takes effect until enable() proves
   // the user can actually generate a valid code with it (prevents locking
   // yourself out with a mistyped/never-scanned secret).
   async setup(userId: string, email: string): Promise<{ qrCodeDataUrl: string; secret: string }> {
+    const existing = await this.prisma.twoFactorCredential.findUnique({ where: { userId } });
+    if (existing?.enabled) {
+      throw new ConflictException(TWO_FACTOR_ALREADY_ENABLED_MESSAGE);
+    }
+
     const secret = generateSecret();
     const secretCiphertext = encryptSecret(secret, this.encryptionKey());
 
     await this.prisma.twoFactorCredential.upsert({
       where: { userId },
       create: { userId, secretCiphertext, enabled: false, recoveryCodeHashes: [] },
-      // Re-running setup resets everything, including any recovery codes
-      // from a previous enable() — consistent with "nothing takes effect
-      // until enable() again."
+      // Only reached for a pending (never-enabled) credential.
       update: { secretCiphertext, enabled: false, recoveryCodeHashes: [] },
     });
 
