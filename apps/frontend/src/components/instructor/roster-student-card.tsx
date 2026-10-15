@@ -1,15 +1,19 @@
-import { ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import type { StudentRosterEntry } from '@eduanalyze-ai/shared-types';
 import type { Grade } from '@eduanalyze-ai/shared-types';
 import { gradeBadgeTone } from '@/lib/grade-badge-color';
 import { LOW_GRADE_LABEL, isLowGrade } from '@/lib/low-grade';
 import { GradeSelectConfirm } from '@/components/academic-record/grade-select-confirm';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { GradeChip } from './grade-chip';
 import { STUDENT_CARD_MAIN, StudentCardFrame, StudentIdentity } from './student-card';
 
 // One student of the roster. In view mode the whole row opens the student's
-// timeline; in edit mode the grade select and the delete step sit beside it.
+// timeline; in edit mode a second row holds the grade select with the delete button,
+// and a change or delete waiting for confirmation is asked in the card (grade) or a dialog.
 export function RosterStudentCard({
   student,
   isSelected,
@@ -34,84 +38,76 @@ export function RosterStudentCard({
   onCancelDelete: () => void;
 }>) {
   const accent = isLowGrade(student.grade) ? gradeBadgeTone(student.grade) : null;
+  // A grade change waiting for its confirmation, or the delete question: this card is
+  // the one being edited.
+  const [pendingGrade, setPendingGrade] = useState(false);
+  const editing = editable && (pendingGrade || isConfirmingDelete);
   return (
     <StudentCardFrame
       accent={accent}
-      accentNote={LOW_GRADE_LABEL}
+      // In edit mode the tooltip would sit over the controls; aria-label says the same.
+      accentNote={editable ? undefined : LOW_GRADE_LABEL}
       selected={isSelected}
+      highlighted={editing}
       interactive={!editable}
     >
-      <div className="flex flex-1 items-center">
-        <button
-          type="button"
-          aria-pressed={isSelected}
-          aria-label={
-            accent ? `${student.fullName} ${student.studentCode} ${LOW_GRADE_LABEL}` : undefined
-          }
-          onClick={onToggleSelect}
-          className={STUDENT_CARD_MAIN}
-        >
-          <StudentIdentity name={student.fullName} code={student.studentCode} />
-          {!editable && (
-            <>
-              <GradeChip grade={student.grade} />
-              <ChevronRight
-                size={16}
-                aria-hidden="true"
-                className="go-arrow shrink-0 text-muted-foreground"
-              />
-            </>
-          )}
-        </button>
-        {editable && (
-          <div className="shrink-0 pr-5">
-            <GradeSelectConfirm
-              value={student.grade}
-              subject={student.fullName}
-              disabled={isBusy}
-              onConfirm={onGradeConfirm}
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        aria-label={
+          accent ? `${student.fullName} ${student.studentCode} ${LOW_GRADE_LABEL}` : undefined
+        }
+        onClick={onToggleSelect}
+        className={cn(STUDENT_CARD_MAIN, editable && 'flex-none pb-3')}
+      >
+        <StudentIdentity name={student.fullName} code={student.studentCode} />
+        {!editable && (
+          <>
+            <GradeChip grade={student.grade} />
+            <ChevronRight
+              size={16}
+              aria-hidden="true"
+              className="go-arrow shrink-0 text-muted-foreground"
             />
-          </div>
+          </>
         )}
-      </div>
+      </button>
       {editable && (
-        <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 px-5 py-2">
-          {isConfirmingDelete ? (
-            <>
+        <div className="px-5 pb-4">
+          <GradeSelectConfirm
+            stacked
+            value={student.grade}
+            subject={student.fullName}
+            disabled={isBusy}
+            onConfirm={onGradeConfirm}
+            onPendingChange={setPendingGrade}
+            trailing={
               <Button
                 type="button"
-                variant="destructive"
-                size="sm"
+                variant="danger"
                 disabled={isBusy}
-                aria-label={`ยืนยันลบผลการเรียนของ ${student.fullName}`}
-                onClick={onConfirmDelete}
+                aria-label={`ลบผลการเรียนของ ${student.fullName}`}
+                className="shrink-0 gap-1.5"
+                onClick={onAskDelete}
               >
-                ยืนยันลบ
+                <Trash2 size={16} aria-hidden="true" />
+                ลบ
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isBusy}
-                onClick={onCancelDelete}
-              >
-                ยกเลิก
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={isBusy}
-              aria-label={`ลบผลการเรียนของ ${student.fullName}`}
-              onClick={onAskDelete}
-            >
-              ลบ
-            </Button>
-          )}
+            }
+          />
         </div>
       )}
+      <ConfirmDialog
+        open={isConfirmingDelete}
+        onOpenChange={(open) => {
+          if (!open) onCancelDelete();
+        }}
+        title="ลบผลการเรียนของนิสิต"
+        description={`ต้องการลบผลการเรียนของ ${student.fullName} (${student.studentCode}) ในรายวิชานี้ใช่หรือไม่ หากนิสิตมีผลการเรียนครั้งก่อนหน้า ระบบจะแสดงผลครั้งนั้นแทน และการลบนี้ไม่สามารถย้อนกลับได้`}
+        confirmLabel="ลบผลการเรียน"
+        busy={isBusy}
+        onConfirm={onConfirmDelete}
+      />
     </StudentCardFrame>
   );
 }

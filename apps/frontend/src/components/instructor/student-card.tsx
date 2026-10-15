@@ -27,12 +27,15 @@ export function StudentCardFrame({
   accent,
   accentNote,
   selected = false,
+  highlighted = false,
   interactive = true,
   children,
 }: Readonly<{
   accent: SemanticTone | null;
   accentNote?: string;
   selected?: boolean;
+  // A card being edited right now: a ring, without the selected background.
+  highlighted?: boolean;
   interactive?: boolean;
   children: ReactNode;
 }>) {
@@ -45,6 +48,7 @@ export function StudentCardFrame({
         interactive && 'interactive-card',
         accent && ['border-l-4', ACCENT_TONE_CLASSES[accent]],
         selected && 'bg-brand-light ring-1 ring-brand',
+        highlighted && 'ring-2 ring-brand',
       )}
     >
       {children}
