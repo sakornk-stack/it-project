@@ -1162,6 +1162,7 @@ export interface InstructorCourseTimelineCourse {
   curriculumYear: number;
   studentCount: number; // everyone enrolled this term — no W/I exclusion
   gradedCount: number; // of those, A to F only (no W/I/S/U)
+  totalStudentCount: number; // distinct students in this course across all terms
   predominantYearLevel: number; // 1-4, mode across this group's students
 }
 

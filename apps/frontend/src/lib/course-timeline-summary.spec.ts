@@ -15,7 +15,7 @@ function course(
   studentCount: number,
   predominantYearLevel = 2,
 ): InstructorCourseTimelineCourse {
-  return { courseId: id, code: id, name: id, programCode: 'P', curriculumYear: 2565, studentCount, gradedCount: studentCount, predominantYearLevel };
+  return { courseId: id, code: id, name: id, programCode: 'P', curriculumYear: 2565, studentCount, gradedCount: studentCount, totalStudentCount: studentCount, predominantYearLevel };
 }
 const sem = (term: SemesterTerm, ...courses: InstructorCourseTimelineCourse[]) => ({
   semesterId: `s-${term}-${courses.map((c) => c.courseId).join('')}`,

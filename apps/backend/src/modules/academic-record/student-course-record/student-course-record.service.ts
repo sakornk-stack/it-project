@@ -107,6 +107,9 @@ export interface InstructorCourseTimelineCourse {
   curriculumYear: number;
   studentCount: number; // everyone enrolled, unlike SemesterAchievement (no W/I exclusion)
   gradedCount: number; // of those, A to F only (no W/I/S/U)
+  // Distinct students with an active record in this course across ALL terms, the same
+  // people the course page counts. Repeated on each term's row of the course.
+  totalStudentCount: number;
   predominantYearLevel: number; // 1-4, mode across this group's students
 }
 
@@ -603,6 +606,13 @@ export class StudentCourseRecordService {
       cells.set(key, group);
     }
 
+    const studentsByCourse = new Map<string, Set<string>>();
+    for (const record of records) {
+      const ids = studentsByCourse.get(record.courseId) ?? new Set<string>();
+      ids.add(record.studentProfileId);
+      studentsByCourse.set(record.courseId, ids);
+    }
+
     const courseRows = Array.from(cells.values()).map((group) => {
       const first = group[0];
       const yearLevels = group.map((r) =>
@@ -619,6 +629,7 @@ export class StudentCourseRecordService {
         curriculumYear: first.course.curriculum.effectiveYear,
         studentCount: group.length,
         gradedCount: group.filter((r) => isLetterGrade(r.grade)).length,
+        totalStudentCount: studentsByCourse.get(first.courseId)?.size ?? 0,
         predominantYearLevel: this.modeOf(yearLevels),
       };
     });
@@ -636,6 +647,7 @@ export class StudentCourseRecordService {
         curriculumYear: row.curriculumYear,
         studentCount: row.studentCount,
         gradedCount: row.gradedCount,
+        totalStudentCount: row.totalStudentCount,
         predominantYearLevel: row.predominantYearLevel,
       });
       semesters.set(row.semesterId, courses);
