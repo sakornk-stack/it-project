@@ -24,7 +24,7 @@ export function LowGradeFilterChips({
   ];
 
   return (
-    <div role="group" aria-label="กรองตามเกรดล่าสุด" className="flex flex-wrap gap-2">
+    <div role="group" aria-label="กรองตามเกรดล่าสุด" className="flex flex-wrap items-center gap-2">
       {options.map((option) => {
         const selected = value === option.value;
         return (
@@ -35,7 +35,7 @@ export function LowGradeFilterChips({
             variant={selected ? 'default' : 'outline'}
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
-            className={cn('gap-2', selected && 'font-semibold')}
+            className={cn('h-11 gap-2', selected && 'font-semibold')}
           >
             {option.label}
             {option.warn && option.count > 0 ? (

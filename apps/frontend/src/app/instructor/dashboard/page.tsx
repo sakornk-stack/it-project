@@ -11,7 +11,6 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
 import { CourseHero } from '@/components/instructor/course-hero';
 import { CourseOverview } from '@/components/instructor/course-overview';
 import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
@@ -136,7 +135,7 @@ function InstructorDashboardContent() {
           <Card>
             <CardContent className="pt-6">
               <EmptyState
-                icon={BookOpen}
+                illustration="no-data"
                 description="ยังไม่มีวิชาที่ได้รับมอบหมายให้คุณสอน วิชาจะแสดงที่นี่เมื่อเจ้าหน้าที่มอบหมายให้คุณเป็นอาจารย์ผู้รับผิดชอบ หากคิดว่าควรมีแล้ว ให้ติดต่อเจ้าหน้าที่ที่ดูแลหลักสูตร"
               />
             </CardContent>

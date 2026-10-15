@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users } from 'lucide-react';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
 import { fetchCourseCloAchievement, fetchCourseRoster } from '@/lib/api/instructor';
 import { fetchCourseEvidenceCoverage } from '@/lib/evidence-coverage';
@@ -14,7 +13,6 @@ import { CourseInfoSection } from './course-info-section';
 import { CourseFollowUpList } from './course-follow-up-list';
 import { CourseHero } from './course-hero';
 import { CourseOverview } from './course-overview';
-import { SectionCard } from './section-card';
 
 export type InstructorTab = 'overview' | 'students' | 'clo';
 
@@ -163,22 +161,16 @@ export function InstructorDetailPanel({
 
       {activeTab === 'students' && (
         <Reveal index={2}>
-          <SectionCard
-            icon={Users}
-            title="รายชื่อนิสิต"
-            description="ค้นหา เรียงลำดับ และเปิดดูผลการเรียนของนิสิตแต่ละคนในวิชานี้"
-          >
-            <StudentRosterTable
-              courseId={course.courseId}
-              courseCode={course.code}
-              clos={course.clos}
-              roster={rosterQuery.data}
-              isLoading={rosterQuery.isLoading}
-              isError={rosterQuery.isError}
-              onChanged={isInstructor ? handleGradebookChanged : undefined}
-              initialSelectedStudentId={initialSelectedStudentId}
-            />
-          </SectionCard>
+          <StudentRosterTable
+            courseId={course.courseId}
+            courseCode={course.code}
+            clos={course.clos}
+            roster={rosterQuery.data}
+            isLoading={rosterQuery.isLoading}
+            isError={rosterQuery.isError}
+            onChanged={isInstructor ? handleGradebookChanged : undefined}
+            initialSelectedStudentId={initialSelectedStudentId}
+          />
         </Reveal>
       )}
     </>

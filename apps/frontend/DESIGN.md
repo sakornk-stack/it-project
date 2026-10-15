@@ -100,6 +100,17 @@
 - Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `npm run db:backup -- <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
 - ห้าม commit/push หรือถ่ายภาพหน้าจอ ถ้าผู้ใช้ไม่สั่ง
 
+## 12) Instructor pages
+ใช้กับ `/instructor/dashboard`, `my-courses`, `courses/[courseId]`, `students`, `year-levels` (ค่ากลางอยู่ใน `components/instructor/instructor-ui.ts`)
+- หัวหน้า: `PageHeader` + `TEXT_PAGE` (ชื่อ + คำอธิบายบรรทัดเดียว + action ขวา) แล้วแถบสรุป `StatCard` + `AnimatedNumber` เมื่อมีตัวเลข; หัวส่วน `PageSection` + `TEXT_SECTION`; ระหว่างส่วน `space-y-6`, ในกริด `gap-4`
+- การ์ด: `CARD` (`rounded-xl border-slate-200 shadow-sm`) + `CARD_PAD` (`p-5`) มุมเดียวทั้งระบบ; การ์ดกดได้เติม `interactive-card` (ยก 2px + เงา + `.go-arrow` 180ms) การ์ดไม่ซ้อนการ์ด
+- การ์ดรายการ: avatar/ไอคอนซ้าย → ชื่อ (`font-semibold truncate`) + เมตาบรรทัดเดียว (`text-xs text-muted-foreground truncate` + `title`) → ชิปสถานะเดียวขวา → `.go-arrow`; ทั้งใบเป็น `<Link>`; ไม่พิมพ์ซ้ำสิ่งที่ตัวกรองบอกอยู่แล้ว
+- ชิปเกรด: `GradeChip` (`components/instructor/grade-chip.tsx`) เท่านั้น ไม่เขียนคำว่า "เกรด" ลอย (มี `sr-only`); สีตาม `gradeBadgeTone` เขียวเฉพาะชิป/จุดเล็ก
+- Toolbar: ชิปกรอง → select → ค้นหา → ล้างตัวกรอง `h-11` แถวเดียวที่ `xl` (`student-filter-bar.tsx`) ซ่อน select ถ้ามีตัวเลือกเดียว; ใต้แถวมี "แสดง X จาก N" (`role=status`); รายการยาวใช้ `Pagination` 12/หน้า
+- แถบสีขอบซ้าย: เฉพาะการ์ด/แถวที่ต้องเตือน `border-l-4` + `ACCENT_TONE_CLASSES` (warning = D/D+, danger = F/U; ปกติไม่มีแถบ) อธิบายผ่าน `title`/`aria-label` ไม่ใช้จุดสี+legend; หน้านิสิตใช้กริดการ์ด 1/2/3 คอลัมน์ ไม่มีมุมมองแถว; ตัวเรียงเป็น select เดียวใน toolbar
+- รายการนิสิตใช้ร่วมกันสองที่ (หน้า `students` และแท็บนิสิตในหน้าวิชา): `StudentFilterBar` (ชิป + ค้นหา + select เรียง + `actions` ขวา), `StudentCardFrame`/`StudentIdentity`/`StudentCardGrid`/`StudentListStatus` ใน `student-card.tsx`, `GradeChip`, `Pagination` 12/หน้า
+- Empty = `EmptyState` + `illustration`; Skeleton ทรงเดียวกับการ์ดจริง; Reveal stagger เบาเฉพาะครั้งแรก (`motion-reduce:` ปิดการขยับ)
+
 ## 11) ขั้นตอนมาตรฐานท้ายงานดีไซน์
 1. `npx tsc --noEmit` (ใน `apps/frontend`)
 2. `npx next lint --dir src/...` เฉพาะโฟลเดอร์ที่แตะ

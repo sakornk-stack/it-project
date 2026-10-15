@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { ArrowRight, Users } from 'lucide-react';
 import type { AtRiskStudent } from '@eduanalyze-ai/shared-types';
-import { gradeBadgeTone } from '@/lib/grade-badge-color';
-import { GRADE_LABELS, formatSemesterLabel } from '@/lib/grade-label';
+import { formatSemesterLabel } from '@/lib/grade-label';
 import { LOW_GRADE_LABEL, LOW_GRADE_RULE, isLowGrade } from '@/lib/low-grade';
 import { Badge } from '@/components/ui/badge';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
+import { GradeChip } from './grade-chip';
 import { SectionCard } from './section-card';
 
 // Keeps the overview short; the students tab lists everyone.
@@ -62,7 +62,7 @@ export function CourseFollowUpList({
                       {formatSemesterLabel(s.semesterTerm, s.academicYear)}
                     </span>
                   </span>
-                  <Badge tone={gradeBadgeTone(s.grade)}>เกรด {GRADE_LABELS[s.grade]}</Badge>
+                  <GradeChip grade={s.grade} />
                   <ArrowRight
                     size={16}
                     aria-hidden="true"

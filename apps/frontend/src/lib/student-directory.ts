@@ -71,6 +71,26 @@ export function countPeople(people: readonly Pick<StudentPerson, 'hasLowGrade'>[
   return { total: people.length, low: people.filter((p) => p.hasLowGrade).length };
 }
 
+export type PeopleSort = 'risk' | 'code' | 'name';
+export const PEOPLE_SORT_LABELS: Record<PeopleSort, string> = {
+  risk: 'เกรดต่ำก่อน',
+  code: 'รหัสนิสิต',
+  name: 'ชื่อ',
+};
+
+// 'risk' keeps the order applyStudentFilters already gives (low grade first, then code).
+export function sortPeopleBy<T extends { studentCode: string; fullName: string }>(
+  people: T[],
+  sort: PeopleSort,
+): T[] {
+  if (sort === 'risk') return people;
+  return [...people].sort((a, b) =>
+    sort === 'code'
+      ? a.studentCode.localeCompare(b.studentCode)
+      : a.fullName.localeCompare(b.fullName, 'th'),
+  );
+}
+
 const matchesQuery = (person: StudentPerson, q: string) => {
   const term = q.trim().toLowerCase();
   if (term === '') return true;

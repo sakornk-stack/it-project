@@ -16,6 +16,9 @@ import {
   DEFAULT_STUDENT_FILTERS,
   applyStudentFilters,
   buildStudentsSummary,
+  groupByPerson,
+  sortPeopleBy,
+  type PeopleSort,
   parseStudentFilters,
   studentFiltersToQuery,
   type StudentFilters,
@@ -30,6 +33,7 @@ import {
   StudentPersonList,
   StudentPersonListSkeleton,
 } from '@/components/instructor/student-person-list';
+import { StudentListStatus } from '@/components/instructor/student-card';
 import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
@@ -87,17 +91,20 @@ function InstructorStudentsContent() {
   const entries = useMemo(() => query.data?.students ?? [], [query.data]);
   const courses = useMemo(() => query.data?.courses ?? [], [query.data]);
   const { grade, courseId } = urlFilters;
-  const { people, counts } = useMemo(
-    () => applyStudentFilters(entries, { grade, courseId, q: search }),
-    [entries, grade, courseId, search],
-  );
+  const [sort, setSort] = useState<PeopleSort>('risk');
+  const { filtered, counts } = useMemo(() => {
+    const result = applyStudentFilters(entries, { grade, courseId, q: search });
+    return { filtered: result.people, counts: result.counts };
+  }, [entries, grade, courseId, search]);
+  const people = useMemo(() => sortPeopleBy(filtered, sort), [filtered, sort]);
   const summary = query.data ? buildStudentsSummary(entries, courses.length) : null;
+  const totalPeople = useMemo(() => groupByPerson(entries).length, [entries]);
   const isFiltered = studentFiltersToQuery(filters) !== '';
   // The cards follow the filters one beat behind and fade meanwhile, so typing
   // never blanks the list.
   const listPeople = useDeferredValue(people);
   const listStale = listPeople !== people;
-  const pagination = usePagination(listPeople, undefined, studentFiltersToQuery(filters));
+  const pagination = usePagination(listPeople, 12, studentFiltersToQuery(filters));
   // The first cards arrive one after another on the first view only; later
   // filtering and paging swap cards without any entrance.
   const firstView = useRef(true);
@@ -127,7 +134,11 @@ function InstructorStudentsContent() {
         <Reveal index={0}>
           <PageHeader
             title="นิสิต"
-            description={summary ?? 'นิสิตในวิชาที่คุณสอน เรียงจากคนที่มีเกรด D+ ลงไปก่อน'}
+            description={
+              courses.length === 1 && summary
+                ? `${courses[0].code} ${courses[0].name} · ${summary}`
+                : (summary ?? 'นิสิตในวิชาที่คุณสอน เรียงจากคนที่มีเกรด D+ ลงไปก่อน')
+            }
             titleClassName={TEXT_PAGE}
           />
         </Reveal>
@@ -172,10 +183,14 @@ function InstructorStudentsContent() {
                   setSearch(q);
                   writeUrl({ ...filters, q });
                 }}
+                sort={sort}
+                onSortChange={setSort}
                 isFiltered={isFiltered}
                 onClear={clearFilters}
               />
             </Reveal>
+
+            <StudentListStatus shown={people.length} total={totalPeople} sort={sort} />
 
             {people.length === 0 ? (
               <Reveal index={2}>
@@ -198,13 +213,14 @@ function InstructorStudentsContent() {
                 <div
                   aria-busy={listStale}
                   className={cn(
-                    'space-y-3 transition-opacity duration-150 motion-reduce:transition-none',
+                    'space-y-4 transition-opacity duration-150 motion-reduce:transition-none',
                     listStale && 'opacity-60',
                   )}
                 >
                   <StudentPersonList
                     people={pagination.pageRows}
-                    showLowBadge={filters.grade !== 'LOW'}
+                    showCourse={courses.length > 1}
+                    markLow={filters.grade !== 'LOW'}
                     stagger={firstView.current}
                   />
                   <Pagination {...pagination} unit="คน" onPageChange={pagination.setPage} />

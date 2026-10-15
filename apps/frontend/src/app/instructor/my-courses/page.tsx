@@ -22,7 +22,7 @@ import {
 } from '@/components/instructor/instructor-course-timeline';
 import { PageHeader } from '@/components/layout/page-header';
 import { CollapsibleCard } from '@/components/instructor/section-card';
-import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
+import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -103,6 +103,7 @@ function InstructorMyCoursesContent() {
         {latest && (
           <Reveal index={1}>
             <PageSection
+              titleClassName={TEXT_SECTION}
               title={
                 <span className="flex flex-wrap items-center gap-2">
                   เทอมล่าสุด

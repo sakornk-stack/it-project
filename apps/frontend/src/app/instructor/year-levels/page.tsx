@@ -185,7 +185,7 @@ function InstructorYearLevelsContent() {
 
         {figures && figures.total > 0 && (
           <Reveal index={1}>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3">
               <StatCard
                 icon={Users}
                 tone="primary"
