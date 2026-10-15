@@ -8,7 +8,13 @@ import type {
 } from '@eduanalyze-ai/shared-types';
 import { SPARSE_SUMMARY, dataLevelOf } from '@/lib/course-snapshot';
 import { ploProgressBarColorClassName } from '@/lib/plo-color';
-import { formatPercent } from '@/lib/format-percent';
+import {
+  NO_CLO_DATA_HINT,
+  NO_CLO_DATA_LABEL,
+  cloBarValue,
+  formatCloPercent,
+  hasCloPercent,
+} from '@/lib/clo-percent';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageSection } from '@/components/layout/page-section';
@@ -38,7 +44,8 @@ export function CloAchievementSection({
   // People counted in the B-or-above share (W and I left out): how much the
   // share can be trusted.
   gradedPeople: number;
-  achievementPercent: number;
+  // null = no student with a final grade yet.
+  achievementPercent: number | null;
   clos: CloAchievementEntry[];
   plos: CoursePloEntry[];
   courseAssessment: CourseAssessmentSummary;
@@ -88,13 +95,18 @@ export function CloAchievementSection({
   return (
     <div className="space-y-5">
       <PageSection title="ภาพรวมเป้าการเรียนรู้">
-        {level === 'insufficient' ? (
+        {!hasCloPercent(achievementPercent) ? (
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{NO_CLO_DATA_LABEL}</p>
+            <p className="text-xs text-muted-foreground">{NO_CLO_DATA_HINT}</p>
+          </div>
+        ) : level === 'insufficient' ? (
           <p className="text-sm text-muted-foreground">{SPARSE_SUMMARY}</p>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             <Progress value={achievementPercent} className="min-w-32 flex-1" barClassName="bg-brand" />
             <span className="shrink-0 text-sm font-medium text-primary">
-              ได้ B ขึ้นไป {formatPercent(achievementPercent)}
+              ได้ B ขึ้นไป {formatCloPercent(achievementPercent)}
             </span>
             {level === 'low' && <LowSampleTag counted={gradedPeople} />}
           </div>
@@ -166,13 +178,17 @@ export function CloAchievementSection({
                       {plo.code} · {plo.name}
                     </span>
                     <span className="font-medium text-primary">
-                      {formatPercent(plo.achievementPercent)}
+                      {formatCloPercent(plo.achievementPercent)}
                     </span>
                   </div>
-                  <Progress
-                    value={plo.achievementPercent}
-                    barClassName={ploProgressBarColorClassName(plo.achievementPercent, null)}
-                  />
+                  {hasCloPercent(plo.achievementPercent) ? (
+                    <Progress
+                      value={cloBarValue(plo.achievementPercent)}
+                      barClassName={ploProgressBarColorClassName(plo.achievementPercent, null)}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{NO_CLO_DATA_HINT}</p>
+                  )}
                 </div>
               ))}
             </PageSection>

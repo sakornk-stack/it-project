@@ -1,6 +1,7 @@
 import type { InstructorCourseSummary, SemesterTerm } from '@eduanalyze-ai/shared-types';
 import { countLowGradePeople } from './follow-ups';
 import { LOW_GRADE_LABEL, NO_LOW_GRADE } from './low-grade';
+import { hasCloPercent } from './clo-percent';
 
 // Pure, rule-based reading of the instructor dashboard response. It only reads
 // what GET /dashboard/instructor returned, so it stays inside the "courses I
@@ -16,12 +17,12 @@ export function overallAchievementPercent(
   courses: readonly Pick<InstructorCourseSummary, 'studentCount' | 'achievementPercent'>[],
 ): number | null {
   const counted = courses.filter(
-    (c) => isPositiveCount(c.studentCount) && Number.isFinite(c.achievementPercent),
+    (c) => isPositiveCount(c.studentCount) && hasCloPercent(c.achievementPercent),
   );
   const totalStudents = counted.reduce((sum, c) => sum + c.studentCount, 0);
   if (totalStudents === 0) return null;
   const achieved = counted.reduce(
-    (sum, c) => sum + (c.achievementPercent * c.studentCount) / 100,
+    (sum, c) => sum + (c.achievementPercent! * c.studentCount) / 100,
     0,
   );
   return (achieved / totalStudents) * 100;
@@ -119,7 +120,7 @@ export function sortCoursesByAttention<
   T extends Pick<InstructorCourseSummary, 'studentCount' | 'achievementPercent'>,
 >(courses: readonly T[]): T[] {
   const rank = (c: T) =>
-    isPositiveCount(c.studentCount) && Number.isFinite(c.achievementPercent)
+    isPositiveCount(c.studentCount) && hasCloPercent(c.achievementPercent)
       ? c.achievementPercent
       : Number.POSITIVE_INFINITY;
   return [...courses].sort((a, b) => rank(a) - rank(b));
@@ -137,9 +138,9 @@ export function buildInstructorSummary(courses: readonly InstructorCourseSummary
     lowGradePeople > 0 ? `${LOW_GRADE_LABEL} ${lowGradePeople} คน` : NO_LOW_GRADE;
 
   const graded = courses.filter(
-    (c) =>
+    (c): c is InstructorCourseSummary & { achievementPercent: number } =>
       isPositiveCount(c.studentCount) &&
-      Number.isFinite(c.achievementPercent) &&
+      hasCloPercent(c.achievementPercent) &&
       Number.isFinite(c.achievementThreshold),
   );
   // Worst first, the same order the comparison chart uses.

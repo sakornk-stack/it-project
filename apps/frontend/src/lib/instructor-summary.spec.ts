@@ -223,6 +223,26 @@ describe('formatAchievementChange', () => {
   });
 });
 
+describe('null achievementPercent (no graded student)', () => {
+  it('is not averaged in as 0 and does not trigger a below-target warning', () => {
+    const nullCourse = course({
+      courseId: 'c2',
+      studentCount: 5,
+      achievementPercent: null,
+    });
+    expect(overallAchievementPercent([course(), nullCourse])).toBe(80);
+    expect(buildInstructorSummary([course(), nullCourse])).not.toMatch(/ยังไม่ถึงเป้า|NaN/);
+  });
+
+  it('sorts a null course after measured ones', () => {
+    const input = [
+      course({ courseId: 'none', achievementPercent: null }),
+      course({ courseId: 'low', achievementPercent: 20 }),
+    ];
+    expect(sortCoursesByAttention(input).map((c) => c.courseId)).toEqual(['low', 'none']);
+  });
+});
+
 describe('buildInstructorSummary', () => {
   it('normal: every course passes and nobody needs following up', () => {
     expect(buildInstructorSummary(allPassing)).toBe(
