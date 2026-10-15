@@ -66,7 +66,10 @@ function InfoCell({
 
 // Copies the address and shows a check for a moment; a refusal (no clipboard
 // access) says so in a toast instead of failing silently.
-function CopyEmailButton({ email }: Readonly<{ email: string }>) {
+export function CopyEmailButton({
+  email,
+  tooltip = true,
+}: Readonly<{ email: string; tooltip?: boolean }>) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
@@ -85,6 +88,15 @@ function CopyEmailButton({ email }: Readonly<{ email: string }>) {
   }
 
   const label = copied ? 'คัดลอกแล้ว' : 'คัดลอกอีเมล';
+  const button = (
+    <Button type="button" variant="ghost" size="icon" aria-label={label} onClick={() => void copy()}>
+      {copied ? (
+        <Check size={18} aria-hidden="true" className="text-emerald-600" />
+      ) : (
+        <Copy size={18} aria-hidden="true" />
+      )}
+    </Button>
+  );
   return (
     <div className="flex shrink-0 items-center gap-1">
       <span
@@ -97,31 +109,21 @@ function CopyEmailButton({ email }: Readonly<{ email: string }>) {
       >
         {copied ? 'คัดลอกแล้ว' : ''}
       </span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={label}
-            onClick={() => void copy()}
-          >
-            {copied ? (
-              <Check size={18} aria-hidden="true" className="text-emerald-600" />
-            ) : (
-              <Copy size={18} aria-hidden="true" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+      ) : (
+        button
+      )}
     </div>
   );
 }
 
 // Who this account is: initials avatar, name, status, roles, and the facts the
 // API holds about it (email). Last sign-in is not in the API.
-const AVATAR_RING: Record<SemanticTone, string> = {
+export const AVATAR_RING: Record<SemanticTone, string> = {
   success: 'from-emerald-300 to-emerald-100',
   warning: 'from-amber-300 to-amber-100',
   danger: 'from-red-300 to-red-100',

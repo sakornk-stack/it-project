@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 // The header every card on the user detail page shares: a brand-tinted icon
 // tile, the section title, a line saying what it is for, and an optional action
@@ -9,9 +10,21 @@ export function DetailSectionHeader({
   title,
   description,
   action,
-}: Readonly<{ icon: LucideIcon; title: string; description?: ReactNode; action?: ReactNode }>) {
+  className,
+}: Readonly<{
+  icon: LucideIcon;
+  title: string;
+  description?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}>) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 p-4 pb-3 sm:p-6 sm:pb-4">
+    <div
+      className={cn(
+        'flex flex-wrap items-start justify-between gap-3 p-4 pb-3 sm:p-6 sm:pb-4',
+        className,
+      )}
+    >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span
           aria-hidden="true"

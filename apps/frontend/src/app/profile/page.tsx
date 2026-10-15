@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import {
   BookOpen,
   Building2,
@@ -9,6 +10,7 @@ import {
   Hash,
   Landmark,
   Mail,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import type {
@@ -16,6 +18,7 @@ import type {
   DepartmentListItem,
   FacultyListItem,
   ProgramListItem,
+  Role,
   StudentProfileMeResponse,
 } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
@@ -26,15 +29,22 @@ import {
   fetchPrograms,
 } from '@/lib/api/organization';
 import { cn } from '@/lib/utils';
+import { accountStatus, type AccountStatus } from '@/lib/account-status';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AccountSecurityCard } from '@/components/profile/account-security-card';
-import { primaryRoleFor, ROLE_LABEL_TH } from '@/components/auth/require-role';
+import { primaryRoleFor, ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
+import { CopyEmailButton } from '@/components/admin/user-profile-card';
+import { DetailSectionHeader } from '@/components/admin/detail-section-header';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
 import { Reveal } from '@/components/layout/reveal';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { InitialsAvatar } from '@/components/ui/initials-avatar';
+import { ICON_TILE_CLASS, PROFILE_CARD_CLASS } from '@/components/profile/profile-card-class';
+import { SecurityStatus } from '@/components/profile/security-row';
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -58,13 +68,15 @@ function ProfileItem({
   className?: string;
 }) {
   return (
-    <div className={cn('flex min-w-0 items-start gap-3 py-1', className)}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand">
-        <Icon size={17} aria-hidden="true" />
+    <div className={cn('flex min-w-0 items-start gap-3', className)}>
+      <div className={cn(ICON_TILE_CLASS, 'h-10 w-10')}>
+        <Icon size={18} aria-hidden="true" />
       </div>
-      <div className="min-w-0 space-y-0.5 pt-0.5">
+      <div className="min-w-0 space-y-1">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="break-words text-sm font-semibold leading-5 text-primary">{value}</p>
+        <p className="course-name-break text-sm font-semibold leading-relaxed tabular-nums text-primary">
+          {value}
+        </p>
       </div>
     </div>
   );
@@ -89,17 +101,13 @@ function ProfileEducationCard({
   const curriculum = curricula.find((c) => c.id === profile.curriculumId);
 
   return (
-    <Card className="border-slate-200/80 shadow-sm">
-      <CardHeader className="flex-row items-center gap-3 space-y-0 pb-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand">
-          <GraduationCap size={20} aria-hidden="true" />
-        </div>
-        <div>
-          <CardTitle className="text-lg text-primary">ข้อมูลการศึกษา</CardTitle>
-          <CardDescription className="mt-1">หลักสูตรและหน่วยงานการศึกษาปัจจุบัน</CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+    <Card className={PROFILE_CARD_CLASS}>
+      <DetailSectionHeader
+        icon={GraduationCap}
+        title="ข้อมูลการศึกษา"
+        description="หลักสูตรและหน่วยงานการศึกษาปัจจุบัน"
+      />
+      <CardContent className="grid gap-x-8 gap-y-4 px-4 pb-4 pt-0 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-3">
         <ProfileItem icon={Landmark} label="คณะ" value={faculty?.name ?? '—'} />
         <ProfileItem icon={Building2} label="ภาควิชา" value={department?.name ?? '—'} />
         <ProfileItem icon={GraduationCap} label="สาขา" value={program?.name ?? '—'} />
@@ -113,6 +121,94 @@ function ProfileEducationCard({
           label="ปีที่เข้าศึกษา"
           value={`${profile.admissionYear}`}
         />
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfoCell({
+  icon: Icon,
+  label,
+  children,
+}: Readonly<{ icon: LucideIcon; label: string; children: ReactNode }>) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-muted/40 p-3">
+      <span aria-hidden="true" className={cn(ICON_TILE_CLASS, 'hidden h-10 w-10 min-[400px]:flex')}>
+        <Icon size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5 text-sm font-medium leading-relaxed text-primary">{children}</dd>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSummaryCard({
+  fullName,
+  email,
+  roles,
+  studentCode,
+  status,
+}: Readonly<{
+  fullName: string;
+  email: string;
+  roles: Role[];
+  studentCode?: string;
+  status: AccountStatus;
+}>) {
+  // The avatar is always brand-coloured; the role colour lives only on the role chips.
+  return (
+    <Card className={PROFILE_CARD_CLASS}>
+      {/* Thin banner: brand tint fading into the card, no image. */}
+      <div
+        aria-hidden="true"
+        className="h-[4.5rem] bg-gradient-to-b from-brand-light via-brand-light/60 to-card sm:h-20"
+      />
+      <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+        <div className="-mt-10 flex flex-col gap-5 sm:-mt-12 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <div className="min-w-0 space-y-3">
+            <InitialsAvatar
+              name={fullName}
+              className="h-20 w-20 border-0 bg-gradient-to-br from-brand to-brand/70 text-3xl text-white shadow-md ring-2 ring-card dark:text-brand-foreground dark:shadow-[0_0_22px_hsl(var(--brand)/0.25)] sm:h-24 sm:w-24 sm:text-4xl"
+            />
+            <h2
+              title={fullName}
+              className="course-name-break text-xl font-bold leading-snug text-primary sm:text-2xl"
+            >
+              {fullName}
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              {roles.map((role) => (
+                <Badge key={role} tone={ROLE_BADGE_TONE[role]}>
+                  {ROLE_LABEL_TH[role]}
+                </Badge>
+              ))}
+              {studentCode && (
+                <Badge tone="neutral" className="gap-1 font-mono tabular-nums">
+                  <Hash size={12} aria-hidden="true" />
+                  {studentCode}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <dl className="grid min-w-0 gap-3 lg:w-[34rem] lg:max-w-[60%] lg:grid-cols-[minmax(0,1fr)_auto]">
+            <InfoCell icon={Mail} label="อีเมล">
+              <div className="flex min-w-0 items-center gap-1">
+                <span
+                  className="min-w-0 flex-1 break-all sm:truncate sm:break-normal"
+                  title={email}
+                >
+                  {email}
+                </span>
+                <CopyEmailButton email={email} tooltip={false} />
+              </div>
+            </InfoCell>
+            <InfoCell icon={ShieldCheck} label="สถานะบัญชี">
+              <SecurityStatus tone={status.tone} label={status.label} live={status.live} />
+            </InfoCell>
+          </dl>
+        </div>
       </CardContent>
     </Card>
   );
@@ -198,7 +294,6 @@ function ProfileContent() {
     );
   }
 
-  const initial = user.fullName.trim().charAt(0).toUpperCase();
   const identityLabel = isStudent ? profileQuery.data?.studentCode : user.email;
 
   return (
@@ -209,45 +304,21 @@ function ProfileContent() {
       skeleton={skeleton}
     >
       <Reveal index={0}>
-        <PageHeader title="ข้อมูลส่วนตัว" />
+        <PageHeader
+          title="โปรไฟล์และความปลอดภัย"
+          description="ข้อมูลบัญชีของคุณและการตั้งค่าความปลอดภัย"
+        />
       </Reveal>
 
       <Reveal index={1}>
-        <Card className="border-slate-200 bg-gradient-to-br from-brand-light/70 via-card to-card shadow-sm">
-          <CardContent className="flex flex-col gap-5 p-5 sm:p-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand text-xl font-bold tracking-wide text-brand-foreground shadow-sm ring-4 ring-card sm:h-20 sm:w-20 sm:text-2xl">
-                {initial}
-              </div>
-              <div className="min-w-0">
-                <h1 className="break-words text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
-                  {user.fullName}
-                </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
-                    <GraduationCap size={14} aria-hidden="true" />
-                    {ROLE_LABEL_TH[primaryRole]}
-                  </span>
-                  {isStudent && profileQuery.data && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-background/90 px-3 py-1 text-xs font-medium text-slate-600">
-                      <Hash size={13} aria-hidden="true" />
-                      {profileQuery.data.studentCode}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex min-w-0 items-start gap-3 rounded-lg bg-background/70 px-4 py-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-light text-brand">
-                <Mail size={16} aria-hidden="true" />
-              </div>
-              <div className="min-w-0 pt-0.5">
-                <p className="text-xs font-medium text-muted-foreground">อีเมล</p>
-                <p className="break-all text-sm font-medium leading-5 text-primary">{user.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ProfileSummaryCard
+          fullName={user.fullName}
+          email={user.email}
+          roles={user.roles}
+          studentCode={isStudent ? profileQuery.data?.studentCode : undefined}
+          // A signed-in account is active by definition; only the password flag is in /auth/me.
+          status={accountStatus({ isActive: true, mustChangePassword: user.mustChangePassword })}
+        />
       </Reveal>
 
       {isStudent &&

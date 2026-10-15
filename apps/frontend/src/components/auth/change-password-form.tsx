@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
+import { Loader2 } from 'lucide-react';
 import type { ChangePasswordRequest } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -142,6 +143,9 @@ export function ChangePasswordForm({
         className={inline ? 'w-full sm:w-auto' : 'w-full'}
         disabled={form.formState.isSubmitting}
       >
+        {form.formState.isSubmitting && (
+          <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+        )}
         {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
       </Button>
     </>

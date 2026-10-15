@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { Check, Copy, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Check, Copy, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { disableTwoFactor, enableTwoFactor, setupTwoFactor } from '@/lib/api/two-factor';
 import {
   twoFactorDisableSchema,
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SecurityCard, SecurityStatus } from '@/components/profile/security-row';
 
 // Same Card + react-hook-form + zod + apiClient pattern as
 // ChangePasswordForm — the closest existing analog. No Dialog primitive
@@ -50,61 +51,100 @@ export function TwoFactorSection({ embedded = false }: Readonly<{ embedded?: boo
     await refreshUser();
   }
 
-  const content = (
+  const flows = (
     <>
-      <CardHeader className={embedded ? 'p-0' : undefined}>
+      {(mode === 'setup' || mode === 'recoveryCodes') && <TwoFactorStepper mode={mode} />}
+
+      {mode === 'setup' && (
+        <TwoFactorSetupFlow
+          onCancel={() => setMode('view')}
+          onEnabled={(codes) => {
+            setRecoveryCodes(codes);
+            setMode('recoveryCodes');
+          }}
+        />
+      )}
+
+      {mode === 'recoveryCodes' && (
+        <TwoFactorRecoveryCodesReveal recoveryCodes={recoveryCodes} onDone={handleDone} />
+      )}
+
+      {mode === 'disable' && (
+        <TwoFactorDisableFlow onCancel={() => setMode('view')} onDisabled={handleDone} />
+      )}
+    </>
+  );
+
+  const toggleButton =
+    enabled ? (
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full transition-transform motion-safe:active:scale-[0.98] sm:w-auto"
+        onClick={() => setMode('disable')}
+      >
+        ปิดใช้งาน 2FA
+      </Button>
+    ) : (
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full transition-transform motion-safe:active:scale-[0.98] sm:w-auto"
+        onClick={() => setMode('setup')}
+      >
+        เปิดใช้งาน 2FA
+      </Button>
+    );
+
+  const title = 'ยืนยันตัวตนสองขั้นตอน (2FA)';
+  const description =
+    'ใช้แอปยืนยันตัวตน (เช่น Google Authenticator, Authy) เพิ่มความปลอดภัยตอนเข้าสู่ระบบ';
+
+  if (embedded) {
+    return (
+      <SecurityCard
+        icon={ShieldCheck}
+        title={title}
+        description={description}
+        attention={mode === 'view' && !enabled}
+        className={mode !== 'view' ? 'lg:col-span-2' : undefined}
+        status={
+          mode === 'view' ? (
+            <SecurityStatus
+              tone={enabled ? 'success' : 'warning'}
+              label={enabled ? 'เปิดใช้งานแล้ว' : 'ยังไม่ได้เปิดใช้งาน'}
+              live={enabled}
+            />
+          ) : undefined
+        }
+        action={mode === 'view' ? toggleButton : undefined}
+      >
+        {mode !== 'view' ? <div className="space-y-4">{flows}</div> : null}
+      </SecurityCard>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle className={embedded ? 'text-base' : undefined}>
-              ยืนยันตัวตนสองขั้นตอน (2FA)
-            </CardTitle>
-            <CardDescription>ใช้แอปยืนยันตัวตน (เช่น Google Authenticator, Authy) เพิ่มความปลอดภัยตอนเข้าสู่ระบบ</CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </div>
           {mode === 'view' && (
             <Badge tone={enabled ? 'success' : 'neutral'}>{enabled ? 'เปิดอยู่' : 'ปิดอยู่'}</Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent className={cn('space-y-4', embedded && 'p-0 pt-4')}>
-        {mode === 'view' && (
-          <div>
-            {enabled ? (
-              <Button type="button" variant="outline" onClick={() => setMode('disable')}>
-                ปิดใช้งาน 2FA
-              </Button>
-            ) : (
-              <Button type="button" variant="outline" onClick={() => setMode('setup')}>
-                เปิดใช้งาน 2FA
-              </Button>
-            )}
-          </div>
-        )}
-
-        {(mode === 'setup' || mode === 'recoveryCodes') && <TwoFactorStepper mode={mode} />}
-
-        {mode === 'setup' && (
-          <TwoFactorSetupFlow
-            onCancel={() => setMode('view')}
-            onEnabled={(codes) => {
-              setRecoveryCodes(codes);
-              setMode('recoveryCodes');
-            }}
-          />
-        )}
-
-        {mode === 'recoveryCodes' && (
-          <TwoFactorRecoveryCodesReveal recoveryCodes={recoveryCodes} onDone={handleDone} />
-        )}
-
-        {mode === 'disable' && (
-          <TwoFactorDisableFlow onCancel={() => setMode('view')} onDisabled={handleDone} />
-        )}
+      <CardContent className="space-y-4">
+        {mode === 'view' && <div>{toggleButton}</div>}
+        {flows}
       </CardContent>
-    </>
+    </Card>
   );
-
-  return embedded ? <div>{content}</div> : <Card>{content}</Card>;
 }
+
 
 // Purely derived from the existing `mode` state — no new state, no prop
 // drilling into the flow components below. Kept private/local since this
@@ -236,7 +276,7 @@ function TwoFactorSetupFlow({
           <button
             type="button"
             onClick={() => handleCopySecret(setupQuery.data.secret)}
-            className="shrink-0 text-slate-400 transition-colors duration-150 hover:text-brand motion-safe:active:scale-90"
+            className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-500 transition-colors duration-150 hover:text-brand motion-safe:active:scale-90"
             aria-label={secretCopied ? 'คัดลอกรหัสลับแล้ว' : 'คัดลอกรหัสลับ'}
           >
             {secretCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
@@ -269,8 +309,11 @@ function TwoFactorSetupFlow({
               </FormItem>
             )}
           />
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button type="submit" disabled={form.formState.isSubmitting || verified}>
+              {form.formState.isSubmitting && (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              )}
               {form.formState.isSubmitting ? 'กำลังยืนยัน...' : 'ยืนยันและเปิดใช้งาน'}
             </Button>
             <Button type="button" variant="ghost" onClick={onCancel} disabled={verified}>
@@ -397,8 +440,11 @@ function TwoFactorDisableFlow({
             </FormItem>
           )}
         />
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button type="submit" variant="destructive" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting && (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            )}
             {form.formState.isSubmitting ? 'กำลังปิดใช้งาน...' : 'ยืนยันปิดใช้งาน 2FA'}
           </Button>
           <Button type="button" variant="ghost" onClick={onCancel}>
