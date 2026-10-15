@@ -404,7 +404,7 @@ export interface CurriculumDashboardReport {
   areasForImprovement: RadarPoint[];
   lowestPlo: RadarPoint | null;
   lowestClos: LowestCloEntry[];
-  courseAnalytics: { courseId: string; code: string; name: string; achievementPercent: number }[];
+  courseAnalytics: { courseId: string; code: string; name: string; achievementPercent: number | null }[];
   cohortComparison: CohortPloAchievementReport[];
 }
 
@@ -1082,7 +1082,7 @@ export interface CoursePloEntry {
   ploId: string;
   code: string;
   name: string;
-  achievementPercent: number;
+  achievementPercent: number | null; // null = no data
   cloBreakdown: { cloId: string; code: string; weight: number }[];
 }
 
@@ -1129,7 +1129,7 @@ export interface InstructorCourseSummary {
   name: string;
   studentCount: number; // excludes W/I
   atRiskStudents: AtRiskStudent[]; // latest attempt C or below, worst first
-  achievementPercent: number; // % graded B or above
+  achievementPercent: number | null; // % graded B or above; null = no graded student yet
   achievementThreshold: number; // the bar achievementPercent is judged against
   gradeDistribution: Record<Grade, number>; // full raw tally incl. W/I/S/U
   clos: CloAchievementEntry[];
@@ -1247,7 +1247,7 @@ export interface CourseCloAchievementReport {
   courseId: string;
   totalStudents: number;
   achievedStudents: number;
-  achievementPercent: number;
+  achievementPercent: number | null; // null = no graded student yet (not 0%)
   // Curriculum.defaultAchievementThreshold — present even when clos is
   // empty, unlike each CloAchievementEntry.threshold.
   achievementThreshold: number;

@@ -10,7 +10,8 @@ export interface CourseCloAchievementReport {
   courseId: string;
   totalStudents: number;
   achievedStudents: number;
-  achievementPercent: number;
+  // null = no student with a final grade yet (distinct from a real 0%).
+  achievementPercent: number | null;
   // Curriculum.defaultAchievementThreshold — the course-level bar, kept
   // separate from each CloAchievementEntry.threshold (which may override
   // it per CLO). Present even when clos is empty, so a course with no CLOs

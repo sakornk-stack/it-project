@@ -839,7 +839,7 @@ export class DashboardService {
     curricula: CurriculumWithProgram[],
     coursesByCurriculum: Map<string, Course[]>,
     closByCourse: Map<string, Clo[]>,
-    achievementByCourse: Map<string, { totalStudents: number; achievementPercent: number }>,
+    achievementByCourse: Map<string, { totalStudents: number; achievementPercent: number | null }>,
   ): {
     problematicClos: ProblematicCloEntry[];
     cloBelowThreshold: Map<string, boolean>;
@@ -850,7 +850,13 @@ export class DashboardService {
     for (const curriculum of curricula) {
       for (const course of coursesByCurriculum.get(curriculum.id) ?? []) {
         const achievement = achievementByCourse.get(course.id);
-        if (!achievement || achievement.totalStudents === 0) continue;
+        if (
+          !achievement ||
+          achievement.totalStudents === 0 ||
+          achievement.achievementPercent === null
+        ) {
+          continue;
+        }
 
         for (const clo of closByCourse.get(course.id) ?? []) {
           const threshold =

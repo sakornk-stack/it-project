@@ -184,7 +184,7 @@ export class PloAchievementService {
           ploId: mapping.plo.id,
           code: mapping.plo.code,
           name: mapping.plo.name,
-          achievementPercent: 0,
+          achievementPercent: null,
           cloBreakdown: [],
         };
         entriesByPlo.set(mapping.ploId, entry);
@@ -197,6 +197,11 @@ export class PloAchievementService {
         code: clo.code,
         weight: mapping.weight,
       });
+      // No data for the course (null) is excluded from the average, not
+      // counted as 0 — it must not drag the PLO down.
+      if (cloReport.achievementPercent === null) {
+        continue;
+      }
       weightSumByPlo.set(
         mapping.ploId,
         weightSumByPlo.get(mapping.ploId)! + mapping.weight,
@@ -217,7 +222,9 @@ export class PloAchievementService {
     const plos = Array.from(entriesByPlo.values()).map((entry) => ({
       ...entry,
       achievementPercent:
-        weightedScoreSumByPlo.get(entry.ploId)! / weightSumByPlo.get(entry.ploId)!,
+        weightSumByPlo.get(entry.ploId)! > 0
+          ? weightedScoreSumByPlo.get(entry.ploId)! / weightSumByPlo.get(entry.ploId)!
+          : null,
     }));
 
     return {
@@ -547,6 +554,11 @@ export class PloAchievementService {
 
       // Every CLO of this course shares achievementPercent — there is no
       // per-CLO percent field (Phase 8 limitation, see TODO.md).
+      // A course with no graded student has no percent to rank — it is
+      // "no data", not the lowest.
+      if (achievementPercent === null) {
+        continue;
+      }
       for (const clo of closByCourse.get(course.id) ?? []) {
         if (achievementPercent < lowestAchievement) {
           lowestAchievement = achievementPercent;

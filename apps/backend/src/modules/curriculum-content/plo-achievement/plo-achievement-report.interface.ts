@@ -43,14 +43,15 @@ export interface CoursePloEntry {
   ploId: string;
   code: string;
   name: string;
-  achievementPercent: number;
+  // null = no CLO of this PLO in the course has data yet.
+  achievementPercent: number | null;
   cloBreakdown: { cloId: string; code: string; weight: number }[];
 }
 
 export interface CoursePloAchievementReport {
   courseId: string;
-  // Pass-through from Phase 8's course-level %.
-  achievementPercent: number;
+  // Pass-through from Phase 8's course-level %; null = no data.
+  achievementPercent: number | null;
   plos: CoursePloEntry[];
 }
 
@@ -82,7 +83,8 @@ export interface CourseAnalyticsEntry {
   courseId: string;
   code: string;
   name: string;
-  achievementPercent: number;
+  // null = no student with a final grade in this course yet.
+  achievementPercent: number | null;
 }
 
 export interface CurriculumPloAchievementReport {

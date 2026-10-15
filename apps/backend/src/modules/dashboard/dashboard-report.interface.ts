@@ -70,7 +70,8 @@ export interface InstructorCourseSummary {
   // Latest attempt graded C or below (AT_RISK_GRADES), worst first.
   atRiskStudents: AtRiskStudent[];
   // "% B ขึ้นไป" per §30 — pass-through of Phase 8's course-level %.
-  achievementPercent: number;
+  // null = no student with a final grade yet.
+  achievementPercent: number | null;
   // The bar achievementPercent is judged against, so the UI never has to
   // invent its own fixed bands.
   achievementThreshold: number;

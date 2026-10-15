@@ -60,7 +60,7 @@ export class CloAchievementService {
           code: clo.code,
           description: clo.description,
           threshold,
-          isAchieved: achievementPercent >= threshold,
+          isAchieved: achievementPercent !== null && achievementPercent >= threshold,
         };
       }),
     };
@@ -80,7 +80,9 @@ export class CloAchievementService {
   ): {
     totalStudents: number;
     achievedStudents: number;
-    achievementPercent: number;
+    // null = nobody has a final grade yet (no data) — never 0, which
+    // would read as "everyone failed".
+    achievementPercent: number | null;
   } {
     let totalStudents = 0;
     let achievedStudents = 0;
@@ -98,7 +100,7 @@ export class CloAchievementService {
       totalStudents,
       achievedStudents,
       achievementPercent:
-        totalStudents > 0 ? (achievedStudents / totalStudents) * 100 : 0,
+        totalStudents > 0 ? (achievedStudents / totalStudents) * 100 : null,
     };
   }
 }
