@@ -49,18 +49,18 @@ export function InstructorCourseGridSkeleton() {
 export function InstructorCourseTimelineSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <Skeleton className="h-6 w-48" />
-        <div className="space-y-2 rounded-md border border-slate-200 p-3">
-          {Array.from({ length: 3 }).map((_, rowIndex) => (
-            <div key={rowIndex} className="flex min-h-11 items-center justify-between gap-2">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          ))}
-        </div>
+      <Skeleton className="h-7 w-56" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
       </div>
-      <Skeleton className="h-14 w-full rounded-lg" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-64 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-16 w-full rounded-xl" />
     </div>
   );
 }

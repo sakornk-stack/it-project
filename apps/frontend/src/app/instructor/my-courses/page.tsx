@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchInstructorCourseTimeline } from '@/lib/api/instructor';
 import {
@@ -16,15 +15,19 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { InstructorCourseTimelineSkeleton } from '@/components/instructor/instructor-dashboard-skeleton';
-import { TermCourseList, TermHeading } from '@/components/instructor/instructor-course-timeline';
+import {
+  TermCourseList,
+  TermHeading,
+  TermSummaryStrip,
+} from '@/components/instructor/instructor-course-timeline';
 import { PageHeader } from '@/components/layout/page-header';
-import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
+import { CollapsibleCard } from '@/components/instructor/section-card';
+import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -100,44 +103,51 @@ function InstructorMyCoursesContent() {
         {latest && (
           <Reveal index={1}>
             <PageSection
-              title={`เทอมล่าสุด — ${termLabel(latest)} · ${latest.semester.courses.length} วิชา`}
-              titleClassName={TEXT_SECTION}
-              actions={
-                <Button asChild variant="outline">
-                  <Link href="/instructor/dashboard">
-                    ดูผลการเรียนของแต่ละวิชา
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
+              title={
+                <span className="flex flex-wrap items-center gap-2">
+                  เทอมล่าสุด
+                  <Badge tone="neutral" className="whitespace-nowrap px-2.5 text-[13px]">
+                    {termLabel(latest)}
+                  </Badge>
+                </span>
               }
             >
-              <TermCourseList semester={latest.semester} academicYear={latest.academicYear} />
+              <div className="space-y-6">
+                <TermSummaryStrip courses={latest.semester.courses} />
+                <TermCourseList semester={latest.semester} academicYear={latest.academicYear} />
+              </div>
             </PageSection>
           </Reveal>
         )}
 
         {latest && previousYears.length > 0 && (
           <Reveal index={2}>
-            <CollapsibleSection
+            <CollapsibleCard
+              icon={History}
               title="เทอมก่อนหน้า"
-              meta={
-                <span className="text-sm font-normal text-muted-foreground">
-                  {previousCount.courses} วิชา · {previousCount.semesters} เทอม
+              description={
+                <span className="flex flex-wrap items-center gap-2">
+                  <Badge tone="neutral" className="whitespace-nowrap">
+                    {previousCount.courses} วิชา
+                  </Badge>
+                  <Badge tone="neutral" className="whitespace-nowrap">
+                    {previousCount.semesters} เทอม
+                  </Badge>
                 </span>
               }
+              defaultOpen={false}
             >
               <div className="space-y-6">
-                <p className="text-xs text-muted-foreground">
-                  แสดงตามประวัติการลงทะเบียนของนิสิตในแต่ละวิชา หากเพิ่งได้รับมอบหมายให้สอน
-                  อาจเห็นเทอมย้อนหลังที่คุณไม่ได้เป็นผู้สอนด้วย
-                </p>
                 {previousYears.map((yearGroup) => (
                   <div key={yearGroup.academicYear} className="space-y-3">
-                    <h2 className="text-base font-semibold text-primary">
+                    <h3 className="text-sm font-semibold text-primary">
                       ปีการศึกษา {yearGroup.academicYear}
-                    </h2>
+                    </h3>
                     {yearGroup.semesters.map((semester) => (
-                      <div key={semester.semesterId} className="space-y-2">
+                      <div
+                        key={semester.semesterId}
+                        className="space-y-2 border-l-2 border-slate-200 pl-4"
+                      >
                         <TermHeading term={semester.semesterTerm} count={semester.courses.length} />
                         <TermCourseList
                           semester={semester}
@@ -149,7 +159,7 @@ function InstructorMyCoursesContent() {
                   </div>
                 ))}
               </div>
-            </CollapsibleSection>
+            </CollapsibleCard>
           </Reveal>
         )}
       </DashboardShell>
