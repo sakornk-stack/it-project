@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Users } from 'lucide-react';
 import type { AtRiskStudent } from '@eduanalyze-ai/shared-types';
 import { formatSemesterLabel } from '@/lib/grade-label';
-import { LOW_GRADE_LABEL, LOW_GRADE_RULE, isLowGrade } from '@/lib/low-grade';
+import { LOW_GRADE_LABEL, LOW_GRADE_RULE, NO_LOW_GRADE, isLowGrade } from '@/lib/low-grade';
 import { Badge } from '@/components/ui/badge';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { GradeChip } from './grade-chip';
@@ -35,7 +35,7 @@ export function CourseFollowUpList({
       description={LOW_GRADE_RULE}
     >
       {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">ยังไม่มีนิสิตที่มีเกรด D+ ลงไปในวิชานี้</p>
+        <p className="text-sm text-muted-foreground">{NO_LOW_GRADE}ในวิชานี้</p>
       ) : (
         <>
           <ul className="-mx-2 divide-y divide-slate-100">

@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Expects to be rendered inside a <Form> whose schema has facultyId/

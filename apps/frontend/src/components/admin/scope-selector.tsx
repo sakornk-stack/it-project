@@ -8,7 +8,7 @@ import { fetchDepartments, fetchFaculties, fetchPrograms } from '@/lib/api/organ
 import { allowedLevels, type AllowedScopeTargets } from '@/lib/admin-scope-options';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
 import { Skeleton } from '@/components/ui/skeleton';
 import {

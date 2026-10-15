@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthHeading } from '@/components/auth/auth-heading';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import {
   Form,
@@ -35,7 +36,7 @@ const BRAND_COPY = {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<AuthLoadingScreen />}>
       <ResetPasswordForm />
     </Suspense>
   );

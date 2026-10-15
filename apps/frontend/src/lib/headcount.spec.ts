@@ -5,7 +5,7 @@ describe('describeHeadcount', () => {
     expect(describeHeadcount(2, 5)).toEqual({
       value: 2,
       unit: 'คน',
-      note: '5 ที่นั่ง เพราะบางคนเรียนหลายวิชา',
+      note: 'การลงทะเบียน 5 รายการ เพราะบางคนเรียนหลายวิชา',
     });
   });
 
@@ -14,13 +14,13 @@ describe('describeHeadcount', () => {
   });
 
   it('falls back to seats only when the people count is not available', () => {
-    expect(describeHeadcount(null, 5)).toEqual({ value: 5, unit: 'ที่นั่ง', note: null });
-    expect(describeHeadcount(Number.NaN, 5)).toEqual({ value: 5, unit: 'ที่นั่ง', note: null });
+    expect(describeHeadcount(null, 5)).toEqual({ value: 5, unit: 'รายการ', note: null });
+    expect(describeHeadcount(Number.NaN, 5)).toEqual({ value: 5, unit: 'รายการ', note: null });
   });
 
   it('handles nobody enrolled and never prints NaN', () => {
     expect(describeHeadcount(0, 0)).toEqual({ value: 0, unit: 'คน', note: null });
     const h = describeHeadcount(null, Number.NaN);
-    expect(h).toEqual({ value: 0, unit: 'ที่นั่ง', note: null });
+    expect(h).toEqual({ value: 0, unit: 'รายการ', note: null });
   });
 });

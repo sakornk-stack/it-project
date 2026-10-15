@@ -27,7 +27,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
-import { GpaScale } from '@/components/staff/gpa-scale';
+import { GpaScale } from '@/components/ui/gpa-scale';
 import { MetricCard } from '@/components/staff/metric-card';
 import {
   GRADE_SAVES_NOW_DETAIL,

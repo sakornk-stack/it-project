@@ -67,7 +67,7 @@ describe('predominantYearLevel', () => {
 describe('buildTimelineSummary', () => {
   it('normal: latest term, course count, seats and year level', () => {
     expect(buildTimelineSummary(years)).toBe(
-      'ภาคต้น / 2568: สอน 3 วิชา · ลงทะเบียน 15 ที่นั่ง (ถ้าเรียนหลายวิชาจะนับซ้ำ) · ส่วนใหญ่ปี 2',
+      'ภาคต้น / 2568: สอน 3 วิชา · การลงทะเบียน 15 รายการ (นับต่อวิชา) · ส่วนใหญ่ปี 2',
     );
   });
 

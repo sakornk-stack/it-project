@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Compass } from 'lucide-react';
 import type { CareerFitEntry } from '@eduanalyze-ai/shared-types';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { LEVEL_SHORT, RankBadge } from '@/components/career-fit/career-fit-card';
 import { Reveal } from '@/components/layout/reveal';
 import { PageSection } from '@/components/layout/page-section';

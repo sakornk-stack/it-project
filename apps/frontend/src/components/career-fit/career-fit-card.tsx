@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, CircleCheck, CircleDashed, CircleDot, Compass } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { CareerFitEntry, CareerFitLevel } from '@eduanalyze-ai/shared-types';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';

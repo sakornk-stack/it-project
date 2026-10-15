@@ -25,7 +25,7 @@ import { UserDangerZone, UserStatusSection } from '@/components/admin/user-statu
 import { UserRolesSection } from '@/components/admin/user-roles-section';
 import { UserScopesSection } from '@/components/admin/user-scopes-section';
 import { describeApiError } from '@/lib/describe-api-error';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { ListSkeleton, Skeleton } from '@/components/ui/skeleton';

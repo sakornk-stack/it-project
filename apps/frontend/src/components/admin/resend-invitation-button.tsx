@@ -5,7 +5,7 @@ import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import { resendInvitation } from '@/lib/api/user-management';
 import { canResendInvitation, describeResendError } from '@/lib/resend-invitation';
 import { useToast } from '@/lib/toast-context';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 

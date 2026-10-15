@@ -1,9 +1,15 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useId, type KeyboardEvent } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
-import { fetchCourseCloAchievement, fetchCourseRoster } from '@/lib/api/instructor';
-import { fetchCourseEvidenceCoverage } from '@/lib/evidence-coverage';
+import {
+  invalidateAfterGradeChange,
+  useCourseCloAchievement,
+  useCourseEvidenceCoverage,
+  useCourseRoster,
+} from '@/lib/instructor-queries';
+import { nextTabIndex } from '@/lib/tab-keys';
 import { cn } from '@/lib/utils';
 import { buildCourseOverviews } from '@/lib/instructor-overview';
 import { Reveal } from '@/components/layout/reveal';
@@ -65,36 +71,39 @@ export function InstructorDetailPanel({
   initialSelectedStudentId?: string;
 }) {
   const queryClient = useQueryClient();
+  const tabsId = useId();
+  const tabId = (key: InstructorTab) => `${tabsId}-tab-${key}`;
+  const panelId = (key: InstructorTab) => `${tabsId}-panel-${key}`;
+
+  // Arrow keys move focus along the tabs; Enter or Space (the button's own click)
+  // opens the focused one, so moving along does not add a history entry per key.
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const next = nextTabIndex(index, event.key, TABS.length);
+    if (next === null) return;
+    event.preventDefault();
+    document.getElementById(tabId(TABS[next].key))?.focus();
+  }
 
   function handleTabChange(tab: InstructorTab) {
     if (tab !== activeTab) onTabChange(tab);
   }
 
-  const cloQuery = useQuery({
-    queryKey: ['course-clo-achievement', course.courseId],
-    queryFn: () => fetchCourseCloAchievement(course.courseId),
+  const cloQuery = useCourseCloAchievement(course.courseId, {
     enabled: isInstructor && activeTab === 'clo',
   });
 
-  const rosterQuery = useQuery({
-    queryKey: ['course-roster', course.courseId],
-    queryFn: () => fetchCourseRoster(course.courseId),
+  const rosterQuery = useCourseRoster(course.courseId, {
     enabled: isInstructor && (activeTab === 'students' || activeTab === 'clo'),
   });
 
   // Evidence coverage sits beside the grade-based numbers on the CLO tab so
   // the two are never confused for one another.
-  const evidenceCoverageQuery = useQuery({
-    queryKey: ['course-evidence-coverage', course.courseId],
-    queryFn: () => fetchCourseEvidenceCoverage(course.courseId),
+  const evidenceCoverageQuery = useCourseEvidenceCoverage(course.courseId, {
     enabled: isInstructor && activeTab === 'clo',
   });
 
   function handleGradebookChanged() {
-    void queryClient.invalidateQueries({
-      queryKey: ['course-roster', course.courseId],
-    });
-    void queryClient.invalidateQueries({ queryKey: ['instructor-dashboard'] });
+    invalidateAfterGradeChange(queryClient, course.courseId);
   }
 
   return (
@@ -105,73 +114,91 @@ export function InstructorDetailPanel({
 
       {/* Tabs sit on the page itself; every section below is a card of its own. */}
       <Reveal index={1}>
-        <nav aria-label="หัวข้อของรายวิชา" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <div className="flex min-w-max gap-x-2 border-b border-slate-200">
-            {TABS.map(({ key, label }) => (
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <div
+            role="tablist"
+            aria-label="หัวข้อของรายวิชา"
+            className="flex min-w-max gap-x-2 border-b border-slate-200"
+          >
+            {TABS.map(({ key, label }, index) => (
               <button
                 key={key}
+                id={tabId(key)}
                 type="button"
-                aria-current={activeTab === key ? 'true' : undefined}
+                role="tab"
+                aria-selected={activeTab === key}
+                aria-controls={panelId(key)}
+                tabIndex={activeTab === key ? 0 : -1}
                 onClick={() => handleTabChange(key)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={cn(
                   '-mb-px min-h-11 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                   activeTab === key
                     ? 'border-brand text-brand'
-                    : 'border-transparent text-slate-500 hover:text-primary',
+                    : 'border-transparent text-muted-foreground hover:text-primary',
                 )}
               >
                 {label}
               </button>
             ))}
           </div>
-        </nav>
+        </div>
       </Reveal>
 
       {activeTab === 'overview' && (
-        <Reveal index={2}>
-          <CourseOverview
-            course={course}
-            aside={
-              <>
-                <CourseFollowUpList courseId={course.courseId} students={course.atRiskStudents} />
-                <CourseInfoSection course={course} />
-              </>
-            }
-          />
-        </Reveal>
+        <div role="tabpanel" id={panelId('overview')} aria-labelledby={tabId('overview')}>
+          <Reveal index={2}>
+            <CourseOverview
+              course={course}
+              aside={
+                <>
+                  <CourseFollowUpList courseId={course.courseId} students={course.atRiskStudents} />
+                  <CourseInfoSection course={course} />
+                </>
+              }
+            />
+          </Reveal>
+        </div>
       )}
 
       {activeTab === 'clo' && (
-        <Reveal index={2}>
-          <CloAchievementSection
-            gradedPeople={buildCourseOverviews([course])[0].stats.graded}
-            achievementPercent={course.achievementPercent}
-            clos={course.clos}
-            plos={course.plos}
-            courseAssessment={course.courseAssessment}
-            detail={cloQuery.data}
-            isLoading={cloQuery.isLoading}
-            isError={cloQuery.isError}
-            evidenceCoverage={evidenceCoverageQuery.data}
-            evidenceTotal={rosterQuery.data?.length}
-            evidenceError={evidenceCoverageQuery.isError}
-          />
-        </Reveal>
+        <div role="tabpanel" id={panelId('clo')} aria-labelledby={tabId('clo')}>
+          <Reveal index={2}>
+            <CloAchievementSection
+              gradedPeople={buildCourseOverviews([course])[0].stats.graded}
+              achievementPercent={course.achievementPercent}
+              clos={course.clos}
+              plos={course.plos}
+              courseAssessment={course.courseAssessment}
+              detail={cloQuery.data}
+              isLoading={cloQuery.isLoading}
+              isError={cloQuery.isError}
+              onRetry={() => void cloQuery.refetch()}
+              evidenceCoverage={evidenceCoverageQuery.data}
+              evidenceTotal={rosterQuery.data?.length}
+              evidenceError={evidenceCoverageQuery.isError}
+              onEvidenceRetry={() => void evidenceCoverageQuery.refetch()}
+            />
+          </Reveal>
+        </div>
       )}
 
       {activeTab === 'students' && (
-        <Reveal index={2}>
-          <StudentRosterTable
-            courseId={course.courseId}
-            courseCode={course.code}
-            clos={course.clos}
-            roster={rosterQuery.data}
-            isLoading={rosterQuery.isLoading}
-            isError={rosterQuery.isError}
-            onChanged={isInstructor ? handleGradebookChanged : undefined}
-            initialSelectedStudentId={initialSelectedStudentId}
-          />
-        </Reveal>
+        <div role="tabpanel" id={panelId('students')} aria-labelledby={tabId('students')}>
+          <Reveal index={2}>
+            <StudentRosterTable
+              courseId={course.courseId}
+              courseCode={course.code}
+              clos={course.clos}
+              roster={rosterQuery.data}
+              isLoading={rosterQuery.isLoading}
+              isError={rosterQuery.isError}
+              onRetry={() => void rosterQuery.refetch()}
+              onChanged={isInstructor ? handleGradebookChanged : undefined}
+              initialSelectedStudentId={initialSelectedStudentId}
+            />
+          </Reveal>
+        </div>
       )}
     </>
   );

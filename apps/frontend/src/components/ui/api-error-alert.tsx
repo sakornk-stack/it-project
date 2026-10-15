@@ -18,7 +18,13 @@ export function ApiErrorAlert({
         <div className="space-y-2">
           <AlertDescription>{message}</AlertDescription>
           {onRetry && (
-            <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="[@media(pointer:coarse)]:min-h-11"
+              onClick={onRetry}
+            >
               ลองอีกครั้ง
             </Button>
           )}

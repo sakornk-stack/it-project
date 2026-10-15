@@ -14,7 +14,7 @@ import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import type { AccessLimitation } from '@/lib/admin-user-guard';
 import { formatThaiDate } from '@/lib/admin-users';
 import { cn } from '@/lib/utils';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { Card, CardContent } from '@/components/ui/card';
 
 // formatThaiDate answers an em dash for a missing/invalid date; this card shows a plain "-".

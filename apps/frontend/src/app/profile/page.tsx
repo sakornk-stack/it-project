@@ -35,7 +35,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AccountSecurityCard } from '@/components/profile/account-security-card';
 import { primaryRoleFor, ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { CopyEmailButton } from '@/components/admin/user-profile-card';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -170,7 +170,7 @@ function ProfileSummaryCard({
           <div className="min-w-0 space-y-3">
             <InitialsAvatar
               name={fullName}
-              className="h-20 w-20 border-0 bg-gradient-to-br from-brand to-brand/70 text-3xl text-white shadow-md ring-2 ring-card dark:text-brand-foreground dark:shadow-[0_0_22px_hsl(var(--brand)/0.25)] sm:h-24 sm:w-24 sm:text-4xl"
+              className="h-20 w-20 border-0 bg-gradient-to-br from-brand to-brand/70 text-3xl text-brand-foreground shadow-md ring-2 ring-card dark:shadow-[0_0_22px_hsl(var(--brand)/0.25)] sm:h-24 sm:w-24 sm:text-4xl"
             />
             <h2
               title={fullName}

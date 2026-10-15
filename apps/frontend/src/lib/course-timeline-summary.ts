@@ -95,7 +95,7 @@ export function buildTimelineSummary(
   const seats = courses.reduce((sum, c) => sum + (isCount(c.studentCount) ? c.studentCount : 0), 0);
   if (seats > 0) {
     // One course: seats are people. Several: a student in two of them counts twice here.
-    parts.push(courses.length > 1 ? `ลงทะเบียน ${seats} ที่นั่ง (ถ้าเรียนหลายวิชาจะนับซ้ำ)` : `ลงทะเบียน ${seats} คน`);
+    parts.push(courses.length > 1 ? `การลงทะเบียน ${seats} รายการ (นับต่อวิชา)` : `นิสิต ${seats} คน`);
   }
   const level = predominantYearLevel(courses);
   if (level !== null) parts.push(`ส่วนใหญ่${yearLevelLabel(level)}`);

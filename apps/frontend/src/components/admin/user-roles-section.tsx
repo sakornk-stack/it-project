@@ -14,9 +14,9 @@ import { AddButton } from '@/components/admin/add-button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RevokeButton } from './revoke-button';
 import { describeApiError } from '@/lib/describe-api-error';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Plus, ShieldCheck } from 'lucide-react';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import {

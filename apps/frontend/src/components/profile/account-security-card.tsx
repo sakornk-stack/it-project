@@ -4,7 +4,7 @@ import { useId, useState } from 'react';
 import { ChevronDown, KeyRound, ShieldCheck, Timer } from 'lucide-react';
 import { ChangePasswordForm } from '@/components/auth/change-password-form';
 import { TwoFactorSection } from '@/components/auth/two-factor-section';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { SecurityCard, SecurityNote } from '@/components/profile/security-row';
 import { Button } from '@/components/ui/button';
 import { SESSION_TIMEOUT_CONFIG } from '@/lib/session-timeout-config';
@@ -17,14 +17,16 @@ const MINUTE_MS = 60_000;
 export function AccountSecurityCard() {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const panelId = useId();
+  const headingId = useId();
   // From the same config the idle guard runs on, so the line never drifts from what happens.
   const idleMinutes = SESSION_TIMEOUT_CONFIG.idleMs / MINUTE_MS;
   const showIdle = Number.isFinite(idleMinutes) && idleMinutes > 0;
 
   return (
-    <section className="space-y-4">
+    <section aria-labelledby={headingId} className="space-y-4">
       <DetailSectionHeader
         className="p-0 sm:p-0"
+        headingId={headingId}
         icon={ShieldCheck}
         title="ความปลอดภัยของบัญชี"
         description="จัดการรหัสผ่านและการยืนยันตัวตนตอนเข้าสู่ระบบ"

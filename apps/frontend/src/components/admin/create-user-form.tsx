@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { describeApiError } from '@/lib/describe-api-error';
-import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/ui/api-error-alert';
 import { ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {

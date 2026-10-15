@@ -7,7 +7,8 @@ import type {
 import { dataLevelOf, SPARSE_LABEL } from '@/lib/course-snapshot';
 import { formatSemesterLabel } from '@/lib/grade-label';
 import { predominantYearLevel, yearLevelLabel } from '@/lib/course-timeline-summary';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { BADGE_TONE_CLASSES, BAR_TONE_CLASSES } from '@/lib/tone';
+import { cn } from '@/lib/utils';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Badge } from '@/components/ui/badge';
@@ -34,18 +35,29 @@ const STRIP_TONE: Record<'ok' | 'low' | 'insufficient', string> = {
 };
 
 // The whole card is the link (44px+ tall). A thin strip on top carries the data level;
-// the two figures are real counts (this term, all terms).
-function CourseCard({ course }: Readonly<{ course: InstructorCourseTimelineCourse }>) {
+// the two figures are real counts of people: the term shown (always named), all terms.
+function CourseCard({
+  course,
+  termText,
+}: Readonly<{ course: InstructorCourseTimelineCourse; termText: string }>) {
   const level = dataLevelOf(course.gradedCount);
   return (
     <Link
       href={`/instructor/courses/${course.courseId}`}
-      className={`${CARD} interactive-card relative flex h-full min-h-11 flex-col overflow-hidden bg-gradient-to-b from-card to-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2`}
+      className={cn(
+        CARD,
+        'interactive-card relative flex h-full min-h-11 flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+      )}
     >
       <span aria-hidden="true" className={`h-1 w-full ${STRIP_TONE[level]}`} />
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-2">
-          <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
+          <span
+            className={cn(
+              'inline-flex rounded-md border px-2 py-0.5 font-mono text-xs',
+              BADGE_TONE_CLASSES.neutral,
+            )}
+          >
             {course.code}
           </span>
           <p
@@ -64,14 +76,14 @@ function CourseCard({ course }: Readonly<{ course: InstructorCourseTimelineCours
               {course.studentCount}
               <span className="ml-1 text-sm font-normal text-muted-foreground">คน</span>
             </dd>
-            <dt className={TEXT_LABEL}>เทอมนี้</dt>
+            <dt className={TEXT_LABEL}>นิสิต {termText}</dt>
           </div>
           <div className="px-2">
             <dd className="text-2xl font-semibold tabular-nums text-primary">
               {course.totalStudentCount}
               <span className="ml-1 text-sm font-normal text-muted-foreground">คน</span>
             </dd>
-            <dt className={TEXT_LABEL}>ทั้งหมด (ทุกเทอม)</dt>
+            <dt className={TEXT_LABEL}>นิสิตทุกเทอม</dt>
           </div>
         </dl>
         <div className="flex flex-wrap items-center gap-2">
@@ -142,7 +154,7 @@ export function TermCourseList({
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {semester.courses.map((course) => (
         <li key={course.courseId}>
-          <CourseCard course={course} />
+          <CourseCard course={course} termText={termText} />
         </li>
       ))}
     </ul>
@@ -151,22 +163,27 @@ export function TermCourseList({
 
 export function TermHeading({ term, count }: Readonly<{ term: string; count: number }>) {
   return (
-    <h4 className="text-sm font-medium text-muted-foreground">
+    <h3 className="text-sm font-medium text-muted-foreground">
       {formatSemesterLabel(term, undefined)} · {count} วิชา
-    </h4>
+    </h3>
   );
 }
 
-// Four figures: courses, students this term, students over all terms, year level. Students
-// are counted per course, so one in two courses counts twice; the caption says so.
+// Four figures: courses, the term shown, all terms, year level. With several courses the
+// two counts are per course (a student in two courses counts twice), so they are worded as
+// registrations, not people.
 export function TermSummaryStrip({
   courses,
-}: Readonly<{ courses: readonly InstructorCourseTimelineCourse[] }>) {
+  termText,
+}: Readonly<{ courses: readonly InstructorCourseTimelineCourse[]; termText: string }>) {
   const sum = (pick: (c: InstructorCourseTimelineCourse) => number) =>
     courses.reduce((total, c) => total + (pick(c) > 0 ? pick(c) : 0), 0);
   const termSeats = sum((c) => c.studentCount);
   const allSeats = sum((c) => c.totalStudentCount);
-  const overlap = courses.length > 1 ? 'ถ้าเรียนหลายวิชาจะนับซ้ำ' : undefined;
+  const perCourse = courses.length > 1;
+  const unit = perCourse ? 'รายการ' : 'คน';
+  const noun = perCourse ? 'การลงทะเบียน' : 'นิสิต';
+  const overlap = perCourse ? 'นับต่อวิชา ถ้าเรียนหลายวิชาจะนับซ้ำ' : undefined;
   const level = predominantYearLevel(courses);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -183,20 +200,20 @@ export function TermSummaryStrip({
         dense
         interactive={false}
         icon={Users}
-        tone="success"
-        label="นิสิตเทอมนี้"
+        tone="primary"
+        label={`${noun} ${termText}`}
         value={<AnimatedNumber value={termSeats} />}
-        suffix="คน"
+        suffix={unit}
         caption={overlap}
       />
       <StatCard
         dense
         interactive={false}
         icon={UsersRound}
-        tone="warning"
-        label="นิสิตทั้งหมด (ทุกเทอม)"
+        tone="neutral"
+        label={`${noun}ทุกเทอม`}
         value={<AnimatedNumber value={allSeats} />}
-        suffix="คน"
+        suffix={unit}
         caption={overlap}
       />
       <StatCard

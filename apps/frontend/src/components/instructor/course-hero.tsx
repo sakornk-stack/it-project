@@ -2,10 +2,9 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, CalendarDays, CircleDashed, GraduationCap } from 'lucide-react';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
-import { fetchInstructorCourseTimeline } from '@/lib/api/instructor';
+import { useInstructorCourseTimeline } from '@/lib/instructor-queries';
 import {
   DATA_SOURCE_NOTE,
   SPARSE_LABEL,
@@ -36,10 +35,7 @@ export function CourseHero({
   detailHref?: string;
   switcher?: ReactNode;
 }>) {
-  const timelineQuery = useQuery({
-    queryKey: ['instructor-course-timeline'],
-    queryFn: fetchInstructorCourseTimeline,
-  });
+  const timelineQuery = useInstructorCourseTimeline();
   const termInfo = timelineQuery.data
     ? courseTermInfo(timelineQuery.data.years, course.courseId)
     : null;
@@ -75,7 +71,7 @@ export function CourseHero({
   const actions = (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row lg:shrink-0 lg:justify-end">
       <Button asChild className="min-h-11 w-full sm:w-auto">
-        <Link href={`${base}?tab=students`}>รายชื่อนิสิต ({stats.seats})</Link>
+        <Link href={`${base}?tab=students`}>รายชื่อนิสิต {stats.seats} คน</Link>
       </Button>
     </div>
   );

@@ -11,7 +11,7 @@ import { OrgEntityForm } from './org-entity-form';
 import { OrgNodeMenu } from './org-node-menu';
 import { describeApiError } from '@/lib/describe-api-error';
 import { orgWriteErrors } from '@/lib/api-error-presets';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { DeactivateConfirm } from '@/components/admin/deactivate-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

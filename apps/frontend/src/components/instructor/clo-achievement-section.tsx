@@ -9,6 +9,8 @@ import type {
 } from '@eduanalyze-ai/shared-types';
 import { SPARSE_SUMMARY, dataLevelOf } from '@/lib/course-snapshot';
 import { ploProgressBarColorClassName } from '@/lib/plo-color';
+import { TEXT_TONE_CLASSES } from '@/lib/tone';
+import { cn } from '@/lib/utils';
 import {
   NO_CLO_DATA_HINT,
   NO_CLO_DATA_LABEL,
@@ -16,6 +18,7 @@ import {
   formatCloPercent,
   hasCloPercent,
 } from '@/lib/clo-percent';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -55,9 +58,11 @@ export function CloAchievementSection({
   detail,
   isLoading,
   isError,
+  onRetry,
   evidenceCoverage,
   evidenceTotal,
   evidenceError,
+  onEvidenceRetry,
 }: Readonly<{
   // People counted in the B-or-above share (W and I left out): how much the
   // share can be trusted.
@@ -70,6 +75,7 @@ export function CloAchievementSection({
   detail: CourseCloAchievementReport | undefined;
   isLoading: boolean;
   isError: boolean;
+  onRetry: () => void;
   // Per-CLO count of students with a graded score. Sits *beside* the
   // grade-based percentages above — never replaces them: there is no
   // course-level evidence endpoint, and computing that percentage in the
@@ -78,6 +84,7 @@ export function CloAchievementSection({
   evidenceCoverage: Map<string, number> | undefined;
   evidenceTotal: number | undefined;
   evidenceError: boolean;
+  onEvidenceRetry: () => void;
 }>) {
   const level = dataLevelOf(gradedPeople);
   const sortedClos = useMemo(
@@ -86,7 +93,10 @@ export function CloAchievementSection({
   );
 
   const scoredAssessmentClos = useMemo(
-    () => courseAssessment.clos.filter((c) => c.averageScore !== null && c.scoreCount > 0),
+    () =>
+      courseAssessment.clos.flatMap((c) =>
+        c.averageScore !== null && c.scoreCount > 0 ? [{ ...c, averageScore: c.averageScore }] : [],
+      ),
     [courseAssessment.clos],
   );
   const lowestAssessmentCloId = useMemo(
@@ -94,7 +104,7 @@ export function CloAchievementSection({
       scoredAssessmentClos.length === 0
         ? null
         : scoredAssessmentClos.reduce(
-            (min, c) => (c.averageScore! < min.averageScore! ? c : min),
+            (min, c) => (c.averageScore < min.averageScore ? c : min),
             scoredAssessmentClos[0],
           ).cloId,
     [scoredAssessmentClos],
@@ -104,7 +114,7 @@ export function CloAchievementSection({
       scoredAssessmentClos.length === 0
         ? null
         : scoredAssessmentClos.reduce(
-            (max, c) => (c.averageScore! > max.averageScore! ? c : max),
+            (max, c) => (c.averageScore > max.averageScore ? c : max),
             scoredAssessmentClos[0],
           ).cloId,
     [scoredAssessmentClos],
@@ -150,7 +160,10 @@ export function CloAchievementSection({
         )}
         {isLoading && <Skeleton className="h-3 w-40" />}
         {isError && (
-          <p className="text-xs text-destructive">ไม่สามารถโหลดจำนวนนิสิตที่ได้ B ขึ้นไปได้</p>
+          <ApiErrorAlert
+            message="ไม่สามารถโหลดจำนวนนิสิตที่ได้ B ขึ้นไปได้ กรุณาลองใหม่อีกครั้ง"
+            onRetry={onRetry}
+          />
         )}
         {detail && (
           <p className="text-xs text-muted-foreground">
@@ -198,7 +211,10 @@ export function CloAchievementSection({
           ))}
         </ul>
         {evidenceError && (
-          <p className="text-xs text-destructive">โหลดจำนวนคะแนนของแต่ละข้อไม่สำเร็จ</p>
+          <ApiErrorAlert
+            message="ไม่สามารถโหลดจำนวนคะแนนของแต่ละข้อได้ กรุณาลองใหม่อีกครั้ง"
+            onRetry={onEvidenceRetry}
+          />
         )}
       </SectionCard>
 
@@ -243,14 +259,18 @@ export function CloAchievementSection({
                   <span className="text-muted-foreground">
                     {c.code}
                     {c.cloId === highestAssessmentCloId && (
-                      <span className="ml-1.5 text-xs text-emerald-600">(สูงสุด)</span>
+                      <span className={cn('ml-1.5 text-xs', TEXT_TONE_CLASSES.success)}>
+                        (สูงสุด)
+                      </span>
                     )}
                     {c.cloId === lowestAssessmentCloId && c.cloId !== highestAssessmentCloId && (
-                      <span className="ml-1.5 text-xs text-amber-600">(ต่ำสุด)</span>
+                      <span className={cn('ml-1.5 text-xs', TEXT_TONE_CLASSES.warning)}>
+                        (ต่ำสุด)
+                      </span>
                     )}
                   </span>
                   <span className="font-medium tabular-nums text-primary">
-                    {c.averageScore!.toFixed(1)}
+                    {c.averageScore.toFixed(1)}
                   </span>
                 </div>
               ))}

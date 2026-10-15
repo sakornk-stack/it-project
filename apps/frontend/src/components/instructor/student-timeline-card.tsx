@@ -1,15 +1,15 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import type { CloAchievementEntry } from '@eduanalyze-ai/shared-types';
-import { fetchStudentTimeline } from '@/lib/api/instructor';
-import { fetchActualCloAchievement } from '@/lib/api/assessment-evidence';
+import { actualCloAchievementQuery, useStudentTimeline } from '@/lib/instructor-queries';
 import { formatPercent } from '@/lib/format-percent';
 import { gradeBadgeTone } from '@/lib/grade-badge-color';
 import { GRADE_LABELS, formatSemesterLabel } from '@/lib/grade-label';
 import { AchievementSourceBadge } from './achievement-source-badge';
 import { EvidenceCoverageBadge } from './evidence-coverage-badge';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,19 +33,13 @@ export function StudentTimelineCard({
   clos: CloAchievementEntry[];
   onClose: () => void;
 }) {
-  const query = useQuery({
-    queryKey: ['student-timeline', courseId, studentProfileId],
-    queryFn: () => fetchStudentTimeline(courseId, studentProfileId),
-  });
+  const query = useStudentTimeline(courseId, studentProfileId);
 
   // One request per CLO of this course, fired only while this card is
   // mounted (i.e. only for the one student currently selected in the
   // roster) — never fanned out across the whole class.
   const cloAchievementQueries = useQueries({
-    queries: clos.map((clo) => ({
-      queryKey: ['actual-clo-achievement', courseId, studentCourseRecordId, clo.cloId],
-      queryFn: () => fetchActualCloAchievement(courseId, studentCourseRecordId, clo.cloId),
-    })),
+    queries: clos.map((clo) => actualCloAchievementQuery(courseId, studentCourseRecordId, clo.cloId)),
   });
 
   return (
@@ -66,7 +60,10 @@ export function StudentTimelineCard({
       <CardContent>
         {query.isLoading && <ListSkeleton items={3} />}
         {query.isError && (
-          <p className="text-sm text-destructive">ไม่สามารถโหลดข้อมูลได้</p>
+          <ApiErrorAlert
+            message="ไม่สามารถโหลดผลการเรียนของนิสิตได้ กรุณาลองใหม่อีกครั้ง"
+            onRetry={() => void query.refetch()}
+          />
         )}
         {query.data && query.data.entries.length === 0 && (
           <p className="text-sm text-muted-foreground">ไม่พบวิชาที่คุณสอนนิสิตคนนี้</p>
@@ -95,6 +92,16 @@ export function StudentTimelineCard({
 
         {clos.length > 0 && (
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+            {cloAchievementQueries.some((q) => q.isError) && (
+              <ApiErrorAlert
+                message="ไม่สามารถโหลดผลเป้าการเรียนรู้บางข้อได้ กรุณาลองใหม่อีกครั้ง"
+                onRetry={() =>
+                  cloAchievementQueries.forEach((q) => {
+                    if (q.isError) void q.refetch();
+                  })
+                }
+              />
+            )}
             <p className="text-sm font-medium text-primary">
               ผลเป้าการเรียนรู้จากคะแนนที่กรอกจริง ({courseCode})
             </p>
@@ -109,7 +116,7 @@ export function StudentTimelineCard({
                     <span className="min-w-0 text-muted-foreground">{clo.code}</span>
                     {cloQuery.isLoading && <Skeleton className="h-5 w-24" />}
                     {cloQuery.isError && (
-                      <span className="text-xs text-destructive">โหลดไม่สำเร็จ</span>
+                      <span className="text-xs text-muted-foreground">โหลดไม่ได้</span>
                     )}
                     {cloQuery.data && (
                       <span className="flex flex-wrap items-center gap-2">

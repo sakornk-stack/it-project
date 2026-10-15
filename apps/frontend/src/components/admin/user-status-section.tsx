@@ -4,7 +4,7 @@ import { TriangleAlert, UserCog } from 'lucide-react';
 import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import { canPermanentlyDelete } from '@/lib/admin-user-guard';
 import { canResendInvitation } from '@/lib/resend-invitation';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { ResendInvitationButton } from '@/components/admin/resend-invitation-button';
 import { UserPermanentDeleteButton } from '@/components/admin/user-permanent-delete';
 import { Button } from '@/components/ui/button';

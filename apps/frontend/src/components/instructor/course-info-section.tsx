@@ -1,10 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen } from 'lucide-react';
 import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
-import { fetchCourses } from '@/lib/api/academic-record';
-import { fetchPrerequisites } from '@/lib/api/staff';
+import { useInstructorCourseCatalog, useInstructorPrerequisites } from '@/lib/instructor-queries';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CollapsibleCard } from './section-card';
@@ -12,14 +11,8 @@ import { CollapsibleCard } from './section-card';
 // Folded by default: reference data an instructor rarely needs. One card whose
 // header is the toggle; the facts and the prerequisites live inside it.
 export function CourseInfoSection({ course }: { course: InstructorCourseSummary }) {
-  const coursesQuery = useQuery({
-    queryKey: ['courses'],
-    queryFn: fetchCourses,
-  });
-  const prerequisitesQuery = useQuery({
-    queryKey: ['prerequisites'],
-    queryFn: fetchPrerequisites,
-  });
+  const coursesQuery = useInstructorCourseCatalog();
+  const prerequisitesQuery = useInstructorPrerequisites();
 
   const courseMap = new Map((coursesQuery.data ?? []).map((c) => [c.id, c]));
   const detail = courseMap.get(course.courseId);
@@ -45,7 +38,15 @@ export function CourseInfoSection({ course }: { course: InstructorCourseSummary 
           ))}
         </div>
       )}
-      {isError && <p className="text-sm text-destructive">ไม่สามารถโหลดข้อมูลรายวิชาได้</p>}
+      {isError && (
+        <ApiErrorAlert
+          message="ไม่สามารถโหลดข้อมูลรายวิชาได้ กรุณาลองใหม่อีกครั้ง"
+          onRetry={() => {
+            if (coursesQuery.isError) void coursesQuery.refetch();
+            if (prerequisitesQuery.isError) void prerequisitesQuery.refetch();
+          }}
+        />
+      )}
       {detail && (
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 xl:grid-cols-1">
           <div className="min-w-0">

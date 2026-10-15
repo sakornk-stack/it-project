@@ -4,10 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { Loader2 } from 'lucide-react';
 import type { ChangePasswordRequest } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '@/lib/api-client';
+import { RATE_LIMITED_ERROR, OWN_SENTENCE_ONLY } from '@/lib/api-error-presets';
+import { describeApiError, GENERIC_ERROR } from '@/lib/describe-api-error';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
@@ -73,11 +74,14 @@ export function ChangePasswordForm({
       toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
       onSuccess?.();
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 401) {
-        setServerError('รหัสผ่านปัจจุบันไม่ถูกต้อง');
-      } else {
-        setServerError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-      }
+      setServerError(
+        describeApiError(
+          error,
+          { ...RATE_LIMITED_ERROR, 401: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' },
+          GENERIC_ERROR,
+          OWN_SENTENCE_ONLY,
+        ),
+      );
     }
   }
 

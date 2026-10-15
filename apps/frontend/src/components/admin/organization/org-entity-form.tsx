@@ -8,7 +8,7 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { orgWriteErrors } from '@/lib/api-error-presets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import {
   Form,
   FormControl,

@@ -350,6 +350,7 @@ function LoginPageContent() {
                   <div className="relative">
                     <Mail
                       size={16}
+                      aria-hidden="true"
                       className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
@@ -411,12 +412,12 @@ function LoginPageContent() {
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`} onClick={rememberNextForGoogle}>
-            <Button type="button" variant="outline" className="w-full gap-2">
+          <Button asChild variant="outline" className="w-full gap-2">
+            <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`} onClick={rememberNextForGoogle}>
               <GoogleIcon />
               Google
-            </Button>
-          </a>
+            </a>
+          </Button>
         </>
       )}
     </AuthSplitLayout>
@@ -425,7 +426,7 @@ function LoginPageContent() {
 
 function GoogleIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24">
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
       <path
         fill="#4285F4"
         d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.53 5.53 0 0 1-2.4 3.63v3.02h3.88c2.27-2.09 3.57-5.17 3.57-8.84z"

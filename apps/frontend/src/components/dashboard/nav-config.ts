@@ -22,7 +22,7 @@ export interface NavItem {
   icon: LucideIcon;
   href: string;
   // Extra paths (the path itself or anything below it) that keep this item lit.
-  // Only the Staff and Admin menus set it; every other item matches on its href alone.
+  // The Staff, Admin and Super Admin menus set it; every other item matches on its href alone.
   matchPrefixes?: string[];
 }
 

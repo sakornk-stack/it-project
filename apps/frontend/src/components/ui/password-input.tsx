@@ -126,7 +126,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
             value={value}
             onChange={onChange}
             className={cn(
-              'h-11 rounded-lg pl-9 pr-9 transition-colors duration-200',
+              'h-11 rounded-lg pl-9 pr-11 transition-colors duration-200',
               className,
             )}
             {...props}
@@ -134,14 +134,18 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors duration-150 hover:text-brand motion-safe:active:scale-90"
+            className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-150 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-90"
             aria-label={
               visible
                 ? (toggleAriaLabels?.hide ?? 'ซ่อนรหัสผ่าน')
                 : (toggleAriaLabels?.show ?? 'แสดงรหัสผ่าน')
             }
           >
-            {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+            {visible ? (
+              <EyeOff size={16} aria-hidden="true" />
+            ) : (
+              <Eye size={16} aria-hidden="true" />
+            )}
           </button>
         </div>
 

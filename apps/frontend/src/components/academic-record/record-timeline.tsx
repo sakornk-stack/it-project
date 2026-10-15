@@ -9,7 +9,7 @@ import { fetchClos, fetchMyAssessments } from '@/lib/api/course-assessment';
 import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

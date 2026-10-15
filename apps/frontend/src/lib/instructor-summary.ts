@@ -7,7 +7,7 @@ import { hasCloPercent } from './clo-percent';
 // what GET /dashboard/instructor returned, so it stays inside the "courses I
 // teach" scope by construction.
 
-export const NO_STUDENTS_SUMMARY = 'ยังไม่มีนิสิตลงทะเบียนในรายวิชาที่คุณสอน จึงยังสรุปผลไม่ได้';
+export const NO_STUDENTS_SUMMARY = 'ยังไม่มีนิสิตในรายวิชาที่คุณสอน จึงยังสรุปผลไม่ได้';
 
 const isPositiveCount = (n: number) => Number.isFinite(n) && n > 0;
 

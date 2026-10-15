@@ -114,8 +114,6 @@ export function CourseTrendChart({ terms }: Readonly<{ terms: TrendTerm[] }>) {
               ) : (
                 <span
                   key={term.key}
-                  role="img"
-                  aria-label={`${term.label}: ${sparseTermText(term.students)}`}
                   title={sparseTermText(term.students)}
                   className="absolute bottom-0 flex -translate-x-1/2 translate-y-1/2 flex-col items-center"
                   style={{ left: `${columnCentre(i, count)}%` }}

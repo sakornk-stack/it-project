@@ -27,6 +27,14 @@ export const TINT_TONE_CLASSES: Record<SemanticTone, string> = {
   neutral: 'bg-slate-50',
 };
 
+// Text colour alone, for a short remark beside a figure (e.g. highest / lowest).
+export const TEXT_TONE_CLASSES: Record<SemanticTone, string> = {
+  success: 'text-emerald-700',
+  warning: 'text-amber-700',
+  danger: 'text-red-700',
+  neutral: 'text-slate-600',
+};
+
 export const BAR_TONE_CLASSES: Record<SemanticTone, string> = {
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',

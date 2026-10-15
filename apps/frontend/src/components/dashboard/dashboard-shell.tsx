@@ -67,7 +67,7 @@ export function DashboardShell({
     <>
       <div className="mb-8 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
-          <GraduationCap size={18} className="text-brand-light" />
+          <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
         </div>
         <div>
           <p className="text-sm font-medium leading-tight text-primary">EduAnalyze</p>
@@ -75,7 +75,7 @@ export function DashboardShell({
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => {
           const { label, icon: Icon, href } = item;
           const active = isNavItemActive(item, pathname);
@@ -86,11 +86,11 @@ export function DashboardShell({
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition',
+                'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                 active ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50',
               )}
             >
-              <Icon size={16} />
+              <Icon size={16} aria-hidden="true" />
               {label}
             </Link>
           );
@@ -104,9 +104,9 @@ export function DashboardShell({
             <Link
               key={otherRole}
               href={homeRouteForRole(otherRole)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <Repeat size={16} />
+              <Repeat size={16} aria-hidden="true" />
               {ROLE_LABEL_TH[otherRole]}
             </Link>
           ))}
@@ -118,21 +118,21 @@ export function DashboardShell({
           href="/profile"
           aria-current={pathname === '/profile' ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition',
+            'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
             pathname === '/profile'
               ? 'bg-brand-light font-medium text-brand'
               : 'text-slate-600 hover:bg-slate-50',
           )}
         >
-          <User size={16} />
+          <User size={16} aria-hidden="true" />
           โปรไฟล์และความปลอดภัย
         </Link>
         <button
           type="button"
           onClick={() => logout()}
-          className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50"
+          className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <LogOut size={16} />
+          <LogOut size={16} aria-hidden="true" />
           ออกจากระบบ
         </button>
       </div>
@@ -141,7 +141,13 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-dvh bg-background">
-      <aside className="hidden w-64 flex-col border-r border-slate-100 p-6 md:flex">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary focus:shadow-md focus:outline-none focus:ring-2 focus:ring-brand"
+      >
+        ข้ามไปเนื้อหาหลัก
+      </a>
+      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 flex-col border-r border-slate-100 p-6 md:flex">
         {sidebarContent}
       </aside>
 
@@ -159,15 +165,17 @@ export function DashboardShell({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-50 md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="เปิดเมนู"
           >
-            <Menu size={20} />
+            <Menu size={20} aria-hidden="true" />
           </button>
           <div className="flex items-center gap-3">
-            {/* -my-2 keeps the header exactly as tall as before the toggle existed */}
-            <ThemeToggle className="-my-2 h-8 w-8" />
-            <Link href="/profile" className="flex items-center gap-3 text-sm hover:opacity-80">
+            <ThemeToggle />
+            <Link
+              href="/profile"
+              className="flex min-h-11 items-center gap-3 rounded-lg text-sm hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
               {shownIdentity && (
                 <span
                   className={cn('text-muted-foreground', identityIsEmail && 'hidden sm:inline')}
@@ -181,7 +189,11 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 pb-24 md:p-8 md:pb-24">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 pb-24 focus:outline-none md:p-8 md:pb-24"
+        >
           <RevealOnViewProvider>
             {skeleton ? (
               <LoadingGate ready={ready} skeleton={skeleton}>

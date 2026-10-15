@@ -10,7 +10,7 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, STAFF_WRITE_ERRORS } from '@/lib/api-error-presets';
 import { useConfirm } from '@/lib/use-confirm';
 import { useToast } from '@/lib/toast-context';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {

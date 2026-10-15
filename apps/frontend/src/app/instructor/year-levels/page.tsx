@@ -2,23 +2,21 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, ChevronDown, Info, TrendingDown, Users } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, Info, Table2, TrendingDown, Users } from 'lucide-react';
 import {
-  fetchInstructorDashboard,
-  fetchInstructorStudents,
-  fetchInstructorYearLevels,
-} from '@/lib/api/instructor';
+  useInstructorDashboard,
+  useInstructorStudents,
+  useInstructorYearLevels,
+} from '@/lib/instructor-queries';
 import { buildCourseOverviews, buildCourseYearMatrix } from '@/lib/instructor-overview';
 import { buildYearLevelsFigures, lowGradeIds } from '@/lib/student-directory';
 import { LOW_GRADE_LABEL, LOW_GRADE_RULE } from '@/lib/low-grade';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { YearLevelMatrix } from '@/components/instructor/year-level-matrix';
 import { InstructorYearLevelOverview } from '@/components/instructor/instructor-year-level-overview';
 import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
+import { CollapsibleCard, SectionCard } from '@/components/instructor/section-card';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Progress } from '@/components/ui/progress';
 import { BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
@@ -26,18 +24,17 @@ import { formatPercent } from '@/lib/format-percent';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { CollapsibleSection } from '@/components/ui/collapsible-section';
-import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+import { StatCardsSkeleton } from '@/components/ui/skeleton';
 import { PageSection } from '@/components/layout/page-section';
 
 // At or above this share of the students, a count is shown as danger, not warning.
 const HIGH_SHARE_PERCENT = 25;
 
-// "x% of all students" in words, with the same share as a bar.
+// "x% of all students" as a thin bar and one line of words.
 function ShareFooter({
   count,
   total,
@@ -50,10 +47,10 @@ function ShareFooter({
       <Progress
         value={percent}
         label={`${formatPercent(percent)} ของนิสิตทั้งหมด`}
-        className="h-1.5"
+        className="h-1"
         barClassName={BAR_TONE_CLASSES[tone]}
       />
-      <p className="text-[13px] text-muted-foreground">
+      <p className="truncate text-xs text-muted-foreground" title={`${note}`}>
         <span className="font-semibold tabular-nums text-primary">{formatPercent(percent)}</span>{' '}
         ของนิสิตทั้งหมด · {note}
       </p>
@@ -62,36 +59,20 @@ function ShareFooter({
 }
 
 export default function InstructorYearLevelsPage() {
-  return (
-    <ProtectedRoute>
-      <InstructorYearLevelsContent />
-    </ProtectedRoute>
-  );
+  return <InstructorYearLevelsContent />;
 }
 
 function InstructorYearLevelsContent() {
   const { user } = useAuth();
   const isInstructor = !!user?.roles.includes('INSTRUCTOR');
 
-  const query = useQuery({
-    queryKey: ['instructor-year-levels'],
-    queryFn: fetchInstructorYearLevels,
-    enabled: isInstructor,
-  });
+  const query = useInstructorYearLevels({ enabled: isInstructor });
   // Same key as the students page, so the two share one cache entry. Year
   // levels carry no grades of their own; this supplies them per student.
-  const studentsQuery = useQuery({
-    queryKey: ['instructor-students'],
-    queryFn: () => fetchInstructorStudents({}),
-    enabled: isInstructor,
-  });
+  const studentsQuery = useInstructorStudents({ enabled: isInstructor });
 
   // Same key as the dashboard: the per-course grade tally and the goal of each course.
-  const dashboardQuery = useQuery({
-    queryKey: ['instructor-dashboard'],
-    queryFn: fetchInstructorDashboard,
-    enabled: isInstructor,
-  });
+  const dashboardQuery = useInstructorDashboard({ enabled: isInstructor });
   // Credits only weight the overall grade average, which this page does not show,
   // so it is not requested here.
   const courses = useMemo(() => dashboardQuery.data?.courses ?? [], [dashboardQuery.data]);
@@ -119,6 +100,12 @@ function InstructorYearLevelsContent() {
     !!query.data &&
     (studentsQuery.isSuccess || studentsQuery.isError) &&
     (dashboardQuery.isSuccess || dashboardQuery.isError);
+  // All three requests feed this page; name the ones that failed and retry only those.
+  const failedLoads = [
+    { failed: query.isError, label: 'ชั้นปีของนิสิต', refetch: query.refetch },
+    { failed: studentsQuery.isError, label: 'ผลการเรียนรายนิสิต', refetch: studentsQuery.refetch },
+    { failed: dashboardQuery.isError, label: 'รายวิชาที่สอน', refetch: dashboardQuery.refetch },
+  ].filter((l) => l.failed);
   const figures = ready ? buildYearLevelsFigures(buckets, lowIds) : null;
   const lowShare =
     figures && figures.lowGrade !== null && figures.total > 0
@@ -131,20 +118,12 @@ function InstructorYearLevelsContent() {
         ? 'danger'
         : 'warning';
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  // The layout's guard renders nothing below it until the user is known.
+  if (!user) return null;
 
   return (
-    <RequireRole role="INSTRUCTOR">
-      <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
+    <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
+      <div className="space-y-6">
         <Reveal index={0}>
           <PageHeader
             title="ภาพรวมชั้นปี"
@@ -154,15 +133,14 @@ function InstructorYearLevelsContent() {
         </Reveal>
 
         {(query.isLoading || (!!query.data && !ready)) && (
-          <StatCardsSkeleton count={4} className="md:grid-cols-2 xl:grid-cols-4" />
+          <StatCardsSkeleton count={3} className="sm:grid-cols-3" />
         )}
 
-        {query.isError && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              ไม่สามารถโหลดข้อมูลภาพรวมชั้นปีได้ กรุณาลองใหม่อีกครั้ง
-            </AlertDescription>
-          </Alert>
+        {failedLoads.length > 0 && (
+          <ApiErrorAlert
+            message={`ไม่สามารถโหลดข้อมูล${failedLoads.map((l) => l.label).join(' และ ')}ได้ กรุณาลองใหม่อีกครั้ง`}
+            onRetry={() => failedLoads.forEach((l) => void l.refetch())}
+          />
         )}
 
         {ready && totalStudents === 0 && (
@@ -187,15 +165,17 @@ function InstructorYearLevelsContent() {
           <Reveal index={1}>
             <div className="grid gap-4 sm:grid-cols-3">
               <StatCard
+                dense
                 icon={Users}
                 tone="primary"
                 interactive={false}
                 label="นิสิต"
                 value={<AnimatedNumber value={figures.total} />}
                 suffix="คน"
-                footer={<p className="text-[13px] text-muted-foreground">ที่เคยเรียนวิชาของคุณ</p>}
+                footer={<p className="text-xs text-muted-foreground">ที่เคยเรียนวิชาของคุณ</p>}
               />
               <StatCard
+                dense
                 icon={AlertTriangle}
                 tone={lowTone}
                 interactive={false}
@@ -206,7 +186,7 @@ function InstructorYearLevelsContent() {
                 suffix={figures.lowGrade === null ? undefined : 'คน'}
                 footer={
                   figures.lowGrade === null ? (
-                    <p className="text-[13px] text-muted-foreground">โหลดข้อมูลรายวิชาไม่ได้</p>
+                    <p className="text-xs text-muted-foreground">โหลดข้อมูลรายวิชาไม่ได้</p>
                   ) : (
                     <ShareFooter
                       count={figures.lowGrade}
@@ -218,6 +198,7 @@ function InstructorYearLevelsContent() {
                 }
               />
               <StatCard
+                dense
                 icon={TrendingDown}
                 tone={figures.behind > 0 ? 'warning' : 'neutral'}
                 interactive={false}
@@ -237,37 +218,51 @@ function InstructorYearLevelsContent() {
           </Reveal>
         )}
 
-        {ready && totalStudents > 0 && matrix && matrix.levels.length > 0 && (
-          <Reveal index={1}>
+        {ready && totalStudents > 0 && (
+          <Reveal index={2}>
             <PageSection
-              title="เกรดกลาง แยกตามวิชาและชั้นปี"
+              title="รายชื่อนิสิตแต่ละชั้นปี"
               titleClassName={TEXT_SECTION}
-              description="นับเป็นที่นั่ง คนที่เรียนหลายวิชานับในแต่ละวิชา กดที่วิชาเพื่อดูรายละเอียด"
+              description="กดชั้นปีเพื่อดูรายชื่อ ชั้นปีที่ไม่มีนิสิตจะกดไม่ได้"
             >
-              <details className="group rounded-lg border border-slate-200 bg-brand-light px-3">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                  <span className="inline-flex items-center gap-2">
-                    <Info size={16} aria-hidden="true" className="shrink-0 text-brand" />
-                    วิธีอ่านตาราง
-                  </span>
-                  <ChevronDown
-                    size={16}
-                    aria-hidden="true"
-                    className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none"
-                  />
-                </summary>
-                <ul className="list-disc space-y-1 pb-3 pl-5 text-sm text-muted-foreground">
+              <InstructorYearLevelOverview buckets={buckets} lowIds={lowIds} />
+            </PageSection>
+          </Reveal>
+        )}
+
+        {ready && totalStudents > 0 && matrix && matrix.levels.length > 0 && (
+          <Reveal index={3}>
+            <div className="space-y-4">
+              <SectionCard
+                icon={Table2}
+                title="เกรดกลาง แยกตามวิชาและชั้นปี"
+                description="นับเป็นการลงทะเบียน (นับต่อวิชา) กดที่วิชาเพื่อดูรายละเอียด"
+                flush
+                footer={
+                  matrix.unplaced > 0 ? (
+                    <p>การลงทะเบียน {matrix.unplaced} รายการ หาชั้นปีไม่พบ จึงไม่อยู่ในตารางนี้</p>
+                  ) : undefined
+                }
+              >
+                <YearLevelMatrix matrix={matrix} />
+              </SectionCard>
+              <CollapsibleCard icon={Info} tone="neutral" title="วิธีอ่านตาราง">
+                <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                   <li>
-                    ตัวใหญ่ในช่องคือเกรดกลางของกลุ่มนั้น สีพื้นอ่อนตาม GPA ของกลุ่ม: แดง ต่ำกว่า
-                    1.50 เหลือง 1.50–1.74 เขียว 1.75 ขึ้นไป
+                    <span className="font-medium text-primary">การลงทะเบียน (นับต่อวิชา)</span>{' '}
+                    คือจำนวนรายการของนิสิตที่เรียนวิชานั้น นิสิตที่เรียนหลายวิชาจึงถูกนับในแต่ละวิชา
                   </li>
                   <li>
-                    GPA คือค่าเฉลี่ยแต้มเกรดของวิชาในกลุ่มนั้น ส่วน F และ W คือจำนวนคนที่ได้เกรดนั้น
+                    เกรดกลางของกลุ่มแสดงเป็นป้าย สีตาม GPA ของกลุ่ม: แดง ต่ำกว่า 1.50 เหลือง
+                    1.50–1.74 เขียว 1.75 ขึ้นไป
+                  </li>
+                  <li>
+                    GPA คือค่าเฉลี่ยแต้มเกรดของวิชาในกลุ่มนั้น ส่วน F คือจำนวนคนที่ได้เกรดนั้น
                   </li>
                   <li>ช่อง – คือวิชานั้นไม่มีนิสิตในชั้นปีนั้น</li>
                   <li>
-                    ช่องที่มีนิสิตได้เกรด A ถึง F ไม่ถึง 5 ที่นั่งไม่แสดงเกรดกลาง แสดงเป็นข้อความ
-                    &ldquo;ข้อมูลยังน้อย&rdquo;
+                    ช่องที่มีการลงทะเบียนซึ่งได้เกรด A ถึง F ไม่ถึง 5 รายการ ไม่แสดงเกรดกลาง
+                    แสดงเป็นข้อความ &ldquo;ข้อมูลยังน้อย&rdquo;
                   </li>
                   <li>
                     คอลัมน์ &ldquo;รวมวิชานี้&rdquo; รวมทุกชั้นปีของวิชา
@@ -275,31 +270,11 @@ function InstructorYearLevelsContent() {
                   </li>
                   <li>เรียงตามรหัสวิชา</li>
                 </ul>
-              </details>
-              <YearLevelMatrix matrix={matrix} />
-              {matrix.unplaced > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {matrix.unplaced} ที่นั่งหาชั้นปีไม่พบ จึงไม่อยู่ในตารางนี้
-                </p>
-              )}
-            </PageSection>
+              </CollapsibleCard>
+            </div>
           </Reveal>
         )}
-
-        {ready && totalStudents > 0 && (
-          <CollapsibleSection
-            framed={false}
-            title="รายชื่อนิสิตแต่ละชั้นปี"
-            meta={
-              <span className="text-sm font-normal text-muted-foreground">
-                กดชั้นปีเพื่อดูรายชื่อ
-              </span>
-            }
-          >
-            <InstructorYearLevelOverview buckets={buckets} lowIds={lowIds} />
-          </CollapsibleSection>
-        )}
-      </DashboardShell>
-    </RequireRole>
+      </div>
+    </DashboardShell>
   );
 }

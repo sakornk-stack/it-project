@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Archive } from 'lucide-react';
 import type { InactiveRow } from '@/lib/inactive-items';
 import { useToast } from '@/lib/toast-context';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { PermanentDeleteButton } from '@/components/admin/permanent-delete-button';
 import { ReactivateButton } from '@/components/admin/reactivate-button';
 import { Badge } from '@/components/ui/badge';

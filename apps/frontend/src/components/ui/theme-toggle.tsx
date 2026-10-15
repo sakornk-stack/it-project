@@ -17,7 +17,7 @@ export function ThemeToggle({ className }: Readonly<{ className?: string }>) {
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
     >

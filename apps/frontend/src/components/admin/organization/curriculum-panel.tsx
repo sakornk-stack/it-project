@@ -11,7 +11,7 @@ import { useConfirm } from '@/lib/use-confirm';
 import { describeApiError } from '@/lib/describe-api-error';
 import { orgWriteErrors } from '@/lib/api-error-presets';
 import { DeactivateButton } from './deactivate-button';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

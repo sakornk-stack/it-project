@@ -27,7 +27,7 @@ import { useToast } from '@/lib/toast-context';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { describeApiError } from '@/lib/describe-api-error';
-import { ApiErrorAlert } from '@/components/admin/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { UserRowMenu } from '@/components/admin/user-row-menu';
 import { DeactivateConfirm } from '@/components/admin/deactivate-confirm';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';

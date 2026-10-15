@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
 
       {submitted ? (
         <Reveal index={1}>
-          <Alert>
+          <Alert role="status">
             <AlertDescription>
               หากมีบัญชีที่ใช้อีเมลนี้อยู่ในระบบ ระบบได้ส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปให้แล้ว
             </AlertDescription>

@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown, Info, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DetailSectionHeader } from '@/components/admin/detail-section-header';
+import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { CARD } from './instructor-ui';
 
 const BODY_PAD = 'px-4 pb-4 sm:px-6 sm:pb-6';
@@ -61,6 +61,7 @@ export function CollapsibleCard({
   title,
   description,
   defaultOpen = false,
+  tone = 'brand',
   className,
   children,
 }: Readonly<{
@@ -68,6 +69,8 @@ export function CollapsibleCard({
   title: string;
   description?: ReactNode;
   defaultOpen?: boolean;
+  // 'neutral' for reference text (how to read a table): a grey icon tile, not the brand one.
+  tone?: 'brand' | 'neutral';
   className?: string;
   children: ReactNode;
 }>) {
@@ -88,7 +91,10 @@ export function CollapsibleCard({
         >
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand"
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+              tone === 'neutral' ? 'bg-muted text-muted-foreground' : 'bg-brand-light text-brand',
+            )}
           >
             <Icon size={18} />
           </span>
