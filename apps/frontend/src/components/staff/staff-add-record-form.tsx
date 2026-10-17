@@ -104,7 +104,7 @@ export function StaffAddRecordForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ภาคเรียน</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="เลือกภาคเรียน" />
@@ -150,7 +150,7 @@ export function StaffAddRecordForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>เกรด</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="เลือกเกรด" />

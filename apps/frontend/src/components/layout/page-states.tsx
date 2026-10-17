@@ -26,10 +26,6 @@ export function AccessDeniedPage({
   );
 }
 
-export function StudentOnlyPage({ user }: Readonly<{ user: CurrentUserResponse }>) {
-  return <AccessDeniedPage user={user} description="หน้านี้สำหรับนิสิตเท่านั้น" />;
-}
-
 export function PageLoadError({
   message = 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
   onRetry,

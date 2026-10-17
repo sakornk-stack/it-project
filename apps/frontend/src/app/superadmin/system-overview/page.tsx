@@ -20,7 +20,7 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
 
 const linkClass =
   'inline-flex min-h-11 items-center text-sm font-medium text-brand hover:underline';
@@ -41,16 +41,7 @@ function SystemOverviewContent() {
     [usersQuery.data],
   );
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <AuthLoadingScreen />;
 
   const orgReady = facultiesQuery.data && departmentsQuery.data && programsQuery.data;
   const orgFailed = facultiesQuery.isError || departmentsQuery.isError || programsQuery.isError;

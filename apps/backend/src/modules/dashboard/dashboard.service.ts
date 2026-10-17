@@ -39,8 +39,6 @@ import {
   InstructorStudentEntry,
   InstructorStudentsReport,
   InstructorYearLevelsReport,
-  ProblematicCloEntry,
-  ProblematicPloEntry,
   RecentCourse,
   StaffAtRiskStudent,
   StaffOverviewCurriculum,
@@ -827,100 +825,6 @@ export class DashboardService {
         entries: curriculumEntries,
       },
     };
-  }
-
-  // A CLO inherits its course's single achievementPercent (Phase 8
-  // limitation), so this is really "which courses sit below the bar",
-  // reported at CLO granularity. Courses nobody has taken are skipped
-  // entirely rather than counted as 0% failures, and stay absent from
-  // cloBelowThreshold so the PLO rollup can tell "not measured" from
-  // "measured and failing".
-  private collectProblematicClos(
-    curricula: CurriculumWithProgram[],
-    coursesByCurriculum: Map<string, Course[]>,
-    closByCourse: Map<string, Clo[]>,
-    achievementByCourse: Map<string, { totalStudents: number; achievementPercent: number | null }>,
-  ): {
-    problematicClos: ProblematicCloEntry[];
-    cloBelowThreshold: Map<string, boolean>;
-  } {
-    const problematicClos: ProblematicCloEntry[] = [];
-    const cloBelowThreshold = new Map<string, boolean>();
-
-    for (const curriculum of curricula) {
-      for (const course of coursesByCurriculum.get(curriculum.id) ?? []) {
-        const achievement = achievementByCourse.get(course.id);
-        if (
-          !achievement ||
-          achievement.totalStudents === 0 ||
-          achievement.achievementPercent === null
-        ) {
-          continue;
-        }
-
-        for (const clo of closByCourse.get(course.id) ?? []) {
-          const threshold =
-            clo.achievementThreshold ?? curriculum.defaultAchievementThreshold;
-          const isBelow = achievement.achievementPercent < threshold;
-          cloBelowThreshold.set(clo.id, isBelow);
-          if (!isBelow) continue;
-
-          problematicClos.push({
-            cloId: clo.id,
-            code: clo.code,
-            description: clo.description,
-            courseId: course.id,
-            courseCode: course.code,
-            courseName: course.name,
-            curriculumId: curriculum.id,
-            curriculumVersion: curriculum.version,
-            programCode: curriculum.program.code,
-            achievementPercent: achievement.achievementPercent,
-            threshold,
-          });
-        }
-      }
-    }
-
-    problematicClos.sort((a, b) => a.achievementPercent - b.achievementPercent);
-    return { problematicClos, cloBelowThreshold };
-  }
-
-  // Flagged when at least half of a PLO's measurable CLOs are below
-  // their threshold. The counts travel with the verdict so the UI can
-  // show the evidence instead of an unexplained red badge.
-  private selectProblematicPlos(
-    curriculum: CurriculumWithProgram,
-    plos: PloWithMappings[],
-    radar: RadarPoint[],
-    cloBelowThreshold: Map<string, boolean>,
-  ): ProblematicPloEntry[] {
-    const flagged: ProblematicPloEntry[] = [];
-
-    for (const plo of plos) {
-      let below = 0;
-      let measured = 0;
-      for (const mapping of plo.cloMappings) {
-        const isBelow = cloBelowThreshold.get(mapping.clo.id);
-        if (isBelow === undefined) continue; // course never taken
-        measured += 1;
-        if (isBelow) below += 1;
-      }
-      if (measured === 0 || below * 2 < measured) continue;
-
-      flagged.push({
-        ploId: plo.id,
-        code: plo.code,
-        name: plo.name,
-        curriculumId: curriculum.id,
-        curriculumVersion: curriculum.version,
-        programCode: curriculum.program.code,
-        closBelowThreshold: below,
-        totalMeasuredClos: measured,
-        averageValue: radar.find((r) => r.ploId === plo.id)?.value ?? null,
-      });
-    }
-    return flagged;
   }
 
   // One curriculum's student-derived numbers, computed entirely from

@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { OrgTree } from '@/components/admin/organization/org-tree';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
 
 export default function OrganizationAdminPage() {
   return <OrganizationAdminContent />;
@@ -18,16 +18,7 @@ function OrganizationAdminContent() {
   const { user } = useAuth();
   const [addingFaculty, setAddingFaculty] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <AuthLoadingScreen />;
 
   return (
     <DashboardShell role="SUPER_ADMIN" identityLabel={user.email} fullName={user.fullName}>

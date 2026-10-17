@@ -20,7 +20,8 @@ import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
+import { StatCardsSkeleton } from '@/components/ui/skeleton';
 
 // The overview shows the first few curricula; the full list is /admin/curriculum.
 const PREVIEW_LIMIT = 6;
@@ -49,16 +50,7 @@ function AdminOverviewContent() {
   const tabCounts = useMemo(() => countByTab(entries ?? []), [entries]);
   const visible = useMemo(() => filterCurricula(entries ?? [], tab, ''), [entries, tab]);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <AuthLoadingScreen />;
 
   const isEmptyScope = data && data.scope.programCount === 0;
   return (

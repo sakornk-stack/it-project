@@ -19,7 +19,8 @@ import { AcademicYearInactiveSection } from '@/components/admin/academic-year-in
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
+import { StatCardsSkeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 
 // Derived from the terms the system knows, same as the year card.
@@ -58,16 +59,7 @@ function AcademicYearsAdminContent() {
     refetchAll();
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <AuthLoadingScreen />;
 
   return (
     <DashboardShell role="SUPER_ADMIN" identityLabel={user.email} fullName={user.fullName}>

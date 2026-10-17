@@ -12,7 +12,8 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { Reveal } from '@/components/layout/reveal';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
-import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
+import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
+import { StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function AdminCurriculumListPage() {
   return <AdminCurriculumListContent />;
@@ -31,16 +32,7 @@ function AdminCurriculumListContent() {
     [entries, tab, search],
   );
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <AuthLoadingScreen />;
 
   return (
     <DashboardShell role="ADMIN" identityLabel={user.email} fullName={user.fullName}>
