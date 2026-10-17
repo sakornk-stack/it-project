@@ -16,12 +16,11 @@ import { gpaColorClassName } from '@/lib/gpa-color';
 import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AddRecordForm } from '@/components/academic-record/add-record-form';
 import { RecordTimeline } from '@/components/academic-record/record-timeline';
@@ -31,22 +30,12 @@ import { ListSkeleton, Skeleton, StatCardsSkeleton } from '@/components/ui/skele
 const TERM_ORDER: Record<string, number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
 
 export default function AcademicRecordPage() {
-  return (
-    <ProtectedRoute>
-      <AcademicRecordContent />
-    </ProtectedRoute>
-  );
-}
-
-function AcademicRecordContent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isStudent = !!user?.roles.includes('STUDENT');
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
   const studentProfileId = profileQuery.data?.id;
 
@@ -165,20 +154,7 @@ function AcademicRecordContent() {
     setHighlightRecordId(newRecordId);
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const isLoading =
     profileQuery.isLoading ||

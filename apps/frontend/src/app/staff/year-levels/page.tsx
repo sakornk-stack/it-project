@@ -4,8 +4,6 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchStaffStudentRisk, fetchStaffYearLevels } from '@/lib/api/staff';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -19,16 +17,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StaffYearLevelsPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        <StaffYearLevelsContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
-}
-
-function StaffYearLevelsContent() {
   const { user } = useAuth();
   // The same list the overview and the student list count, with the year each
   // student is in taken from the year-level report.
@@ -53,16 +41,7 @@ function StaffYearLevelsContent() {
     };
   }, [studentsQuery.data, yearsQuery.data]);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const failed = studentsQuery.isError || yearsQuery.isError;
 

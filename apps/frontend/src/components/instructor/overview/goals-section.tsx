@@ -2,7 +2,7 @@ import { Target } from 'lucide-react';
 import { type CourseSnapshot, type GoalItem } from '@/lib/course-snapshot';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
-import { SectionCard } from '../section-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { LowSampleTag } from '../overview-parts';
 
 // A code chip (mono) in a fixed narrow column, and the goal's words clamped to two

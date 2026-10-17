@@ -18,8 +18,8 @@ import {
   TermSummaryStrip,
 } from '@/components/instructor/instructor-course-timeline';
 import { PageHeader } from '@/components/layout/page-header';
-import { CollapsibleCard } from '@/components/instructor/section-card';
-import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
+import { CollapsibleCard } from '@/components/ui/section-card';
+import { TEXT_SECTION } from '@/components/instructor/instructor-ui';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
@@ -54,7 +54,6 @@ function InstructorMyCoursesContent() {
         <PageHeader
           title="รายวิชาที่สอน"
           description={summary ?? 'รายวิชาที่คุณได้รับมอบหมายให้สอน แยกตามภาคเรียน'}
-          titleClassName={TEXT_PAGE}
         />
       </Reveal>
 

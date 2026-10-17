@@ -25,7 +25,7 @@ import { StudentCardGrid, StudentListStatus } from './student-card';
 import { RosterActions } from './roster-actions';
 import { RosterStudentCard } from './roster-student-card';
 import { useRosterView } from './use-roster-view';
-import { SectionCard } from './section-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { StudentTimelineCard } from './student-timeline-card';
 
 // The list opens in view mode. Grade editing and deleting appear only after

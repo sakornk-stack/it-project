@@ -15,13 +15,13 @@
 | `app/register/google/page.tsx` | Complete Google OAuth signup |
 | `app/(auth)/forgot-password/page.tsx` | ขอ reset password (email เป็น mock) |
 | `app/(auth)/reset-password/page.tsx` | Reset password ด้วย token |
-| `app/dashboard/page.tsx` | Dashboard: stat cards + entrance animation |
-| `app/academic-record/page.tsx` | Transcript timeline, entrance + removal animation |
-| `app/aptitude-analysis/page.tsx` | PLO radar chart + rule-based interpretation (ไม่ใช้ AI live) |
-| `app/clo-plo-analysis/page.tsx` | CLO/PLO achievement cards |
-| `app/course-assessment/[courseId]/page.tsx` | Self-assessment form ต่อ course |
-| `app/credit-checker/page.tsx` | Credit check (สรุปหน่วยกิต, วิชาที่ต้องจัดการ, ความคืบหน้าตามหมวด) |
-| `app/learning-path/page.tsx` | Drag-and-drop planner (client-only, ไม่มี persist) |
+| `app/(student)/dashboard/page.tsx` | Dashboard: stat cards + entrance animation |
+| `app/(student)/academic-record/page.tsx` | Transcript timeline, entrance + removal animation |
+| `app/(student)/aptitude-analysis/page.tsx` | PLO radar chart + rule-based interpretation (ไม่ใช้ AI live) |
+| `app/(student)/clo-plo-analysis/page.tsx` | CLO/PLO achievement cards |
+| `app/(student)/course-assessment/[courseId]/page.tsx` | Self-assessment form ต่อ course |
+| `app/(student)/credit-checker/page.tsx` | Credit check (สรุปหน่วยกิต, วิชาที่ต้องจัดการ, ความคืบหน้าตามหมวด) |
+| `app/(student)/learning-path/page.tsx` | Drag-and-drop planner (client-only, ไม่มี persist) |
 | `app/profile/page.tsx` | Profile/org info + เปลี่ยนรหัสผ่าน — **เปิดให้ทุก role แล้ว** (เดิม STUDENT-only), non-STUDENT เห็นแค่ identity card + role badge + change-password (ไม่มี "ข้อมูลการศึกษา") |
 
 ### INSTRUCTOR

@@ -6,7 +6,7 @@ import { LOW_GRADE_LABEL, LOW_GRADE_RULE, NO_LOW_GRADE, isLowGrade } from '@/lib
 import { Badge } from '@/components/ui/badge';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { GradeChip } from './grade-chip';
-import { SectionCard } from './section-card';
+import { SectionCard } from '@/components/ui/section-card';
 
 // Keeps the overview short; the students tab lists everyone.
 const MAX_VISIBLE = 5;

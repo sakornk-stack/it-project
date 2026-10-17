@@ -32,7 +32,6 @@ import {
   StudentPersonListSkeleton,
 } from '@/components/instructor/student-person-list';
 import { StudentListStatus } from '@/components/instructor/student-card';
-import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
@@ -58,7 +57,7 @@ function InstructorStudentsFallback() {
   if (!user) return null;
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
-      <PageHeader title="นิสิต" titleClassName={TEXT_PAGE} />
+      <PageHeader title="นิสิต" />
       <StudentPersonListSkeleton />
     </DashboardShell>
   );
@@ -134,7 +133,6 @@ function InstructorStudentsContent() {
               ? `${courses[0].code} ${courses[0].name} · ${summary}`
               : (summary ?? `นิสิตในวิชาที่คุณสอน เรียงจากคนที่${LOW_GRADE_LABEL}ก่อน`)
           }
-          titleClassName={TEXT_PAGE}
         />
       </Reveal>
 

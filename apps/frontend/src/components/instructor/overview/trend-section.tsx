@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { type CourseSnapshot, type TrendTerm } from '@/lib/course-snapshot';
 import { formatPercent } from '@/lib/format-percent';
-import { SectionCard } from '../section-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { CourseTrendChart, sparseTermText } from '../course-trend-chart';
 
 // Fewer than two terms with enough people: no chart, only the latest usable

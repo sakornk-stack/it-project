@@ -10,13 +10,12 @@ import {
   fetchStudentPloAchievement,
 } from '@/lib/api/plo-achievement';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { OverallAchievementCard } from '@/components/clo-plo-analysis/overall-achievement-card';
 import { PloCard } from '@/components/clo-plo-analysis/plo-card';
 import { SCORE_BANDS, scoreBandKey } from '@/lib/plo-score-bands';
@@ -27,16 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 type SortMode = 'lowest' | 'highest' | 'code';
 
 export default function CloPloAnalysisPage() {
-  return (
-    <ProtectedRoute>
-      <CloPloAnalysisContent />
-    </ProtectedRoute>
-  );
-}
-
-function CloPloAnalysisContent() {
   const { user } = useAuth();
-  const isStudent = !!user?.roles.includes('STUDENT');
   const [sortMode, setSortMode] = useState<SortMode>('lowest');
   // PLO cards currently expanded. While any is open the grid stops stretching rows,
   // so an open card grows in its own column without stretching its neighbour.
@@ -52,7 +42,6 @@ function CloPloAnalysisContent() {
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
   const studentProfileId = profileQuery.data?.id;
   const curriculumId = profileQuery.data?.curriculumId;
@@ -118,20 +107,7 @@ function CloPloAnalysisContent() {
     return { counts, noDataCount };
   }, [achievementQuery.data]);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const isLoading =
     profileQuery.isLoading || achievementQuery.isLoading || plosQuery.isLoading || curriculumQuery.isLoading;

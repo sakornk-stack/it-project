@@ -9,8 +9,6 @@ import {
   fetchStudentInvitations,
 } from '@/lib/api/staff';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { StudentsTabs } from '@/components/staff/students-tabs';
 import { PageHeader } from '@/components/layout/page-header';
@@ -23,16 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StaffStudentInvitationsPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        <StaffStudentInvitationsContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
-}
-
-function StaffStudentInvitationsContent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showCsvPanel, setShowCsvPanel] = useState(false);
@@ -55,16 +43,7 @@ function StaffStudentInvitationsContent() {
     queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>

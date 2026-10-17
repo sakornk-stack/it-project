@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown, Info, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DetailSectionHeader } from '@/components/ui/detail-section-header';
-import { CARD } from './instructor-ui';
+import { CARD } from '@/components/instructor/instructor-ui';
 
 const BODY_PAD = 'px-4 pb-4 sm:px-6 sm:pb-6';
 

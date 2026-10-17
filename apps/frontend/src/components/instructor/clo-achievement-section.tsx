@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { EvidenceCoverageBadge } from './evidence-coverage-badge';
 import { LowSampleTag } from './overview-parts';
-import { CollapsibleCard, SectionCard } from './section-card';
+import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
 
 // A small titled block inside a card; the card's own title is the only h2.
 function SubBlock({

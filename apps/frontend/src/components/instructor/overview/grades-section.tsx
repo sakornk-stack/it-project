@@ -6,7 +6,7 @@ import { GRADE_LABELS } from '@/lib/grade-label';
 import { gradeBarClassName } from '@/lib/grade-badge-color';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
-import { SectionCard } from '../section-card';
+import { SectionCard } from '@/components/ui/section-card';
 
 const oneDecimal = (n: number) => `${n.toFixed(1)}%`;
 

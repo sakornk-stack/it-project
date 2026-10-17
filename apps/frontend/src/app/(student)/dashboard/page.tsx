@@ -11,13 +11,12 @@ import { buildDashboardSummary } from '@/lib/dashboard-summary';
 import { computeGpaChange } from '@/lib/gpa-change';
 import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { TiltCard } from '@/components/ui/tilt-card';
@@ -38,26 +37,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BAR_TONE_CLASSES } from '@/lib/tone';
 
 export default function DashboardPage() {
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
-}
-
-function DashboardContent() {
   const { user } = useAuth();
-
-  // Guard before firing any dashboard queries — a non-STUDENT hitting this
-  // page (e.g. an instructor testing the pilot) would otherwise get a
-  // generic "failed to load" error from fetchOwnStudentProfile() 404ing,
-  // which reads as a broken page rather than "wrong page for your role."
-  const isStudent = !!user?.roles.includes('STUDENT');
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
 
   const dashboardQuery = useQuery({
@@ -76,20 +60,7 @@ function DashboardContent() {
   });
   const threshold = curriculumQuery.data?.defaultAchievementThreshold ?? null;
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const isLoading = profileQuery.isLoading || dashboardQuery.isLoading;
 

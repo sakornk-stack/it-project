@@ -6,7 +6,7 @@ import { useInstructorCourseCatalog, useInstructorPrerequisites } from '@/lib/in
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CollapsibleCard } from './section-card';
+import { CollapsibleCard } from '@/components/ui/section-card';
 
 // Folded by default: reference data an instructor rarely needs. One card whose
 // header is the toggle; the facts and the prerequisites live inside it.

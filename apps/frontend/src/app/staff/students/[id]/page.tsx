@@ -20,8 +20,6 @@ import { fetchCurricula, fetchPrograms } from '@/lib/api/organization';
 import { formatSemesterLabel } from '@/lib/grade-label';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -56,13 +54,7 @@ const STATUS_TONE: Record<string, SemanticTone> = {
 const TERM_ORDER: Record<string, number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
 
 export default function StaffStudentDetailPage({ params }: { params: { id: string } }) {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        <StaffStudentDetailContent studentProfileId={params.id} />
-      </RequireRole>
-    </ProtectedRoute>
-  );
+  return <StaffStudentDetailContent studentProfileId={params.id} />;
 }
 
 function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: string }) {
@@ -165,16 +157,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
     });
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const forbidden = isAxiosError(profileQuery.error) && profileQuery.error.response?.status === 403;
   const program = programsQuery.data?.find((p) => p.id === profile?.programId);

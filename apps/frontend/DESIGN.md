@@ -16,14 +16,14 @@
 - สถานะบัญชี: `accountStatus()` ใน `lib/account-status.ts` → ระงับการใช้งาน=danger, รอตั้งรหัสผ่าน=warning, ใช้งานปกติ=success (เฉพาะบัญชีใช้งานปกติมีจุดกะพริบ)
 - สีเกรด: `lib/grade-badge-color.ts` (`gradeBadgeTone`, `gradeBadgeClassName`, `gradeBarClassName`) — A/B+/B/S=success, C+–D=warning, F/U=danger, W/I=neutral แท่งการกระจายเกรดไล่โทนต่อเนื่องตาม tone นี้ (เขียว→เหลือง→แดง) ห้ามใช้เทาสำหรับเกรดที่แสดงจริง เพราะดูเหมือนปิดใช้งาน
 - สถานะปกติ/ผ่านใช้สีเขียวเฉพาะจุดเล็ก (จุดสถานะ ชิป ไอคอน) ห้ามระบายเขียวเป็นพื้นที่ใหญ่เพื่อบอกว่า "ปกติ"
-- สี GPA: `gpaColorClassName` (`lib/gpa-color.ts`, ≥3.5 เขียว, <2.0 แดง) และ `gpaTone` (`components/staff/gpa-scale.tsx`, <1.50 danger, <1.75 warning) ใช้คู่กับ `TINT_TONE_CLASSES`
+- สี GPA: `gpaColorClassName` (`lib/gpa-color.ts`, ≥3.5 เขียว, <2.0 แดง) และ `gpaTone` (`components/ui/gpa-scale.tsx`, <1.50 danger, <1.75 warning) ใช้คู่กับ `TINT_TONE_CLASSES`
 - Contrast: ข้อความต้องผ่าน WCAG AA ทั้ง Light/Dark (ตามคอมเมนต์ใน `globals.css` ที่ตรวจคู่สีของ `.dark`)
 
 ## 3) คอมโพเนนต์กลาง
 | ชื่อ | ไฟล์ | ใช้เมื่อ | ข้อควรระวัง |
 |---|---|---|---|
 | StatCard | `components/dashboard/stat-card.tsx` | การ์ดตัวเลขสรุป | `href`/`onClick`+`showArrow` = ทั้งใบกดได้; `onSelect` = ตัวกรองแบบสลับ; ไม่ใส่ตัวเลข/เปอร์เซ็นต์ที่ API ไม่มี |
-| PageHeader / PageSection | `components/layout/page-header.tsx`, `page-section.tsx` | หัวหน้า / หัวส่วน (ชื่อ+คำอธิบาย+ปุ่มขวา) | ปุ่มหลักอยู่ `actions` |
+| PageHeader / PageSection | `components/layout/page-header.tsx`, `page-section.tsx` | หัวหน้า / หัวส่วน (ชื่อ+คำอธิบาย+ปุ่มขวา) | ปุ่มหลักอยู่ `actions`; ขนาดชื่อหน้า 28px อยู่ที่ `PAGE_TITLE_CLASS` ในไฟล์เดียวกัน หน้าไม่ตั้งขนาดเอง (`titleClassName` ไว้ปรับอย่างอื่น เช่นการตัดบรรทัด) |
 | PageLoadError / StudentOnlyPage | `components/layout/page-states.tsx` | error ของหน้า (มีปุ่ม "ลองใหม่") | ส่ง `onRetry` เสมอ |
 | EmptyState / InlineNotice | `components/ui/empty-state.tsx` | ไม่มีข้อมูล | `size` ใช้ได้เฉพาะคู่กับ `illustration` ไม่ใช่ `icon` |
 | Skeleton / StatCardsSkeleton / TableSkeleton / ListSkeleton | `components/ui/skeleton.tsx` | ระหว่างโหลด | รูปทรงต้องตรงของจริง |
@@ -37,7 +37,7 @@
 | Badge | `components/ui/badge.tsx` | ชิปสถานะ/บทบาท/รหัส | ใช้ `tone` ไม่ใส่สีเอง |
 | InitialsAvatar | `components/ui/initials-avatar.tsx` | อวาตาร์ตัวอักษรแรก | — |
 | Switch | `components/ui/switch.tsx` | สวิตช์เปิด/ปิด (`role=switch`) | สูง 44px ทั้งแถว |
-| SectionCard / CollapsibleCard | `components/instructor/section-card.tsx` | การ์ดส่วนของหน้ารายวิชาทุกแท็บ (หัว `DetailSectionHeader` ไอคอน+ชื่อ+คำอธิบาย) | การ์ดไม่ซ้อนการ์ด; แบบพับได้ใช้ `aria-expanded` + animate ความสูงด้วย grid-rows เนื้อหาที่พับเป็น `invisible` |
+| SectionCard / CollapsibleCard | `components/ui/section-card.tsx` | การ์ดส่วนของหน้ารายวิชาทุกแท็บ (หัว `DetailSectionHeader` ไอคอน+ชื่อ+คำอธิบาย) | การ์ดไม่ซ้อนการ์ด; แบบพับได้ใช้ `aria-expanded` + animate ความสูงด้วย grid-rows เนื้อหาที่พับเป็น `invisible` |
 | Reveal / ScrollReveal | `components/layout/reveal.tsx` | เข้าฉากของบล็อก | ดูข้อ 5 |
 | DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
 
@@ -59,8 +59,8 @@
 
 ## 6) เลย์เอาต์
 - โครงหน้า: `DashboardShell role=… identityLabel fullName` ครอบ; เนื้อหา `main` = `mx-auto max-w-7xl space-y-6 p-4 md:p-8 pb-24`
-- เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี layout กั้นสิทธิ์)
-- หัวหน้า: `PageHeader` ชื่อ (`text-2xl font-semibold text-primary`) + คำอธิบาย 1 บรรทัด `text-sm text-muted-foreground` + ปุ่มหลักมุมขวา (มือถือเต็มความกว้าง `w-full sm:w-auto`, `min-h-11`)
+- เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี `layout.tsx` กั้นสิทธิ์ด้วย `RoleLayoutGuard`: `/instructor` `/staff` `/admin` `/superadmin`; หน้านิสิตอยู่ route group `app/(student)/` (URL ไม่เปลี่ยน) ใช้ `StudentLayoutGuard` ซึ่งแสดง `StudentOnlyPage` เมื่อไม่ใช่นิสิต; `/profile` อยู่นอกกลุ่มเพราะทุกบทบาทใช้ — หน้าใหม่ห้ามห่อ `ProtectedRoute`/`RequireRole` เอง)
+- หัวหน้า: `PageHeader` ชื่อ (`PAGE_TITLE_CLASS` = `text-[28px] font-semibold leading-tight text-primary` ทุกบทบาท) + คำอธิบาย 1 บรรทัด `text-sm text-muted-foreground` + ปุ่มหลักมุมขวา (มือถือเต็มความกว้าง `w-full sm:w-auto`, `min-h-11`)
 - หัวส่วน: `PageSection` (`text-lg font-semibold`) หรือหัวการ์ด `DetailSectionHeader` = ไอคอนในช่อง `h-9 w-9 rounded-lg bg-brand-light text-brand` + ชื่อ + คำอธิบาย + action ขวา
 - หน้าตั้งค่า/โปรไฟล์ใช้ `max-w-7xl` ชิดซ้ายเหมือนหน้าอื่น ไม่จัดกึ่งกลางด้วย `max-w` แคบ
 - หน้าที่มีหลายส่วน: แท็บอยู่บนพื้นหน้า (ไม่อยู่ในการ์ด) ทุกส่วนเป็นการ์ดระดับเดียวกัน; จอ `xl` ขึ้นไปแบ่งสองคอลัมน์ (หลัก `xl:col-span-2` + ข้าง) มือถือ/แท็บเล็ตคอลัมน์เดียว (ตัวอย่าง `course-overview.tsx`)
@@ -86,7 +86,7 @@
 ## 9) สถานะหน้า
 - โหลด: `Skeleton`, `StatCardsSkeleton`, `TableSkeleton`, `ListSkeleton` (`components/ui/skeleton.tsx`); เฉพาะหน้า เช่น `user-list-skeleton.tsx`, `org-tree-skeleton.tsx`
 - ก่อน auth พร้อม: วงกลม + แถบ `Skeleton` กลางจอ (รูปแบบซ้ำในทุกหน้า) / `RequireRole`
-- Error: `PageLoadError` + `onRetry`; ฟอร์ม/การกระทำ: `ApiErrorAlert` (`components/admin/api-error-alert.tsx`)
+- Error: `PageLoadError` + `onRetry`; ฟอร์ม/การกระทำ: `ApiErrorAlert` (`components/ui/api-error-alert.tsx`)
 - ว่าง: `EmptyState` (มี `action` เมื่อมีทางไปต่อ); ค้นหาไม่เจอใช้ `illustration="no-results"` + ปุ่มล้างการค้นหา
 - ศูนย์: แสดง `0` ปกติ การ์ดยังกดได้ (`dimmed` ทำให้จางเมื่อเป็นศูนย์ได้)
 
@@ -102,7 +102,7 @@
 
 ## 12) Instructor pages
 ใช้กับ `/instructor/dashboard`, `my-courses`, `courses/[courseId]`, `students`, `year-levels` (ค่ากลางอยู่ใน `components/instructor/instructor-ui.ts`)
-- หัวหน้า: `PageHeader` + `TEXT_PAGE` (ชื่อ + คำอธิบายบรรทัดเดียว + action ขวา) แล้วแถบสรุป `StatCard` + `AnimatedNumber` เมื่อมีตัวเลข; หัวส่วน `PageSection` + `TEXT_SECTION`; ระหว่างส่วน `space-y-6`, ในกริด `gap-4`
+- หัวหน้า: `PageHeader` (ขนาดชื่อเป็นค่าเริ่มต้น `PAGE_TITLE_CLASS`; `TEXT_PAGE` ใน `instructor-ui.ts` ชี้ค่าเดียวกัน) (ชื่อ + คำอธิบายบรรทัดเดียว + action ขวา) แล้วแถบสรุป `StatCard` + `AnimatedNumber` เมื่อมีตัวเลข; หัวส่วน `PageSection` + `TEXT_SECTION`; ระหว่างส่วน `space-y-6`, ในกริด `gap-4`
 - การ์ด: `CARD` (`rounded-xl border-slate-200 shadow-sm`) + `CARD_PAD` (`p-5`) มุมเดียวทั้งระบบ; การ์ดกดได้เติม `interactive-card` (ยก 2px + เงา + `.go-arrow` 180ms) การ์ดไม่ซ้อนการ์ด
 - การ์ดรายการ: avatar/ไอคอนซ้าย → ชื่อ (`font-semibold truncate`) + เมตาบรรทัดเดียว (`text-xs text-muted-foreground truncate` + `title`) → ชิปสถานะเดียวขวา → `.go-arrow`; ทั้งใบเป็น `<Link>`; ไม่พิมพ์ซ้ำสิ่งที่ตัวกรองบอกอยู่แล้ว
 - ชิปเกรด: `GradeChip` (`components/instructor/grade-chip.tsx`) เท่านั้น ไม่เขียนคำว่า "เกรด" ลอย (มี `sr-only`); สีตาม `gradeBadgeTone` เขียวเฉพาะชิป/จุดเล็ก

@@ -9,8 +9,6 @@ import { fetchStaffStudentRisk, fetchStaffYearLevels } from '@/lib/api/staff';
 import { usePagination } from '@/lib/use-pagination';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -56,14 +54,10 @@ const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[];
 
 export default function StaffStudentsPage() {
   return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        {/* useSearchParams requires a Suspense boundary in the App Router */}
-        <Suspense fallback={<StaffStudentsSkeleton />}>
-          <StaffStudentsContent />
-        </Suspense>
-      </RequireRole>
-    </ProtectedRoute>
+    /* useSearchParams requires a Suspense boundary in the App Router */
+    <Suspense fallback={<StaffStudentsSkeleton />}>
+      <StaffStudentsContent />
+    </Suspense>
   );
 }
 
@@ -181,16 +175,7 @@ function StaffStudentsContent() {
     router.replace(pathname, { scroll: false });
   };
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const statusButtons: { key: string; label: string; count: number }[] = [
     { key: ALL, label: 'ทั้งหมด', count: beforeStatus.length },

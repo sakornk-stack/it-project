@@ -19,8 +19,6 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, STAFF_WRITE_ERRORS } from '@/lib/api-error-presets';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -55,23 +53,19 @@ type CurriculumTab = 'structure' | 'instructors';
 
 export default function StaffCurriculumPage() {
   return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        {/* useSearchParams requires a Suspense boundary in the App Router */}
-        <Suspense
-          fallback={
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="space-y-3">
-                <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-                <Skeleton className="h-3 w-32" />
-              </div>
-            </div>
-          }
-        >
-          <StaffCurriculumContent />
-        </Suspense>
-      </RequireRole>
-    </ProtectedRoute>
+    /* useSearchParams requires a Suspense boundary in the App Router */
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="space-y-3">
+            <Skeleton className="mx-auto h-10 w-10 rounded-full" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+      }
+    >
+      <StaffCurriculumContent />
+    </Suspense>
   );
 }
 
@@ -247,16 +241,7 @@ function StaffCurriculumContent() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const allBlocks = view?.blocks ?? [];
   const activeCoursesInCurriculum = (coursesQuery.data ?? []).filter(

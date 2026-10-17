@@ -18,12 +18,11 @@ import { fetchCreditCheck } from '@/lib/api/credit-checker';
 import { fetchMyCreditLimitRequest } from '@/lib/api/credit-limit-request';
 import { CREDIT_LIMIT_PRESETS, MIN_CREDITS_WARNING } from '@/lib/credit-limit-presets';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { CreditLimitRequestControl } from '@/components/learning-path/credit-limit-request-control';
 import { DragDropPlanner } from '@/components/learning-path/drag-drop-planner';
 import { ElectiveCategoryList } from '@/components/learning-path/elective-category-list';
@@ -33,23 +32,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LearningPathPage() {
-  return (
-    <ProtectedRoute>
-      <LearningPathContent />
-    </ProtectedRoute>
-  );
-}
-
-function LearningPathContent() {
   const { user } = useAuth();
-  const isStudent = !!user?.roles.includes('STUDENT');
   const queryClient = useQueryClient();
   const toast = useToast();
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
   const studentProfileId = profileQuery.data?.id;
   const curriculumId = profileQuery.data?.curriculumId;
@@ -129,20 +118,7 @@ function LearningPathContent() {
     return map;
   }, [coursesQuery.data]);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const isLoading =
     profileQuery.isLoading ||

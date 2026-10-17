@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { Role } from '@eduanalyze-ai/shared-types';
+import type { CurrentUserResponse, Role } from '@eduanalyze-ai/shared-types';
 import { useAuth } from '@/lib/auth-context';
 import { resolveHomeRoute } from '@/lib/dashboard-routes';
 import { Button } from '@/components/ui/button';
@@ -35,9 +35,13 @@ export const ROLE_BADGE_TONE: Record<Role, SemanticTone> = {
 export function RequireRole({
   role,
   children,
+  renderDenied,
 }: {
   role: Role | Role[];
   children: React.ReactNode;
+  // Replaces the default "this page is for X only" message, for trees whose pages
+  // always showed their own wrong-role view (the student pages render it inside the shell).
+  renderDenied?: (user: CurrentUserResponse) => React.ReactNode;
 }) {
   const { user } = useAuth();
   const allowedRoles = Array.isArray(role) ? role : [role];
@@ -57,6 +61,7 @@ export function RequireRole({
   }
 
   if (!allowedRoles.some((allowedRole) => user.roles.includes(allowedRole))) {
+    if (renderDenied) return <>{renderDenied(user)}</>;
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="space-y-4 text-center">

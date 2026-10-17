@@ -10,7 +10,6 @@ import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import Link from 'next/link';
 import { CourseHero } from '@/components/instructor/course-hero';
 import { CourseOverview } from '@/components/instructor/course-overview';
-import { TEXT_PAGE } from '@/components/instructor/instructor-ui';
 import { CourseSelector, type CourseChoice } from '@/components/instructor/course-selector';
 import { InstructorDashboardSkeleton } from '@/components/instructor/instructor-dashboard-skeleton';
 import { PageHeader } from '@/components/layout/page-header';
@@ -36,7 +35,7 @@ function InstructorDashboardFallback() {
   if (!user) return null;
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
-      <PageHeader title="ภาพรวมผลการเรียน" titleClassName={TEXT_PAGE} />
+      <PageHeader title="ภาพรวมผลการเรียน" />
       <InstructorDashboardSkeleton />
     </DashboardShell>
   );
@@ -108,7 +107,6 @@ function InstructorDashboardContent() {
           <PageHeader
             title="ภาพรวมผลการเรียน"
             description="ผลการเรียนของรายวิชาที่คุณสอน ดูทีละวิชา"
-            titleClassName={TEXT_PAGE}
           />
         </div>
       </Reveal>

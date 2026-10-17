@@ -22,7 +22,6 @@ import {
 } from '@/lib/validation/course-assessment.schema';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
@@ -45,32 +44,22 @@ const SELF_ASSESSMENT_LEVELS = [
 ] as const;
 
 export default function CourseAssessmentPage({ params }: { params: { courseId: string } }) {
-  return (
-    <ProtectedRoute>
-      <CourseAssessmentContent courseId={params.courseId} />
-    </ProtectedRoute>
-  );
-}
-
-function CourseAssessmentContent({ courseId }: { courseId: string }) {
+  const { courseId } = params;
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const isStudent = !!user?.roles.includes('STUDENT');
   const [serverError, setServerError] = useState<string | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
-  const coursesQuery = useQuery({ queryKey: ['courses'], queryFn: fetchCourses, enabled: isStudent });
-  const closQuery = useQuery({ queryKey: ['clos'], queryFn: fetchClos, enabled: isStudent });
+  const coursesQuery = useQuery({ queryKey: ['courses'], queryFn: fetchCourses });
+  const closQuery = useQuery({ queryKey: ['clos'], queryFn: fetchClos });
   const assessmentQuery = useQuery({
     queryKey: ['own-assessment', courseId],
     queryFn: () => fetchOwnAssessment(courseId),
-    enabled: isStudent,
   });
 
   const course = coursesQuery.data?.find((c) => c.id === courseId);
@@ -129,20 +118,7 @@ function CourseAssessmentContent({ courseId }: { courseId: string }) {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const isLoading =
     profileQuery.isLoading || coursesQuery.isLoading || closQuery.isLoading || assessmentQuery.isLoading;

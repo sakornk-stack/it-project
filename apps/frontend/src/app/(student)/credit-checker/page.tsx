@@ -11,13 +11,12 @@ import { useAuth } from '@/lib/auth-context';
 import { useCelebrateOnce } from '@/lib/use-celebrate-once';
 import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { StatCard } from '@/components/dashboard/stat-card';
 import {
   CategoryProgressList,
@@ -32,21 +31,11 @@ import { SuccessStrip } from '@/components/ui/success-strip';
 import { ListSkeleton, Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 
 export default function CreditCheckerPage() {
-  return (
-    <ProtectedRoute>
-      <CreditCheckerContent />
-    </ProtectedRoute>
-  );
-}
-
-function CreditCheckerContent() {
   const { user } = useAuth();
-  const isStudent = !!user?.roles.includes('STUDENT');
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
   const studentProfileId = profileQuery.data?.id;
 
@@ -56,20 +45,7 @@ function CreditCheckerContent() {
     enabled: !!studentProfileId,
   });
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const skeleton = (
     <>

@@ -6,12 +6,11 @@ import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchStudentPloAchievement, fetchCurriculum } from '@/lib/api/plo-achievement';
 import { interpretPloRadar } from '@/lib/interpret-plo-radar';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/layout/reveal';
-import { PageLoadError, StudentOnlyPage } from '@/components/layout/page-states';
+import { PageLoadError } from '@/components/layout/page-states';
 import { PloRadarChart } from '@/components/aptitude-analysis/plo-radar-chart';
 import { PloInterpretationCard } from '@/components/aptitude-analysis/plo-interpretation-card';
 import { AptitudeAnalysisSkeleton } from '@/components/aptitude-analysis/aptitude-analysis-skeleton';
@@ -19,21 +18,11 @@ import { CareerFitCard } from '@/components/career-fit/career-fit-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AptitudeAnalysisPage() {
-  return (
-    <ProtectedRoute>
-      <AptitudeAnalysisContent />
-    </ProtectedRoute>
-  );
-}
-
-function AptitudeAnalysisContent() {
   const { user } = useAuth();
-  const isStudent = !!user?.roles.includes('STUDENT');
 
   const profileQuery = useQuery({
     queryKey: ['student-profile-me'],
     queryFn: fetchOwnStudentProfile,
-    enabled: isStudent,
   });
   const studentProfileId = profileQuery.data?.id;
   const curriculumId = profileQuery.data?.curriculumId;
@@ -50,20 +39,7 @@ function AptitudeAnalysisContent() {
     enabled: !!curriculumId,
   });
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isStudent) {
-    return <StudentOnlyPage user={user} />;
-  }
+  if (!user) return null;
 
   const skeleton = <AptitudeAnalysisSkeleton />;
 

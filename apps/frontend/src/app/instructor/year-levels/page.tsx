@@ -15,8 +15,8 @@ import { useAuth } from '@/lib/auth-context';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { YearLevelMatrix } from '@/components/instructor/year-level-matrix';
 import { InstructorYearLevelOverview } from '@/components/instructor/instructor-year-level-overview';
-import { TEXT_PAGE, TEXT_SECTION } from '@/components/instructor/instructor-ui';
-import { CollapsibleCard, SectionCard } from '@/components/instructor/section-card';
+import { TEXT_SECTION } from '@/components/instructor/instructor-ui';
+import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Progress } from '@/components/ui/progress';
 import { BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
@@ -128,7 +128,6 @@ function InstructorYearLevelsContent() {
           <PageHeader
             title="ภาพรวมชั้นปี"
             description="นิสิตที่เคยเรียนวิชาของคุณ แบ่งตามชั้นปี (ไม่รวมนิสิตทั้งหลักสูตร)"
-            titleClassName={TEXT_PAGE}
           />
         </Reveal>
 

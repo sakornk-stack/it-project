@@ -13,8 +13,6 @@ import {
 } from '@/lib/api/staff';
 import { useAuth } from '@/lib/auth-context';
 import { countShare } from '@/lib/progress-ring-geometry';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { RequireRole } from '@/components/auth/require-role';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
@@ -53,16 +51,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 const ALL_CURRICULA = 'ALL';
 
 export default function StaffDashboardPage() {
-  return (
-    <ProtectedRoute>
-      <RequireRole role="STAFF">
-        <StaffDashboardContent />
-      </RequireRole>
-    </ProtectedRoute>
-  );
-}
-
-function StaffDashboardContent() {
   const { user } = useAuth();
   const [scope, setScope] = useState(ALL_CURRICULA);
 
@@ -116,16 +104,7 @@ function StaffDashboardContent() {
     };
   }, [studentsQuery.data, yearsQuery.data, scope]);
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-3">
-          <Skeleton className="mx-auto h-10 w-10 rounded-full" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const scopeIds = new Set(scope === ALL_CURRICULA ? curricula.map((c) => c.id) : [scope]);
   const checklist: ChecklistItem[] = [];

@@ -7,7 +7,7 @@ import { formatMedian, summarizeGradeCenter } from '@/lib/grade-center';
 import { formatGpa } from '@/lib/instructor-overview';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SectionCard } from '../section-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { LowSampleTag } from '../overview-parts';
 
 export function YearSection({
