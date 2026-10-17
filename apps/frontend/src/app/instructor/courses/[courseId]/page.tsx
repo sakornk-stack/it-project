@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { courseTermInfo } from '@/lib/course-snapshot';
 import { useInstructorCourseTimeline, useInstructorDashboard } from '@/lib/instructor-queries';
@@ -21,11 +21,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function InstructorCoursePage({ params }: { params: { courseId: string } }) {
+export default function InstructorCoursePage() {
+  const { courseId } = useParams<{ courseId: string }>();
   // useSearchParams requires a Suspense boundary in the App Router
   return (
     <Suspense fallback={<InstructorCourseSkeleton />}>
-      <InstructorCourseContent courseId={params.courseId} />
+      <InstructorCourseContent courseId={courseId} />
     </Suspense>
   );
 }

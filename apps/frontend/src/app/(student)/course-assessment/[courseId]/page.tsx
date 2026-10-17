@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -43,8 +43,8 @@ const SELF_ASSESSMENT_LEVELS = [
   { score: 5, label: 'ดีเยี่ยม' },
 ] as const;
 
-export default function CourseAssessmentPage({ params }: { params: { courseId: string } }) {
-  const { courseId } = params;
+export default function CourseAssessmentPage() {
+  const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();

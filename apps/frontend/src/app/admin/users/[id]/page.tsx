@@ -1,5 +1,6 @@
 import { UserDetailPageContent } from '@/components/admin/user-detail-page-content';
 
-export default function UserDetailPage({ params }: { params: { id: string } }) {
-  return <UserDetailPageContent userId={params.id} basePath="/admin" />;
+export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <UserDetailPageContent userId={id} basePath="/admin" />;
 }

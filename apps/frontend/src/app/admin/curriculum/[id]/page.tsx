@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, CheckCircle2, GraduationCap, Sigma, Users } from 'lucide-react';
 import { fetchCurriculumQuality } from '@/lib/api/admin';
@@ -46,8 +47,9 @@ function gpaBadge(gpa: number | null) {
   };
 }
 
-export default function AdminCurriculumQualityPage({ params }: { params: { id: string } }) {
-  return <AdminCurriculumQualityContent curriculumId={params.id} />;
+export default function AdminCurriculumQualityPage() {
+  const { id } = useParams<{ id: string }>();
+  return <AdminCurriculumQualityContent curriculumId={id} />;
 }
 
 function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId: string }>) {

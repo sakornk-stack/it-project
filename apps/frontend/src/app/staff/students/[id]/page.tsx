@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { AlertTriangle, ArrowLeft, Check, Pencil, Plus, Star } from 'lucide-react';
@@ -53,8 +54,9 @@ const STATUS_TONE: Record<string, SemanticTone> = {
 
 const TERM_ORDER: Record<string, number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
 
-export default function StaffStudentDetailPage({ params }: { params: { id: string } }) {
-  return <StaffStudentDetailContent studentProfileId={params.id} />;
+export default function StaffStudentDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  return <StaffStudentDetailContent studentProfileId={id} />;
 }
 
 function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: string }) {
