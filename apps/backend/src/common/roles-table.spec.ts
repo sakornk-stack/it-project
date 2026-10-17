@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import { Role } from '@prisma/client';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { ROLES_KEY } from './decorators/roles.decorator';
+import { InstructorGuard } from './guards/instructor.guard';
+import { InstructorOrScopeGuard } from './guards/instructor-or-scope.guard';
 import { AiAnalysisController } from '../modules/ai-analysis/ai-analysis.controller';
 import { CreditCheckerController } from '../modules/academic-record/credit-checker/credit-checker.controller';
 import { LearningPathController } from '../modules/academic-record/learning-path/learning-path.controller';
@@ -106,9 +109,40 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
     },
   ],
   ['CareerFitController', CareerFitController, { getMyCareerFit: ['STUDENT'] }],
-  // Permanent delete of an account: SUPER_ADMIN only, never ADMIN.
-  ['UserManagementController', UserManagementController, { hardDelete: ['SUPER_ADMIN'] }],
+  // Permanent delete of an account: SUPER_ADMIN only, never ADMIN. The instructor list is for
+  // STAFF's assignment sheet (ADMIN kept by policy); SUPER_ADMIN does not get it.
+  [
+    'UserManagementController',
+    UserManagementController,
+    { hardDelete: ['SUPER_ADMIN'], findInstructors: ['ADMIN', 'STAFF'] },
+  ],
+  // Assessment evidence: only the assigned instructor writes; ADMIN may still read.
+  ['AssessmentDefinitionController', AssessmentDefinitionController, { create: ['INSTRUCTOR'] }],
+  ['AssessmentCloMappingController', AssessmentCloMappingController, { create: ['INSTRUCTOR'] }],
+  [
+    'StudentAssessmentScoreController',
+    StudentAssessmentScoreController,
+    { upsert: ['INSTRUCTOR'], bulkUpsert: ['INSTRUCTOR'] },
+  ],
 ];
+
+// The assessment write handlers check course assignment with InstructorGuard, not the
+// instructor-or-ADMIN guard, so an ADMIN in scope cannot write either.
+const ASSESSMENT_WRITES: [string, { prototype: object }, string][] = [
+  ['AssessmentDefinitionController', AssessmentDefinitionController, 'create'],
+  ['AssessmentCloMappingController', AssessmentCloMappingController, 'create'],
+  ['StudentAssessmentScoreController', StudentAssessmentScoreController, 'upsert'],
+  ['StudentAssessmentScoreController', StudentAssessmentScoreController, 'bulkUpsert'],
+];
+
+describe('assessment writes are guarded by InstructorGuard', () => {
+  it.each(ASSESSMENT_WRITES)('%s.%s', (_name, controller, method) => {
+    const handler = (controller.prototype as Record<string, unknown>)[method] as object;
+    const guards = Reflect.getMetadata(GUARDS_METADATA, handler) as unknown[];
+    expect(guards).toContain(InstructorGuard);
+    expect(guards).not.toContain(InstructorOrScopeGuard);
+  });
+});
 
 describe('role permission table', () => {
   describe.each(TABLE)('%s', (_name, controller, handlers) => {

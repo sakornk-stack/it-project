@@ -4,6 +4,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { InstructorCourseTarget } from '../../../common/decorators/instructor-course-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
+import { InstructorGuard } from '../../../common/guards/instructor.guard';
 import { InstructorOrScopeGuard } from '../../../common/guards/instructor-or-scope.guard';
 import { StudentAssessmentScoreService } from './student-assessment-score.service';
 import { AssessmentCloMappingService } from './assessment-clo-mapping.service';
@@ -19,8 +20,10 @@ export class StudentAssessmentScoreController {
   ) {}
 
   @Put()
-  @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('ADMIN', 'INSTRUCTOR')
+  // Writing scores and their structure is the assigned instructor's alone; ADMIN keeps
+  // read access below but no longer writes (policy 2026-10).
+  @UseGuards(JwtAuthGuard, RolesGuard, InstructorGuard)
+  @Roles('INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({
@@ -34,8 +37,10 @@ export class StudentAssessmentScoreController {
   }
 
   @Put('bulk')
-  @UseGuards(JwtAuthGuard, RolesGuard, InstructorOrScopeGuard)
-  @Roles('ADMIN', 'INSTRUCTOR')
+  // Writing scores and their structure is the assigned instructor's alone; ADMIN keeps
+  // read access below but no longer writes (policy 2026-10).
+  @UseGuards(JwtAuthGuard, RolesGuard, InstructorGuard)
+  @Roles('INSTRUCTOR')
   @InstructorCourseTarget({ from: 'body', key: 'courseId' })
   @ApiBearerAuth('access-token')
   @ApiOperation({

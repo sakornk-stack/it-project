@@ -5,6 +5,14 @@ import { PrismaClientOrTx } from '../../../prisma/prisma.types';
 import { UserService } from '../user/user.service';
 
 export const LAST_ROLE_MESSAGE = 'ไม่สามารถถอดบทบาทสุดท้ายของผู้ใช้ได้';
+export const STUDENT_SUPER_ADMIN_CONFLICT_MESSAGE =
+  'บัญชีเดียวกันเป็นทั้งนิสิตและผู้ดูแลระบบสูงสุดไม่ได้ กรุณาใช้บัญชีแยกกัน';
+
+// Roles that may never sit on one account. SUPER_ADMIN has no access to academic data
+// while STUDENT is all academic data, and the student self-service checks
+// (isSelfServiceOnly) exempt SUPER_ADMIN — so holding both would let a student read
+// other students' records.
+const EXCLUSIVE_ROLE_PAIRS: [Role, Role][] = [['STUDENT', 'SUPER_ADMIN']];
 
 @Injectable()
 export class UserRoleService {
@@ -19,6 +27,19 @@ export class UserRoleService {
     tx: PrismaClientOrTx = this.prisma,
   ) {
     await this.userService.findById(userId, tx);
+
+    // Every path that grants a role (sign-up, POST /users/:id/roles) comes through here.
+    const blockedBy = EXCLUSIVE_ROLE_PAIRS.flatMap(([a, b]) =>
+      role === a ? [b] : role === b ? [a] : [],
+    );
+    if (blockedBy.length > 0) {
+      const clash = await tx.userRole.findFirst({
+        where: { userId, role: { in: blockedBy } },
+      });
+      if (clash) {
+        throw new ConflictException(STUDENT_SUPER_ADMIN_CONFLICT_MESSAGE);
+      }
+    }
 
     try {
       return await tx.userRole.create({ data: { userId, role } });

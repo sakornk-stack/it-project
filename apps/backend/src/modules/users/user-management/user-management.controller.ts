@@ -62,9 +62,11 @@ export class UserManagementController {
     return this.userManagementService.listUsers(user);
   }
 
+  // ADMIN/STAFF only: the one caller is STAFF's instructor-assignment sheet. SUPER_ADMIN
+  // manages accounts through GET /users and never needs this list (policy 2026-10).
   @Get('instructors')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN', 'STAFF')
+  @Roles('ADMIN', 'STAFF')
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary:

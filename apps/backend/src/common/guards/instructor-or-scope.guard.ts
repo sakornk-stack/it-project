@@ -16,10 +16,11 @@ import { ScopeResolverService } from '../scope/scope-resolver.service';
 // NestJS ANDs every guard in @UseGuards() — stacking InstructorGuard and
 // ScopeGuard on one route would require an ADMIN to also be a
 // CourseInstructor (and an INSTRUCTOR to also hold a UserScope row),
-// which is never true. This guard implements the real OR: allow if
-// SUPER_ADMIN, OR an assigned CourseInstructor, OR a scope-covering
-// ADMIN. Reuses @InstructorCourseTarget's metadata (courseId source) —
-// no new decorator needed, both checks resolve the same courseId.
+// which is never true. This guard implements the real OR: allow an
+// assigned CourseInstructor OR a scope-covering ADMIN (SUPER_ADMIN has no
+// access to academic data, so there is no branch for it). Reuses
+// @InstructorCourseTarget's metadata (courseId source) — no new decorator
+// needed, both checks resolve the same courseId.
 @Injectable()
 export class InstructorOrScopeGuard implements CanActivate {
   constructor(
