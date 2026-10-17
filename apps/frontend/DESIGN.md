@@ -26,6 +26,7 @@
 | PageHeader / PageSection | `components/layout/page-header.tsx`, `page-section.tsx` | หัวหน้า / หัวส่วน (ชื่อ+คำอธิบาย+ปุ่มขวา) | ปุ่มหลักอยู่ `actions`; ขนาดชื่อหน้า 28px อยู่ที่ `PAGE_TITLE_CLASS` ในไฟล์เดียวกัน หน้าไม่ตั้งขนาดเอง (`titleClassName` ไว้ปรับอย่างอื่น เช่นการตัดบรรทัด) |
 | PageLoadError / StudentOnlyPage | `components/layout/page-states.tsx` | error ของหน้า (มีปุ่ม "ลองใหม่") | ส่ง `onRetry` เสมอ |
 | EmptyState / InlineNotice | `components/ui/empty-state.tsx` | ไม่มีข้อมูล | `size` ใช้ได้เฉพาะคู่กับ `illustration` ไม่ใช่ `icon` |
+| AccessDenied / AccessDeniedPage | `components/ui/access-denied.tsx`, `components/layout/page-states.tsx` | หน้า "ไม่มีสิทธิ์เข้าถึง" ตัวเดียวของทุกบทบาท (ไอคอนกุญแจในวงกลมโทน warning + หัวข้อ + คำอธิบายว่าหน้านี้สำหรับใคร + ปุ่มกลับแดชบอร์ดของ role ผู้ดู) อยู่ใน shell ของ role ผู้ดู | ไม่เรียกเอง: `RoleLayoutGuard` แสดงให้ทุก tree (รวม `(student)`); `StudentOnlyPage` เป็นตัวห่อบาง ๆ ของ `AccessDeniedPage` |
 | Skeleton / StatCardsSkeleton / TableSkeleton / ListSkeleton | `components/ui/skeleton.tsx` | ระหว่างโหลด | รูปทรงต้องตรงของจริง |
 | Pagination | `components/ui/pagination.tsx` | ตารางยาว (`PAGE_SIZES` 10/25/50) | — |
 | ConfirmDialog | `components/ui/confirm-dialog.tsx` | ยืนยันการกระทำ | สูงไม่เกิน `100dvh-2rem` มี safe-area |
@@ -59,7 +60,7 @@
 
 ## 6) เลย์เอาต์
 - โครงหน้า: `DashboardShell role=… identityLabel fullName` ครอบ; เนื้อหา `main` = `mx-auto max-w-7xl space-y-6 p-4 md:p-8 pb-24`
-- เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี `layout.tsx` กั้นสิทธิ์ด้วย `RoleLayoutGuard`: `/instructor` `/staff` `/admin` `/superadmin`; หน้านิสิตอยู่ route group `app/(student)/` (URL ไม่เปลี่ยน) ใช้ `StudentLayoutGuard` ซึ่งแสดง `StudentOnlyPage` เมื่อไม่ใช่นิสิต; `/profile` อยู่นอกกลุ่มเพราะทุกบทบาทใช้ — หน้าใหม่ห้ามห่อ `ProtectedRoute`/`RequireRole` เอง)
+- เส้นทางตามบทบาท: `/dashboard` นิสิต, `/instructor/*`, `/staff/*`, `/admin/*`, `/superadmin/*` (`lib/dashboard-routes.ts`, แต่ละ tree มี `layout.tsx` กั้นสิทธิ์ด้วย `RoleLayoutGuard`: `/instructor` `/staff` `/admin` `/superadmin`; หน้านิสิตอยู่ route group `app/(student)/` (URL ไม่เปลี่ยน) ใช้ `RoleLayoutGuard role="STUDENT"` เช่นกัน; ผู้ที่ role ไม่ตรงเห็น `AccessDenied` ใน shell ของตนเหมือนกันทุก tree; `/profile` อยู่นอกกลุ่มเพราะทุกบทบาทใช้ — หน้าใหม่ห้ามห่อ `ProtectedRoute`/`RequireRole` เอง)
 - หัวหน้า: `PageHeader` ชื่อ (`PAGE_TITLE_CLASS` = `text-[28px] font-semibold leading-tight text-primary` ทุกบทบาท) + คำอธิบาย 1 บรรทัด `text-sm text-muted-foreground` + ปุ่มหลักมุมขวา (มือถือเต็มความกว้าง `w-full sm:w-auto`, `min-h-11`)
 - หัวส่วน: `PageSection` (`text-lg font-semibold`) หรือหัวการ์ด `DetailSectionHeader` = ไอคอนในช่อง `h-9 w-9 rounded-lg bg-brand-light text-brand` + ชื่อ + คำอธิบาย + action ขวา
 - หน้าตั้งค่า/โปรไฟล์ใช้ `max-w-7xl` ชิดซ้ายเหมือนหน้าอื่น ไม่จัดกึ่งกลางด้วย `max-w` แคบ

@@ -1,25 +1,33 @@
 'use client';
 
-import { AlertCircle, Lock } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import type { CurrentUserResponse } from '@eduanalyze-ai/shared-types';
-import { primaryRoleFor } from '@/components/auth/require-role';
+import { primaryRoleFor } from '@/lib/role-priority';
+import { resolveHomeRoute } from '@/lib/dashboard-routes';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { AccessDenied } from '@/components/ui/access-denied';
 
-// Rendered inside the shell with the viewer's own role, so a non-student who
-// lands on a student page still has their nav and a way out.
-export function StudentOnlyPage({ user }: { user: CurrentUserResponse }) {
+// The one "no access" page: the viewer's own shell (menu, header) around AccessDenied, so a
+// wrong-role visitor keeps their navigation and a way out. Used by every role's layout guard.
+export function AccessDeniedPage({
+  user,
+  description,
+}: Readonly<{ user: CurrentUserResponse; description: React.ReactNode }>) {
   return (
     <DashboardShell
       role={primaryRoleFor(user.roles)}
       identityLabel={user.email}
       fullName={user.fullName}
     >
-      <EmptyState icon={Lock} description="หน้านี้สำหรับนิสิตเท่านั้น" />
+      <AccessDenied description={description} homeHref={resolveHomeRoute(user.roles)} />
     </DashboardShell>
   );
+}
+
+export function StudentOnlyPage({ user }: Readonly<{ user: CurrentUserResponse }>) {
+  return <AccessDeniedPage user={user} description="หน้านี้สำหรับนิสิตเท่านั้น" />;
 }
 
 export function PageLoadError({

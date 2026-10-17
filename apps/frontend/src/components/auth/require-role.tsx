@@ -1,10 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import type { CurrentUserResponse, Role } from '@eduanalyze-ai/shared-types';
 import { useAuth } from '@/lib/auth-context';
-import { resolveHomeRoute } from '@/lib/dashboard-routes';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SemanticTone } from '@/lib/tone';
 
@@ -26,9 +23,8 @@ export const ROLE_BADGE_TONE: Record<Role, SemanticTone> = {
   SUPER_ADMIN: 'danger',
 };
 
-// Reproduces the inline-message role gate pattern copy-pasted across every
-// STUDENT page (e.g. app/dashboard/page.tsx's `isStudent` check) as a
-// shared component, for pages restricted to a role other than STUDENT.
+// The role gate behind every RoleLayoutGuard: waits for the user, then renders children for an
+// allowed role or `renderDenied` for anyone else (the guard passes the shared access-denied page).
 // `role` accepts either one role or several (any-of) — e.g. /admin/users
 // is reachable by both SUPER_ADMIN and ADMIN, unlike /superadmin/academic-years
 // which is SUPER_ADMIN-only.
@@ -39,9 +35,7 @@ export function RequireRole({
 }: {
   role: Role | Role[];
   children: React.ReactNode;
-  // Replaces the default "this page is for X only" message, for trees whose pages
-  // always showed their own wrong-role view (the student pages render it inside the shell).
-  renderDenied?: (user: CurrentUserResponse) => React.ReactNode;
+  renderDenied: (user: CurrentUserResponse) => React.ReactNode;
 }) {
   const { user } = useAuth();
   const allowedRoles = Array.isArray(role) ? role : [role];
@@ -61,19 +55,7 @@ export function RequireRole({
   }
 
   if (!allowedRoles.some((allowedRole) => user.roles.includes(allowedRole))) {
-    if (renderDenied) return <>{renderDenied(user)}</>;
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-4 text-center">
-          <p className="text-muted-foreground">
-            หน้านี้สำหรับ{allowedRoles.map((allowedRole) => ROLE_LABEL_TH[allowedRole]).join('หรือ')}เท่านั้น
-          </p>
-          <Button asChild variant="outline" size="sm">
-            <Link href={resolveHomeRoute(user.roles)}>กลับไปแดชบอร์ดของคุณ</Link>
-          </Button>
-        </div>
-      </div>
-    );
+    return <>{renderDenied(user)}</>;
   }
 
   return <>{children}</>;
