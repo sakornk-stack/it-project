@@ -53,19 +53,36 @@ const WRITE_ADMIN: Handlers = {
   remove: ['ADMIN'],
 };
 
+// Reading the curriculum catalogue (courses, categories, requirements, prerequisites) is open to
+// the four roles that work with a curriculum, each limited to their own curricula by
+// CatalogScopeService. SUPER_ADMIN is left out: it has no access to academic data.
+const READ_CATALOG: Handlers = {
+  findAll: ['STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN'],
+  findOne: ['STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN'],
+};
+// CLO/PLO/mappings stay hidden from STAFF and INSTRUCTOR (PROJECT_CONTEXT §9/§10).
+const READ_OUTCOMES: Handlers = {
+  findAll: ['ADMIN', 'STUDENT'],
+  findOne: ['ADMIN', 'STUDENT'],
+};
+
 const TABLE: [string, { prototype: object }, Handlers][] = [
-  ['CourseController', CourseController, WRITE_STAFF],
-  ['CourseCategoryController', CourseCategoryController, WRITE_STAFF],
-  ['CurriculumRequirementController', CurriculumRequirementController, WRITE_STAFF],
-  ['PrerequisiteController', PrerequisiteController, WRITE_STAFF],
+  ['CourseController', CourseController, { ...WRITE_STAFF, ...READ_CATALOG }],
+  ['CourseCategoryController', CourseCategoryController, { ...WRITE_STAFF, ...READ_CATALOG }],
+  [
+    'CurriculumRequirementController',
+    CurriculumRequirementController,
+    { ...WRITE_STAFF, ...READ_CATALOG },
+  ],
+  ['PrerequisiteController', PrerequisiteController, { ...WRITE_STAFF, ...READ_CATALOG }],
   [
     'CourseInstructorController',
     CourseInstructorController,
     { findAll: ['STAFF'], create: ['STAFF'], remove: ['STAFF'] },
   ],
-  ['CloController', CloController, WRITE_ADMIN],
-  ['PloController', PloController, WRITE_ADMIN],
-  ['CloPloMappingController', CloPloMappingController, WRITE_ADMIN],
+  ['CloController', CloController, { ...WRITE_ADMIN, ...READ_OUTCOMES }],
+  ['PloController', PloController, { ...WRITE_ADMIN, ...READ_OUTCOMES }],
+  ['CloPloMappingController', CloPloMappingController, { ...WRITE_ADMIN, ...READ_OUTCOMES }],
   // Permanent delete of faculties/departments/programs: SUPER_ADMIN only. Curricula have none.
   ['FacultyController', FacultyController, { ...WRITE_SUPER_ADMIN, hardDelete: ['SUPER_ADMIN'] }],
   ['DepartmentController', DepartmentController, { ...WRITE_SUPER_ADMIN, hardDelete: ['SUPER_ADMIN'] }],
@@ -106,6 +123,10 @@ describe('role permission table', () => {
 
 // SUPER_ADMIN manages accounts only: no handler of an academic-content controller may list it.
 const ACADEMIC_CONTROLLERS: [string, { prototype: object }][] = [
+  ['CourseController', CourseController],
+  ['CourseCategoryController', CourseCategoryController],
+  ['CurriculumRequirementController', CurriculumRequirementController],
+  ['PrerequisiteController', PrerequisiteController],
   ['AiAnalysisController', AiAnalysisController],
   ['CreditCheckerController', CreditCheckerController],
   ['LearningPathController', LearningPathController],

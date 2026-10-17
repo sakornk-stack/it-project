@@ -56,6 +56,22 @@ export class PrerequisiteService {
     return this.prisma.prerequisite.findMany();
   }
 
+  // Controller-facing read, limited to the caller's curricula — see
+  // CourseService.findAllInCurricula.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.prerequisite.findMany({ where: { course: { curriculum } } });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const prerequisite = await this.prisma.prerequisite.findFirst({
+      where: { id, course: { curriculum } },
+    });
+    if (!prerequisite) {
+      throw new NotFoundException(`Prerequisite ${id} not found`);
+    }
+    return prerequisite;
+  }
+
   async findOne(id: string) {
     const prerequisite = await this.prisma.prerequisite.findUnique({
       where: { id },

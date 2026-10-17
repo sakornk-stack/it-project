@@ -50,6 +50,22 @@ export class CurriculumRequirementService {
     return this.prisma.curriculumRequirement.findMany();
   }
 
+  // Controller-facing read, limited to the caller's curricula — see
+  // CourseService.findAllInCurricula.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.curriculumRequirement.findMany({ where: { curriculum } });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const requirement = await this.prisma.curriculumRequirement.findFirst({
+      where: { id, curriculum },
+    });
+    if (!requirement) {
+      throw new NotFoundException(`Curriculum requirement ${id} not found`);
+    }
+    return requirement;
+  }
+
   async findOne(id: string) {
     const requirement = await this.prisma.curriculumRequirement.findUnique({
       where: { id },

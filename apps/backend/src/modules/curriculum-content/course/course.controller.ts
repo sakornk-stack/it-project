@@ -14,11 +14,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { CatalogScopeService } from '../../../common/scope/catalog-scope.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -26,25 +29,37 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 @ApiTags('curriculum-content')
 @Controller('courses')
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(
+    private readonly courseService: CourseService,
+    private readonly catalogScope: CatalogScopeService,
+  ) {}
 
+  // Reads are limited to the caller's curricula; SUPER_ADMIN has no access to
+  // academic data (see CatalogScopeService).
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List active courses' })
+  @ApiOperation({ summary: 'List active courses within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of active courses' })
-  findAll() {
-    return this.courseService.findAll();
+  async findAll(@CurrentUser() user: RequestUser) {
+    return this.courseService.findAllInCurricula(
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get a course by id' })
+  @ApiOperation({ summary: 'Get a course by id within the caller scope' })
   @ApiResponse({ status: 200, description: 'Course found' })
-  @ApiResponse({ status: 404, description: 'Course not found' })
-  findOne(@Param('id') id: string) {
-    return this.courseService.findOne(id);
+  @ApiResponse({ status: 404, description: 'Course not found or outside the caller scope' })
+  async findOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.courseService.findOneInCurricula(
+      id,
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Post()

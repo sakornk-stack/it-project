@@ -80,6 +80,15 @@ export class CurriculumService {
     });
   }
 
+  // What the ADMIN list shows: only the curricula of programs the caller's
+  // scopes cover (an empty scope matches nothing).
+  findInactiveInPrograms(programIds: string[]) {
+    return this.prisma.curriculum.findMany({
+      where: { isActive: false, programId: { in: programIds } },
+      orderBy: [{ programId: 'asc' }, { version: 'asc' }],
+    });
+  }
+
   // Comes back closed to registration: a program may have only one curriculum open
   // at a time, and reopening is a separate, confirmed step on the curriculum itself.
   async reactivate(id: string) {

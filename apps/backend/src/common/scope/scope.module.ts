@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScopeResolverService } from './scope-resolver.service';
+import { CatalogScopeService } from './catalog-scope.service';
 import { ScopeGuard } from '../guards/scope.guard';
 import { InstructorOrScopeGuard } from '../guards/instructor-or-scope.guard';
 
@@ -10,7 +11,7 @@ import { InstructorOrScopeGuard } from '../guards/instructor-or-scope.guard';
 // InstructorOrScopeGuard lives here (not InstructorModule) because it
 // needs ScopeResolverService — this module already owns that provider.
 @Module({
-  providers: [ScopeResolverService, ScopeGuard, InstructorOrScopeGuard],
-  exports: [ScopeResolverService, ScopeGuard, InstructorOrScopeGuard],
+  providers: [ScopeResolverService, CatalogScopeService, ScopeGuard, InstructorOrScopeGuard],
+  exports: [ScopeResolverService, CatalogScopeService, ScopeGuard, InstructorOrScopeGuard],
 })
 export class ScopeModule {}

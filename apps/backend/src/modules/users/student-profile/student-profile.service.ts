@@ -118,15 +118,11 @@ export class StudentProfileService {
     return profile;
   }
 
-  // §10: SUPER_ADMIN sees every student; ADMIN/STAFF see only students in
-  // programs their scope covers — query-level filtered (CONVENTIONS §3a),
-  // never fetch-all-then-filter-in-memory.
+  // §10: ADMIN/STAFF see only students in programs their scope covers —
+  // query-level filtered (CONVENTIONS §3a), never fetch-all-then-filter-in-
+  // memory. SUPER_ADMIN has no access to student data (the controller's @Roles
+  // excludes it), so there is deliberately no unfiltered branch here.
   async findAllScoped(user: RequestUser) {
-    if (user.roles.includes('SUPER_ADMIN')) {
-      return this.prisma.studentProfile.findMany({
-        include: { user: { select: { fullName: true, email: true } } },
-      });
-    }
     const programIds = await this.scopeResolverService.getCoveredProgramIds(
       user.userId,
     );

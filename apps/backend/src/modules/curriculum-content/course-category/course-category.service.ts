@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
 import { CreateCourseCategoryDto } from './dto/create-course-category.dto';
@@ -23,6 +24,22 @@ export class CourseCategoryService {
 
   findAll() {
     return this.prisma.courseCategory.findMany({ where: { isActive: true } });
+  }
+
+  // Controller-facing reads, limited to the caller's curricula — see
+  // CourseService.findAllInCurricula.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.courseCategory.findMany({ where: { isActive: true, curriculum } });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const category = await this.prisma.courseCategory.findFirst({
+      where: { id, isActive: true, curriculum },
+    });
+    if (!category) {
+      throw new NotFoundException(`Course category ${id} not found`);
+    }
+    return category;
   }
 
   async findOne(id: string) {

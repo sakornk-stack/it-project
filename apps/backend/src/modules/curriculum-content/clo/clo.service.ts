@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CourseService } from '../course/course.service';
 import { CreateCloDto } from './dto/create-clo.dto';
@@ -23,6 +24,24 @@ export class CloService {
 
   findAll() {
     return this.prisma.clo.findMany({ where: { isActive: true } });
+  }
+
+  // Controller-facing reads, limited to the caller's curricula — see
+  // CourseService.findAllInCurricula.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.clo.findMany({
+      where: { isActive: true, course: { curriculum } },
+    });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const clo = await this.prisma.clo.findFirst({
+      where: { id, isActive: true, course: { curriculum } },
+    });
+    if (!clo) {
+      throw new NotFoundException(`CLO ${id} not found`);
+    }
+    return clo;
   }
 
   async findOne(id: string) {

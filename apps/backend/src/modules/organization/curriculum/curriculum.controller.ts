@@ -14,11 +14,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { ScopeResolverService } from '../../../common/scope/scope-resolver.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumService } from './curriculum.service';
 import { CreateCurriculumDto } from './dto/create-curriculum.dto';
 import { UpdateCurriculumDto } from './dto/update-curriculum.dto';
@@ -26,7 +29,10 @@ import { UpdateCurriculumDto } from './dto/update-curriculum.dto';
 @ApiTags('organization')
 @Controller('curricula')
 export class CurriculumController {
-  constructor(private readonly curriculumService: CurriculumService) {}
+  constructor(
+    private readonly curriculumService: CurriculumService,
+    private readonly scopeResolver: ScopeResolverService,
+  ) {}
 
   // Public — see FacultyController's findAll for the reasoning.
   @Get()
@@ -41,10 +47,14 @@ export class CurriculumController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List deactivated curriculum records (ADMIN)' })
+  @ApiOperation({
+    summary: 'List deactivated curriculum records in the ADMIN scope',
+  })
   @ApiResponse({ status: 200, description: 'Deactivated curriculum records' })
-  findInactive() {
-    return this.curriculumService.findInactive();
+  async findInactive(@CurrentUser() user: RequestUser) {
+    return this.curriculumService.findInactiveInPrograms(
+      await this.scopeResolver.getCoveredProgramIds(user.userId),
+    );
   }
 
   @Post(':id/reactivate')

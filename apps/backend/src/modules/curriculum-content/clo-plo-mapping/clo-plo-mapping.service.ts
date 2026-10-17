@@ -57,6 +57,24 @@ export class CloPloMappingService {
     return this.prisma.cloPloMapping.findMany({ where: { isActive: true } });
   }
 
+  // Controller-facing reads, limited to the caller's curricula (a mapping's CLO
+  // and PLO share one curriculum) — see CourseService.findAllInCurricula.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.cloPloMapping.findMany({
+      where: { isActive: true, plo: { curriculum } },
+    });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const mapping = await this.prisma.cloPloMapping.findFirst({
+      where: { id, isActive: true, plo: { curriculum } },
+    });
+    if (!mapping) {
+      throw new NotFoundException(`CLO-PLO mapping ${id} not found`);
+    }
+    return mapping;
+  }
+
   async findOne(id: string) {
     const mapping = await this.prisma.cloPloMapping.findUnique({
       where: { id },

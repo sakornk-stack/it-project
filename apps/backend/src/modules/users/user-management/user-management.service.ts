@@ -179,7 +179,14 @@ export class UserManagementService {
   // GET /users/:id: findOne plus the references, so the screen can say why a
   // permanent delete is refused. findOne itself stays cheap for the other callers.
   async getOne(id: string, requester: RequestUser) {
-    const [summary] = await this.withReferences([await this.findOne(id, requester)]);
+    const found = await this.findOne(id, requester);
+    // Same STUDENT exclusion as listUsers: SUPER_ADMIN reads accounts, not
+    // students, so a student's account can't be fetched by id either. Only the
+    // read is narrowed — findOne stays as is for the write flows that share it.
+    if (requester.roles.includes('SUPER_ADMIN') && found.roles.includes('STUDENT')) {
+      throw new NotFoundException('User not found');
+    }
+    const [summary] = await this.withReferences([found]);
     return summary;
   }
 

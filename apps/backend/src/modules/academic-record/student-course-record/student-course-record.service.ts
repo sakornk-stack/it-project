@@ -231,10 +231,9 @@ export class StudentCourseRecordService {
         orderBy,
       });
     }
-    return this.prisma.studentCourseRecord.findMany({
-      where: { isActive: true },
-      orderBy,
-    });
+    // Not a student and not staff-tier (e.g. SUPER_ADMIN): no access to grades.
+    // Never fall back to returning every record.
+    throw new ForbiddenException('ไม่มีสิทธิ์เข้าถึงผลการเรียน');
   }
 
   async findOne(id: string, user: RequestUser) {
@@ -761,6 +760,13 @@ export class StudentCourseRecordService {
               semester: { include: { academicYear: true } },
             },
           });
+
+    // A student with no record in any of this instructor's courses is not "their"
+    // student: answer 404 (same as an unknown id) rather than handing back the
+    // student's code and name with an empty list.
+    if (records.length === 0) {
+      throw new NotFoundException(`Student ${studentProfileId} not found`);
+    }
 
     const entries = records
       .map((record) => ({

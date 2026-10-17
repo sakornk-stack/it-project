@@ -14,11 +14,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { CatalogScopeService } from '../../../common/scope/catalog-scope.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { PrerequisiteService } from './prerequisite.service';
 import { CreatePrerequisiteDto } from './dto/create-prerequisite.dto';
 import { UpdatePrerequisiteDto } from './dto/update-prerequisite.dto';
@@ -26,25 +29,37 @@ import { UpdatePrerequisiteDto } from './dto/update-prerequisite.dto';
 @ApiTags('curriculum-content')
 @Controller('prerequisites')
 export class PrerequisiteController {
-  constructor(private readonly prerequisiteService: PrerequisiteService) {}
+  constructor(
+    private readonly prerequisiteService: PrerequisiteService,
+    private readonly catalogScope: CatalogScopeService,
+  ) {}
 
+  // Reads are limited to the caller's curricula; SUPER_ADMIN has no access to
+  // academic data (see CatalogScopeService).
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List prerequisites' })
+  @ApiOperation({ summary: 'List prerequisites within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of prerequisites' })
-  findAll() {
-    return this.prerequisiteService.findAll();
+  async findAll(@CurrentUser() user: RequestUser) {
+    return this.prerequisiteService.findAllInCurricula(
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get a prerequisite by id' })
+  @ApiOperation({ summary: 'Get a prerequisite by id within the caller scope' })
   @ApiResponse({ status: 200, description: 'Prerequisite found' })
-  @ApiResponse({ status: 404, description: 'Prerequisite not found' })
-  findOne(@Param('id') id: string) {
-    return this.prerequisiteService.findOne(id);
+  @ApiResponse({ status: 404, description: 'Prerequisite not found or outside the caller scope' })
+  async findOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.prerequisiteService.findOneInCurricula(
+      id,
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Post()

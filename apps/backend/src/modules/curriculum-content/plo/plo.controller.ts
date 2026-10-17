@@ -14,11 +14,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { CatalogScopeService } from '../../../common/scope/catalog-scope.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { PloService } from './plo.service';
 import { CreatePloDto } from './dto/create-plo.dto';
 import { UpdatePloDto } from './dto/update-plo.dto';
@@ -26,30 +29,39 @@ import { UpdatePloDto } from './dto/update-plo.dto';
 @ApiTags('curriculum-content')
 @Controller('plos')
 export class PloController {
-  constructor(private readonly ploService: PloService) {}
+  constructor(
+    private readonly ploService: PloService,
+    private readonly catalogScope: CatalogScopeService,
+  ) {}
 
   // STAFF/INSTRUCTOR must not view CLO/PLO/CloPloMapping at all
   // (PROJECT_CONTEXT.md §10/§9) — @Roles closes this at the API level,
-  // not just by omission in the frontend.
+  // not just by omission in the frontend. ADMIN/STUDENT then only see their
+  // own curricula (see CatalogScopeService).
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List active PLOs' })
+  @ApiOperation({ summary: 'List active PLOs within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of active PLOs' })
-  findAll() {
-    return this.ploService.findAll();
+  async findAll(@CurrentUser() user: RequestUser) {
+    return this.ploService.findAllInCurricula(
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'STUDENT')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get a PLO by id' })
+  @ApiOperation({ summary: 'Get a PLO by id within the caller scope' })
   @ApiResponse({ status: 200, description: 'PLO found' })
-  @ApiResponse({ status: 404, description: 'PLO not found' })
-  findOne(@Param('id') id: string) {
-    return this.ploService.findOne(id);
+  @ApiResponse({ status: 404, description: 'PLO not found or outside the caller scope' })
+  async findOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.ploService.findOneInCurricula(
+      id,
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Post()

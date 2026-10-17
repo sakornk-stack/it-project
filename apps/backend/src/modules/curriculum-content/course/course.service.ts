@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
 import { CourseCategoryService } from '../course-category/course-category.service';
@@ -39,6 +40,24 @@ export class CourseService {
 
   findAll() {
     return this.prisma.course.findMany({ where: { isActive: true } });
+  }
+
+  // Controller-facing read: only courses of the curricula the caller may see
+  // (CatalogScopeService.curriculumWhere). findAll/findOne stay unscoped for
+  // the other services that call them internally. A course outside the scope
+  // is a 404, same as a missing or inactive one, so existence isn't leaked.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
+    return this.prisma.course.findMany({ where: { isActive: true, curriculum } });
+  }
+
+  async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
+    const course = await this.prisma.course.findFirst({
+      where: { id, isActive: true, curriculum },
+    });
+    if (!course) {
+      throw new NotFoundException(`Course ${id} not found`);
+    }
+    return course;
   }
 
   // For INSTRUCTOR self-service — "Course ที่ตัวเองรับผิดชอบ" (PROJECT_CONTEXT.md

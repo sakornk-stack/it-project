@@ -14,11 +14,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { ScopeTarget } from '../../../common/decorators/scope-target.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
+import { CatalogScopeService } from '../../../common/scope/catalog-scope.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumRequirementService } from './curriculum-requirement.service';
 import { CreateCurriculumRequirementDto } from './dto/create-curriculum-requirement.dto';
 import { UpdateCurriculumRequirementDto } from './dto/update-curriculum-requirement.dto';
@@ -28,25 +31,35 @@ import { UpdateCurriculumRequirementDto } from './dto/update-curriculum-requirem
 export class CurriculumRequirementController {
   constructor(
     private readonly curriculumRequirementService: CurriculumRequirementService,
+    private readonly catalogScope: CatalogScopeService,
   ) {}
 
+  // Reads are limited to the caller's curricula; SUPER_ADMIN has no access to
+  // academic data (see CatalogScopeService).
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'List curriculum requirements' })
+  @ApiOperation({ summary: 'List curriculum requirements within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of curriculum requirements' })
-  findAll() {
-    return this.curriculumRequirementService.findAll();
+  async findAll(@CurrentUser() user: RequestUser) {
+    return this.curriculumRequirementService.findAllInCurricula(
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get a curriculum requirement by id' })
+  @ApiOperation({ summary: 'Get a curriculum requirement by id within the caller scope' })
   @ApiResponse({ status: 200, description: 'Curriculum requirement found' })
-  @ApiResponse({ status: 404, description: 'Curriculum requirement not found' })
-  findOne(@Param('id') id: string) {
-    return this.curriculumRequirementService.findOne(id);
+  @ApiResponse({ status: 404, description: 'Curriculum requirement not found or outside the caller scope' })
+  async findOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.curriculumRequirementService.findOneInCurricula(
+      id,
+      await this.catalogScope.curriculumWhere(user),
+    );
   }
 
   @Post()
