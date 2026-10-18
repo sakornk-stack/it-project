@@ -77,6 +77,10 @@ GitHub Actions **ไม่คัดลอกไฟล์ใดๆ ขึ้น V
 
 ทำตามลำดับ 3.1 → 3.12
 
+ข้อควรระวังตอนทำงานผ่าน SSH (เจอจริงตอน deploy ครั้งแรก):
+- เปิด SSH ด้วย `ssh -o ServerAliveInterval=30 <user>@<host>` เพื่อไม่ให้ session หลุดเมื่อเงียบนาน
+- ก่อนวางคำสั่งทุกครั้ง ดู prompt ว่าอยู่เครื่องไหน (Mac หรือ VPS) และอย่าวางหลายบล็อกต่อกันตอนยังไม่แน่ใจ — ถ้า session หลุดกลางทาง บล็อกที่เหลือจะไปรันบนเครื่องผิด
+
 ### 3.1 ตรวจไฟล์ แล้ว commit + push (บน Mac)
 
 ```bash
@@ -216,18 +220,108 @@ curl -sI https://itkukps.tech | head -1                          # site เด�
 certbot จะแก้ไฟล์ `/etc/nginx/sites-available/eduanalyze` เอง (เพิ่ม 443 และ redirect) — ห้าม copy `deploy/nginx.conf` ทับไฟล์นี้อีก
 ถ้าจำเป็นต้องทับ ให้รัน certbot คำสั่งเดิมซ้ำ
 
-### 3.8 ข้อมูลคณะ/หลักสูตร (seed.ts) — รันครั้งเดียว
+### 3.8 ข้อมูลคณะ/หลักสูตร (seed) — รันครั้งเดียว
 
-`seed.ts` สร้างคณะ LASCI + ภาควิชา/สาขา/หลักสูตร (ไม่มี user และไม่มีข้อมูลนิสิต) เป็นแบบ insert-only รันซ้ำได้ไม่ซ้ำข้อมูล
-ปกติสคริปต์จะปฏิเสธเมื่อ `NODE_ENV=production` จึงต้องส่ง `ALLOW_PROD_SEED=yes` **เฉพาะในคำสั่งนี้** (ห้ามใส่ใน `.env`):
+ต้องรัน **6 สคริปต์** ตามลำดับนี้ (ไม่มี user และไม่มีข้อมูลนิสิต ทุกตัวรันซ้ำได้ไม่ซ้ำข้อมูล):
+
+| # | สคริปต์ | ผล |
+|---|---|---|
+| 1 | `seed.ts` | คณะ LASCI + ภาควิชา/สาขา/หลักสูตร |
+| 2 | `import-ict-2564.ts` | วิชา ICT 2564 = **43 วิชา** (ตัดออก 3 วิชา จากเดิม 46) |
+| 3 | `import-ict-2564-gened.ts` | วิชาศึกษาทั่วไป 2564 = **17 วิชา** |
+| 4 | `import-ict-2569.ts` | วิชา ICT 2569 = **50 วิชา** |
+| 5 | `seed-plo-2564.ts` | PLO1–6 ของ 2564 |
+| 6 | `import-ict-clo-plo.ts` | CLO/PLO/mapping (ใช้ `private-data`) |
+
+- ทุกตัว**ยกเว้น `seed.ts`** เป็น dry-run โดยปริยาย ต้องใส่ `--apply` จึงจะเขียนจริง; `seed.ts` เขียนจริงทันที และปฏิเสธเมื่อ `NODE_ENV=production` จึงต้องส่ง `ALLOW_PROD_SEED=yes` **เฉพาะในคำสั่งที่รัน** (ห้ามใส่ใน `.env`)
+- ใน image `migrator` มีเฉพาะ `seed.ts` (กับ `upsert-active.ts` และ seed-guard) สคริปต์ที่เหลือต้อง `scp` ขึ้น VPS แล้ว mount ทีละไฟล์เข้าไปที่ `/app/apps/backend/prisma/` (อ่านอย่างเดียว) ไม่ต้อง build image ใหม่
+- `import-ict-clo-plo.ts` อ่าน `prisma/private-data/` (เฉพาะ `table_*.csv` และ `curriculum.txt` เท่านั้น ห้ามส่งไฟล์อื่น เช่น `career-*`, `*.bak-*`, `meta.json`) และเขียนไฟล์รายงานกลับลงโฟลเดอร์นั้น จึงต้อง mount แบบ**เขียนได้** และให้เจ้าของเป็น uid 1000 (user `node` ใน image) แล้ว**ลบทิ้งทันทีเมื่อเสร็จ** เพราะเป็นข้อมูลหลักสูตรที่ไม่เปิดเผย
+
+**เตรียมไฟล์ (บน Mac)** — แล้ววางลง VPS:
+
+```bash
+# บน Mac, ที่ root ของ repo
+ssh -o ServerAliveInterval=30 root@<VPS_HOST> 'mkdir -p ~/seed-files/private-data'
+scp apps/backend/prisma/{import-ict-2564,import-ict-2564-gened,import-ict-2569,seed-plo-2564,import-ict-clo-plo}.ts root@<VPS_HOST>:~/seed-files/
+scp apps/backend/prisma/private-data/table_*.csv apps/backend/prisma/private-data/curriculum.txt root@<VPS_HOST>:~/seed-files/private-data/
+```
+
+```bash
+# บน VPS
+chown -R 1000:1000 ~/seed-files/private-data && chmod -R u+rwX ~/seed-files/private-data
+```
+
+**สร้าง `seed-all.sh` บน VPS ด้วย heredoc** (อย่าวางโค้ดสคริปต์ทั้งก้อนลง terminal ตรงๆ ให้สร้างเป็นไฟล์แล้วค่อยรัน เพราะ terminal ที่วางหลายบรรทัดอาจกิน input กลางทาง):
+
+```bash
+cat > ~/seed-all.sh <<'EOF'
+#!/usr/bin/env bash
+# Runs the 6 curriculum seed scripts in order. Each script except seed.ts is
+# shown as a dry run first, then asks y/N before --apply.
+set -euo pipefail
+cd ~/eduanalyze
+SRC="$HOME/seed-files"
+
+# run_script NAME [extra docker args via EXTRA_ARGS] -- [script args]
+run_script() {
+  local name="$1"; shift
+  local mount=()
+  if [ "$name" != "seed" ]; then
+    mount=(-v "$SRC/$name.ts:/app/apps/backend/prisma/$name.ts:ro")
+  fi
+  # -T and </dev/null: docker must not read this script's stdin (the y/N answers).
+  docker compose run --rm --no-deps -T -e ALLOW_PROD_SEED=yes \
+    "${mount[@]}" "${EXTRA_ARGS[@]}" migrate \
+    /app/node_modules/.bin/ts-node "prisma/$name.ts" "$@" </dev/null
+}
+
+step() {
+  local name="$1"
+  echo; echo "=== $name: dry run ==="
+  run_script "$name"
+  local answer
+  read -r -p "Apply $name? [y/N] " answer
+  case "$answer" in
+    y | Y) run_script "$name" --apply ;;
+    *) echo "Stopped before $name."; exit 1 ;;
+  esac
+}
+
+EXTRA_ARGS=()
+echo "=== seed (writes immediately) ==="
+read -r -p "Run seed.ts? [y/N] " answer
+case "$answer" in y | Y) run_script seed ;; *) echo "Stopped."; exit 1 ;; esac
+
+step import-ict-2564
+step import-ict-2564-gened
+step import-ict-2569
+step seed-plo-2564
+
+# Needs the private data, writable (it writes its report there), owner uid 1000.
+EXTRA_ARGS=(-v "$SRC/private-data:/app/apps/backend/prisma/private-data")
+step import-ict-clo-plo
+echo; echo "Done. Now delete ~/seed-files/private-data and run the checks in the docs."
+EOF
+bash -n ~/seed-all.sh && bash ~/seed-all.sh
+```
+
+**ตรวจหลัง seed** (ไม่แสดงรหัสผ่านหรือ URL):
 
 ```bash
 cd ~/eduanalyze
-docker compose run --rm --no-deps -e ALLOW_PROD_SEED=yes migrate /app/node_modules/.bin/ts-node prisma/seed.ts
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "select (select count(*) from courses) as courses, (select count(*) from clos) as clos, (select count(*) from users) as users"'
+```
+
+ผลที่ถูกต้อง: `courses` = **110** (43 + 17 + 50), `clos` = **129**, `users` = **0**
+
+เมื่อเสร็จ**ลบข้อมูลหลักสูตรออกจาก VPS**:
+
+```bash
+rm -rf ~/seed-files/private-data
+rm -f ~/seed-files/*.ts      # จะเก็บ .ts ไว้รันซ้ำก็ได้ เพราะไม่ใช่ข้อมูลลับ
 ```
 
 หมายเหตุ: `totalCredits` ส่วนใหญ่เป็นค่าชั่วคราว 132 (จริงเฉพาะ ICT 2564 = 126 และ ICT 2569 = 120) ให้แก้เป็นค่าจริงผ่านหน้าเว็บของ SUPER_ADMIN
-สคริปต์ `import-*` ใช้ไฟล์ใน `prisma/private-data/` ซึ่งไม่ได้อยู่ใน image โดยตั้งใจ
 
 ### 3.9 ผู้ดูแลระบบคนแรก (SUPER_ADMIN)
 
@@ -244,6 +338,18 @@ bash ~/eduanalyze/deploy/create-first-admin.sh
 จากนั้นตั้งรหัสจริง: เปิด `https://eduanalyze.itkukps.tech/forgot-password` → ใส่อีเมลเดียวกัน → เปิดลิงก์ในอีเมล → ตั้งรหัส
 (ขั้นนี้ทดสอบว่า Gmail SMTP ใช้ได้ไปในตัว; หน้านี้ตอบข้อความเดียวกันเสมอไม่ว่าอีเมลจะมีบัญชีหรือไม่)
 แนะนำให้เปิด 2FA ให้บัญชีนี้ทันทีหลังเข้าสู่ระบบ
+
+ข้อควรรู้ (เจอตอน deploy ครั้งแรก):
+- ตั้งรหัสผ่านของบัญชีแรกผ่านปุ่ม **"ลืมรหัสผ่าน?"** ในหน้า login เท่านั้น — **ไม่ใช่แท็บสมัครสมาชิก** (อีเมลนี้มีบัญชีอยู่แล้ว การสมัครจะถูกปฏิเสธ)
+- 1 อีเมลมีได้ 1 บัญชี ถ้าต้องการทดสอบหลายบทบาทด้วยกล่องจดหมายเดียว ให้ใช้ plus-address เช่น `name+staff@gmail.com`, `name+instructor@gmail.com` (อีเมลถึงกล่องเดียวกัน แต่ระบบนับเป็นคนละบัญชี)
+- สคริปต์ตรวจก่อนสร้าง: ต้องพิมพ์อีเมลซ้ำเพื่อยืนยัน, ปฏิเสธโดเมนทดสอบ (`test.local`, `example.com`, `localhost`, `.local`, `.test`, `.invalid`), แสดงอีเมลแบบปิดบังแล้วถาม `y/N` ก่อนสร้างจริง
+
+#### ลำดับสร้างบัญชีผู้ใช้
+
+1. **SUPER_ADMIN** — สร้างด้วยสคริปต์ข้างบน
+2. **STAFF** — SUPER_ADMIN สร้างผ่านหน้าเว็บ ต้องกำหนด**ขอบเขต** (คณะ/ภาควิชา/สาขา/หลักสูตร) เสมอ
+3. **อาจารย์ (INSTRUCTOR)** — ไม่ใช้ขอบเขต แต่ใช้ **การมอบหมายรายวิชา**: STAFF เป็นผู้มอบหมายอาจารย์เข้ารายวิชาที่ `/staff/curriculum` (SUPER_ADMIN มอบหมายเองไม่ได้ ต้องมี STAFF ก่อน)
+4. **ADMIN** สร้างได้เฉพาะ STAFF ภายในขอบเขตของตัวเองเท่านั้น
 
 ### 3.10 กุญแจ SSH: ของคุณเอง และของ GitHub Actions (จำกัดสิทธิ์)
 
@@ -341,6 +447,18 @@ ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password root@179.197
 ```
 
 ถ้าเข้าด้วยกุญแจไม่ได้: ใน Browser terminal ของ hPanel รัน `rm /etc/ssh/sshd_config.d/00-eduanalyze-hardening.conf && systemctl reload ssh` แล้วแก้กุญแจก่อน
+
+### Google login (ถ้าจะเปิดใช้)
+
+1. ใน `.env` บน VPS ต้องมี `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL=https://eduanalyze.itkukps.tech/api/auth/google/callback` — ตรวจโดย**ไม่แสดงค่า**:
+   ```bash
+   grep -E '^GOOGLE_(CLIENT_ID|CLIENT_SECRET|CALLBACK_URL)=.+' ~/eduanalyze/.env | sed 's/=.*/=<ตั้งแล้ว>/'
+   ```
+   ต้องเห็น 3 บรรทัด
+2. Google Cloud Console → APIs & Services → Credentials → OAuth client (Web application):
+   - Authorized redirect URI: `https://eduanalyze.itkukps.tech/api/auth/google/callback`
+   - Authorized JavaScript origin: `https://eduanalyze.itkukps.tech`
+3. GitHub → Settings → Variables: ตั้ง `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true` — เป็นค่าที่**ฝังตอน build** ของ frontend จึง**ต้อง Run workflow `Deploy` ใหม่** หลังตั้ง ปุ่ม Google ถึงจะขึ้น (แค่แก้ `.env` บน VPS ไม่พอ)
 
 ### 3.12 Deploy ผ่าน GitHub Actions
 

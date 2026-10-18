@@ -77,5 +77,5 @@ Do not put secrets in any of them. The Docker image takes each as a build arg
 | `NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES` | 30 | Idle minutes before sign-out. |
 | `NEXT_PUBLIC_IDLE_WARNING_SECONDS` | 60 | Warning shown this long before idle sign-out. |
 | `NEXT_PUBLIC_SESSION_MAX_HOURS` | 8 | Early-warning cap. Must match backend `SESSION_ABSOLUTE_MAX_HOURS`; the backend enforces it. |
-| `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN` | false | Shows the Google sign-in buttons when `true`. |
+| `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN` | false | Shows the Google sign-in buttons when `true`. Baked in at build time: in production it is a GitHub Variable, so re-run the `Deploy` workflow after changing it (docs/DEPLOY.md). |
 | `NEXT_PUBLIC_SELF_SIGNUP_DOMAINS` | `ku.th` | **Production must be `ku.th` only, never `test.local`.** Domains named in the sign-up form hint and checked before submit. Display only; the backend `SELF_SIGNUP_ALLOWED_DOMAINS` decides. |
