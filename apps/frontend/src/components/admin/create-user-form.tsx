@@ -221,6 +221,11 @@ export function CreateUserForm({
                             ))}
                           </SelectContent>
                         </Select>
+                        {field.value === 'INSTRUCTOR' && (
+                          <p className="text-sm text-muted-foreground">
+                            อาจารย์จะถูกมอบหมายรายวิชาโดยเจ้าหน้าที่ภายหลัง (ไม่มีช่องขอบเขต)
+                          </p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
