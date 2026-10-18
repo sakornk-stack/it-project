@@ -67,7 +67,7 @@ export function UserListFilters({
                 onChange({ search: '' });
                 searchRef.current?.focus();
               }}
-              className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-primary"
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-primary"
             >
               <X size={16} aria-hidden="true" />
             </button>

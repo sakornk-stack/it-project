@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 const SEGMENT =
-  'inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground sm:min-h-9 sm:flex-none motion-reduce:transition-none';
+  'inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground sm:flex-none motion-reduce:transition-none';
 
 // Search, expand/collapse and the inactive switch. Stacks on a phone; every control is 44px
 // tall there. The result count is announced politely as the search text changes.
@@ -54,7 +54,7 @@ export function OrgToolbar({
               type="button"
               aria-label="ล้างข้อความค้นหา"
               onClick={() => onSearchChange('')}
-              className="absolute right-0.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
             >
               <X size={16} aria-hidden="true" />
             </button>

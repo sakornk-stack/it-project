@@ -91,7 +91,7 @@ export function UserManageBlocked({
         <TooltipTrigger asChild>
           <span
             tabIndex={0}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 before:absolute before:-inset-1 before:content-[''] hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Lock size={16} aria-hidden="true" />
             {!showReason && <span className="sr-only">{reason}</span>}

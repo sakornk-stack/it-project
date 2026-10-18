@@ -162,7 +162,7 @@ function TwoFactorStepper({ mode }: Readonly<{ mode: Mode }>) {
       {steps.map((s, i) => {
         const done = mode === 'recoveryCodes' ? s.n < 3 : s.n < 2;
         const current = mode === 'recoveryCodes' ? s.n === 3 : s.n === 2;
-        let circleTone = 'border-slate-300 text-slate-400';
+        let circleTone = 'border-slate-300 text-slate-500';
         if (done) circleTone = 'border-emerald-500 bg-emerald-500 text-white';
         else if (current) circleTone = 'border-brand bg-brand text-white dark:text-brand-foreground';
         return (

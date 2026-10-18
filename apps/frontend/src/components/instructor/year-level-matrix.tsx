@@ -61,7 +61,7 @@ function Figure({
 function Cell({ cell, end = false }: Readonly<{ cell: MatrixCell | null; end?: boolean }>) {
   if (!cell) {
     return (
-      <span className={cn('block text-slate-300', end && 'text-right')} aria-label="ไม่มีนิสิต">
+      <span className={cn('block text-slate-500', end && 'text-right')} aria-label="ไม่มีนิสิต">
         –
       </span>
     );
