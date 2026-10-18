@@ -4,6 +4,29 @@ import { UserService } from '../../users/user/user.service';
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 import { JwtStrategy } from './jwt.strategy';
 
+// Both strategies hand process.env.JWT_*_SECRET straight to passport-jwt when
+// constructed, which throws without a secret. CI has no .env, so set fake,
+// non-secret values for this file only and put the previous ones back after.
+const FAKE_ENV = {
+  JWT_ACCESS_SECRET: 'test-only-access-secret',
+  JWT_REFRESH_SECRET: 'test-only-refresh-secret',
+};
+const savedEnv: Record<string, string | undefined> = {};
+
+beforeAll(() => {
+  for (const [key, value] of Object.entries(FAKE_ENV)) {
+    savedEnv[key] = process.env[key];
+    process.env[key] = value;
+  }
+});
+
+afterAll(() => {
+  for (const key of Object.keys(FAKE_ENV)) {
+    if (savedEnv[key] === undefined) delete process.env[key];
+    else process.env[key] = savedEnv[key];
+  }
+});
+
 const PAYLOAD = { sub: 'u1', email: 'a@b.c', roles: ['SUPER_ADMIN', 'ADMIN'] as never };
 
 function service(result: unknown) {
