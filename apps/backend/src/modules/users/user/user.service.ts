@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PrismaClientOrTx } from '../../../prisma/prisma.types';
 
+function emailEquals(email: string): Prisma.UserWhereInput {
+  return { email: { equals: email.trim(), mode: 'insensitive' } };
+}
+
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
@@ -14,7 +18,9 @@ export class UserService {
     tx: PrismaClientOrTx = this.prisma,
     mustChangePassword = false,
   ) {
-    const existing = await tx.user.findUnique({ where: { email } });
+    // Case-insensitive: "A@ku.th" and "a@ku.th" are one mailbox, so they must
+    // never become two accounts (users.email itself is a plain unique column).
+    const existing = await tx.user.findFirst({ where: emailEquals(email), select: { id: true } });
     if (existing) {
       throw new ConflictException(`Email "${email}" is already in use`);
     }
@@ -24,7 +30,7 @@ export class UserService {
   }
 
   async findByEmail(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findFirst({ where: emailEquals(email) });
     if (!user) {
       throw new NotFoundException(`User with email "${email}" not found`);
     }

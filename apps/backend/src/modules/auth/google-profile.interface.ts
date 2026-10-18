@@ -5,4 +5,8 @@ export interface GoogleProfile {
   email: string;
   googleId: string;
   fullName: string;
+  // Google's email_verified claim. Sign-in is refused without it.
+  emailVerified: boolean;
+  // Workspace `hd` claim (absent for consumer Gmail accounts).
+  hostedDomain?: string;
 }

@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -18,6 +19,9 @@ export class AiAnalysisController {
   constructor(private readonly aiAnalysisService: AiAnalysisService) {}
 
   @Get('student/:studentProfileId')
+  // Each call sends this student's grade data to Anthropic and costs money,
+  // so it gets the same tight per-IP limit as login (global default is 100/min).
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STUDENT')
   @ApiBearerAuth('access-token')

@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
   Body,
+  HttpStatus,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
 import { OptionalJwtRefreshGuard } from '../../common/guards/jwt-refresh-optional.guard';
 import { Jwt2faPendingGuard } from '../../common/guards/jwt-2fa-pending.guard';
 import { AuthService } from './auth.service';
+import { GoogleSignupRefusedException } from './google-signup-refused.exception';
 import { TwoFactorService } from './two-factor.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -30,6 +32,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { CompleteGoogleRegistrationDto } from './dto/complete-google-registration.dto';
+import { ResendEmailSignupDto } from './dto/resend-email-signup.dto';
+import { VerifyEmailSignupDto } from './dto/verify-email-signup.dto';
 import { TwoFactorEnableDto } from './dto/two-factor-enable.dto';
 import { TwoFactorDisableDto } from './dto/two-factor-disable.dto';
 import { TwoFactorVerifyDto } from './dto/two-factor-verify.dto';
@@ -56,18 +60,56 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({
     summary:
-      'Register a new student account — sets the refresh token as an httpOnly cookie and returns the access token in the body',
+      'Register a student. With invitationToken: creates the account, sets the refresh cookie and returns the access token. Without: starts an email sign-up (allowed domains only) and returns 202 with a generic message — the account is only created by POST /auth/register/verify.',
   })
-  @ApiResponse({ status: 201, description: 'Access token issued, refresh cookie set' })
-  @ApiResponse({ status: 400, description: 'Invalid or mismatched program/curriculum' })
-  @ApiResponse({ status: 409, description: 'Email or student code already in use' })
+  @ApiResponse({ status: 201, description: 'Invited: access token issued, refresh cookie set' })
+  @ApiResponse({ status: 202, description: 'Self-service: check-your-email message (same for every address)' })
+  @ApiResponse({ status: 400, description: 'Domain not allowed, or invalid/mismatched program/curriculum' })
+  @ApiResponse({ status: 409, description: 'Invited: email or student code already in use' })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const { accessToken, refreshToken } = await this.authService.register(dto);
+    const result = await this.authService.register(dto);
+    if ('message' in result) {
+      response.status(HttpStatus.ACCEPTED);
+      return result;
+    }
+    this.setRefreshCookie(response, result.refreshToken);
+    return { accessToken: result.accessToken };
+  }
+
+  @Post('register/verify')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Finish an email sign-up with the token from the verification mail — creates the STUDENT account, sets the refresh cookie and returns the access token',
+  })
+  @ApiResponse({ status: 201, description: 'Account created, access token issued, refresh cookie set' })
+  @ApiResponse({ status: 401, description: 'Link expired, already used or invalid' })
+  @ApiResponse({ status: 409, description: 'Email already has an account, or student code taken' })
+  async verifyEmailSignup(
+    @Body() dto: VerifyEmailSignupDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.verifyEmailSignup(dto.token);
     this.setRefreshCookie(response, refreshToken);
     return { accessToken };
+  }
+
+  @Post('register/resend')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Re-send the verification mail of a pending email sign-up. Always the same generic answer; per-address cooldown and daily cap apply.',
+  })
+  @ApiResponse({ status: 202, description: 'Generic check-your-email message' })
+  async resendEmailSignup(
+    @Body() dto: ResendEmailSignupDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.status(HttpStatus.ACCEPTED);
+    return this.authService.resendEmailSignup(dto.email);
   }
 
   // Public, unauthenticated — the register page calls this before the
@@ -309,6 +351,11 @@ export class AuthController {
       // friendly message.
       if (error instanceof ConflictException) {
         response.redirect(`${frontendUrl}/login?googleError=email_exists`);
+        return;
+      }
+      // Unverified address, or not an allowed domain for a new sign-up.
+      if (error instanceof GoogleSignupRefusedException) {
+        response.redirect(`${frontendUrl}/login?googleError=${error.reason}`);
         return;
       }
       throw error;

@@ -189,6 +189,30 @@ describe('UserManagementService role changes', () => {
     expect(userRoleService.revokeRole).toHaveBeenCalledWith('target', 'STAFF');
   });
 
+  it.each([
+    ['SUPER_ADMIN', ['SUPER_ADMIN']],
+    ['ADMIN', ['ADMIN']],
+  ] as [string, Role[]][])(
+    '%s can neither add nor remove roles on a student account',
+    async (_name, roles) => {
+      const { service, userRoleService } = setup({
+        target: { roles: ['STUDENT'], scopes: [scope('p1')] },
+        coveredPrograms: ['p1'],
+      });
+      const actor = requester('actor', roles);
+      for (const role of ['INSTRUCTOR', 'STAFF', 'ADMIN'] as Role[]) {
+        const assign = service.assignRole('target', role, actor);
+        await expect(assign).rejects.toThrow(ForbiddenException);
+        await expect(assign).rejects.toThrow('บัญชีนิสิต');
+        await expect(service.revokeRole('target', role, actor)).rejects.toThrow(
+          ForbiddenException,
+        );
+      }
+      expect(userRoleService.assignRole).not.toHaveBeenCalled();
+      expect(userRoleService.revokeRole).not.toHaveBeenCalled();
+    },
+  );
+
   it('SUPER_ADMIN may grant ADMIN to a STAFF user', async () => {
     const { service, userRoleService } = setup({ target: staff('p1') });
     await service.assignRole('target', 'ADMIN', requester('sa', ['SUPER_ADMIN']));

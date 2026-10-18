@@ -28,7 +28,9 @@ Names and purpose only. Never put values in this file. Templates:
 | `GOOGLE_CLIENT_ID` | no | Google OAuth client id. |
 | `GOOGLE_CLIENT_SECRET` | no | Google OAuth client secret. |
 | `GOOGLE_CALLBACK_URL` | no | Public URL of the OAuth callback. |
-| `SMTP_HOST` | no | Mail server for reset and invite emails. |
+| `GOOGLE_REQUIRE_HOSTED_DOMAIN` | no | `true`: a new Google sign-up must also carry the Workspace `hd` claim for an allowed domain (default false). Returning users are not affected. |
+| `SELF_SIGNUP_ALLOWED_DOMAINS` | no | Email domains self-service sign-up accepts, comma-separated, exact match (default `ku.th`; `sub.ku.th` and `evilku.th` are refused). Applies to email+password and Google sign-up, not to staff invitations. Dev/test may add `test.local` in their own `.env` only. Keep equal to `NEXT_PUBLIC_SELF_SIGNUP_DOMAINS`. |
+| `SMTP_HOST` | no | Mail server for reset, invite and sign-up verification emails. Without it, email+password sign-up cannot be finished. |
 | `SMTP_PORT` | no | Mail server port (default 587). |
 | `SMTP_USER` | no | Mail account. |
 | `SMTP_PASS` | no | Mail app password. |
@@ -50,3 +52,4 @@ Do not put secrets in any of them. The Docker image takes each as a build arg
 | `NEXT_PUBLIC_IDLE_WARNING_SECONDS` | 60 | Warning shown this long before idle sign-out. |
 | `NEXT_PUBLIC_SESSION_MAX_HOURS` | 8 | Early-warning cap. Must match backend `SESSION_ABSOLUTE_MAX_HOURS`; the backend enforces it. |
 | `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN` | false | Shows the Google sign-in buttons when `true`. |
+| `NEXT_PUBLIC_SELF_SIGNUP_DOMAINS` | `ku.th` | Domains named in the sign-up form hint and checked before submit. Display only; the backend `SELF_SIGNUP_ALLOWED_DOMAINS` decides. |

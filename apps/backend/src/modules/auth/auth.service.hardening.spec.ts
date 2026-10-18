@@ -49,6 +49,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
     {} as unknown as PasswordResetService,
     {} as never,
     { isEnabled: jest.fn().mockResolvedValue(false) } as unknown as TwoFactorService,

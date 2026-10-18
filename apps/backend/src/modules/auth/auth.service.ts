@@ -9,14 +9,20 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { AuthProvider, Prisma, Role, User } from '@prisma/client';
+import { AuthProvider, ConsentKind, Prisma, Role, User } from '@prisma/client';
 import { hashPassword } from '../../common/util/password.util';
+import { isAllowedSignupEmail, normalizeEmail } from '../../common/auth/signup-domain';
+import { assertCurrentPrivacyPolicyVersion } from '../../common/privacy/privacy-policy.constant';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserService } from '../users/user/user.service';
 import { UserRoleService } from '../users/user-role/user-role.service';
 import { UserAuthMethodService } from '../users/user-auth-method/user-auth-method.service';
 import { StudentProfileService } from '../users/student-profile/student-profile.service';
 import { GooglePendingRegistrationService } from './google-pending-registration.service';
+import {
+  EmailSignupRequestService,
+  SIGNUP_LINK_TTL_MINUTES,
+} from './email-signup-request.service';
 import { PendingInvitationService } from './pending-invitation.service';
 import { StudentInvitationService } from './student-invitation.service';
 import { PasswordResetService } from './password-reset.service';
@@ -32,8 +38,17 @@ import { CompleteGoogleRegistrationDto } from './dto/complete-google-registratio
 import { JwtPayload } from './jwt-payload.interface';
 import { RequestUser } from './request-user.interface';
 import { GoogleProfile } from './google-profile.interface';
+import { GoogleSignupRefusedException } from './google-signup-refused.exception';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+// One answer for every self-service sign-up or resend that passes validation,
+// whether or not the address already has an account — no account enumeration.
+export const SIGNUP_CHECK_EMAIL_MESSAGE = `หากอีเมลนี้สมัครได้ เราได้ส่งลิงก์ยืนยันไปที่อีเมลแล้ว ลิงก์มีอายุ ${SIGNUP_LINK_TTL_MINUTES} นาที`;
+export const SIGNUP_EMAIL_TAKEN_MESSAGE = 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ';
+export const SIGNUP_STUDENT_CODE_TAKEN_MESSAGE =
+  'รหัสนิสิตนี้ถูกใช้แล้ว หากเป็นรหัสของคุณ กรุณาติดต่อเจ้าหน้าที่';
+
+
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MAX_MINUTES = 15;
 
@@ -47,6 +62,9 @@ interface CreateStudentAccountParams {
   programId: string;
   curriculumId: string;
   admissionYear: number;
+  // Version the person accepted; recorded as a UserConsent in the same
+  // transaction as the account.
+  privacyPolicyVersion: string;
 }
 
 @Injectable()
@@ -58,6 +76,7 @@ export class AuthService {
     private readonly userAuthMethodService: UserAuthMethodService,
     private readonly studentProfileService: StudentProfileService,
     private readonly googlePendingRegistrationService: GooglePendingRegistrationService,
+    private readonly emailSignupRequestService: EmailSignupRequestService,
     private readonly pendingInvitationService: PendingInvitationService,
     private readonly studentInvitationService: StudentInvitationService,
     private readonly passwordResetService: PasswordResetService,
@@ -67,7 +86,14 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  // Invitation: creates the account and logs in (the emailed invitation link
+  // already proved the mailbox). Without one: only starts an email sign-up
+  // (requestEmailSignup) — no account, no tokens, until the link is used.
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ accessToken: string; refreshToken: string } | { message: string }> {
+    assertCurrentPrivacyPolicyVersion(dto.privacyPolicyVersion);
+    if (!dto.invitationToken) return this.requestEmailSignup(dto);
     const passwordHash = await hashPassword(dto.password);
 
     // Invited path: academic fields always come from the StudentInvitation
@@ -76,37 +102,40 @@ export class AuthService {
     // Only email is cross-checked (a token can't be replayed against a
     // different address) and only fullName is allowed to differ (the
     // student may correct a typo staff made).
-    if (dto.invitationToken) {
-      const invitation = await this.studentInvitationService.findValidByToken(
-        dto.invitationToken,
+    const invitation = await this.studentInvitationService.findValidByToken(
+      dto.invitationToken,
+    );
+    if (normalizeEmail(invitation.email) !== normalizeEmail(dto.email)) {
+      throw new BadRequestException(
+        'Email must match the one this invitation was sent to',
       );
-      if (invitation.email !== dto.email) {
-        throw new BadRequestException(
-          'Email must match the one this invitation was sent to',
-        );
-      }
-
-      const user = await this.createStudentAccount(
-        {
-          email: dto.email,
-          passwordHash,
-          fullName: dto.fullName,
-          provider: AuthProvider.PASSWORD,
-          providerUserId: null,
-          studentCode: invitation.studentCode,
-          programId: invitation.programId,
-          curriculumId: invitation.curriculumId,
-          admissionYear: invitation.admissionYear,
-        },
-        (tx) => this.studentInvitationService.consume(invitation.id, tx),
-      );
-      return this.issueTokenPair(user);
     }
 
-    // Uninvited (fully self-service) path — unchanged from before
-    // invitations existed. class-validator only marks these @IsOptional
-    // at the DTO level (the requirement depends on invitationToken's
-    // presence, not on studentCode's own type), so it's enforced here.
+    const user = await this.createStudentAccount(
+      {
+        email: normalizeEmail(invitation.email),
+        passwordHash,
+        fullName: dto.fullName,
+        provider: AuthProvider.PASSWORD,
+        providerUserId: null,
+        studentCode: invitation.studentCode,
+        programId: invitation.programId,
+        curriculumId: invitation.curriculumId,
+        admissionYear: invitation.admissionYear,
+        privacyPolicyVersion: dto.privacyPolicyVersion,
+      },
+      (tx) => this.studentInvitationService.consume(invitation.id, tx),
+    );
+    return this.issueTokenPair(user);
+  }
+
+  // Self-service email+password sign-up, step 1. Allowed domains only. Every
+  // request that passes validation gets the same answer, and the only work
+  // that differs (the mail) is not awaited, so neither the body nor the
+  // response time tells whether the address already has an account.
+  private async requestEmailSignup(dto: RegisterDto): Promise<{ message: string }> {
+    // class-validator only marks these @IsOptional at the DTO level (the
+    // requirement depends on invitationToken's presence), so it's enforced here.
     if (
       !dto.studentCode ||
       !dto.programId ||
@@ -117,23 +146,120 @@ export class AuthService {
         'studentCode, programId, curriculumId, and admissionYear are required without an invitationToken',
       );
     }
+    const email = normalizeEmail(dto.email);
+    this.assertSignupDomain(email);
+    // Says nothing about accounts, so it can fail loudly here instead of
+    // after the person has clicked the link.
+    await this.studentProfileService.validateProgramAndCurriculum(dto.programId, dto.curriculumId);
+    // Hashed before the existence check so both branches cost the same.
+    const passwordHash = await hashPassword(dto.password);
 
-    const user = await this.createStudentAccount({
-      email: dto.email,
-      passwordHash,
-      fullName: dto.fullName,
-      provider: AuthProvider.PASSWORD,
-      providerUserId: null,
-      studentCode: dto.studentCode,
-      programId: dto.programId,
-      curriculumId: dto.curriculumId,
-      admissionYear: dto.admissionYear,
-    });
+    if (!(await this.emailHasAccount(email))) {
+      const token = await this.emailSignupRequestService.upsert({
+        email,
+        passwordHash,
+        fullName: dto.fullName,
+        studentCode: dto.studentCode,
+        programId: dto.programId,
+        curriculumId: dto.curriculumId,
+        admissionYear: dto.admissionYear,
+        privacyPolicyVersion: dto.privacyPolicyVersion,
+      });
+      if (token) this.mailSignupLink(email, token);
+    }
+    return { message: SIGNUP_CHECK_EMAIL_MESSAGE };
+  }
 
+  // Step 2: the link from the mail. Creates the STUDENT account (with the
+  // consent recorded at step 1) and logs in. The request row is consumed in
+  // the same transaction, so a link works once even if clicked twice at once.
+  async verifyEmailSignup(token: string) {
+    const request = await this.emailSignupRequestService.findValidByToken(token);
+    // Only the mailbox owner gets this far, so naming the cause is not an
+    // enumeration leak.
+    if (await this.emailHasAccount(request.email)) {
+      throw new ConflictException(SIGNUP_EMAIL_TAKEN_MESSAGE);
+    }
+    let user: User;
+    try {
+      user = await this.createStudentAccount(
+        {
+          email: request.email,
+          passwordHash: request.passwordHash,
+          fullName: request.fullName,
+          provider: AuthProvider.PASSWORD,
+          providerUserId: null,
+          studentCode: request.studentCode,
+          programId: request.programId,
+          curriculumId: request.curriculumId,
+          admissionYear: request.admissionYear,
+          privacyPolicyVersion: request.privacyPolicyVersion,
+        },
+        (tx) => this.emailSignupRequestService.consume(request, tx),
+      );
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        // UserService (email raced in) or StudentProfileService (code taken).
+        const emailClash = String(error.message).startsWith('Email');
+        throw new ConflictException(
+          emailClash ? SIGNUP_EMAIL_TAKEN_MESSAGE : SIGNUP_STUDENT_CODE_TAKEN_MESSAGE,
+        );
+      }
+      throw error;
+    }
     return this.issueTokenPair(user);
   }
 
+  // Same answer whatever happens; mails only for a live request within its limits.
+  async resendEmailSignup(rawEmail: string): Promise<{ message: string }> {
+    const email = normalizeEmail(rawEmail);
+    if (this.isSignupDomain(email)) {
+      const token = await this.emailSignupRequestService.resend(email);
+      if (token) this.mailSignupLink(email, token);
+    }
+    return { message: SIGNUP_CHECK_EMAIL_MESSAGE };
+  }
+
+  private mailSignupLink(email: string, token: string) {
+    // Not awaited (timing side channel, see forgotPassword); the .catch must
+    // stay so a failed send can't crash Node. EmailService logs a masked address.
+    void this.emailService
+      .sendSignupVerificationEmail(email, token, SIGNUP_LINK_TTL_MINUTES)
+      .catch(() => undefined);
+  }
+
+  private signupDomains(): string[] {
+    return this.configService.get<string[]>('signup.allowedDomains') ?? ['ku.th'];
+  }
+
+  private isSignupDomain(email: string): boolean {
+    return isAllowedSignupEmail(email, this.signupDomains());
+  }
+
+  private assertSignupDomain(email: string) {
+    if (!this.isSignupDomain(email)) {
+      const list = this.signupDomains()
+        .map((d) => `@${d}`)
+        .join(' หรือ ');
+      throw new BadRequestException(`สมัครด้วยตนเองได้เฉพาะอีเมล ${list}`);
+    }
+  }
+
+  private async emailHasAccount(email: string): Promise<boolean> {
+    try {
+      await this.userService.findByEmail(email);
+      return true;
+    } catch (error) {
+      if (error instanceof NotFoundException) return false;
+      throw error;
+    }
+  }
+
   async handleGoogleCallback(profile: GoogleProfile) {
+    // Every Google sign-in, new or returning: Google must vouch for the address.
+    if (!profile.emailVerified) {
+      throw new GoogleSignupRefusedException('email_unverified');
+    }
     const existingMethod =
       await this.userAuthMethodService.findByProviderAndProviderUserId(
         AuthProvider.GOOGLE,
@@ -173,11 +299,19 @@ export class AuthService {
       );
     }
 
-    // Brand-new identity: cannot create the User yet (no studentCode/
-    // program/curriculum/admissionYear from Google) — park it as a
-    // pending registration and let the client collect the rest.
+    // Brand-new identity = a self-service sign-up, so the domain rule applies
+    // (read from Google's claim, never from the client). Returning users above
+    // are not re-checked: the rule governs who may join, not who may stay.
+    const email = normalizeEmail(profile.email);
+    if (!this.isSignupDomain(email) || !this.hostedDomainOk(profile, email)) {
+      throw new GoogleSignupRefusedException('domain_not_allowed');
+    }
+
+    // Cannot create the User yet (no studentCode/program/curriculum/
+    // admissionYear from Google) — park it as a pending registration and let
+    // the client collect the rest.
     const pendingToken = await this.googlePendingRegistrationService.create(
-      profile.email,
+      email,
       profile.googleId,
       profile.fullName,
     );
@@ -185,9 +319,13 @@ export class AuthService {
   }
 
   async completeGoogleRegistration(dto: CompleteGoogleRegistrationDto) {
+    assertCurrentPrivacyPolicyVersion(dto.privacyPolicyVersion);
     const pending = await this.googlePendingRegistrationService.findValidByToken(
       dto.pendingToken,
     );
+    // Again at completion, from the server-side pending row: the allowed
+    // domains may have changed in the 10 minutes since the callback.
+    this.assertSignupDomain(pending.email);
 
     const user = await this.createStudentAccount(
       {
@@ -200,6 +338,7 @@ export class AuthService {
         programId: dto.programId,
         curriculumId: dto.curriculumId,
         admissionYear: dto.admissionYear,
+        privacyPolicyVersion: dto.privacyPolicyVersion,
       },
       (tx) => tx.googlePendingRegistration.delete({ where: { id: pending.id } }),
     );
@@ -207,6 +346,15 @@ export class AuthService {
     // Google already verified this identity — issue tokens immediately,
     // same as register()/login().
     return this.issueTokenPair(user);
+  }
+
+  // With GOOGLE_REQUIRE_HOSTED_DOMAIN=true the account must also be managed by
+  // that organisation's Google Workspace (`hd` claim equals the email domain),
+  // so an address the university has since closed can't sign up.
+  private hostedDomainOk(profile: GoogleProfile, email: string): boolean {
+    if (!this.configService.get<boolean>('google.requireHostedDomain')) return true;
+    const hd = profile.hostedDomain?.trim().toLowerCase();
+    return !!hd && email.endsWith(`@${hd}`) && this.signupDomains().includes(hd);
   }
 
   // Shared by register() (PASSWORD) and completeGoogleRegistration()
@@ -246,6 +394,16 @@ export class AuthService {
         params.admissionYear,
         tx,
       );
+
+      // Same transaction as the account: no student account exists without
+      // a record of the policy version it accepted.
+      await tx.userConsent.create({
+        data: {
+          userId: createdUser.id,
+          kind: ConsentKind.PRIVACY_POLICY,
+          policyVersion: params.privacyPolicyVersion,
+        },
+      });
 
       if (extraTxStep) {
         await extraTxStep(tx);

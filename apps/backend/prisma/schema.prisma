@@ -150,6 +150,7 @@ model User {
   pendingInvitation      PendingInvitation?
   passwordResetToken     PasswordResetToken?
   twoFactorCredential    TwoFactorCredential?
+  consents               UserConsent[]
   courseInstructor       CourseInstructor[]
   enteredCourseRecords   StudentCourseRecord[]
   sentStudentInvitations StudentInvitation[]
@@ -284,6 +285,31 @@ enum AuthProvider {
   GOOGLE
 }
 
+// Proof that a person accepted a given version of a policy. Written once, in
+// the same transaction that creates the account (AuthService
+// .createStudentAccount), so a student account never exists without it.
+// Accounts created before this table existed have no row — a known limitation,
+// not a gap to backfill. No IP/user-agent on purpose (data minimisation).
+// onDelete Restrict like the rest of the schema: STUDENT accounts are never
+// hard-deleted, and those are the only accounts that get a row today.
+enum ConsentKind {
+  PRIVACY_POLICY
+}
+
+model UserConsent {
+  id            String      @id @default(uuid())
+  userId        String
+  kind          ConsentKind
+  policyVersion String
+  acceptedAt    DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, kind, policyVersion])
+  @@index([userId])
+  @@map("user_consents")
+}
+
 // Holds a not-yet-a-User Google identity while the client collects the
 // remaining registration fields (studentCode/programId/curriculumId/
 // admissionYear) that Google's callback can never provide. No relation to
@@ -299,6 +325,36 @@ model GooglePendingRegistration {
   createdAt DateTime @default(now())
 
   @@map("google_pending_registrations")
+}
+
+// Self-service email+password sign-up waiting for the person to prove they own
+// the mailbox. Same token-hash+TTL idea as GooglePendingRegistration: no User
+// row exists until POST /auth/register/verify consumes this row, so an
+// unverified sign-up can never log in. One row per (normalised) email —
+// signing up again replaces the token, so older links stop working.
+// sendCount/windowStartedAt cap verification emails per address (anti-spam,
+// on top of the per-IP throttle). No FK to anything: the program/curriculum
+// pair is checked when the row is written and again when the account is made.
+model EmailSignupRequest {
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  tokenHash            String   @unique
+  passwordHash         String
+  fullName             String
+  studentCode          String
+  programId            String
+  curriculumId         String
+  admissionYear        Int
+  privacyPolicyVersion String
+  expiresAt            DateTime
+  lastSentAt           DateTime
+  sendCount            Int      @default(1)
+  windowStartedAt      DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("email_signup_requests")
 }
 
 // Gates password-setting for a User created by an ADMIN/SUPER_ADMIN via

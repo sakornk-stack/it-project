@@ -6,6 +6,7 @@ import { EmailModule } from '../../common/email/email.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GooglePendingRegistrationService } from './google-pending-registration.service';
+import { EmailSignupRequestService } from './email-signup-request.service';
 import { PendingInvitationModule } from './pending-invitation.module';
 import { StudentInvitationModule } from './student-invitation.module';
 import { PasswordResetModule } from './password-reset.module';
@@ -38,6 +39,7 @@ import { TwoFactorService } from './two-factor.service';
   providers: [
     AuthService,
     GooglePendingRegistrationService,
+    EmailSignupRequestService,
     TwoFactorService,
     JwtStrategy,
     JwtRefreshStrategy,

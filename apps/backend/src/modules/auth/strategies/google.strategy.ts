@@ -25,10 +25,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ): void {
+    // Claims only, passed through unjudged — AuthService decides.
+    // `verified` comes from the userinfo `email_verified` claim (boolean, but
+    // accepted as the string "true" too); `hd` only exists on Workspace accounts.
+    const verified: unknown = profile.emails?.[0]?.verified;
+    const json = (profile as unknown as { _json?: { hd?: unknown } })._json;
     const googleProfile: GoogleProfile = {
       email: profile.emails?.[0]?.value ?? '',
       googleId: profile.id,
       fullName: profile.displayName,
+      emailVerified: verified === true || verified === 'true',
+      hostedDomain: typeof json?.hd === 'string' ? json.hd : undefined,
     };
     done(null, googleProfile);
   }

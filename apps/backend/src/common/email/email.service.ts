@@ -125,4 +125,21 @@ export class EmailService {
     `;
     await this.sendMail({ to, subject, html });
   }
+
+  // Self-service sign-up: proves the person owns `to` before any account is
+  // created (AuthService.verifyEmailSignup). Deliberately carries nothing the
+  // requester typed (no name) — anyone can trigger this mail to an allowed
+  // address, so it must not become a way to put their own text in someone
+  // else's inbox. The link lands on a page that needs a click to POST, so a
+  // mail scanner that follows links cannot use the token up.
+  async sendSignupVerificationEmail(to: string, token: string, ttlMinutes: number): Promise<void> {
+    const verifyUrl = `${this.frontendUrl}/register/verify?token=${token}`;
+    const subject = 'ยืนยันอีเมลเพื่อสมัครใช้งาน EduAnalyzeAI';
+    const html = `
+      <p>มีการสมัครใช้งานระบบ EduAnalyzeAI ด้วยอีเมลนี้ กรุณากดลิงก์ด้านล่างเพื่อยืนยันอีเมลและเปิดใช้บัญชี</p>
+      <p><a href="${verifyUrl}">ยืนยันอีเมล</a></p>
+      <p>ลิงก์นี้ใช้ได้ครั้งเดียวและหมดอายุใน ${ttlMinutes} นาที หากคุณไม่ได้สมัคร กรุณาเพิกเฉยต่ออีเมลนี้ ระบบจะไม่สร้างบัญชีให้</p>
+    `;
+    await this.sendMail({ to, subject, html });
+  }
 }

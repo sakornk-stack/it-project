@@ -1,3 +1,5 @@
+import { parseSignupDomains } from '../common/auth/signup-domain';
+
 const DEFAULT_SESSION_ABSOLUTE_MAX_HOURS = 8;
 
 // Falls back to the default for anything that isn't a positive finite
@@ -60,6 +62,15 @@ export default () => ({
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackUrl: process.env.GOOGLE_CALLBACK_URL,
+    // true: a NEW Google sign-up must also carry the Workspace `hd` claim for
+    // an allowed domain (the account is managed by that organisation), not
+    // just a verified address. Returning users are not affected.
+    requireHostedDomain: process.env.GOOGLE_REQUIRE_HOSTED_DOMAIN === 'true',
+  },
+  signup: {
+    // Domains self-service sign-up accepts (default ku.th). Dev/test add
+    // test.local in their own .env — never in code.
+    allowedDomains: parseSignupDomains(process.env.SELF_SIGNUP_ALLOWED_DOMAINS),
   },
   totp: {
     encryptionKey: process.env.TOTP_ENCRYPTION_KEY,

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { Equals, IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CompleteGoogleRegistrationDto {
   @ApiProperty({ example: 'a1b2c3...' })
@@ -23,4 +23,15 @@ export class CompleteGoogleRegistrationDto {
   @ApiProperty({ example: 2026 })
   @IsInt()
   admissionYear!: number;
+
+  // PDPA consent: the box must be ticked (exactly true) and the version must
+  // match PRIVACY_POLICY_VERSION, checked in AuthService before any write.
+  @ApiProperty({ example: true })
+  @Equals(true, { message: 'acceptPrivacyPolicy must be true' })
+  acceptPrivacyPolicy!: true;
+
+  @ApiProperty({ example: '2026-10-18-draft.1' })
+  @IsString()
+  @IsNotEmpty()
+  privacyPolicyVersion!: string;
 }

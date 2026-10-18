@@ -9,6 +9,7 @@ import { UserAuthMethodService } from '../users/user-auth-method/user-auth-metho
 import { StudentProfileService } from '../users/student-profile/student-profile.service';
 import { AuthService } from './auth.service';
 import { GooglePendingRegistrationService } from './google-pending-registration.service';
+import { EmailSignupRequestService } from './email-signup-request.service';
 import { PasswordResetService } from './password-reset.service';
 import { PendingInvitationService } from './pending-invitation.service';
 import { StudentInvitationService } from './student-invitation.service';
@@ -45,6 +46,7 @@ function setup({
     unused as unknown as UserAuthMethodService,
     unused as unknown as StudentProfileService,
     unused as unknown as GooglePendingRegistrationService,
+    unused as unknown as EmailSignupRequestService,
     unused as unknown as PendingInvitationService,
     unused as unknown as StudentInvitationService,
     passwordResetService as unknown as PasswordResetService,

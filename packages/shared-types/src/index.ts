@@ -18,6 +18,10 @@ export interface RegisterRequest {
   curriculumId?: string;
   admissionYear?: number;
   invitationToken?: string;
+  // PDPA consent: always true when sent; the version must equal the server's
+  // PRIVACY_POLICY_VERSION or the sign-up is refused (400).
+  acceptPrivacyPolicy: true;
+  privacyPolicyVersion: string;
 }
 
 export interface LoginRequest {
@@ -45,6 +49,9 @@ export interface CompleteGoogleRegistrationRequest {
   programId: string;
   curriculumId: string;
   admissionYear: number;
+  // Same consent pair as RegisterRequest.
+  acceptPrivacyPolicy: true;
+  privacyPolicyVersion: string;
 }
 
 // ---- Auth responses ----
@@ -54,6 +61,21 @@ export interface CompleteGoogleRegistrationRequest {
 // a JSON body, only the access token is.
 export interface AccessTokenResponse {
   accessToken: string;
+}
+
+// 202 from POST /auth/register (no invitation) and /auth/register/resend: the
+// same "check your email" sentence for every address — no account is created
+// until POST /auth/register/verify.
+export interface SignupStartedResponse {
+  message: string;
+}
+
+export interface VerifyEmailSignupRequest {
+  token: string;
+}
+
+export interface ResendEmailSignupRequest {
+  email: string;
 }
 
 export type Role = 'STUDENT' | 'INSTRUCTOR' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';

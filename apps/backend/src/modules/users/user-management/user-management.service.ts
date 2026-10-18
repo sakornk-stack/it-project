@@ -44,6 +44,8 @@ const LAST_SUPER_ADMIN_MESSAGE = 'ลบถาวรไม่ได้ เพร
 const DELETE_RACE_MESSAGE = 'ลบถาวรไม่ได้ เพราะมีข้อมูลอ้างอิงบัญชีนี้เพิ่มขึ้นระหว่างดำเนินการ';
 const SELF_ROLE_MESSAGE = 'ไม่สามารถถอดบทบาทของตัวเองได้';
 const SELF_ASSIGN_ROLE_MESSAGE = 'ไม่สามารถกำหนดบทบาทให้ตัวเองได้';
+const STUDENT_ROLE_CHANGE_MESSAGE =
+  'ไม่สามารถเพิ่มหรือถอดบทบาทของบัญชีนิสิตได้ กรุณาใช้บัญชีแยกสำหรับงานอื่น';
 
 @Injectable()
 export class UserManagementService {
@@ -361,6 +363,12 @@ export class UserManagementService {
     }
     // Natural 404 if the target is outside the ADMIN's scope.
     const target = await this.findOne(id, requester);
+    // A student account (self-registered or invited) is never upgraded or
+    // trimmed here: staff/instructor/admin work needs its own account.
+    // Checked before the ADMIN rules so SUPER_ADMIN is held to it too.
+    if (target.roles.includes('STUDENT')) {
+      throw new ForbiddenException(STUDENT_ROLE_CHANGE_MESSAGE);
+    }
     assertMayManageTarget(target.roles, requester);
 
     if (!requester.roles.includes('SUPER_ADMIN') && role !== 'STAFF') {
