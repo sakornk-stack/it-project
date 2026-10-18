@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { homeRouteForRole } from '@/lib/dashboard-routes';
 import { ROLE_PRIORITY } from '@/lib/role-priority';
+import { PrivacyFooterLink } from '@/components/layout/privacy-footer-link';
 import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -203,6 +204,7 @@ export function DashboardShell({
               children
             )}
           </RevealOnViewProvider>
+          <PrivacyFooterLink className="pt-6" />
         </main>
       </div>
     </div>

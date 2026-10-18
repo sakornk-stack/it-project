@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { GraduationCap } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/brand';
+import { PrivacyFooterLink } from '@/components/layout/privacy-footer-link';
 
 // Shared shell for every sign-in page (/login, /register, /forgot-password,
 // /reset-password, /register/google): a two-panel card (brand panel + form).
@@ -107,6 +108,7 @@ export function AuthSplitLayout({
             {children}
           </div>
         </div>
+        <PrivacyFooterLink className="mt-2" />
       </div>
     </div>
   );

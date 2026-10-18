@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { acceptPrivacyPolicySchema } from './common';
 
 export const completeGoogleRegistrationSchema = z.object({
   studentCode: z.string().min(1, 'กรุณากรอกรหัสนิสิต'),
@@ -11,6 +12,7 @@ export const completeGoogleRegistrationSchema = z.object({
     .int()
     .min(2400, 'ปีการศึกษาไม่ถูกต้อง')
     .max(2700, 'ปีการศึกษาไม่ถูกต้อง'),
+  acceptPrivacyPolicy: acceptPrivacyPolicySchema,
 });
 
 export type CompleteGoogleRegistrationFormValues = z.infer<

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
@@ -31,6 +32,7 @@ import {
 import { cn } from '@/lib/utils';
 import { accountStatus, type AccountStatus } from '@/lib/account-status';
 import { useAuth } from '@/lib/auth-context';
+import { PRIVACY_POLICY_LINK_LABEL, PRIVACY_POLICY_PATH } from '@/lib/privacy-policy';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AccountSecurityCard } from '@/components/profile/account-security-card';
 import { primaryRoleFor, ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
@@ -41,6 +43,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
 import { Reveal } from '@/components/layout/reveal';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { ICON_TILE_CLASS, PROFILE_CARD_CLASS } from '@/components/profile/profile-card-class';
@@ -307,6 +310,11 @@ function ProfileContent() {
         <PageHeader
           title="โปรไฟล์และความปลอดภัย"
           description="ข้อมูลบัญชีของคุณและการตั้งค่าความปลอดภัย"
+          actions={
+            <Button asChild variant="outline" size="sm" className="min-h-11 w-full sm:w-auto">
+              <Link href={PRIVACY_POLICY_PATH}>{PRIVACY_POLICY_LINK_LABEL}</Link>
+            </Button>
+          }
         />
       </Reveal>
 

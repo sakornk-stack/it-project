@@ -5,12 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AccessTokenResponse, RegisterRequest } from '@eduanalyze-ai/shared-types';
+import type {
+  AccessTokenResponse,
+  RegisterRequest,
+  SignupStartedResponse,
+} from '@eduanalyze-ai/shared-types';
+import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api-client';
 import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, RATE_LIMITED_ERROR } from '@/lib/api-error-presets';
 import { fetchInvitationPreview } from '@/lib/api/auth';
 import { useAuth } from '@/lib/auth-context';
+import { PRIVACY_POLICY_VERSION, STALE_PRIVACY_POLICY_MESSAGE } from '@/lib/privacy-policy';
+import { isStalePrivacyPolicyError } from '@/lib/privacy-policy-error';
 import { cn } from '@/lib/utils';
 import { HOVER_LIFT } from '@/lib/motion';
 import { registerSchema, type RegisterFormValues } from '@/lib/validation/register.schema';
@@ -19,6 +26,9 @@ import {
   type InvitedRegisterFormValues,
 } from '@/lib/validation/invited-register.schema';
 import { DependentOrgSelect } from '@/components/auth/dependent-org-select';
+import { PrivacyConsentField } from '@/components/auth/privacy-consent-field';
+import { SignupCheckEmail } from '@/components/auth/signup-check-email';
+import { signupDomainsText } from '@/lib/signup-domain';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { AuthHeading } from '@/components/auth/auth-heading';
 import { AuthModeTabs } from '@/components/auth/auth-mode-tabs';
@@ -123,6 +133,7 @@ function InvitedRegisterForm({
       password: '',
       confirmPassword: '',
       fullName: preview.fullName,
+      acceptPrivacyPolicy: false,
     },
   });
 
@@ -136,12 +147,18 @@ function InvitedRegisterForm({
       password: values.password,
       fullName: values.fullName,
       invitationToken: token,
+      acceptPrivacyPolicy: true,
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
     };
     try {
       const { data } = await apiClient.post<AccessTokenResponse>('/auth/register', payload);
       await login(data.accessToken);
       router.push('/dashboard');
     } catch (error) {
+      if (isStalePrivacyPolicyError(error)) {
+        setServerError(STALE_PRIVACY_POLICY_MESSAGE);
+        return;
+      }
       setServerError(
         describeApiError(
           error,
@@ -231,6 +248,7 @@ function InvitedRegisterForm({
               </FormItem>
             )}
           />
+          <PrivacyConsentField />
 
           <Button
             type="submit"
@@ -245,10 +263,21 @@ function InvitedRegisterForm({
   );
 }
 
+// The server's own Thai sentence for a refused domain (400), which the form's
+// generic 400 text ("bad curriculum") would otherwise hide.
+function domainRefusal(error: unknown): string | null {
+  if (!isAxiosError(error) || error.response?.status !== 400) return null;
+  const message = (error.response.data as { message?: unknown } | undefined)?.message;
+  return typeof message === 'string' && message.startsWith('สมัครด้วยตนเองได้เฉพาะอีเมล')
+    ? message
+    : null;
+}
+
 function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem: boolean }>) {
-  const router = useRouter();
-  const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  // Set once the server has accepted the sign-up: the form gives way to the
+  // "check your email" panel. No account exists until the mailed link is used.
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -262,6 +291,7 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
       programId: '',
       curriculumId: '',
       admissionYear: undefined,
+      acceptPrivacyPolicy: false,
     },
   });
 
@@ -278,18 +308,27 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
       programId: values.programId,
       curriculumId: values.curriculumId,
       admissionYear: values.admissionYear,
+      acceptPrivacyPolicy: true,
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
     };
     try {
-      const { data } = await apiClient.post<AccessTokenResponse>('/auth/register', payload);
-      await login(data.accessToken);
-      router.push('/dashboard');
+      await apiClient.post<SignupStartedResponse>('/auth/register', payload);
+      setSentTo(values.email.trim().toLowerCase());
     } catch (error) {
+      if (isStalePrivacyPolicyError(error)) {
+        setServerError(STALE_PRIVACY_POLICY_MESSAGE);
+        return;
+      }
+      const refusal = domainRefusal(error);
+      if (refusal) {
+        setServerError(refusal);
+        return;
+      }
       setServerError(
         describeApiError(
           error,
           {
             ...RATE_LIMITED_ERROR,
-            409: 'อีเมลหรือรหัสนิสิตนี้ถูกใช้งานแล้ว',
             400: 'ข้อมูลหลักสูตรไม่ถูกต้อง กรุณาเลือกใหม่',
           },
           undefined,
@@ -325,115 +364,126 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
         <AuthModeTabs active="register" />
       </Reveal>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {serverError && (
-            <Alert variant="destructive" className="animate-shake">
-              <AlertDescription>{serverError}</AlertDescription>
-            </Alert>
-          )}
+      {sentTo ? (
+        <SignupCheckEmail email={sentTo} onStartOver={() => setSentTo(null)} />
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {serverError && (
+              <Alert variant="destructive" className="animate-shake">
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
 
-          <Reveal index={2} className="space-y-4">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground">ข้อมูลบัญชี</p>
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ชื่อ-นามสกุล</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>อีเมล</FormLabel>
-                  <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>รหัสผ่าน</FormLabel>
-                  <FormControl>
-                    <PasswordInput autoComplete="new-password" showStrength {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ยืนยันรหัสผ่านอีกครั้ง</FormLabel>
-                  <FormControl>
-                    <PasswordInput autoComplete="new-password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </Reveal>
+            <Reveal index={2} className="space-y-4">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">ข้อมูลบัญชี</p>
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ชื่อ-นามสกุล</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>อีเมล</FormLabel>
+                    <FormControl>
+                      <Input type="email" autoComplete="email" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      ใช้อีเมล {signupDomainsText()} ของมหาวิทยาลัย
+                      ระบบจะส่งลิงก์ยืนยันไปที่อีเมลนี้
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>รหัสผ่าน</FormLabel>
+                    <FormControl>
+                      <PasswordInput autoComplete="new-password" showStrength {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ยืนยันรหัสผ่านอีกครั้ง</FormLabel>
+                    <FormControl>
+                      <PasswordInput autoComplete="new-password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </Reveal>
 
-          <Reveal index={4} className="space-y-4">
-            <p className="pt-2 text-xs font-medium tracking-wide text-muted-foreground">
-              ข้อมูลการศึกษา
-            </p>
-            <FormField
-              control={form.control}
-              name="studentCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>รหัสนิสิต</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="admissionYear"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ปีที่เข้าศึกษา (พ.ศ.)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Reveal index={4} className="space-y-4">
+              <p className="pt-2 text-xs font-medium tracking-wide text-muted-foreground">
+                ข้อมูลการศึกษา
+              </p>
+              <FormField
+                control={form.control}
+                name="studentCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>รหัสนิสิต</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="admissionYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ปีที่เข้าศึกษา (พ.ศ.)</FormLabel>
+                    <FormControl>
+                      {/* Value starts undefined (empty keeps the schema's own message); ''
+                          keeps the <input> controlled from the first render. */}
+                      <Input type="number" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <DependentOrgSelect />
-          </Reveal>
+              <DependentOrgSelect />
+              <PrivacyConsentField />
+            </Reveal>
 
-          <Reveal index={6}>
-            <Button
-              type="submit"
-              className={cn('w-full', HOVER_LIFT)}
-              disabled={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? 'กำลังสมัครสมาชิก...' : 'สมัครสมาชิก'}
-            </Button>
-          </Reveal>
-        </form>
-      </Form>
+            <Reveal index={6}>
+              <Button
+                type="submit"
+                className={cn('w-full', HOVER_LIFT)}
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? 'กำลังสมัครสมาชิก...' : 'สมัครสมาชิก'}
+              </Button>
+            </Reveal>
+          </form>
+        </Form>
+      )}
 
       {GOOGLE_LOGIN_ENABLED && (
         <Reveal index={6}>

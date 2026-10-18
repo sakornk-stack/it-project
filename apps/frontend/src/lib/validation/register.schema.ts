@@ -1,9 +1,11 @@
 import { z } from 'zod';
-import { emailSchema, passwordSchema } from './common';
+import { isAllowedSignupEmail, signupDomainError } from '../signup-domain';
+import { acceptPrivacyPolicySchema, emailSchema, passwordSchema } from './common';
 
 export const registerSchema = z
   .object({
-    email: emailSchema,
+    // Early hint only; the server enforces SELF_SIGNUP_ALLOWED_DOMAINS.
+    email: emailSchema.refine((email) => isAllowedSignupEmail(email), signupDomainError()),
     password: passwordSchema,
     confirmPassword: z.string().min(1, 'กรุณายืนยันรหัสผ่าน'),
     fullName: z.string().min(1, 'กรุณากรอกชื่อ-นามสกุล').max(255),
@@ -17,6 +19,7 @@ export const registerSchema = z
       .int()
       .min(2400, 'ปีการศึกษาไม่ถูกต้อง')
       .max(2700, 'ปีการศึกษาไม่ถูกต้อง'),
+    acceptPrivacyPolicy: acceptPrivacyPolicySchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'รหัสผ่านไม่ตรงกัน',

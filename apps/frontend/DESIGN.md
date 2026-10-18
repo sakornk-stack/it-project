@@ -41,6 +41,10 @@
 | SectionCard / CollapsibleCard | `components/ui/section-card.tsx` | การ์ดส่วนของหน้ารายวิชาทุกแท็บ (หัว `DetailSectionHeader` ไอคอน+ชื่อ+คำอธิบาย) | การ์ดไม่ซ้อนการ์ด; แบบพับได้ใช้ `aria-expanded` + animate ความสูงด้วย grid-rows เนื้อหาที่พับเป็น `invisible` |
 | Reveal / ScrollReveal | `components/layout/reveal.tsx` | เข้าฉากของบล็อก | ดูข้อ 5 |
 | GradeEstimateBadge | `components/ui/grade-estimate-badge.tsx`, `lib/grade-estimate.ts` | ป้าย "ประมาณจากเกรด" กำกับ CLO%/PLO% ที่คำนวณจากเกรด (หัวการ์ด: radar, ภาพรวม PLO, หน้าวิชาของอาจารย์, PLO/CLO ต่ำสุดของ admin) | ข้อความกลางอยู่ที่ `GRADE_ESTIMATE_*` ห้ามพิมพ์ถ้อยคำเอง; วางที่หัวการ์ดละหนึ่งป้าย ไม่ซ้ำการ์ดข้างเคียง; ค่าที่มาจากคะแนนประเมินจริงใช้ `AchievementSourceBadge` |
+| PrivacyConsentField | `components/auth/privacy-consent-field.tsx` | ช่องยอมรับนโยบายในฟอร์มสมัครทุกเส้นทาง (สมัครเอง/ใบเชิญ/Google) | อยู่ใน `<Form>` ผูกกับ `acceptPrivacyPolicy` (`acceptPrivacyPolicySchema`); ทั้งแถวเป็น label สูง ≥44px; ลิงก์เปิดแท็บใหม่; payload ต้องส่ง `PRIVACY_POLICY_VERSION` |
+| SignupCheckEmail | `components/auth/signup-check-email.tsx` | หลังสมัครด้วยอีเมล: บอกให้ตรวจอีเมล + ปุ่มส่งซ้ำ (นับถอยหลัง 60 วินาที) | ข้อความต้องไม่บอกว่าอีเมลมีบัญชีแล้วหรือไม่; ยืนยันจริงที่ `/register/verify` ซึ่งต้องกดปุ่มก่อน POST (กันโปรแกรมสแกนลิงก์) |
+| PrivacyFooterLink | `components/layout/privacy-footer-link.tsx` | ลิงก์ "นโยบายความเป็นส่วนตัว" ท้าย `AuthSplitLayout` และ `DashboardShell` | — |
+| AiDisclosureNotice | `components/ai/ai-disclosure-notice.tsx`, `lib/ai-disclosure.ts` | แจ้งก่อนปุ่มที่เรียก `fetchAiSkillAnalysis` (ส่งข้อมูลให้ Anthropic) | ยังไม่มีจุดใช้: ห้ามวางบนส่วนที่ไม่ได้เรียก API จริง (เช่นการ์ดสรุปผลที่ใช้กฎ) |
 | DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
 
 ## 4) คลาสกลาง (`app/globals.css`)
@@ -99,6 +103,8 @@
 - ห้ามแสดงแถว/ศูนย์/NaN ของคะแนนประเมินจริงเมื่อไม่มีข้อมูล (`student_assessment_scores` ว่าง): ซ่อนส่วนนั้น (`hasActualCloEvidence` ใน `lib/actual-clo-evidence.ts`, `hasScores` ใน `clo-achievement-section.tsx`)
 - ชื่อตัวเลขหน่วยกิต (`lib/credit-labels.ts`): "ความคืบหน้าหน่วยกิต" = สัดส่วนหน่วยกิตอย่างเดียว; "ความพร้อมสำเร็จการศึกษา" = `GraduationReadiness.isReady` (หน่วยกิต + วิชาบังคับ + หมวดวิชา) เท่านั้น; "หน่วยกิตสะสม" = วิชาในหลักสูตรที่ผ่าน (รวม S ไม่รวม F/U/W/I); "หน่วยกิตที่นับ GPA" รวม F แยกชื่อ
 - ปุ่ม "ปรับช่วงหน่วยกิตในแผน" ตั้งเองได้ ไม่มีผู้อนุมัติ/ไม่มีการแจ้งใคร: ถ้อยคำใช้ "ตั้ง/บันทึก" ห้ามใช้ "ขอ/ส่งคำขอ" (`CREDIT_LIMIT_SELF_SET_NOTE`)
+- สมัครด้วยตนเอง: โดเมนกลางอยู่ที่ `lib/signup-domain.ts` (ใบ้/ตรวจล่วงหน้าเท่านั้น backend ตัดสิน); ข้อความ error ของ Google อยู่ที่ `lib/google-login-error.ts` (whitelist code)
+- นโยบายความเป็นส่วนตัว (`/privacy`, เนื้อหาใน `lib/privacy-policy.ts`): เขียนจากข้อเท็จจริงของระบบเท่านั้น; แก้เนื้อหาแล้วต้องเพิ่ม `PRIVACY_POLICY_VERSION` ทั้ง frontend และ backend (`common/privacy/privacy-policy.constant.ts`) พร้อมกัน
 - ห้ามเปลี่ยนสิทธิ์/พฤติกรรมเดิมระหว่างงานดีไซน์ (เพิ่ม/แก้/ปิด/เปิดใช้งาน/ลบถาวร + dialog)
 - ห้ามค่าจาก URL (`?role=`, `?create=`) เชื่อตรง ๆ ต้องตรวจ (`parseRoleParam` ใน `lib/user-list-filter.ts`)
 - `prettier`: repo ไม่มี config ใช้ `--single-quote --print-width 100 --trailing-comma all`; ห้าม `--write` ทั้งไฟล์ที่เดิมไม่ผ่าน

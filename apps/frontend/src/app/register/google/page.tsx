@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,9 @@ import { apiClient } from '@/lib/api-client';
 import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, RATE_LIMITED_ERROR } from '@/lib/api-error-presets';
 import { useAuth } from '@/lib/auth-context';
+import { takeTokenFromUrl } from '@/lib/signup-domain';
+import { PRIVACY_POLICY_VERSION, STALE_PRIVACY_POLICY_MESSAGE } from '@/lib/privacy-policy';
+import { isStalePrivacyPolicyError } from '@/lib/privacy-policy-error';
 import {
   completeGoogleRegistrationSchema,
   type CompleteGoogleRegistrationFormValues,
@@ -19,6 +22,7 @@ import {
 import { AuthHeading } from '@/components/auth/auth-heading';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { DependentOrgSelect } from '@/components/auth/dependent-org-select';
+import { PrivacyConsentField } from '@/components/auth/privacy-consent-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,7 +51,13 @@ export default function CompleteGoogleRegistrationPage() {
 function CompleteGoogleRegistrationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pendingToken = searchParams.get('pendingToken') ?? '';
+  // Read once into state, then taken out of the address bar (it must not stay
+  // in history or a Referer). A reload therefore needs a fresh Google sign-in,
+  // which the 10-minute pending session allows anyway.
+  const [pendingToken] = useState(() => searchParams.get('pendingToken') ?? '');
+  useEffect(() => {
+    takeTokenFromUrl(window, 'pendingToken');
+  }, []);
   const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const form = useForm<CompleteGoogleRegistrationFormValues>({
@@ -58,6 +68,7 @@ function CompleteGoogleRegistrationForm() {
       departmentId: '',
       programId: '',
       curriculumId: '',
+      acceptPrivacyPolicy: false,
     },
   });
 
@@ -69,6 +80,8 @@ function CompleteGoogleRegistrationForm() {
       programId: values.programId,
       curriculumId: values.curriculumId,
       admissionYear: values.admissionYear,
+      acceptPrivacyPolicy: true,
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
     };
     try {
       const { data } = await apiClient.post<AccessTokenResponse>(
@@ -78,6 +91,10 @@ function CompleteGoogleRegistrationForm() {
       await login(data.accessToken);
       router.push('/dashboard');
     } catch (error) {
+      if (isStalePrivacyPolicyError(error)) {
+        setServerError(STALE_PRIVACY_POLICY_MESSAGE);
+        return;
+      }
       setServerError(
         describeApiError(
           error,
@@ -145,7 +162,9 @@ function CompleteGoogleRegistrationForm() {
               <FormItem>
                 <FormLabel>ปีที่เข้าศึกษา (พ.ศ.)</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  {/* The form value starts undefined (so an empty field keeps its "enter the
+                      year" message); '' keeps the <input> controlled from the first render. */}
+                  <Input type="number" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -153,6 +172,7 @@ function CompleteGoogleRegistrationForm() {
           />
 
           <DependentOrgSelect />
+          <PrivacyConsentField />
           <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เสร็จสิ้นการสมัคร'}
           </Button>

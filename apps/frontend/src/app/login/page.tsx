@@ -7,6 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, ShieldCheck } from 'lucide-react';
 import type { LoginResponse } from '@eduanalyze-ai/shared-types';
+import { googleLoginErrorMessage } from '@/lib/google-login-error';
+import { takeTokenFromUrl } from '@/lib/signup-domain';
 import { apiClient } from '@/lib/api-client';
 import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, RATE_LIMITED_ERROR } from '@/lib/api-error-presets';
@@ -47,9 +49,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
-const GOOGLE_EMAIL_EXISTS_MESSAGE =
-  'อีเมลนี้เคยสมัครด้วยรหัสผ่านแล้ว กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่านแทน';
-
 const BRAND_COPY = {
   title: 'ยินดีต้อนรับกลับมา',
   description:
@@ -72,7 +71,7 @@ function LoginPageContent() {
   const { login, status, user } = useAuth();
   const nextParam = searchParams.get(NEXT_PARAM);
   const [serverError, setServerError] = useState<string | null>(() =>
-    searchParams.get('googleError') === 'email_exists' ? GOOGLE_EMAIL_EXISTS_MESSAGE : null,
+    googleLoginErrorMessage(searchParams.get('googleError')),
   );
   // Why the last session ended (?reason=idle|absolute|refresh-failed). A
   // neutral notice rather than a destructive error: nothing the user did wrong.
@@ -110,6 +109,8 @@ function LoginPageContent() {
     const tokenFromGoogle = searchParams.get('pendingToken');
     if (tokenFromGoogle && searchParams.get('requires2fa') === '1') {
       setPendingToken(tokenFromGoogle);
+      // Held in state now; don't leave the 2FA token in the address bar.
+      takeTokenFromUrl(window, 'pendingToken');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
