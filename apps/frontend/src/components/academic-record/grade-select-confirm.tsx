@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Grade } from '@eduanalyze-ai/shared-types';
-import { GRADE_LABELS, gradeOptionsFor } from '@/lib/grade-label';
+import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -59,7 +59,7 @@ export function GradeSelectConfirm({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {gradeOptionsFor(value).map((g) => (
+        {GRADE_OPTIONS.map((g) => (
           <SelectItem key={g} value={g}>
             {GRADE_LABELS[g]}
           </SelectItem>

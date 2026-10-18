@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { CourseListItem, Grade, SemesterGpa, StudentCourseRecord } from '@eduanalyze-ai/shared-types';
 import { deleteCourseRecord, updateCourseRecordGrade } from '@/lib/api/academic-record';
 import { fetchClos, fetchMyAssessments } from '@/lib/api/course-assessment';
-import { GRADE_LABELS } from '@/lib/grade-label';
+import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';

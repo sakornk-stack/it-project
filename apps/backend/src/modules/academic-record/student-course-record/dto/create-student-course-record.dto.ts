@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Grade } from '@prisma/client';
-import { IsIn, IsUUID } from 'class-validator';
-import { ENTRY_GRADE_MESSAGE, ENTRY_GRADES } from '../grade-point.constant';
+import { IsEnum, IsUUID } from 'class-validator';
 
 export class CreateStudentCourseRecordDto {
   // Required so a SUPER_ADMIN can create/correct a record on a student's
@@ -21,7 +20,7 @@ export class CreateStudentCourseRecordDto {
   @IsUUID()
   semesterId!: string;
 
-  @ApiProperty({ enum: ENTRY_GRADES, example: Grade.B_PLUS })
-  @IsIn(ENTRY_GRADES, { message: ENTRY_GRADE_MESSAGE })
+  @ApiProperty({ enum: Grade, example: Grade.B_PLUS })
+  @IsEnum(Grade)
   grade!: Grade;
 }

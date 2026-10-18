@@ -18,19 +18,7 @@ export const GRADE_LABELS: Record<Grade, string> = {
   U: 'U',
 };
 
-// S/U can no longer be entered, but stay in GRADE_LABELS so existing records
-// still display. Pickers offer only the entry grades.
-export const LEGACY_GRADES: readonly Grade[] = ['S', 'U'];
-
-export const GRADE_OPTIONS = (Object.keys(GRADE_LABELS) as Grade[]).filter(
-  (g) => !LEGACY_GRADES.includes(g),
-);
-
-// Options for editing an existing record: a stored S/U stays listed so the
-// select can still show it, but no other record can be switched to S/U.
-export function gradeOptionsFor(current: Grade): Grade[] {
-  return LEGACY_GRADES.includes(current) ? [...GRADE_OPTIONS, current] : GRADE_OPTIONS;
-}
+export const GRADE_OPTIONS = Object.keys(GRADE_LABELS) as Grade[];
 
 // Shared by the score-entry <select> and the CSV importer, which accepts
 // these Thai labels as well as the raw enum values — one source of truth so
