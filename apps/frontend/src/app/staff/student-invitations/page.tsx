@@ -58,8 +58,9 @@ export default function StaffStudentInvitationsPage() {
               className="gap-1.5 px-4"
               onClick={() => setShowCsvPanel((open) => !open)}
             >
+              {/* Only closes the panel; "ยกเลิกคำเชิญ" in the list withdraws an invitation. */}
               {showCsvPanel ? (
-                'ยกเลิก'
+                'ปิดแผงนำเข้า'
               ) : (
                 <>
                   <Plus size={16} />

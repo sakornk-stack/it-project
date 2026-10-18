@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, Lock, SearchX } from 'lucide-react';
+import { ChevronRight, SearchX } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
@@ -7,24 +7,14 @@ import { StatusBadge } from './status-badge';
 import type { StaffStudentRow } from './staff-status';
 import { NO_DATA_LABEL } from './student-reading';
 
-const LOCKED_BUTTON =
-  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-dashed border-slate-300 px-3 text-sm text-muted-foreground';
 // Stretched over the whole row (the row is `relative`), so the row is one real
 // link; the focus ring is drawn on the row because the link itself has no box.
 const ROW_LINK =
   'font-semibold text-primary outline-none after:absolute after:inset-0 after:content-[""]';
 
-// A suspended student's detail page answers 404, so the action is a note
-// instead of a link.
-function Action({ row }: { row: StaffStudentRow }) {
-  if (!row.isActive) {
-    return (
-      <span className={LOCKED_BUTTON}>
-        <Lock aria-hidden="true" className="h-4 w-4" />
-        เปิดดูไม่ได้
-      </span>
-    );
-  }
+// Every student opens, suspended ones too: their page is read-only and is
+// where STAFF reactivates the account.
+function Action() {
   return (
     <span className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground transition-colors [@media(hover:hover)]:group-hover:text-primary group-has-[:focus-visible]:text-primary">
       ดูรายละเอียด
@@ -36,9 +26,8 @@ function Action({ row }: { row: StaffStudentRow }) {
   );
 }
 
-// The student's name, as the row's link when the student can be opened.
+// The student's name, as the row's link.
 function NameCell({ row }: { row: StaffStudentRow }) {
-  if (!row.isActive) return <span className="break-words font-semibold">{row.fullName}</span>;
   return (
     <Link href={`/staff/students/${row.studentProfileId}`} className={cn(ROW_LINK, 'break-words')}>
       {row.fullName}
@@ -94,8 +83,8 @@ export function StaffStudentList({
             <tr
               key={row.studentProfileId}
               className={cn(
-                'group relative border-b border-slate-100 align-middle',
-                row.isActive ? 'interactive-row' : 'text-muted-foreground',
+                'interactive-row group relative border-b border-slate-100 align-middle',
+                !row.isActive && 'text-muted-foreground',
               )}
             >
               <td className="px-3 py-3 font-semibold tabular-nums">{row.studentCode}</td>
@@ -113,7 +102,7 @@ export function StaffStudentList({
                 <StatusBadge status={row.status} />
               </td>
               <td className="px-3 py-3">
-                <Action row={row} />
+                <Action />
               </td>
             </tr>
           ))}
@@ -126,8 +115,8 @@ export function StaffStudentList({
           <li
             key={row.studentProfileId}
             className={cn(
-              'group relative space-y-3 rounded-lg border border-slate-200 bg-card p-4',
-              row.isActive ? 'interactive-card' : 'text-muted-foreground',
+              'interactive-card group relative space-y-3 rounded-lg border border-slate-200 bg-card p-4',
+              !row.isActive && 'text-muted-foreground',
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -153,7 +142,7 @@ export function StaffStudentList({
               </div>
             </dl>
             <div className="flex">
-              <Action row={row} />
+              <Action />
             </div>
           </li>
         ))}

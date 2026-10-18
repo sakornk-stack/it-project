@@ -70,3 +70,24 @@ export function formatThaiDate(iso: string): string {
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+// Sign-ins are recorded from 2026-10 on, so null means "not since then", not "never".
+export const NO_LAST_LOGIN_LABEL = 'ยังไม่มีบันทึก';
+
+export function formatLastLogin(iso: string | null, withTime = false): string {
+  if (!iso) return NO_LAST_LOGIN_LABEL;
+  return withTime ? formatThaiDateTime(iso) : formatThaiDate(iso);
+}
+
+// "8 ก.ย. 2568 14:05" — for events where the time of day matters (last sign-in, history).
+export function formatThaiDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

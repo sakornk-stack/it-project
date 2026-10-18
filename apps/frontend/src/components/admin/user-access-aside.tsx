@@ -6,13 +6,14 @@ import {
   Info,
   KeyRound,
   Lock,
+  LogIn,
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminUserSummary } from '@eduanalyze-ai/shared-types';
 import type { AccessLimitation } from '@/lib/admin-user-guard';
-import { formatThaiDate } from '@/lib/admin-users';
+import { formatLastLogin, formatThaiDate } from '@/lib/admin-users';
 import { cn } from '@/lib/utils';
 import { DetailSectionHeader } from '@/components/ui/detail-section-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,8 +86,7 @@ function Fact({
   );
 }
 
-// Facts the API holds that the profile card above does not already show. The
-// API has no last-sign-in time, so none is shown.
+// Facts the API holds that the profile card above does not already show.
 function AccountInfoCard({ user }: Readonly<{ user: AdminUserSummary }>) {
   return (
     <Card>
@@ -95,6 +95,9 @@ function AccountInfoCard({ user }: Readonly<{ user: AdminUserSummary }>) {
         <dl className="space-y-3">
           <Fact icon={CalendarDays} label="สร้างบัญชีเมื่อ">
             {dateOrDash(user.createdAt)}
+          </Fact>
+          <Fact icon={LogIn} label="เข้าใช้ล่าสุด">
+            {formatLastLogin(user.lastLoginAt, true)}
           </Fact>
           <Fact icon={Clock} label="แก้ไขล่าสุด">
             {dateOrDash(user.updatedAt)}

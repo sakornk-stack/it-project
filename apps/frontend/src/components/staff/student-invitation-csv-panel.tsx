@@ -247,7 +247,7 @@ export function StudentInvitationCsvPanel({
               onClick={onClose}
               disabled={importing}
             >
-              ยกเลิก
+              ปิดโดยไม่นำเข้า
             </Button>
           </div>
         </div>

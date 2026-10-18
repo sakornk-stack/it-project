@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { AlertTriangle, ArrowLeft, Check, Pencil, Plus, Star } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Ban, Check, Pencil, Plus, Star } from 'lucide-react';
 import {
   fetchAcademicYears,
   fetchCourses,
@@ -14,12 +14,15 @@ import {
 } from '@/lib/api/academic-record';
 import {
   fetchCourseRecordsInScope,
+  fetchStaffOverview,
   fetchStaffStudentRisk,
+  fetchStudentAuditLogs,
   fetchStudentProfile,
 } from '@/lib/api/staff';
 import { fetchCurricula, fetchPrograms } from '@/lib/api/organization';
 import { formatSemesterLabel } from '@/lib/grade-label';
 import { useAuth } from '@/lib/auth-context';
+import { ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { useToast } from '@/lib/toast-context';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
@@ -37,6 +40,11 @@ import { StaffAddRecordForm } from '@/components/staff/staff-add-record-form';
 import { StaffRecordList } from '@/components/staff/staff-record-list';
 import { staffStatus } from '@/components/staff/staff-status';
 import { StatusBadge } from '@/components/staff/status-badge';
+import { isStudentSuspended } from '@/components/staff/student-account';
+import { StudentAccountStatusControl } from '@/components/staff/student-account-status-control';
+import { StudentHistorySection } from '@/components/staff/student-history-section';
+import { StudentProfileEditForm } from '@/components/staff/student-profile-edit-form';
+import type { AuditLabelLookups } from '@/components/staff/describe-audit-entry';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +74,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   const [showAddForm, setShowAddForm] = useState(false);
   // Viewing is the default; nothing on the page can write until editing is turned on.
   const [editing, setEditing] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
   const mode = recordModeView(editing);
 
   const profileQuery = useQuery({
@@ -106,6 +115,15 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   const curriculaQuery = useQuery({
     queryKey: ['curricula'],
     queryFn: fetchCurricula,
+  });
+  const auditQuery = useQuery({
+    queryKey: ['staff-student-audit', studentProfileId],
+    queryFn: () => fetchStudentAuditLogs(studentProfileId),
+  });
+  // The requester's own programs and their curricula: what the edit form offers.
+  const overviewQuery = useQuery({
+    queryKey: ['staff-overview'],
+    queryFn: fetchStaffOverview,
   });
 
   const courseMap = useMemo(
@@ -157,7 +175,34 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
     queryClient.invalidateQueries({
       queryKey: ['staff-student-gpa', studentProfileId],
     });
+    queryClient.invalidateQueries({ queryKey: ['staff-student-audit', studentProfileId] });
   }
+
+  // After a suspension, reactivation or profile edit: the student, the
+  // directory status and the program counts all move.
+  function refetchAccount() {
+    queryClient.invalidateQueries({ queryKey: ['staff-student', studentProfileId] });
+    queryClient.invalidateQueries({ queryKey: ['staff-student-risk'] });
+    queryClient.invalidateQueries({ queryKey: ['staff-student-audit', studentProfileId] });
+    queryClient.invalidateQueries({ queryKey: ['staff-overview'] });
+  }
+
+  function handleProfileSaved() {
+    toast.success('บันทึกข้อมูลนิสิตแล้ว');
+    setEditingProfile(false);
+    refetchAccount();
+  }
+
+  const auditLabels: AuditLabelLookups = {
+    course: (id) => {
+      const course = courseMap.get(id);
+      return course && `${course.code} ${course.name}`;
+    },
+    semester: (id) => semesterMap.get(id)?.label,
+    program: (id) => programsQuery.data?.find((p) => p.id === id)?.code,
+    curriculum: (id) => curriculaQuery.data?.find((c) => c.id === id)?.version,
+    role: (role) => ROLE_LABEL_TH[role],
+  };
 
   if (!user) return null;
 
@@ -166,6 +211,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   const curriculum = curriculaQuery.data?.find((c) => c.id === profile?.curriculumId);
   const gpa = gpaQuery.data;
   const risk = riskQuery.data?.find((s) => s.studentProfileId === studentProfileId);
+  const suspended = profile ? isStudentSuspended(profile) : false;
 
   return (
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
@@ -226,8 +272,28 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
             <PageHeader
               title={profile.user.fullName}
               description={`${profile.studentCode} · ${profile.user.email}`}
-              actions={risk && <StatusBadge status={staffStatus(risk)} />}
+              actions={
+                <div className="flex flex-wrap items-center gap-2">
+                  {risk && <StatusBadge status={staffStatus(risk)} />}
+                  <StudentAccountStatusControl profile={profile} onChanged={refetchAccount} />
+                </div>
+              }
             />
+            {suspended && (
+              <p
+                role="note"
+                className={cn(
+                  'mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm',
+                  BADGE_TONE_CLASSES.neutral,
+                )}
+              >
+                <Ban aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  บัญชีนี้ถูกระงับ นิสิตเข้าสู่ระบบไม่ได้ ดูข้อมูลได้อย่างเดียว
+                  ถ้าจะแก้ผลการเรียนหรือข้อมูลนิสิต ให้เปิดบัญชีอีกครั้งก่อน
+                </span>
+              </p>
+            )}
             {risk && risk.lowGradeCount > 0 && (
               <p
                 role="note"
@@ -248,8 +314,19 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
 
           <Reveal index={1} className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card className="flex h-full flex-col md:col-span-2">
-              <CardHeader>
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
                 <CardTitle>ข้อมูลนิสิต</CardTitle>
+                {!suspended && !editingProfile && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-1.5 px-4"
+                    onClick={() => setEditingProfile(true)}
+                  >
+                    <Pencil aria-hidden="true" size={16} />
+                    แก้ไขข้อมูล
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="flex-1">
                 <dl className="grid h-full grid-cols-1 content-evenly gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
@@ -316,11 +393,21 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
             )}
           </Reveal>
 
+          {editingProfile && !suspended && (
+            <StudentProfileEditForm
+              profile={profile}
+              programs={overviewQuery.data?.programs ?? []}
+              onSaved={handleProfileSaved}
+              onCancel={() => setEditingProfile(false)}
+            />
+          )}
+
           <Reveal index={2}>
             <PageSection
               title="ผลการเรียนรายวิชา"
               actions={
-                editing ? (
+                !suspended &&
+                (editing ? (
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
@@ -360,7 +447,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                     <Pencil aria-hidden="true" size={16} />
                     แก้ไขผลการเรียน
                   </Button>
-                )
+                ))
               }
             >
               {mode.showNotice && (
@@ -394,12 +481,22 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                     records={ownRecords}
                     courseMap={courseMap}
                     semesterMap={semesterMap}
-                    editing={editing}
+                    editing={editing && !suspended}
                     onChanged={refetchRecords}
                   />
                 </CardContent>
               </Card>
             </PageSection>
+          </Reveal>
+
+          <Reveal index={3}>
+            <StudentHistorySection
+              entries={auditQuery.data}
+              loading={auditQuery.isLoading}
+              failed={auditQuery.isError}
+              onRetry={() => auditQuery.refetch()}
+              labels={auditLabels}
+            />
           </Reveal>
         </>
       )}

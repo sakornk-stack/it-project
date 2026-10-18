@@ -32,6 +32,8 @@
 | ConfirmDialog | `components/ui/confirm-dialog.tsx` | ยืนยันการกระทำ | สูงไม่เกิน `100dvh-2rem` มี safe-area |
 | PermanentDeleteDialog / PermanentDeleteButton | `components/admin/permanent-delete-button.tsx` | ลบถาวร | ต้องพิมพ์ยืนยัน; ห้ามทำปุ่มลบถาวรเอง |
 | DeactivateConfirm | `components/admin/deactivate-confirm.tsx` | ปิดใช้งาน (soft delete) | 409 จาก API คือผู้ตัดสิน |
+| StudentAccountStatusControl | `components/staff/student-account-status-control.tsx` | STAFF ระงับ/เปิดบัญชีนิสิต | ยืนยันสองชั้น (เหตุผล → พิมพ์รหัสนิสิต) ไม่ใช้ `DeactivateConfirm` เพราะเปิดคืนได้; ไม่มีปุ่มลบบัญชีนิสิต |
+| StudentHistorySection | `components/staff/student-history-section.tsx`, `describe-audit-entry.ts` | ประวัติการเปลี่ยนแปลงของนิสิต (อ่านอย่างเดียว) | ข้อความแต่ละแถวมาจาก `describeAuditEntry` เท่านั้น; ไม่แสดงอีเมลผู้ทำ |
 | Input / Combobox / Select | `components/ui/input.tsx`, `combobox.tsx`, `select.tsx` | ช่องกรอก | `h-11`, `text-base md:text-sm` กัน iOS zoom |
 | Progress | `components/ui/progress.tsx` | แถบ 0–100 | `animateOnView` (ค่าเริ่มต้น) เติมครั้งเดียวตอนเข้า viewport |
 | AnimatedNumber / AnimatedRing | `components/ui/animated-number.tsx`, `animated-ring.tsx` | ตัวเลข/วงแหวนนับขึ้น | ค่าว่างแสดง fallback ไม่นับ |

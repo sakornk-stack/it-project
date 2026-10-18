@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, SearchX, UsersRound } from 'lucide-react';
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
-import { compareUsersDefault, formatThaiDate } from '@/lib/admin-users';
+import { compareUsersDefault, formatLastLogin, formatThaiDate } from '@/lib/admin-users';
 import { accountStatus } from '@/lib/account-status';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
 import { usePagination } from '@/lib/use-pagination';
@@ -389,7 +389,8 @@ export function UserListTable({
                     <ScopeBadges user={user} resolveTargetName={resolveTargetName} />
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs text-muted-foreground">
-                        สร้างเมื่อ {formatThaiDate(user.createdAt)}
+                        สร้างเมื่อ {formatThaiDate(user.createdAt)} · เข้าใช้ล่าสุด{' '}
+                        {formatLastLogin(user.lastLoginAt)}
                       </p>
                       <RowActions
                         href={href}
@@ -461,6 +462,9 @@ export function UserListTable({
                         </td>
                         <td className="px-3 py-3">
                           <StatusColumn user={user} />
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            เข้าใช้ล่าสุด {formatLastLogin(user.lastLoginAt)}
+                          </p>
                         </td>
                         <td className="px-3 py-2">
                           <RowActions

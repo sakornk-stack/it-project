@@ -1,5 +1,23 @@
 import type { AdminUserSummary, Role } from '@eduanalyze-ai/shared-types';
-import { activeShare, compareUsersDefault, formatThaiDate, summarizeUsers } from './admin-users';
+import {
+  activeShare,
+  compareUsersDefault,
+  formatLastLogin,
+  formatThaiDate,
+  summarizeUsers,
+} from './admin-users';
+
+describe('formatLastLogin', () => {
+  it('says there is no record yet for null, not "never"', () => {
+    expect(formatLastLogin(null)).toBe('ยังไม่มีบันทึก');
+  });
+
+  it('shows the Thai date, with the time when asked', () => {
+    const iso = '2026-10-18T07:05:00.000Z';
+    expect(formatLastLogin(iso)).toBe(formatThaiDate(iso));
+    expect(formatLastLogin(iso, true)).toMatch(/\d{1,2}:\d{2}/);
+  });
+});
 
 function user(roles: Role[], opts: { isActive?: boolean; scopes?: number } = {}): AdminUserSummary {
   return {
@@ -8,6 +26,7 @@ function user(roles: Role[], opts: { isActive?: boolean; scopes?: number } = {})
     fullName: 'x',
     isActive: opts.isActive ?? true,
     mustChangePassword: false,
+    lastLoginAt: null,
     createdAt: '2025-09-08T00:00:00.000Z',
     updatedAt: '2025-09-08T00:00:00.000Z',
     roles,

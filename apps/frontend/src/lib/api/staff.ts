@@ -1,4 +1,5 @@
 import type {
+  AuditLogEntry,
   CourseCategory,
   CourseInstructor,
   CreateCourseCategoryRequest,
@@ -15,11 +16,14 @@ import type {
   StaffStudentRiskEntry,
   StudentCourseRecord,
   StudentInvitationListEntry,
+  StudentProfileDetail,
   StudentProfileSummary,
   UpdateCourseCategoryRequest,
   UpdateCourseRequest,
   UpdateCurriculumRequirementRequest,
   UpdatePrerequisiteRequest,
+  UpdateStudentActiveStatusRequest,
+  UpdateStudentProfileRequest,
 } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '../api-client';
 
@@ -29,7 +33,29 @@ export async function fetchStudentProfiles() {
 }
 
 export async function fetchStudentProfile(id: string) {
-  const { data } = await apiClient.get<StudentProfileSummary>(`/student-profiles/${id}`);
+  const { data } = await apiClient.get<StudentProfileDetail>(`/student-profiles/${id}`);
+  return data;
+}
+
+export async function updateStudentProfile(id: string, dto: UpdateStudentProfileRequest) {
+  const { data } = await apiClient.patch<StudentProfileSummary>(`/student-profiles/${id}`, dto);
+  return data;
+}
+
+// Suspends or reactivates the student's sign-in and directory status together.
+export async function updateStudentActiveStatus(
+  id: string,
+  dto: UpdateStudentActiveStatusRequest,
+) {
+  const { data } = await apiClient.patch<{ id: string; isActive: boolean }>(
+    `/student-profiles/${id}/active-status`,
+    dto,
+  );
+  return data;
+}
+
+export async function fetchStudentAuditLogs(id: string) {
+  const { data } = await apiClient.get<AuditLogEntry[]>(`/student-profiles/${id}/audit-logs`);
   return data;
 }
 
@@ -163,6 +189,11 @@ export async function fetchStudentInvitations() {
     '/student-invitations',
   );
   return data;
+}
+
+// The invitation link stops working at once; audited server-side.
+export async function cancelStudentInvitation(id: string) {
+  await apiClient.delete(`/student-invitations/${id}`);
 }
 
 export async function resendStudentInvitation(id: string) {
