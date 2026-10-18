@@ -106,6 +106,27 @@ describe('AuthService.forgotPassword', () => {
     }
   });
 
+  // The first SUPER_ADMIN (src/cli/create-first-admin.ts) sets its password
+  // through this flow, so the role must never change the outcome or reply.
+  it('treats a SUPER_ADMIN account like any other and never consults the role', async () => {
+    const { service, passwordResetService, emailService } = setup({
+      user: { id: 'admin-1', email: 'admin@example.com', passwordHash: 'unusable-hash' },
+    });
+    const missing = setup({ user: null });
+
+    const forAdmin = await service.forgotPassword({ email: 'admin@example.com' });
+    const forNobody = await missing.service.forgotPassword({ email: 'nobody@example.com' });
+
+    expect(forAdmin).toEqual(GENERIC_MESSAGE);
+    expect(forAdmin).toEqual(forNobody);
+    expect(passwordResetService.create).toHaveBeenCalledWith('admin-1');
+    expect(emailService.sendPasswordSetupEmail).toHaveBeenCalledWith(
+      'admin@example.com',
+      'reset-token',
+      'reset',
+    );
+  });
+
   it('sends nothing for a Google-only account with no password', async () => {
     const { service, passwordResetService, emailService } = setup({
       user: { ...existingUser, passwordHash: null },

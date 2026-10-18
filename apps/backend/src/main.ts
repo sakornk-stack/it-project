@@ -65,7 +65,9 @@ async function bootstrap() {
   }
 
   const port = process.env.PORT ?? 3001;
-  await app.listen(port);
+  // All interfaces: inside a container the published port reaches it via the
+  // container's own network interface, not loopback.
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();

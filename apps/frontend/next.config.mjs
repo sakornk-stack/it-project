@@ -1,5 +1,17 @@
+import { fileURLToPath } from 'node:url';
+
+// The Docker image (apps/frontend/Dockerfile) sets NEXT_OUTPUT=standalone to
+// get a self-contained server.js with only the files it needs. The tracing
+// root is the repo root so the npm-workspace package (shared-types) and the
+// hoisted node_modules are included. Local `npm run build/start` is unchanged.
+const standalone = process.env.NEXT_OUTPUT === 'standalone';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(standalone && {
+    output: 'standalone',
+    outputFileTracingRoot: fileURLToPath(new URL('../../', import.meta.url)),
+  }),
   // Separate output dir for `next build`/`next start` so a build run
   // while `next dev` is live never collides with dev's .next — a stray
   // `next build` interleaving production (hashed) chunk/manifest files

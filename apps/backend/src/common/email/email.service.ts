@@ -20,7 +20,7 @@ export interface SendMailParams {
 // auth on the real password). Kept swappable: nothing outside this file
 // knows it's Gmail specifically, only SMTP_HOST/PORT/USER/PASS/FROM.
 // Logs carry a shortened address (a***@domain), never the full one.
-function maskEmail(address: string): string {
+export function maskEmail(address: string): string {
   const [local, domain] = address.split('@');
   return domain ? `${local.slice(0, 1)}***@${domain}` : '***';
 }

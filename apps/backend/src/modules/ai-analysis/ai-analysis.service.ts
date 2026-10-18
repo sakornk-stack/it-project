@@ -7,6 +7,17 @@ import { StudentDashboardReport } from '../dashboard/dashboard-report.interface'
 import { AiSkillAnalysisReport } from './ai-analysis-report.interface';
 
 const NO_DATA_SUMMARY = 'ยังไม่มีข้อมูลผลการเรียนเพียงพอสำหรับการวิเคราะห์';
+const UNAVAILABLE_MESSAGE =
+  'บริการวิเคราะห์ด้วย AI ไม่สามารถให้บริการได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง';
+
+// An empty key or the placeholder "disabled" (production default, see
+// deploy/make-env.sh) turns AI analysis off. It must be checked before any
+// request is built: the SDK would otherwise send the student's data to the
+// provider and only then be rejected for the bad key.
+export function isAiEnabled(apiKey: string | undefined): boolean {
+  const key = (apiKey ?? '').trim();
+  return key !== '' && key.toLowerCase() !== 'disabled';
+}
 
 // §25: AI interprets already-computed numbers, never invents new ones —
 // the tool schema below is qualitative-only (no numeric fields) so "don't
@@ -134,18 +145,24 @@ interface ToolResult {
 @Injectable()
 export class AiAnalysisService {
   private readonly logger = new Logger(AiAnalysisService.name);
-  private readonly client: Anthropic;
+  private client?: Anthropic;
   private readonly model: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly dashboardService: DashboardService,
   ) {
-    this.client = new Anthropic({
+    this.model = this.configService.get<string>('ai.model')!;
+  }
+
+  // Created on first real use only, so a disabled deployment never builds a
+  // client (the SDK constructor also throws on an empty key).
+  private getClient(): Anthropic {
+    this.client ??= new Anthropic({
       apiKey: this.configService.get<string>('ai.anthropicApiKey'),
       timeout: 20000,
     });
-    this.model = this.configService.get<string>('ai.model')!;
+    return this.client;
   }
 
   // Self-ownership enforced inside getStudentDashboard (via checkCredits) —
@@ -155,6 +172,13 @@ export class AiAnalysisService {
     studentProfileId: string,
     user: RequestUser,
   ): Promise<AiSkillAnalysisReport> {
+    // Before reading the dashboard or building a prompt: nothing about the
+    // student is assembled, let alone sent, while AI is off.
+    if (!isAiEnabled(this.configService.get<string>('ai.anthropicApiKey'))) {
+      this.logger.warn('AI skill analysis requested while AI is disabled');
+      throw new ServiceUnavailableException(UNAVAILABLE_MESSAGE);
+    }
+
     const dashboard = await this.dashboardService.getStudentDashboard(
       studentProfileId,
       user,
@@ -186,7 +210,7 @@ export class AiAnalysisService {
 
   private async callAnthropic(promptInput: PromptInput): Promise<ToolResult> {
     try {
-      const response = await this.client.messages.create({
+      const response = await this.getClient().messages.create({
         model: this.model,
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
@@ -204,9 +228,7 @@ export class AiAnalysisService {
       return toolUse.input as ToolResult;
     } catch (error) {
       this.logger.error('AI skill analysis call failed', error as Error);
-      throw new ServiceUnavailableException(
-        'บริการวิเคราะห์ด้วย AI ไม่สามารถให้บริการได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง',
-      );
+      throw new ServiceUnavailableException(UNAVAILABLE_MESSAGE);
     }
   }
 }
