@@ -15,6 +15,8 @@ const nextConfig = {
     }));
   },
   distDir: process.env.NEXT_BUILD_MODE === 'production' ? '.next-build' : '.next',
+  // Hide the Next.js dev indicator (bottom-left "N" badge) in dev mode.
+  devIndicators: false,
 };
 
 export default nextConfig;
