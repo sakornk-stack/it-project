@@ -14,7 +14,14 @@ out/
 .env
 .env.local
 .env.*.local
+.env.*
+db.env
 !.env.example
+
+# VPS-side files (deploy/make-env.sh, backup-db.sh, remote-deploy.sh) if a
+# copy of the repo ever sits next to them
+/backups/
+.previous-image-tag
 
 # Logs
 *.log

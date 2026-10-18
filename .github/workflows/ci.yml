@@ -1,0 +1,85 @@
+# CI: lint, type-check and unit tests for both apps, then a trial build of
+# every Docker image (nothing is pushed). deploy.yml runs after this workflow
+# succeeds on main.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, type-check, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      # Backend (the workspace "lint" script passes --fix; CI only checks)
+      - name: Backend lint
+        working-directory: apps/backend
+        run: npx eslint "{src,test}/**/*.ts"
+      - name: Backend type-check
+        working-directory: apps/backend
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Backend unit tests
+        run: npm run test --workspace=apps/backend -- --ci
+
+      # Frontend
+      - name: Frontend lint
+        run: npm run lint --workspace=apps/frontend
+      - name: Frontend type-check
+        run: npm run typecheck --workspace=apps/frontend
+      - name: Frontend unit tests
+        run: npm run test --workspace=apps/frontend -- --ci
+
+  docker-build:
+    name: Docker build (${{ matrix.name }})
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: apps/backend/Dockerfile
+            target: runtime
+          - name: migrator
+            dockerfile: apps/backend/Dockerfile
+            target: migrator
+          - name: frontend
+            dockerfile: apps/frontend/Dockerfile
+            target: runtime
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Build ${{ matrix.name }} image (not pushed)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

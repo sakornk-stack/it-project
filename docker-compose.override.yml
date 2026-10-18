@@ -1,0 +1,19 @@
+# Local development only — loaded automatically by `docker compose` next to
+# docker-compose.yml, and never copied to the VPS (so the production DB is
+# never published on a host port).
+#
+# Postgres is published on host port 5433, never 5432 — a pre-existing
+# Homebrew Postgres install may already be using 5432, and this project's
+# real data was migrated out of it via pg_dump/pg_restore, not by
+# stopping/replacing that install. Keeping 5433 permanent (not just during
+# migration) means falling back to Homebrew Postgres is always just
+# pointing DATABASE_URL at 5432 again, no container changes needed.
+#
+# To run a second, isolated copy of the stack on this machine (for example a
+# deploy rehearsal), skip this file with `-f docker-compose.yml` and a
+# different `-p <project>` so it cannot collide with port 5433.
+services:
+  postgres:
+    ports:
+      # Loopback only, so the dev database is never reachable from the LAN.
+      - '127.0.0.1:5433:5432'

@@ -36,8 +36,34 @@ Names and purpose only. Never put values in this file. Templates:
 | `SMTP_PASS` | no | Mail app password. |
 | `SMTP_FROM` | no | Sender address. |
 | `TOTP_ENCRYPTION_KEY` | yes | Encrypts 2FA secrets (64 hex characters). Losing it makes every 2FA secret unreadable, so back it up separately. |
-| `ANTHROPIC_API_KEY` | no | Enables AI analysis. |
+| `ANTHROPIC_API_KEY` | no | Enables AI analysis. Empty or `disabled` turns it off: the endpoint answers 503 before any student data is read or sent. **Production keeps it `disabled`** until the privacy policy names the transfer of student data to this outside provider and the university has approved it. |
 | `ANTHROPIC_MODEL` | no | Model override for AI analysis. |
+
+## Container only (backend and migrator images)
+
+| Name | Default | Purpose |
+|---|---|---|
+| `POSTGRES_HOST` | `postgres` | Database host the image entrypoint puts in `DATABASE_URL`. |
+| `POSTGRES_DB` | `eduanalyze_ai` | Database name the image entrypoint puts in `DATABASE_URL`. |
+
+Inside a container `DATABASE_URL` is always built from `POSTGRES_USER`, `POSTGRES_PASSWORD` and the two above.
+
+## Docker Compose (`docker-compose.yml`)
+
+Compose variables: read from the shell or from a `.env` next to `docker-compose.yml`, not from `apps/backend/.env`.
+Local dev needs none of them. On the VPS, `deploy/make-env.sh` writes them to `~/eduanalyze/.env`.
+
+| Name | Local default | VPS value | Purpose |
+|---|---|---|---|
+| `COMPOSE_PROJECT_NAME` | folder name (`eduanalyze-ai`) | `eduanalyze` | Prefix of container, volume and network names. Do not set it locally: the dev volume is `eduanalyze-ai_postgres_data`. |
+| `APP_ENV_FILE` | `apps/backend/.env` | `.env` | Env file for the backend and migrator. |
+| `DB_ENV_FILE` | same as `APP_ENV_FILE` | `db.env` | Env file with only `POSTGRES_USER`/`POSTGRES_PASSWORD`. postgres and the migrator read only this file (no JWT/SMTP/TOTP); the backend reads it plus `APP_ENV_FILE`. Kept apart so a deploy that rewrites `IMAGE_TAG` does not restart postgres. |
+| `BACKEND_IMAGE` | `eduanalyze-ai-backend` | `ghcr.io/patcharadnaimingchua/eduanalyze-ai-backend` | Backend image name. |
+| `FRONTEND_IMAGE` | `eduanalyze-ai-frontend` | `ghcr.io/patcharadnaimingchua/eduanalyze-ai-frontend` | Frontend image name. |
+| `MIGRATOR_IMAGE` | `eduanalyze-ai-migrator` | `ghcr.io/patcharadnaimingchua/eduanalyze-ai-migrator` | Image that runs `prisma migrate deploy` and exits. |
+| `IMAGE_TAG` | `latest` (also when empty) | empty at first, then `sha-xxxxxxx` (set by each deploy) | Tag used for the three app images; rollback means an older tag (history in `~/eduanalyze/.image-tag-history`). |
+| `BACKEND_PORT` | 3001 | 3401 | Host port, always bound to 127.0.0.1. |
+| `FRONTEND_PORT` | 3000 | 3400 | Host port, always bound to 127.0.0.1. |
 
 ## Frontend (build time, `apps/frontend/.env.local` or Docker build args)
 

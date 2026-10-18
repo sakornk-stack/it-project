@@ -32,3 +32,7 @@ Setup instructions will be added as each phase is implemented (starting with dat
 ## Database backup
 
 Run `bash scripts/db-backup.sh <label>` from the project root (the label is optional and defaults to `manual`). Dumps are written to `apps/backend/.backups/` and are git-ignored. They contain real user data, so never send anything in `.backups` off the machine. Back up before any QA or test round that touches Docker; see `apps/backend/CONVENTIONS.md` §10.
+
+## Deployment
+
+Production runs on a VPS at `https://eduanalyze.itkukps.tech`: GitHub Actions (`CI`, then `Deploy`) builds the images, pushes them to GHCR and deploys over SSH. Setup steps, rollback, backups and the PDPA rule are in [docs/DEPLOY.md](docs/DEPLOY.md) (Thai).

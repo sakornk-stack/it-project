@@ -6,8 +6,16 @@
 - **Deploy:** รัน `prisma migrate deploy` ก่อนเปิดโค้ดใหม่ ตั้ง env ให้ครบตาม `ENV_VARS.md` (production ตั้ง `SELF_SIGNUP_ALLOWED_DOMAINS` / `NEXT_PUBLIC_SELF_SIGNUP_DOMAINS` เป็น `ku.th` อย่างเดียว) ดูหมายเหตุ deploy ของ idle timeout ด้านล่าง
 - **ทดสอบ backup-restore:** สำรองด้วย `bash scripts/db-backup.sh <label>` แล้วลองกู้ไฟล์ลงฐานข้อมูลสำเนาให้ผ่านอย่างน้อยหนึ่งรอบก่อนใช้จริง
 - **นโยบายความเป็นส่วนตัว:** เนื้อหาใน `lib/privacy-policy.ts` ต้องให้มหาวิทยาลัยตรวจก่อนเปิดใช้ (รวมถึงเรื่องการเปิด `gpaRiskLevel` ให้ Instructor)
+- **AI analysis ปิดบน production (`ANTHROPIC_API_KEY=disabled`):** เปิดได้ก็ต่อเมื่อ privacy policy ระบุการส่งข้อมูลผลการเรียนให้ผู้ให้บริการภายนอก (Anthropic) และมหาวิทยาลัยอนุญาตแล้ว ระหว่างนี้ endpoint ตอบ 503 ก่อนอ่านหรือส่งข้อมูลใดๆ (ควรซ่อนปุ่ม AI ฝั่ง frontend ด้วยเมื่อปิด)
+- **VPS (docs/DEPLOY.md):** ตั้งกุญแจ deploy แบบ forced command, ปิด PasswordAuthentication, ตั้ง cron backup และผ่าน restore test ก่อนใส่ข้อมูลนิสิตจริง
 
 ### ทำทีหลังได้
+- Deploy (จากรีวิวความปลอดภัย 2026-10-18):
+  - L7 pin base image (`node:22-slim`, `postgres:16.15`) ด้วย digest `@sha256:` (Dependabot อัปเดตให้)
+  - L8 Content-Security-Policy สำหรับหน้า HTML (ต้องใช้ nonce ของ Next.js)
+  - L9 token GHCR `read:packages` แบบ classic อ่านได้ทุก package ของบัญชีและเก็บใน `/root/.docker/config.json`: ตั้งวันหมดอายุสั้นและต่ออายุตามกำหนด หรือใช้ credential helper
+  - L10 compose/สคริปต์บน VPS: workflow ไม่คัดลอกให้แล้ว อัปเดตด้วย scp เอง อย่าแก้ไฟล์บน VPS ตรงๆ (แก้ใน repo แล้ว scp)
+  - L11 backup อยู่ดิสก์เดียวกับระบบ และ dump `pre-deploy` กับ image แท็กเก่าสะสม: ต่ออายุ VPS ก่อน 2026-11-11, ล้างทีละแท็ก (ไม่ใช้ prune), ทบทวนเรื่องสำเนานอกเครื่องเมื่อ PDPA อนุญาต
 - B3, B4, B7, B8, B11 (รายละเอียดของแต่ละข้อไม่ได้อยู่ในเอกสารใน repo: ดูจากรายการงานชุด B ที่ติดตามอยู่)
 - อัปเกรดแพ็กเกจ
 - นำเข้ารายวิชาของ 14 หลักสูตร

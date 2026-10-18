@@ -7,41 +7,59 @@
 #     pm25-pipeline) even if a port looks taken; find what holds the port first.
 #   - Run `npm run db:backup -- <label>` before any QA/test round that touches
 #     Docker. Reset test data with a seed or the API, not by deleting volumes.
+#   - Do not add a top-level `name:` or rename the `postgres` service or the
+#     `postgres_data` key: the dev volume is `eduanalyze-ai_postgres_data`
+#     (project name = folder name) and renaming any of these points compose at
+#     a new, empty volume. The VPS sets COMPOSE_PROJECT_NAME=eduanalyze in its
+#     .env instead, so its volume is `eduanalyze_postgres_data`.
 #
-# Daily dev only needs the postgres service:
-#   docker compose up -d postgres
-# backend/frontend keep running natively (npm run start:dev / npm run dev)
-# against it on host port 5433.
+# One file for both places:
+#   - Local dev: values come from apps/backend/.env (default APP_ENV_FILE).
+#     docker-compose.override.yml (loaded automatically) publishes postgres on
+#     host port 5433. Daily dev only needs `docker compose up -d postgres`;
+#     backend/frontend keep running natively against it.
+#   - VPS (~/eduanalyze): only this file is copied (no override, so the DB is
+#     never published). deploy/make-env.sh writes .env (APP_ENV_FILE=.env,
+#     DB_ENV_FILE=db.env, the GHCR image names, IMAGE_TAG, the ports and the
+#     app settings) and db.env (POSTGRES_USER/POSTGRES_PASSWORD only).
+#     Deploys run `docker compose pull && docker compose up -d --no-build`.
 #
-# The full stack (all 3 services, backend+frontend built as images) is for
-# testing an actual containerized deploy, not the everyday dev loop:
-#   npm run docker:rebuild            (both images)
+# Start order: postgres (healthy) -> migrate (exits 0) -> backend (healthy)
+# -> frontend.
+#
+# The full local stack (images built from source) is for testing an actual
+# containerized deploy, not the everyday dev loop:
+#   npm run docker:rebuild            (all images)
 #   npm run docker:rebuild:frontend   (frontend only)
 #   npm run docker:rebuild:backend    (backend only)
+# backend/frontend have NO volume mount and run a production build baked into
+# the image — editing source and then running plain `docker compose up -d`
+# silently reuses the stale image. Always pass --build (the npm scripts above
+# do this for you). `npm run docker:check-fresh` tells you if an image is stale.
 #
-# backend/frontend have NO volume mount and run a production build
-# (`next build`/`nest build` baked into the image at build time) — editing
-# source and then running plain `docker compose up -d` silently reuses the
-# stale image with NO error or warning. Always pass --build (the npm
-# scripts above do this for you) after changing backend/frontend source.
-# Run `npm run docker:check-fresh` if unsure whether a running image is
-# already stale.
-#
-# Postgres is published on host port 5433, never 5432 — a pre-existing
-# Homebrew Postgres install may already be using 5432, and this project's
-# real data was migrated out of it via pg_dump/pg_restore, not by
-# stopping/replacing that install. Keeping 5433 permanent (not just during
-# migration) means falling back to Homebrew Postgres is always just
-# pointing DATABASE_URL at 5432 again, no container changes needed.
+# Memory limits keep this stack well inside a VPS shared with other apps
+# (about 1.9 GB in total at most; postgres + backend + frontend idle far lower).
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
 services:
   postgres:
-    image: postgres:16
+    # Pinned minor (Debian), the version tested locally. Upgrade on purpose:
+    # bump it here (and in deploy/restore-test.sh), test, then deploy.
+    # Changing the major version or switching to alpine would not match the
+    # data already in the volume. Deploys never pull this image.
+    image: postgres:16.15
+    # Only the POSTGRES_* file: on the VPS that is db.env, so editing .env
+    # (every deploy rewrites IMAGE_TAG there) never recreates the database
+    # container. Locally both names default to apps/backend/.env.
     env_file:
-      - apps/backend/.env
+      - ${DB_ENV_FILE:-${APP_ENV_FILE:-apps/backend/.env}}
     environment:
       POSTGRES_DB: eduanalyze_ai
-    ports:
-      - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -49,20 +67,54 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
-  backend:
+  # One-shot: `prisma migrate deploy`, then exits. Re-runs on every `up` and
+  # is a no-op when nothing is pending.
+  migrate:
+    image: ${MIGRATOR_IMAGE:-eduanalyze-ai-migrator}:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      target: migrator
+    # Database credentials only (no JWT/SMTP/TOTP); NODE_ENV=production comes
+    # from the image, so seed.ts still needs ALLOW_PROD_SEED=yes.
     env_file:
-      - apps/backend/.env
-    ports:
-      - '3001:3001'
+      - ${DB_ENV_FILE:-${APP_ENV_FILE:-apps/backend/.env}}
     depends_on:
       postgres:
         condition: service_healthy
+    restart: 'no'
+    init: true
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  backend:
+    image: ${BACKEND_IMAGE:-eduanalyze-ai-backend}:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: runtime
+    env_file:
+      - ${DB_ENV_FILE:-${APP_ENV_FILE:-apps/backend/.env}}
+      - ${APP_ENV_FILE:-apps/backend/.env}
+    environment:
+      NODE_OPTIONS: --max-old-space-size=384
+    ports:
+      - '127.0.0.1:${BACKEND_PORT:-3001}:3001'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     # GET /api/health (public, DB ping). Mirrors the HEALTHCHECK in
-    # apps/backend/Dockerfile; start_period covers `prisma migrate deploy`.
+    # apps/backend/Dockerfile.
     healthcheck:
       test:
         [
@@ -74,9 +126,17 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 20s
+    restart: unless-stopped
+    init: true
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   frontend:
+    image: ${FRONTEND_IMAGE:-eduanalyze-ai-frontend}:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
@@ -86,17 +146,30 @@ services:
         # Docker-internal "backend" hostname. Must include the /api
         # prefix (NestJS's global prefix, see main.ts) — every backend
         # route lives under /api, so omitting it 404s on every call.
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+        # On the VPS the images come from GHCR, built by
+        # .github/workflows/deploy.yml with the production values.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${BACKEND_PORT:-3001}/api}
         # Inlined at build time like API_URL; set in the shell (or a root
         # .env) to override. Defaults match apps/frontend/.env.example.
         NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: ${NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES:-30}
         NEXT_PUBLIC_IDLE_WARNING_SECONDS: ${NEXT_PUBLIC_IDLE_WARNING_SECONDS:-60}
         NEXT_PUBLIC_SESSION_MAX_HOURS: ${NEXT_PUBLIC_SESSION_MAX_HOURS:-8}
         NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN: ${NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN:-false}
+        NEXT_PUBLIC_SELF_SIGNUP_DOMAINS: ${NEXT_PUBLIC_SELF_SIGNUP_DOMAINS:-ku.th}
+    environment:
+      NODE_OPTIONS: --max-old-space-size=384
     ports:
-      - '3000:3000'
+      - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 volumes:
   # Never run `docker compose down -v` without meaning to delete all

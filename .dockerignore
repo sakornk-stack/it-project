@@ -11,10 +11,37 @@ dist
 **/.next-build
 coverage
 **/coverage
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Secrets: no env file of any kind goes into an image (examples are harmless).
 .env
-.env.local
-.env.*.local
-apps/backend/.backups
+.env*
+**/.env*
+**/db.env
+!**/.env.example
+
+# Real data and private material: database dumps, curriculum sources, design
+# references, VPS backups.
+**/.backups
+backups
+**/private-data
+.design-ref
+DEPLOY_GUIDE.md
+
+# Tooling and audit output, not needed to build
 .git
+.github
+.claude
+.agents
+skills-lock.json
+issues.json
+sonar-issues.json
+sonar-project.properties
+*.pdf
+**/*.tmp.js
+**/*.tmp.js.map
+**/*.tmp.d.ts
 *.log
 .DS_Store
+**/.DS_Store

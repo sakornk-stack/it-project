@@ -1,0 +1,218 @@
+# Deploy: after CI succeeds on main (or by hand from the Actions tab), build
+# and push the three images to GHCR, then deploy them to the VPS over SSH.
+#
+# Images (private packages, pushed with GITHUB_TOKEN):
+#   ghcr.io/patcharadnaimingchua/eduanalyze-ai-{backend,migrator,frontend}
+#   tags: latest and sha-<7 hex>
+#
+# Repository secrets (Settings > Secrets and variables > Actions > Secrets):
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY (private key made only for this, limited on
+#   the VPS to the forced command deploy/ssh-deploy-gate.sh) and
+#   VPS_SSH_KNOWN_HOSTS (the VPS host key line, fingerprint checked by hand);
+#   optional VPS_PORT (default 22).
+#   Without all four, the deploy job is skipped and only images are pushed.
+# Repository variables (optional, …> Variables): NEXT_PUBLIC_* overrides for the
+#   frontend build (defaults below are the production values) and PUBLIC_URL
+#   (e.g. https://eduanalyze.itkukps.tech) for a health check from outside.
+#
+# Rollback: Actions > Deploy > Run workflow > rollback_tag = an older sha-xxxxxxx.
+# That skips the build and redeploys images already in GHCR.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback_tag:
+        description: 'Deploy an existing tag instead of building (e.g. sha-1a2b3c4). Leave empty to build main.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: ghcr.io/patcharadnaimingchua/eduanalyze-ai
+
+jobs:
+  build:
+    name: Build and push images
+    # workflow_run: only a CI run for a push to main of this repository (a pull
+    # request from a fork whose branch is also called "main" must not deploy).
+    if: >-
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.head_repository.full_name == github.repository)
+      || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.rollback_tag == '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - id: tag
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: echo "tag=sha-${SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Backend image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: runtime
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-backend:latest
+            ${{ env.IMAGE_PREFIX }}-backend:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Migrator image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: migrator
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-migrator:latest
+            ${{ env.IMAGE_PREFIX }}-migrator:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=migrator
+          cache-to: type=gha,mode=max,scope=migrator
+
+      # NEXT_PUBLIC_* are baked into the bundle here. Public values only.
+      - name: Frontend image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-frontend:latest
+            ${{ env.IMAGE_PREFIX }}-frontend:${{ steps.tag.outputs.tag }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://eduanalyze.itkukps.tech/api' }}
+            NEXT_PUBLIC_SELF_SIGNUP_DOMAINS=${{ vars.NEXT_PUBLIC_SELF_SIGNUP_DOMAINS || 'ku.th' }}
+            NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=${{ vars.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN || 'false' }}
+            NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES=${{ vars.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES || '30' }}
+            NEXT_PUBLIC_IDLE_WARNING_SECONDS=${{ vars.NEXT_PUBLIC_IDLE_WARNING_SECONDS || '60' }}
+            NEXT_PUBLIC_SESSION_MAX_HOURS=${{ vars.NEXT_PUBLIC_SESSION_MAX_HOURS || '8' }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  check-vps:
+    name: Is the VPS configured?
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$VPS_USER" ] && [ -n "$VPS_SSH_KEY" ] && [ -n "$VPS_SSH_KNOWN_HOSTS" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VPS_HOST / VPS_USER / VPS_SSH_KEY / VPS_SSH_KNOWN_HOSTS are not all set: skipping the deploy job."
+          fi
+
+  deploy:
+    name: Deploy to VPS
+    needs: [build, check-vps]
+    if: >-
+      always()
+      && needs.check-vps.outputs.configured == 'true'
+      && (needs.build.result == 'success'
+          || (needs.build.result == 'skipped' && github.event_name == 'workflow_dispatch'
+              && github.ref == 'refs/heads/main' && inputs.rollback_tag != ''))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # No checkout and no file copy: the deploy key can only run the forced
+    # command deploy/ssh-deploy-gate.sh on the VPS ("deploy sha-..."), and the
+    # compose file and scripts there are updated by hand (docs/DEPLOY.md).
+    # A rollback therefore runs exactly the same way, with an older tag.
+    steps:
+      - name: Choose tag
+        id: tag
+        env:
+          BUILT_TAG: ${{ needs.build.outputs.tag }}
+          ROLLBACK_TAG: ${{ inputs.rollback_tag }}
+        run: |
+          tag="${ROLLBACK_TAG:-$BUILT_TAG}"
+          if [[ ! "$tag" =~ ^sha-[0-9a-f]{7,40}$ ]]; then
+            echo "::error::Invalid tag (expected sha- followed by 7-40 lowercase hex characters)"; exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Set up SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Verified host key only (docs/DEPLOY.md); never trust-on-first-use.
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName $VPS_HOST
+            Port ${VPS_PORT:-22}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 15
+          EOF
+
+      - name: Deploy ${{ steps.tag.outputs.tag }}
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        # The VPS sees this as SSH_ORIGINAL_COMMAND; the gate re-checks it.
+        run: ssh -l "$VPS_USER" vps "deploy $TAG"
+
+      - name: Public health check
+        if: vars.PUBLIC_URL != ''
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+        run: |
+          for _ in $(seq 1 12); do
+            if curl -fsS "$PUBLIC_URL/api/health"; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::$PUBLIC_URL/api/health did not answer 200"; exit 1
+
+      - name: Rollback hint
+        if: failure()
+        run: |
+          echo "::error::Deploy failed. Roll back: Actions > Deploy > Run workflow > rollback_tag = the sha tag shown above"
+          echo "(history on the VPS: ~/eduanalyze/.image-tag-history; detailed logs: ~/eduanalyze/logs/)"

@@ -1,0 +1,18 @@
+# Keeps the SHA-pinned actions (with their "# vX.Y.Z" comments) and the
+# Dockerfile base images up to date through weekly pull requests. Review each
+# PR like any other change: it runs CI before anything can deploy.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/backend
+      - /apps/frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
