@@ -22,6 +22,7 @@ import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
 import { EvidenceCoverageBadge } from './evidence-coverage-badge';
 import { LowSampleTag } from './overview-parts';
 import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
@@ -30,13 +31,17 @@ import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
 function SubBlock({
   title,
   description,
+  aside,
   children,
-}: Readonly<{ title: string; description?: string; children: ReactNode }>) {
+}: Readonly<{ title: string; description?: string; aside?: ReactNode; children: ReactNode }>) {
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-sm font-medium text-primary">{title}</h3>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-medium text-primary">{title}</h3>
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+        {aside}
       </div>
       {children}
     </div>
@@ -133,6 +138,7 @@ export function CloAchievementSection({
         icon={Target}
         title="ภาพรวมเป้าการเรียนรู้"
         description="สัดส่วนนิสิตที่ได้ B ขึ้นไปของวิชานี้"
+        aside={<GradeEstimateBadge />}
       >
         {!hasCloPercent(achievementPercent) ? (
           <div className="space-y-1">
@@ -228,6 +234,7 @@ export function CloAchievementSection({
             <SubBlock
               title="เป้าหมายของหลักสูตรที่เกี่ยวข้อง"
               description="เป้าหมายของหลักสูตร (PLO) คือผลลัพธ์ที่หลักสูตรคาดหวังจากนิสิต"
+              aside={<GradeEstimateBadge />}
             >
               {plos.map((plo) => (
                 <div key={plo.ploId} className="space-y-1">

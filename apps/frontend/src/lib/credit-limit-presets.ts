@@ -15,3 +15,7 @@ export const CREDIT_LIMIT_PRESETS: Record<
   EXCEED_MAX: { label: '23-25 หน่วยกิต', effectiveMax: 25 },
   BELOW_MIN: { label: 'ต่ำกว่า 9 หน่วยกิต', effectiveMin: 0 },
 };
+
+// Shown inside the form: the setting is the student's own and nobody reviews it.
+export const CREDIT_LIMIT_SELF_SET_NOTE =
+  'ตั้งค่านี้ใช้กับแผนของคุณเท่านั้น ไม่ได้ส่งให้ผู้อนุมัติ และไม่ใช่การลงทะเบียน';

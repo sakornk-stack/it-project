@@ -24,6 +24,7 @@ import { NO_DATA_LABEL } from '@/components/staff/student-reading';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Info, Layers } from 'lucide-react';
@@ -96,8 +97,9 @@ export function LowestSection({
   const none = plos.length === 0 && clos.length === 0;
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle>PLO / CLO ที่ต่ำสุด</CardTitle>
+        {!none && <GradeEstimateBadge />}
       </CardHeader>
       <CardContent className="space-y-5">
         {none ? (

@@ -7,6 +7,12 @@ import type { StudentDashboardResponse } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile, fetchStudentDashboard } from '@/lib/api/dashboard';
 import { fetchCurriculum } from '@/lib/api/plo-achievement';
 import { useAuth } from '@/lib/auth-context';
+import {
+  CREDITS_EARNED_NOTE,
+  CREDIT_PROGRESS_LABEL,
+  GRADUATION_READINESS_LABEL,
+  GRADUATION_READINESS_NOTE,
+} from '@/lib/credit-labels';
 import { buildDashboardSummary } from '@/lib/dashboard-summary';
 import { computeGpaChange } from '@/lib/gpa-change';
 import { COUNT_UP_MS } from '@/lib/animated-number';
@@ -191,6 +197,7 @@ function DashboardCards({
                 {creditsOver > 0 && (
                   <p className="text-xs text-muted-foreground">เกินเกณฑ์ {creditsOver} หน่วยกิต</p>
                 )}
+                <p className="text-xs text-muted-foreground">{CREDITS_EARNED_NOTE}</p>
                 {dashboard.onTrackStatus && (
                   <p
                     className={
@@ -212,14 +219,18 @@ function DashboardCards({
           <TiltCard>
             <StatCard
               icon={Award}
-              label="ความพร้อมสำหรับการสำเร็จการศึกษา"
+              label={GRADUATION_READINESS_LABEL}
               href="/learning-path"
               visual={
                 <div className="flex w-full items-center gap-4">
-                  <ProgressRing value={animatedProgress} label="ความพร้อมสำหรับการสำเร็จการศึกษา" />
+                  <div className="flex shrink-0 flex-col items-center gap-1">
+                    <ProgressRing value={animatedProgress} label={CREDIT_PROGRESS_LABEL} />
+                    <span className="text-xs text-muted-foreground">{CREDIT_PROGRESS_LABEL}</span>
+                  </div>
                   <ReadinessChecklist readiness={dashboard.graduationReadiness} />
                 </div>
               }
+              footer={<p className="text-xs text-muted-foreground">{GRADUATION_READINESS_NOTE}</p>}
             />
           </TiltCard>
         </Reveal>

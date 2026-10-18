@@ -8,6 +8,11 @@ import type { CourseSummary, CreditCheckReport } from '@eduanalyze-ai/shared-typ
 import { fetchOwnStudentProfile } from '@/lib/api/dashboard';
 import { fetchCreditCheck } from '@/lib/api/credit-checker';
 import { useAuth } from '@/lib/auth-context';
+import {
+  CREDITS_EARNED_NOTE,
+  CREDIT_PROGRESS_LABEL,
+  CREDIT_PROGRESS_NOTE,
+} from '@/lib/credit-labels';
 import { useCelebrateOnce } from '@/lib/use-celebrate-once';
 import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
@@ -141,10 +146,9 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
         <Reveal index={1}>
           <StatCard
             icon={GraduationCap}
-            label="ความพร้อมสำเร็จการศึกษา"
-            visual={
-              <ProgressRing value={animatedReadiness} label="ความพร้อมสำเร็จการศึกษา (ตามหน่วยกิต)" />
-            }
+            label={CREDIT_PROGRESS_LABEL}
+            visual={<ProgressRing value={animatedReadiness} label={CREDIT_PROGRESS_LABEL} />}
+            footer={<p className="text-xs text-muted-foreground">{CREDIT_PROGRESS_NOTE}</p>}
           />
         </Reveal>
         <Reveal index={2}>
@@ -154,11 +158,10 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
             value={report.creditsPassed}
             suffix={`/ ${report.totalCreditsRequired}`}
             footer={
-              creditsOverRequired > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  เกินเกณฑ์ {creditsOverRequired} หน่วยกิต
-                </p>
-              ) : undefined
+              <div className="space-y-1 text-xs text-muted-foreground">
+                {creditsOverRequired > 0 && <p>เกินเกณฑ์ {creditsOverRequired} หน่วยกิต</p>}
+                <p>{CREDITS_EARNED_NOTE}</p>
+              </div>
             }
           />
         </Reveal>

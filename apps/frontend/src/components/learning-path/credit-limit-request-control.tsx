@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Settings2, X } from 'lucide-react';
 import type { CreditLimitRequest } from '@eduanalyze-ai/shared-types';
 import { deleteCreditLimitRequest, upsertCreditLimitRequest } from '@/lib/api/credit-limit-request';
-import { CREDIT_LIMIT_PRESETS } from '@/lib/credit-limit-presets';
+import { CREDIT_LIMIT_PRESETS, CREDIT_LIMIT_SELF_SET_NOTE } from '@/lib/credit-limit-presets';
 import {
   creditLimitRequestSchema,
   type CreditLimitRequestFormValues,
@@ -19,7 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Self-declared, no approval workflow — POST takes effect immediately.
+// Self-declared, no approval workflow — POST takes effect immediately and nobody
+// is notified, so the copy says "set"/"save", never "request"/"send".
 // Sits in the "จัดแผนเทอมหน้า" section's actions slot, next to the reset
 // button. Form is inline (toggled by local state), not a dialog — this
 // codebase has no Dialog/Sheet primitive, so every short form here follows
@@ -42,9 +43,9 @@ export function CreditLimitRequestControl({
     try {
       await deleteCreditLimitRequest();
       onChanged();
-      toast.success('ยกเลิกคำขอปรับหน่วยกิตแล้ว');
+      toast.success('ยกเลิกการตั้งช่วงหน่วยกิตแล้ว');
     } catch {
-      setCancelError('ยกเลิกคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      setCancelError('ยกเลิกการตั้งช่วงหน่วยกิตไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setCancelling(false);
     }
@@ -54,7 +55,7 @@ export function CreditLimitRequestControl({
     return (
       <div className="flex flex-col items-end gap-1">
         <div className="flex items-center gap-2">
-          <Badge tone="success">ขอปรับ: {CREDIT_LIMIT_PRESETS[request.type].label}</Badge>
+          <Badge tone="success">ช่วงที่ตั้งไว้: {CREDIT_LIMIT_PRESETS[request.type].label}</Badge>
           <Button
             type="button"
             variant="ghost"
@@ -64,7 +65,7 @@ export function CreditLimitRequestControl({
             onClick={handleCancel}
           >
             <X size={14} aria-hidden="true" />
-            {cancelling ? 'กำลังยกเลิก...' : 'ยกเลิกคำขอ'}
+            {cancelling ? 'กำลังยกเลิก...' : 'ยกเลิกการตั้งค่า'}
           </Button>
         </div>
         {cancelError && <p className="text-xs text-destructive">{cancelError}</p>}
@@ -93,7 +94,7 @@ export function CreditLimitRequestControl({
       onClick={() => setShowForm(true)}
     >
       <Settings2 size={14} aria-hidden="true" />
-      ขอปรับหน่วยกิต
+      ปรับช่วงหน่วยกิตในแผน
     </Button>
   );
 }
@@ -117,9 +118,9 @@ function CreditLimitRequestForm({
     try {
       await upsertCreditLimitRequest(values);
       onSubmitted();
-      toast.success('ส่งคำขอปรับหน่วยกิตแล้ว');
+      toast.success('บันทึกช่วงหน่วยกิตในแผนของคุณแล้ว');
     } catch {
-      setServerError('ส่งคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      setServerError('บันทึกช่วงหน่วยกิตไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     }
   }
 
@@ -134,6 +135,7 @@ function CreditLimitRequestForm({
             <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
+        <p className="text-xs text-muted-foreground">{CREDIT_LIMIT_SELF_SET_NOTE}</p>
         <FormField
           control={form.control}
           name="type"
@@ -173,7 +175,7 @@ function CreditLimitRequestForm({
         />
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'กำลังส่ง...' : 'ยืนยัน'}
+            {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'บันทึก'}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             ยกเลิก

@@ -298,7 +298,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                     />
                   </div>
                 }
-                note={`${gpa.creditsCounted} หน่วยกิตสะสม`}
+                note={`${gpa.creditsCounted} หน่วยกิตที่นับ GPA`}
               />
             ) : (
               <Card>

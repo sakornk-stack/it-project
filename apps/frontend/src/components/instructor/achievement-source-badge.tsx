@@ -1,5 +1,6 @@
 import type { EvidenceSource } from '@eduanalyze-ai/shared-types';
 import { Badge } from '@/components/ui/badge';
+import { GRADE_ESTIMATE_LABEL } from '@/lib/grade-estimate';
 import type { SemanticTone } from '@/lib/tone';
 
 // States where a number came from, so a grade estimate can never be mistaken
@@ -12,7 +13,7 @@ import type { SemanticTone } from '@/lib/tone';
 // next to each other. Same shared tone vocabulary, no new tone needed.
 const SOURCE_PRESENTATION: Record<EvidenceSource, { tone: SemanticTone; label: string }> = {
   EVIDENCE_BASED: { tone: 'success', label: 'จากคะแนนที่กรอกจริง' },
-  LEGACY_GRADE_ESTIMATE: { tone: 'warning', label: 'ประมาณจากเกรด' },
+  LEGACY_GRADE_ESTIMATE: { tone: 'warning', label: GRADE_ESTIMATE_LABEL },
   NO_EVIDENCE: { tone: 'neutral', label: 'ยังไม่มีคะแนนที่กรอก' },
 };
 

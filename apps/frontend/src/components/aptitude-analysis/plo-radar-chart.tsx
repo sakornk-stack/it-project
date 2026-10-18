@@ -3,6 +3,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
 import { formatFiveScaleAgainstThreshold } from '@/lib/five-scale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DEFAULT_SIZE = 320;
@@ -100,8 +101,9 @@ export function PloRadarChart({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle>{title}</CardTitle>
+        <GradeEstimateBadge />
       </CardHeader>
       <CardContent className="flex justify-center">
         <svg

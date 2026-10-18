@@ -3,6 +3,7 @@ import { SCORE_BANDS, type ScoreBandKey } from '@/lib/plo-score-bands';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
 import { CollapsibleSection } from '@/components/ui/collapsible-section';
 
 const RADIUS = 52;
@@ -46,8 +47,9 @@ export function OverallAchievementCard({
   return (
     <div className="space-y-3">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle>ภาพรวมความสำเร็จของ PLO</CardTitle>
+          <GradeEstimateBadge />
         </CardHeader>
         <CardContent className="grid grid-cols-1 items-center gap-8 sm:grid-cols-[auto_1fr] sm:gap-10">
           <div className="flex flex-col items-center gap-2">

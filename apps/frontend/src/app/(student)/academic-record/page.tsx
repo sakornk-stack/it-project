@@ -292,7 +292,7 @@ export default function AcademicRecordPage() {
                 {showCreditsNote && (
                   <p id={creditsNoteId} className="mt-1">
                     รวมวิชาที่สอบตก (F) ด้วย เพราะมีผลต่อเกรดเฉลี่ย — ไม่เหมือน
-                    &quot;หน่วยกิตสะสม&quot; ที่นับเฉพาะวิชาที่ผ่าน ไม่นับวิชาที่ได้ W, I, S หรือ U
+                    &quot;หน่วยกิตสะสม&quot; ที่นับเฉพาะวิชาที่ผ่าน (รวม S) ไม่นับวิชาที่ได้ F, U, W หรือ I
                   </p>
                 )}
               </div>
