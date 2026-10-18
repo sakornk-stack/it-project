@@ -26,6 +26,35 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 200;
 
+// Domains that are obviously for testing; a real SUPER_ADMIN must never be
+// created on one (a mistyped demo address once locked the first account out).
+const TEST_DOMAINS = ['test.local', 'example.com', 'localhost'];
+const TEST_DOMAIN_SUFFIXES = ['.local', '.test', '.invalid', '.localhost'];
+
+export function isTestEmailDomain(email: string): boolean {
+  const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+  return (
+    TEST_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`)) ||
+    TEST_DOMAIN_SUFFIXES.some((suffix) => domain.endsWith(suffix))
+  );
+}
+
+const TEST_DOMAIN_MESSAGE =
+  'อีเมลนี้ใช้โดเมนสำหรับทดสอบ (เช่น test.local, example.com, localhost, .local, .test, .invalid) ไม่สร้างบัญชีแอดมินจริง กรุณาใช้อีเมลจริง';
+
+// Throws FirstAdminRefusedError when the input cannot become the first admin.
+function assertValidInput(email: string, fullName: string): void {
+  if (email.includes('@') && isTestEmailDomain(email)) {
+    throw new FirstAdminRefusedError(TEST_DOMAIN_MESSAGE);
+  }
+  if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
+    throw new FirstAdminRefusedError('Email address is not valid');
+  }
+  if (!fullName || fullName.length > MAX_NAME_LENGTH) {
+    throw new FirstAdminRefusedError(`Full name must be 1-${MAX_NAME_LENGTH} characters`);
+  }
+}
+
 export class FirstAdminRefusedError extends Error {}
 
 export interface FirstAdminInput {
@@ -47,12 +76,7 @@ export async function createFirstAdmin(
 ): Promise<FirstAdminResult> {
   const email = normalizeEmail(input.email);
   const fullName = input.fullName.trim();
-  if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
-    throw new FirstAdminRefusedError('Email address is not valid');
-  }
-  if (!fullName || fullName.length > MAX_NAME_LENGTH) {
-    throw new FirstAdminRefusedError(`Full name must be 1-${MAX_NAME_LENGTH} characters`);
-  }
+  assertValidInput(email, fullName);
 
   const passwordHash = await hash(randomBytes(32).toString('base64url'));
 
@@ -115,6 +139,17 @@ export async function run(
     return 2;
   }
   if (!argv.includes('--confirm')) {
+    // The dry run validates too, so deploy/create-first-admin.sh can refuse a
+    // bad address before it asks for the final y/N.
+    try {
+      assertValidInput(normalizeEmail(email), fullName.trim());
+    } catch (error) {
+      if (error instanceof FirstAdminRefusedError) {
+        log(`Refused: ${error.message}`);
+        return 1;
+      }
+      throw error;
+    }
     log(`Dry run: would create SUPER_ADMIN ${maskEmail(normalizeEmail(email))}. Add --confirm.`);
     return 0;
   }

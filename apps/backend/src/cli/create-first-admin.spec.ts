@@ -22,7 +22,7 @@ function setup({
   return { tx, prisma: prisma as never };
 }
 
-const input = { email: '  Admin.Person@Example.COM ', fullName: ' Admin Person ' };
+const input = { email: '  Admin.Person@Uni.AC.TH ', fullName: ' Admin Person ' };
 
 describe('createFirstAdmin', () => {
   it('creates only the user, its SUPER_ADMIN role and a PASSWORD method in one transaction', async () => {
@@ -31,12 +31,12 @@ describe('createFirstAdmin', () => {
 
     const result = await createFirstAdmin(prisma, input, hash);
 
-    expect(result).toEqual({ id: 'new-admin-id', maskedEmail: 'a***@example.com' });
+    expect(result).toEqual({ id: 'new-admin-id', maskedEmail: 'a***@uni.ac.th' });
     expect((prisma as { $transaction: jest.Mock }).$transaction).toHaveBeenCalledTimes(1);
     expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
     expect(tx.user.create).toHaveBeenCalledWith({
       data: {
-        email: 'admin.person@example.com',
+        email: 'admin.person@uni.ac.th',
         fullName: 'Admin Person',
         passwordHash: FAKE_HASH,
         mustChangePassword: true,
@@ -79,7 +79,7 @@ describe('createFirstAdmin', () => {
       FirstAdminRefusedError,
     );
     expect(tx.user.findFirst).toHaveBeenCalledWith({
-      where: { email: { equals: 'admin.person@example.com', mode: 'insensitive' } },
+      where: { email: { equals: 'admin.person@uni.ac.th', mode: 'insensitive' } },
       select: { id: true },
     });
     expect(tx.user.create).not.toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe('createFirstAdmin', () => {
 
   it.each([
     ['not-an-email', 'Admin Person'],
-    ['admin@example.com', '   '],
+    ['admin@uni.ac.th', '   '],
   ])('refuses invalid input %p / %p before touching the database', async (email, fullName) => {
     const { prisma } = setup();
 
@@ -99,7 +99,7 @@ describe('createFirstAdmin', () => {
 });
 
 describe('run', () => {
-  const argv = ['--email=admin.person@example.com', '--name=Admin Person'];
+  const argv = ['--email=admin.person@uni.ac.th', '--name=Admin Person'];
 
   it('is a dry run without --confirm', async () => {
     const { tx, prisma } = setup();
@@ -116,8 +116,8 @@ describe('run', () => {
 
     await expect(run([...argv, '--confirm'], prisma, (l) => lines.push(l))).resolves.toBe(0);
     const output = lines.join('\n');
-    expect(output).toContain('a***@example.com');
-    expect(output).not.toContain('admin.person@example.com');
+    expect(output).toContain('a***@uni.ac.th');
+    expect(output).not.toContain('admin.person@uni.ac.th');
     expect(output).not.toMatch(/\$2[aby]\$/);
   });
 
@@ -151,26 +151,69 @@ describe('run', () => {
   it('reads email and name from FIRST_ADMIN_EMAIL / FIRST_ADMIN_NAME (nothing in argv)', async () => {
     const { tx, prisma } = setup();
     const lines: string[] = [];
-    const env = { FIRST_ADMIN_EMAIL: 'admin.person@example.com', FIRST_ADMIN_NAME: 'Admin Person' };
+    const env = { FIRST_ADMIN_EMAIL: 'admin.person@uni.ac.th', FIRST_ADMIN_NAME: 'Admin Person' };
 
     await expect(run(['--confirm'], prisma, (l) => lines.push(l), env)).resolves.toBe(0);
     expect(tx.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          email: 'admin.person@example.com',
+          email: 'admin.person@uni.ac.th',
           fullName: 'Admin Person',
         }),
       }),
     );
-    expect(lines.join('\n')).not.toContain('admin.person@example.com');
+    expect(lines.join('\n')).not.toContain('admin.person@uni.ac.th');
   });
 
   it('refuses an email longer than 254 characters', async () => {
     const { prisma } = setup();
-    const email = `${'a'.repeat(250)}@example.com`;
+    const email = `${'a'.repeat(250)}@uni.ac.th`;
 
     await expect(
       createFirstAdmin(prisma, { email, fullName: 'A' }, jest.fn()),
     ).rejects.toBeInstanceOf(FirstAdminRefusedError);
+  });
+
+  describe('test domains', () => {
+    it.each([
+      'demo-superadmin@test.local',
+      'a@example.com',
+      'a@sub.example.com',
+      'a@localhost',
+      'a@printer.local',
+      'a@site.test',
+      'a@site.invalid',
+      'A@TEST.LOCAL',
+    ])('refuses %s in Thai without touching the database', async (email) => {
+      const { tx, prisma } = setup();
+      const hash = jest.fn();
+
+      await expect(createFirstAdmin(prisma, { email, fullName: 'A' }, hash)).rejects.toThrow(
+        'โดเมนสำหรับทดสอบ',
+      );
+      expect(hash).not.toHaveBeenCalled();
+      expect(tx.user.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts real-looking domains', async () => {
+      const { prisma } = setup();
+      await expect(
+        createFirstAdmin(prisma, { email: 'a@gmail.com', fullName: 'A' }, jest.fn().mockResolvedValue(FAKE_HASH)),
+      ).resolves.toMatchObject({ id: 'new-admin-id' });
+    });
+
+    it('refuses in the dry run too, so the shell script stops before asking', async () => {
+      const { tx, prisma } = setup();
+      const lines: string[] = [];
+      const code = await run(
+        ['--email=demo-superadmin@test.local', '--name=Demo'],
+        prisma,
+        (l) => lines.push(l),
+        {},
+      );
+      expect(code).toBe(1);
+      expect(lines.join('\n')).toContain('Refused: อีเมลนี้ใช้โดเมนสำหรับทดสอบ');
+      expect(tx.user.create).not.toHaveBeenCalled();
+    });
   });
 });
