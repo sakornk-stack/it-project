@@ -110,7 +110,7 @@
 - ห้ามเปลี่ยนสิทธิ์/พฤติกรรมเดิมระหว่างงานดีไซน์ (เพิ่ม/แก้/ปิด/เปิดใช้งาน/ลบถาวร + dialog)
 - ห้ามค่าจาก URL (`?role=`, `?create=`) เชื่อตรง ๆ ต้องตรวจ (`parseRoleParam` ใน `lib/user-list-filter.ts`)
 - `prettier`: repo ไม่มี config ใช้ `--single-quote --print-width 100 --trailing-comma all`; ห้าม `--write` ทั้งไฟล์ที่เดิมไม่ผ่าน
-- Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `npm run db:backup -- <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
+- Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `bash scripts/db-backup.sh <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
 - ห้าม commit/push หรือถ่ายภาพหน้าจอ ถ้าผู้ใช้ไม่สั่ง
 
 ## 12) Instructor pages

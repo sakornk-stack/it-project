@@ -1,5 +1,26 @@
 # TODO
 
+## สรุปงานค้าง (จัดกลุ่ม 2026-10-18)
+
+### ก่อนเปิดใช้จริง
+- **Deploy:** รัน `prisma migrate deploy` ก่อนเปิดโค้ดใหม่ ตั้ง env ให้ครบตาม `ENV_VARS.md` (production ตั้ง `SELF_SIGNUP_ALLOWED_DOMAINS` / `NEXT_PUBLIC_SELF_SIGNUP_DOMAINS` เป็น `ku.th` อย่างเดียว) ดูหมายเหตุ deploy ของ idle timeout ด้านล่าง
+- **ทดสอบ backup-restore:** สำรองด้วย `bash scripts/db-backup.sh <label>` แล้วลองกู้ไฟล์ลงฐานข้อมูลสำเนาให้ผ่านอย่างน้อยหนึ่งรอบก่อนใช้จริง
+- **นโยบายความเป็นส่วนตัว:** เนื้อหาใน `lib/privacy-policy.ts` ต้องให้มหาวิทยาลัยตรวจก่อนเปิดใช้ (รวมถึงเรื่องการเปิด `gpaRiskLevel` ให้ Instructor)
+
+### ทำทีหลังได้
+- B3, B4, B7, B8, B11 (รายละเอียดของแต่ละข้อไม่ได้อยู่ในเอกสารใน repo: ดูจากรายการงานชุด B ที่ติดตามอยู่)
+- อัปเกรดแพ็กเกจ
+- นำเข้ารายวิชาของ 14 หลักสูตร
+- ผู้ใช้เดิมที่สมัครก่อนมี PDPA consent ยังไม่มีแถว consent
+
+### รอคณะ
+- CLO ที่ขาดของรายวิชา (รอข้อมูลจากคณะ)
+
+---
+
+## รายละเอียดและประวัติ
+
+
 ## Observations & Data Issues
 
 ### ✓ H9-H11 Testing (2026-09-29) — CLOSED
@@ -73,10 +94,6 @@ Three commits delivered (2026-09-30):
 ---
 
 ## Known Technical Debt
-
-### Backend ESLint Config (pre-existing)
-`apps/backend/` has no ESLint setup. Tests (Jest 96/96), TypeScript (`tsc`), and Prisma migrations are the current gates. This is a pre-existing issue outside the M20 scope but noted here for future build-quality work.
-
 
 ### Staff/Admin — สถานะนักศึกษาใช้ GPA สะสม (ตัดสินใจ 2026-10-08, **ยังไม่ push**)
 เกณฑ์ (ค่าคงที่เดียว `GPA_CRITICAL_BELOW` / `GPA_WATCH_BELOW` ใน `grade-point.constant.ts`): GPA สะสมต่ำกว่า 1.50 = เร่งด่วน · 1.50–1.74 = เฝ้าระวัง · 1.75 ขึ้นไป = ปกติ · ไม่มี GPA (ไม่นับ W/I/S/U) = ยังไม่มีข้อมูล เดิมใช้เกรดที่แย่ที่สุดรายวิชา
@@ -269,7 +286,7 @@ Three commits delivered (2026-09-30):
 - **ชุด 4:** ยืนยันอีเมลแบบบังคับ/เตือน/ไม่ทำ; จะเปิด Google หรือไม่และจำกัดโดเมนไหม; ข้อความนโยบายความเป็นส่วนตัวจริงจากมหาวิทยาลัย; ยังต้องการ `POST /auth/accept-invitation` หรือยกเลิก
 
 ### ข้อกำหนดทั่วไปทุกชุด
-- รัน `npm run db:backup -- <label>` **ก่อน** ชุดที่แตะฐานข้อมูล (ชุด 3, 4.2, 4.4) และก่อนรอบทดสอบ/`docker:rebuild` ทุกครั้งตามกฎ `apps/CLAUDE.md`; migration สร้างด้วย `--create-only` แล้วตรวจก่อนเสมอ ห้าม `docker compose down -v`/`volume rm`/`system prune`
+- รัน `bash scripts/db-backup.sh <label>` **ก่อน** ชุดที่แตะฐานข้อมูล (ชุด 3, 4.2, 4.4) และก่อนรอบทดสอบ/`docker:rebuild` ทุกครั้งตามกฎ `apps/CLAUDE.md`; migration สร้างด้วย `--create-only` แล้วตรวจก่อนเสมอ ห้าม `docker compose down -v`/`volume rm`/`system prune`
 - เทสต์ backend (`npx jest` ใน `apps/backend`, ปัจจุบัน 159 ข้อ) และ `npx tsc --noEmit` ต้องผ่านก่อนคอมมิตทุกครั้ง; ฝั่ง frontend `tsc`/`lint`/`jest`/`next build` ผ่านด้วยเมื่อแก้ UI
 - เปลี่ยน endpoint/ชนิดข้อมูลที่ frontend ใช้ ให้แก้ `packages/shared-types/src/index.ts` ในคอมมิตเดียวกัน และอัปเดต TODO.md ลบรายการที่ทำเสร็จ
 - ห้าม push และห้ามรัน `cleanup-demo` จนกว่าผู้ใช้สั่ง; แยกคอมมิตเป็นชุดย่อยที่ย้อนกลับได้
@@ -279,11 +296,6 @@ Three commits delivered (2026-09-30):
 - CLO/PLO/CLO-PLO mapping เขียนผ่าน API/seed เท่านั้น (ไม่มี UI) และสิทธิ์เขียนย้ายเป็น ADMIN แล้ว
 - ตรวจข้อมูลจริงแบบอ่านอย่างเดียว: บัญชี SUPER_ADMIN ที่ถือบทบาทอื่นด้วย (ADMIN/STAFF/INSTRUCTOR) ยังเข้าข้อมูลวิชาการผ่านบทบาทนั้น
 - `GET /curricula/inactive` ของ ADMIN ไม่กรองตาม scope (ไม่มี `@ScopeTarget` สำหรับรายการ)
-
-### ลบบัญชีผู้ใช้ถาวร (2026-10-13, **ยังไม่ commit**)
-- `DELETE /users/:id/permanent` (SUPER_ADMIN) ทำแล้ว: ลบได้เฉพาะบัญชีที่ระงับและไม่มีข้อมูลอ้างอิง; บัญชีที่เคยบันทึก/แก้ผลการเรียน (`enteredByUserId`) หรือเป็นผู้เชิญนิสิต ลบถาวรไม่ได้ (ตัดสินใจบล็อก ไม่เปลี่ยน schema) — ถ้าภายหลังต้องการให้ลบได้ ต้องตัดสินใจเรื่อง `SetNull` + migration และเก็บ `enteredByRole` ไว้
-- ยังไม่ทำ: แก้ไขชื่อ/อีเมลของบัญชี (ยังไม่มี endpoint หรือหน้าแก้ไข)
-- ยังไม่ได้ลองกับ DB จริง/สำเนา: ทดสอบด้วย jest (mock) เท่านั้น ควรลองสร้างบัญชี `@test.local` ใหม่ → ระงับ → ลบ บนสำเนา DB ก่อนใช้จริง
 
 ### Idle session timeout (เริ่ม 2026-10-14, **ยังไม่ commit/push**) — backend + frontend เขียนเสร็จ, migration รันกับ dev DB แล้ว, รอ QA มือ
 **Deploy notes (ต้องทำก่อน/ตอน deploy ฝั่ง backend)**
@@ -302,7 +314,7 @@ Three commits delivered (2026-09-30):
 - **ยังค้าง:** (1) QA มือบนเบราว์เซอร์ด้วยบัญชี `@test.local` (ลด idle เป็น 1 นาที/warning 20 วินาทีชั่วคราวผ่าน env) — dialog/focus trap/Esc/aria-live/reduced-motion/Light-Dark/ข้ามแท็บ ยังไม่มี DOM test (ไม่มี jsdom) (2) สื่อที่กำลังเล่น (วิดีโอ) ไม่นับเป็นกิจกรรม — ถ้าระบบมีวิดีโอภายหลังต้องเพิ่ม (3) หน้า `/` (hub) เป็น public จึงไม่มี timeout ฝั่ง client ขณะอยู่ที่หน้านั้น (backend ยังบังคับ 15m/8h ตามปกติ)
 
 ### นิสิตจำลอง DEMO-IT66 (100 คน ICT 2564 ปีเข้า 2566) — เขียนสคริปต์+ทดสอบบนสำเนาแล้ว, **ยังไม่ได้รันกับ `eduanalyze_ai`**, ยังไม่ commit (2026-10-14)
-รอคำสั่ง "รันจริง" แล้วทำ: `npm run db:backup -- <label>` → `cd apps/backend && npx ts-node prisma/seed-demo-it66.ts` (dry-run) → `… --confirm`
+รอคำสั่ง "รันจริง" แล้วทำ: `bash scripts/db-backup.sh <label>` → `cd apps/backend && npx ts-node prisma/seed-demo-it66.ts` (dry-run) → `… --confirm`
 - ไฟล์: `prisma/seed-demo-it66.ts` (สร้าง), `prisma/cleanup-demo-it66.ts` (ลบ; dry-run เป็นค่าเริ่มต้น, expect เป๊ะ 100/100/4612, `--expect=U,P,R` override), `prisma/demo-it66/engine.ts` (ตรรกะบริสุทธิ์), `engine.spec.ts` (รันเฉพาะกิจ: `npx jest --rootDir=. --roots=prisma/demo-it66 --testRegex 'engine\.spec\.ts$'` ไม่อยู่ใน `npm test`), `catalog.fixture.ts` (สำเนารายวิชา ICT 2564 ใช้ในเทสต์เท่านั้น)
 - guard: ไม่ใช่ production, host local, **port 5433**, DB ∈ {eduanalyze_ai, eduanalyze_seed_test}; ปฏิเสธถ้ามี DEMO-IT66 อยู่แล้ว; insert-only ใน transaction เดียว ตรวจ 100/100/100/4612 และ protected counts ก่อน commit
 - ผลบนสำเนา (seed 20261016): records 4,612 (ฤดูร้อน 5); เกรด A 19.1 / B+ 15.5 / B 20.6 / C+ 15.7 / C 12.7 / D+ 6.4 / D 5.5 / F 4.6 %; GPAX <1.50 = 5, 1.50–1.74 = 7, 1.75–1.99 = 9, 2.00–2.49 = 22, 2.50–2.99 = 26, 3.00–3.49 = 22, ≥3.50 = 9; หน่วยกิตที่ผ่าน min/median/max = 67/120/120 → ตามหลังแผน (<99) **3 คน**; ติด F แล้วเรียนซ้ำผ่าน 36 คน, มี F ค้างไม่ได้เรียนซ้ำ 23 คน (รวมกลุ่ม GPAX ต่ำที่ผ่านไม่ครบ)

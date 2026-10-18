@@ -28,3 +28,7 @@ packages/
 ## Getting Started
 
 Setup instructions will be added as each phase is implemented (starting with database connection and Prisma schema in Phase 1).
+
+## Database backup
+
+Run `bash scripts/db-backup.sh <label>` from the project root (the label is optional and defaults to `manual`). Dumps are written to `apps/backend/.backups/` and are git-ignored. They contain real user data, so never send anything in `.backups` off the machine. Back up before any QA or test round that touches Docker; see `apps/backend/CONVENTIONS.md` §10.

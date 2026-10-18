@@ -233,7 +233,7 @@ The dev database lives only in the `postgres_data` Docker volume. On 2026-10-06 
 
 - **Never** run `docker compose down -v` / `docker-compose down -v`, `docker volume rm`, `docker volume prune` or `docker system prune`. Stop containers with `npm run docker:stop` (`docker compose stop`), which keeps containers and volumes.
 - **Never** stop, start, remove or otherwise touch containers or volumes that belong to another project (for example `pm25-pipeline`). If a port such as 5433 looks taken, find out what holds it (`docker ps`, `lsof -i :5433`) and report it; do not clear it.
-- Run `npm run db:backup -- <label>` **before every QA/test round that touches Docker** (rebuilds, restarts, browser testing against real data). Dumps go to `apps/backend/.backups/` as `eduanalyze_ai_<YYYYMMDD>_<HHMMSS>_<label>.dump` and are git-ignored.
+- Run `bash scripts/db-backup.sh <label>` **before every QA/test round that touches Docker** (rebuilds, restarts, browser testing against real data). Dumps go to `apps/backend/.backups/` as `eduanalyze_ai_<YYYYMMDD>_<HHMMSS>_<label>.dump` and are git-ignored. Run it from the project root. The files hold real user data: never send anything in `.backups` off the machine.
 - To clear test data, use a seed or the API, never by deleting the volume.
 
 ## 11. Audit Log and Student Account Management (2026-10)
