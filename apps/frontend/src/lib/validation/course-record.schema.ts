@@ -7,10 +7,10 @@ import { z } from 'zod';
 export const courseRecordSchema = z.object({
   courseId: z.string().uuid('กรุณาเลือกวิชา'),
   semesterId: z.string().uuid('กรุณาเลือกภาคเรียน'),
-  grade: z.enum(
-    ['A', 'B_PLUS', 'B', 'C_PLUS', 'C', 'D_PLUS', 'D', 'F', 'W', 'I', 'S', 'U'],
-    { errorMap: () => ({ message: 'กรุณาเลือกเกรด' }) },
-  ),
+  // S/U are no longer accepted as new input (existing records keep them).
+  grade: z.enum(['A', 'B_PLUS', 'B', 'C_PLUS', 'C', 'D_PLUS', 'D', 'F', 'W', 'I'], {
+    errorMap: () => ({ message: 'กรุณาเลือกเกรด (ไม่รับเกรด S และ U)' }),
+  }),
 });
 
 export type CourseRecordFormValues = z.infer<typeof courseRecordSchema>;

@@ -62,6 +62,16 @@ export const AT_RISK_GRADES: ReadonlySet<Grade> = new Set<Grade>([
   'U',
 ]);
 
+// Grades a user may enter or send. S/U stay in the Prisma enum so existing
+// rows keep reading and calculating as before, but are no longer accepted
+// as new input (create/update).
+export const ENTRY_GRADES: readonly Grade[] = (Object.keys(GRADE_POINTS) as Grade[]).filter(
+  (g) => g !== 'S' && g !== 'U',
+);
+
+export const ENTRY_GRADE_MESSAGE =
+  'เกรดไม่ถูกต้อง ระบบไม่รับเกรด S และ U กรุณาเลือกเกรด A, B+, B, C+, C, D+, D, F, W หรือ I';
+
 export type RiskLevel = 'CRITICAL' | 'WATCH' | 'NORMAL';
 
 // The severe end of AT_RISK_GRADES: a failing grade (F/U) or one that
