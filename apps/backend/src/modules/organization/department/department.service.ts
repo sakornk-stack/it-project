@@ -9,7 +9,6 @@ import {
   countDepartmentReferences,
   departmentBlockMessage,
   hasOrgReferences,
-  type DepartmentReferences,
 } from '../org-references.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { conflictOnDuplicate } from '../../../common/util/reactivate.util';

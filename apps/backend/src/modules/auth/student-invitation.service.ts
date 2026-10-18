@@ -209,11 +209,9 @@ export class StudentInvitationService {
   // `select` (not `include`) deliberately omits tokenHash — a listing
   // response has no business exposing it, even hashed.
   async findAllInScope(user: RequestUser) {
-    const select = {
-      id: true,
-      email: true,
-      fullName: true,
-      studentCode: true,
+    const idSelect = { id: true };
+    const withoutPii = {
+      ...idSelect,
       programId: true,
       curriculumId: true,
       admissionYear: true,
@@ -221,12 +219,13 @@ export class StudentInvitationService {
       createdAt: true,
       program: { select: { code: true, name: true } },
     };
+    const piiSelect = { email: true, fullName: true, studentCode: true };
+    // Same keys (and order) as before: id, email, fullName, studentCode, …
+    const select = { ...idSelect, ...piiSelect, ...withoutPii };
 
     // SUPER_ADMIN gets the operational view only — the student's identity
     // (email/name/student code) is stripped at the query level.
     if (user.roles.includes('SUPER_ADMIN')) {
-      const { email, fullName, studentCode, ...withoutPii } = select;
-      void email, fullName, studentCode;
       return this.prisma.studentInvitation.findMany({
         select: withoutPii,
         orderBy: { createdAt: 'desc' },

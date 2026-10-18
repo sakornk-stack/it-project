@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Clo, Course, Grade, Prisma, StudentProfile } from '@prisma/client';
+import { Clo, Course, Prisma, StudentProfile } from '@prisma/client';
 import { RequestUser } from '../auth/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeResolverService } from '../../common/scope/scope-resolver.service';
@@ -47,7 +47,6 @@ import {
   StaffYearLevelsReport,
   StudentDashboardReport,
   SystemCurriculumEntry,
-  SystemCurriculumOverviewReport,
   YearLevelBucket,
   YearLevelStudent,
 } from './dashboard-report.interface';

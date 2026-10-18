@@ -35,6 +35,14 @@ export class GooglePendingRegistrationService {
     return pending;
   }
 
+  // Periodic cleanup (ExpiredSignupCleanupService); returns only a count.
+  async deleteExpiredBefore(cutoff: Date): Promise<number> {
+    const { count } = await this.prisma.googlePendingRegistration.deleteMany({
+      where: { expiresAt: { lt: cutoff } },
+    });
+    return count;
+  }
+
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

@@ -117,6 +117,16 @@ export class EmailSignupRequestService {
     };
   }
 
+  // Periodic cleanup (ExpiredSignupCleanupService); returns only a count.
+  // Safe for the send cap as long as cutoff ≤ now - SIGNUP_SEND_WINDOW_MS:
+  // windowStartedAt ≤ expiresAt, so such a row's window is already over.
+  async deleteExpiredBefore(cutoff: Date): Promise<number> {
+    const { count } = await this.prisma.emailSignupRequest.deleteMany({
+      where: { expiresAt: { lt: cutoff } },
+    });
+    return count;
+  }
+
   // Expired rows whose daily send window is also over carry nothing worth
   // keeping; rows still inside the window are kept so the cap can't be reset
   // just by waiting for a link to expire.

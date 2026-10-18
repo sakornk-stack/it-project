@@ -41,6 +41,7 @@ import { GoogleProfile } from './google-profile.interface';
 import { GoogleSignupRefusedException } from './google-signup-refused.exception';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+const INVALID_TWO_FACTOR_CODE_MESSAGE = 'Invalid verification code';
 // One answer for every self-service sign-up or resend that passes validation,
 // whether or not the address already has an account — no account enumeration.
 export const SIGNUP_CHECK_EMAIL_MESSAGE = `หากอีเมลนี้สมัครได้ เราได้ส่งลิงก์ยืนยันไปที่อีเมลแล้ว ลิงก์มีอายุ ${SIGNUP_LINK_TTL_MINUTES} นาที`;
@@ -445,18 +446,15 @@ export class AuthService {
       await this.recordFailedLogin(user);
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
-    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { failedLoginAttempts: 0, lockedUntil: null },
-      });
-    }
 
     // Password alone is enough UNLESS this user opted into 2FA — checked
     // live from the database every login (same "always resolve live"
     // principle as mustChangePassword), so this is the one and only
     // branch point: everyone who never enables 2FA gets byte-identical
     // behavior to before this feature existed.
+    // The lockout counter is NOT cleared here for a 2FA account: only a
+    // correct code clears it (verifyTwoFactorLogin), otherwise someone who
+    // knows the password could reset the code-guess budget by logging in again.
     if (await this.twoFactorService.isEnabled(user.id)) {
       return {
         pendingToken: this.signPendingTwoFactorToken(user.id),
@@ -464,14 +462,39 @@ export class AuthService {
       };
     }
 
+    await this.clearLockout(user);
     return this.issueTokenPair(user);
   }
 
-  // Called by POST /auth/2fa/verify once TwoFactorService.verifyLoginCode
-  // confirms the code — issues the exact same token pair a normal
-  // login()/register() would, just reached via a different path.
-  // Exponential backoff per account: from the 5th consecutive failure the
-  // account is locked 1, 2, 4, … minutes, capped at 15.
+  // POST /auth/2fa/verify. Shares the login lockout counter (same threshold,
+  // backoff and cap), and answers a locked account with the same 401 as a
+  // wrong code without checking it — so a recovery code is never spent on a
+  // locked account and the response does not reveal the lock.
+  async verifyTwoFactorLogin(userId: string, code: string) {
+    const user = await this.userService.findById(userId);
+    if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      throw new UnauthorizedException(INVALID_TWO_FACTOR_CODE_MESSAGE);
+    }
+    if (!(await this.twoFactorService.verifyLoginCode(user.id, code))) {
+      await this.recordFailedLogin(user);
+      throw new UnauthorizedException(INVALID_TWO_FACTOR_CODE_MESSAGE);
+    }
+    await this.clearLockout(user);
+    return this.issueTokenPair(user);
+  }
+
+  private async clearLockout(user: User) {
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
+    }
+  }
+
+  // Exponential backoff per account: from the 5th consecutive failure (wrong
+  // password or wrong 2FA code) the account is locked 1, 2, 4, … minutes,
+  // capped at 15.
   private async recordFailedLogin(user: User) {
     const attempts = user.failedLoginAttempts + 1;
     const lockMinutes =

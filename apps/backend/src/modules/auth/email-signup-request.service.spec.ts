@@ -157,4 +157,13 @@ describe('EmailSignupRequestService', () => {
       UnauthorizedException,
     );
   });
+
+  it('deleteExpiredBefore removes only rows that expired before the cutoff and returns the count', async () => {
+    const { service, rows } = setup();
+    await service.upsert(data, at(0)); // expires at 30 min
+    await service.upsert({ ...data, email: 'later@ku.th' }, at(60 * 60_000)); // expires at 90 min
+    await expect(service.deleteExpiredBefore(at(31 * 60_000))).resolves.toBe(1);
+    expect(rows.map((r) => r.email)).toEqual(['later@ku.th']);
+    await expect(service.deleteExpiredBefore(at(31 * 60_000))).resolves.toBe(0);
+  });
 });

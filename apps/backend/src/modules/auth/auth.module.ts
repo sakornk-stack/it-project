@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GooglePendingRegistrationService } from './google-pending-registration.service';
 import { EmailSignupRequestService } from './email-signup-request.service';
+import { ExpiredSignupCleanupService } from './expired-signup-cleanup.service';
 import { PendingInvitationModule } from './pending-invitation.module';
 import { StudentInvitationModule } from './student-invitation.module';
 import { PasswordResetModule } from './password-reset.module';
@@ -40,6 +41,7 @@ import { TwoFactorService } from './two-factor.service';
     AuthService,
     GooglePendingRegistrationService,
     EmailSignupRequestService,
+    ExpiredSignupCleanupService,
     TwoFactorService,
     JwtStrategy,
     JwtRefreshStrategy,

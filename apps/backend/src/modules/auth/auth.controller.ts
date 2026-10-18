@@ -9,7 +9,6 @@ import {
   Body,
   HttpStatus,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -312,12 +311,9 @@ export class AuthController {
     @CurrentUser() user: RequestUser,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const isValid = await this.twoFactorService.verifyLoginCode(user.userId, dto.code);
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid verification code');
-    }
-    const { accessToken, refreshToken } = await this.authService.completeTwoFactorLogin(
+    const { accessToken, refreshToken } = await this.authService.verifyTwoFactorLogin(
       user.userId,
+      dto.code,
     );
     this.setRefreshCookie(response, refreshToken);
     return { accessToken };
