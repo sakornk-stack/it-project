@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -82,5 +82,23 @@ export class StudentInvitationController {
       .sendStudentInvitationEmail(email, token, fullName)
       .catch(() => undefined);
     return { resent: true, email };
+  }
+
+  // Same guard chain as resend. Nothing for ADMIN/SUPER_ADMIN: invitations are
+  // STAFF work (pinned in roles-table.spec.ts).
+  @Delete(':id')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('STAFF')
+  @ScopeTarget('studentInvitation', { from: 'param', key: 'id' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Cancel a pending student invitation (its link stops working); audited',
+  })
+  @ApiResponse({ status: 204, description: 'Invitation cancelled' })
+  @ApiResponse({ status: 403, description: 'No scope covering this invitation' })
+  @ApiResponse({ status: 404, description: 'Invitation not found, already used or cancelled' })
+  remove(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.studentInvitationService.cancel(id, user);
   }
 }

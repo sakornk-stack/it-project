@@ -10,8 +10,13 @@ function user(roles: Role[]): RequestUser {
 }
 
 function setup(courseCurriculumId: string, covered = true) {
+  const studentCourseRecord = { create: jest.fn().mockResolvedValue({ id: 'r1' }) };
   const prisma = {
-    studentCourseRecord: { create: jest.fn().mockResolvedValue({ id: 'r1' }) },
+    studentCourseRecord,
+    // Audited (STAFF) writes run in a transaction over the same mock table.
+    $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
+      fn({ studentCourseRecord }),
+    ),
   };
   const studentProfileService = {
     findByUserId: jest.fn().mockResolvedValue(PROFILE),
@@ -34,6 +39,7 @@ function setup(courseCurriculumId: string, covered = true) {
     courseService as never,
     semesterService as never,
     scopeResolver as never,
+    { record: jest.fn().mockResolvedValue(undefined) } as never,
   );
   return { service, prisma };
 }

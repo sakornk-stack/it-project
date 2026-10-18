@@ -580,7 +580,7 @@ export class AuthService {
     });
     // Every refresh token (including this device's) is now invalid; hand
     // the caller a fresh one so only *other* sessions are signed out.
-    return this.issueTokenPair(updated);
+    return this.issueTokenPair(updated, { recordLogin: false });
   }
 
   // Refresh tokens whose iat is before this instant are rejected by
@@ -674,7 +674,12 @@ export class AuthService {
     );
   }
 
-  private async issueTokenPair(user: User) {
+  // Every sign-in (password, 2FA, Google, sign-up) ends here and stamps
+  // lastLoginAt; changePassword passes recordLogin: false since it only
+  // re-issues tokens for a session that already exists. A suspended account
+  // still receives tokens (the JWT strategies refuse them on first use), so it
+  // is not counted as a sign-in.
+  private async issueTokenPair(user: User, { recordLogin = true } = {}) {
     const payload = await this.buildJwtPayload(user, Math.floor(Date.now() / 1000));
 
     const accessToken = this.signAccessToken(payload);
@@ -684,6 +689,13 @@ export class AuthService {
       // Unique id so POST /auth/logout can denylist exactly this token.
       jwtid: randomUUID(),
     });
+
+    if (recordLogin && user.isActive) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+    }
 
     return { accessToken, refreshToken };
   }

@@ -94,10 +94,12 @@ async function main() {
       const ci = await tx.courseInstructor.deleteMany({ where: { id: { in: assignmentIds } } });
       const s = await tx.studentAssessmentScore.deleteMany({ where: { studentCourseRecordId: { in: recordIds } } });
       const r = await tx.studentCourseRecord.deleteMany({ where: { id: { in: recordIds } } });
+      // No FK, so nothing blocks; removed so no history of a demo student lingers.
+      const a = await tx.auditLog.deleteMany({ where: { studentProfileId: { in: profileIds } } });
       const p = await tx.studentProfile.deleteMany({ where: { id: { in: profileIds } } });
       const ur = await tx.userRole.deleteMany({ where: { id: { in: roleIds } } });
       const u = await tx.user.deleteMany({ where: { id: { in: userIds } } });
-      return { course_instructors: ci.count, student_assessment_scores: s.count, student_course_records: r.count, student_profiles: p.count, user_roles: ur.count, users: u.count };
+      return { course_instructors: ci.count, student_assessment_scores: s.count, student_course_records: r.count, audit_logs: a.count, student_profiles: p.count, user_roles: ur.count, users: u.count };
     },
     { timeout: 120000, maxWait: 30000 },
   );

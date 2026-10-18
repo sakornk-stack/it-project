@@ -20,6 +20,7 @@ function setup(opts: { records?: unknown[]; myCourseIds?: string[] } = {}) {
     { findMyCourses } as never,
     {} as never,
     { getCoveredProgramIds: jest.fn().mockResolvedValue(['p1']) } as never,
+    {} as never,
   );
   return { service, findMany };
 }

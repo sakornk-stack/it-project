@@ -4,6 +4,7 @@ import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { ROLES_KEY } from './decorators/roles.decorator';
 import { InstructorGuard } from './guards/instructor.guard';
 import { InstructorOrScopeGuard } from './guards/instructor-or-scope.guard';
+import { ScopeGuard } from './guards/scope.guard';
 import { AiAnalysisController } from '../modules/ai-analysis/ai-analysis.controller';
 import { CreditCheckerController } from '../modules/academic-record/credit-checker/credit-checker.controller';
 import { LearningPathController } from '../modules/academic-record/learning-path/learning-path.controller';
@@ -94,7 +95,26 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
   [
     'StudentInvitationController',
     StudentInvitationController,
-    { create: ['STAFF'], resend: ['STAFF'], findAll: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] },
+    {
+      create: ['STAFF'],
+      resend: ['STAFF'],
+      remove: ['STAFF'],
+      findAll: ['STAFF', 'ADMIN', 'SUPER_ADMIN'],
+    },
+  ],
+  // Managing a student account (edit, suspend/reactivate, history) is STAFF-only;
+  // there is no route that deletes one.
+  [
+    'StudentProfilesController',
+    StudentProfilesController,
+    {
+      getMe: ['STUDENT'],
+      findAll: ['ADMIN', 'STAFF'],
+      findOne: ['ADMIN', 'STAFF'],
+      update: ['STAFF'],
+      updateActiveStatus: ['STAFF'],
+      findAuditLogs: ['STAFF'],
+    },
   ],
   [
     'StudentCourseRecordController',
@@ -114,7 +134,12 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
   [
     'UserManagementController',
     UserManagementController,
-    { hardDelete: ['SUPER_ADMIN'], findInstructors: ['ADMIN', 'STAFF'] },
+    {
+      hardDelete: ['SUPER_ADMIN'],
+      findInstructors: ['ADMIN', 'STAFF'],
+      // Never STAFF: students are suspended through StudentProfilesController instead.
+      updateActiveStatus: ['SUPER_ADMIN', 'ADMIN'],
+    },
   ],
   // Assessment evidence: only the assigned instructor writes; ADMIN may still read.
   ['AssessmentDefinitionController', AssessmentDefinitionController, { create: ['INSTRUCTOR'] }],
@@ -141,6 +166,23 @@ describe('assessment writes are guarded by InstructorGuard', () => {
     const guards = Reflect.getMetadata(GUARDS_METADATA, handler) as unknown[];
     expect(guards).toContain(InstructorGuard);
     expect(guards).not.toContain(InstructorOrScopeGuard);
+  });
+});
+
+// STAFF's student-account handlers act on one student or invitation, so the
+// role alone is not enough: ScopeGuard must check its program.
+const STUDENT_ACCOUNT_SCOPED: [string, { prototype: object }, string][] = [
+  ['StudentInvitationController', StudentInvitationController, 'remove'],
+  ['StudentProfilesController', StudentProfilesController, 'update'],
+  ['StudentProfilesController', StudentProfilesController, 'updateActiveStatus'],
+  ['StudentProfilesController', StudentProfilesController, 'findAuditLogs'],
+];
+
+describe('student account handlers are guarded by ScopeGuard', () => {
+  it.each(STUDENT_ACCOUNT_SCOPED)('%s.%s', (_name, controller, method) => {
+    const handler = (controller.prototype as Record<string, unknown>)[method] as object;
+    const guards = Reflect.getMetadata(GUARDS_METADATA, handler) as unknown[];
+    expect(guards).toContain(ScopeGuard);
   });
 });
 

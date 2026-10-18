@@ -5,12 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Grade, Prisma, Role, SemesterTerm } from '@prisma/client';
+import { Grade, Prisma, SemesterTerm } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RequestUser } from '../../auth/request-user.interface';
 import { CourseService } from '../../curriculum-content/course/course.service';
 import { StudentProfileService } from '../../users/student-profile/student-profile.service';
 import { ScopeResolverService } from '../../../common/scope/scope-resolver.service';
+import { AuditLogService } from '../../../common/audit/audit-log.service';
+import { actingRole, type AuditSnapshot } from '../../../common/audit/audit-log.util';
 import { SemesterService } from '../semester/semester.service';
 import { CreateStudentCourseRecordDto } from './dto/create-student-course-record.dto';
 import { resolveYearLevel } from '../../../common/academic/year-level';
@@ -142,6 +144,12 @@ export interface StudentInstructorTimeline {
   entries: StudentInstructorTimelineEntry[];
 }
 
+// What the audit log keeps of a grade row: enough to say which course, which
+// term and which grade, nothing about the student beyond the row's own ids.
+function gradeSnapshot(row: { grade: Grade; courseId: string; semesterId: string }): AuditSnapshot {
+  return { grade: row.grade, courseId: row.courseId, semesterId: row.semesterId };
+}
+
 @Injectable()
 export class StudentCourseRecordService {
   constructor(
@@ -150,6 +158,7 @@ export class StudentCourseRecordService {
     private readonly courseService: CourseService,
     private readonly semesterService: SemesterService,
     private readonly scopeResolverService: ScopeResolverService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async create(dto: CreateStudentCourseRecordDto, user: RequestUser) {
@@ -169,19 +178,34 @@ export class StudentCourseRecordService {
     }
     await this.semesterService.findActiveByIdOrThrow(dto.semesterId);
 
+    const data = {
+      studentProfileId,
+      courseId: dto.courseId,
+      semesterId: dto.semesterId,
+      grade: dto.grade,
+      // Snapshot, not a live join — see schema.prisma comment on
+      // StudentCourseRecord.credits.
+      credits: course.credits,
+      enteredByUserId: user.userId,
+      enteredByRole: actingRole(user.roles),
+    };
     try {
-      return await this.prisma.studentCourseRecord.create({
-        data: {
+      if (!this.isAudited(user)) {
+        return await this.prisma.studentCourseRecord.create({ data });
+      }
+      // The P2002 below aborts this transaction too, so the catch wraps it whole.
+      return await this.prisma.$transaction(async (tx) => {
+        const created = await tx.studentCourseRecord.create({ data });
+        await this.auditLogService.record(tx, {
+          action: 'GRADE_CREATE',
+          actor: user,
+          targetType: 'StudentCourseRecord',
+          targetId: created.id,
           studentProfileId,
-          courseId: dto.courseId,
-          semesterId: dto.semesterId,
-          grade: dto.grade,
-          // Snapshot, not a live join — see schema.prisma comment on
-          // StudentCourseRecord.credits.
-          credits: course.credits,
-          enteredByUserId: user.userId,
-          enteredByRole: this.resolveActingRole(user),
-        },
+          programId: profile.programId,
+          after: gradeSnapshot(created),
+        });
+        return created;
       });
     } catch (error) {
       if (
@@ -263,7 +287,7 @@ export class StudentCourseRecordService {
 
   async update(id: string, dto: UpdateStudentCourseRecordDto, user: RequestUser) {
     await this.findOne(id, user);
-    return this.prisma.studentCourseRecord.update({
+    const args = {
       where: { id },
       data: {
         ...dto,
@@ -271,8 +295,26 @@ export class StudentCourseRecordService {
         // always answers "who is responsible for the current grade value"
         // — see schema.prisma comment on enteredByUserId.
         enteredByUserId: user.userId,
-        enteredByRole: this.resolveActingRole(user),
+        enteredByRole: actingRole(user.roles),
       },
+    };
+    if (!this.isAudited(user)) {
+      return this.prisma.studentCourseRecord.update(args);
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const before = await this.findForAudit(tx, id);
+      const updated = await tx.studentCourseRecord.update(args);
+      await this.auditLogService.record(tx, {
+        action: 'GRADE_UPDATE',
+        actor: user,
+        targetType: 'StudentCourseRecord',
+        targetId: id,
+        studentProfileId: before.studentProfileId,
+        programId: before.studentProfile.programId,
+        before: gradeSnapshot(before),
+        after: gradeSnapshot(updated),
+      });
+      return updated;
     });
   }
 
@@ -283,13 +325,35 @@ export class StudentCourseRecordService {
   // row, so it stays recoverable/auditable rather than gone outright.
   async remove(id: string, user: RequestUser) {
     await this.findOne(id, user);
-    if (this.isStaffTier(user) || this.isInstructorTier(user)) {
-      return this.prisma.studentCourseRecord.update({
-        where: { id },
-        data: { isActive: false },
+    if (this.isAudited(user)) {
+      return this.prisma.$transaction(async (tx) => {
+        const before = await this.findForAudit(tx, id);
+        const removed = await tx.studentCourseRecord.update({
+          where: { id },
+          data: { isActive: false },
+        });
+        await this.auditLogService.record(tx, {
+          action: 'GRADE_DELETE',
+          actor: user,
+          targetType: 'StudentCourseRecord',
+          targetId: id,
+          studentProfileId: before.studentProfileId,
+          programId: before.studentProfile.programId,
+          before: gradeSnapshot(before),
+        });
+        return removed;
       });
     }
     return this.prisma.studentCourseRecord.delete({ where: { id } });
+  }
+
+  // The row as it stands inside the write's own transaction, with the
+  // student's program for the audit scope.
+  private findForAudit(tx: Prisma.TransactionClient, id: string) {
+    return tx.studentCourseRecord.findUniqueOrThrow({
+      where: { id },
+      include: { studentProfile: { select: { programId: true } } },
+    });
   }
 
   // Deterministic, computed live on every call (never cached) — per
@@ -863,15 +927,10 @@ export class StudentCourseRecordService {
     }
   }
 
-  // Audit-trail snapshot for enteredByRole — most-privileged role wins if
-  // a user somehow holds more than one (STUDENT never co-occurs with
-  // ADMIN/STAFF/SUPER_ADMIN in practice, per §33, so this is unambiguous).
-  private resolveActingRole(user: RequestUser): Role {
-    if (user.roles.includes('SUPER_ADMIN')) return Role.SUPER_ADMIN;
-    if (user.roles.includes('ADMIN')) return Role.ADMIN;
-    if (user.roles.includes('STAFF')) return Role.STAFF;
-    if (user.roles.includes('INSTRUCTOR')) return Role.INSTRUCTOR;
-    return Role.STUDENT;
+  // Grade writes by someone other than the student (STAFF, INSTRUCTOR) go to
+  // the audit log; a student's own entries and corrections do not.
+  private isAudited(user: RequestUser) {
+    return this.isStaffTier(user) || this.isInstructorTier(user);
   }
 
   private async assertStaffScopeCovers(

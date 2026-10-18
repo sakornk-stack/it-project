@@ -94,6 +94,7 @@ describe('CreditCheckerService.computeCreditCheck — W after an earlier outcome
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
   );
   const rec = (
     id: string,

@@ -1310,6 +1310,8 @@ export interface AdminUserSummary {
   fullName: string;
   isActive: boolean;
   mustChangePassword: boolean;
+  // Last sign-in; null if none since this started being recorded.
+  lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
   roles: Role[];
@@ -1374,6 +1376,52 @@ export interface StudentProfileSummary {
   createdAt: string;
   updatedAt: string;
   user: { fullName: string; email: string };
+}
+
+// GET /student-profiles/:id — a suspended student is returned too;
+// user.isActive is whether the account can sign in.
+export interface StudentProfileDetail extends StudentProfileSummary {
+  user: { fullName: string; email: string; isActive: boolean };
+}
+
+// PATCH /student-profiles/:id (STAFF, in scope). There is deliberately no
+// studentCode: the server answers 400 if one is sent.
+export interface UpdateStudentProfileRequest {
+  programId?: string;
+  curriculumId?: string;
+  admissionYear?: number;
+  reason: string;
+}
+
+// PATCH /student-profiles/:id/active-status (STAFF, in scope).
+export interface UpdateStudentActiveStatusRequest {
+  isActive: boolean;
+  reason: string;
+}
+
+export type AuditAction =
+  | 'GRADE_CREATE'
+  | 'GRADE_UPDATE'
+  | 'GRADE_DELETE'
+  | 'STUDENT_SUSPEND'
+  | 'STUDENT_REACTIVATE'
+  | 'STUDENT_PROFILE_UPDATE'
+  | 'STUDENT_INVITATION_CANCEL';
+
+export type AuditSnapshot = Record<string, string | number | boolean | null>;
+
+// GET /student-profiles/:id/audit-logs (STAFF, in scope), newest first.
+// actorName is null when the account has been deleted since; no email.
+export interface AuditLogEntry {
+  id: string;
+  action: AuditAction;
+  actorRole: Role;
+  actorName: string | null;
+  targetId: string;
+  before: AuditSnapshot | null;
+  after: AuditSnapshot | null;
+  reason: string | null;
+  createdAt: string;
 }
 
 // ---- STAFF: picking an instructor for CourseInstructor ----

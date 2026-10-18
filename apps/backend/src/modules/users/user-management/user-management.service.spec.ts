@@ -165,6 +165,26 @@ describe('UserManagementService.updateActiveStatus', () => {
       service.updateActiveStatus('target', false, requester('a1', ['ADMIN'])),
     ).rejects.toThrow(NotFoundException);
   });
+
+  // Students are suspended by STAFF through /student-profiles; /users hides them.
+  it.each([
+    ['SUPER_ADMIN', ['SUPER_ADMIN'], false],
+    ['SUPER_ADMIN', ['SUPER_ADMIN'], true],
+    ['ADMIN', ['ADMIN'], false],
+    ['ADMIN', ['ADMIN'], true],
+  ] as [string, Role[], boolean][])(
+    '%s gets a 404 setting a student account active=%s',
+    async (_name, roles, active) => {
+      const { service, userService } = setup({
+        target: { roles: ['STUDENT'], scopes: [scope('p1')] },
+        coveredPrograms: ['p1'],
+      });
+      await expect(
+        service.updateActiveStatus('target', active, requester('actor', roles)),
+      ).rejects.toThrow(NotFoundException);
+      expect(userService.setActiveStatus).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('UserManagementService role changes', () => {
@@ -355,6 +375,17 @@ describe('UserManagementService.resendInvitation', () => {
     await expect(
       service.resendInvitation('target', requester('adm', ['ADMIN'])),
     ).rejects.toBeInstanceOf(NotFoundException);
+    expect(emailService.sendPasswordSetupEmail).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 to a SUPER_ADMIN for a student account and sends nothing', async () => {
+    const { service, passwordResetService, emailService } = setupResend({
+      target: { roles: ['STUDENT'], mustChangePassword: true },
+    });
+    await expect(
+      service.resendInvitation('target', requester('sa', ['SUPER_ADMIN'])),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(passwordResetService.create).not.toHaveBeenCalled();
     expect(emailService.sendPasswordSetupEmail).not.toHaveBeenCalled();
   });
 

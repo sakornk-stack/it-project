@@ -126,6 +126,44 @@ describe('changePassword revokes all sessions', () => {
   });
 });
 
+describe('lastLoginAt', () => {
+  const stamped = (update: jest.Mock) =>
+    update.mock.calls.filter(([args]) => 'lastLoginAt' in args.data);
+
+  it('is stamped on a successful password login of an active account', async () => {
+    const { service, update } = setup({ isActive: true });
+    await login(service, GOOD);
+    expect(stamped(update)).toHaveLength(1);
+    expect(stamped(update)[0][0]).toEqual({
+      where: { id: 'u1' },
+      data: { lastLoginAt: expect.any(Date) },
+    });
+  });
+
+  it('is stamped after the 2FA step too', async () => {
+    const { service, update } = setup({ isActive: true });
+    await service.completeTwoFactorLogin('u1');
+    expect(stamped(update)).toHaveLength(1);
+  });
+
+  it('is not stamped for a suspended account, nor for a failed login', async () => {
+    const suspended = setup({ isActive: false });
+    await login(suspended.service, GOOD);
+    expect(stamped(suspended.update)).toHaveLength(0);
+
+    const wrong = setup({ isActive: true });
+    await expect(login(wrong.service, 'wrong')).rejects.toThrow(UnauthorizedException);
+    expect(stamped(wrong.update)).toHaveLength(0);
+  });
+
+  it('is not stamped by a password change or a token refresh', async () => {
+    const { service, update } = setup({ isActive: true });
+    await service.changePassword('u1', { oldPassword: GOOD, newPassword: 'New-Passw0rd' });
+    await service.refreshAccessToken('u1');
+    expect(stamped(update)).toHaveLength(0);
+  });
+});
+
 describe('JwtRefreshStrategy tokenValidAfter', () => {
   function strategy(tokenValidAfter: Date | null) {
     process.env.JWT_REFRESH_SECRET = REFRESH_SECRET;

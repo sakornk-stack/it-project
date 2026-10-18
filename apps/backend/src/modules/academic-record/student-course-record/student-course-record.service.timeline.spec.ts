@@ -7,6 +7,7 @@ const service = new StudentCourseRecordService(
   {} as never,
   {} as never,
   {} as never,
+  {} as never,
 );
 
 function rec(

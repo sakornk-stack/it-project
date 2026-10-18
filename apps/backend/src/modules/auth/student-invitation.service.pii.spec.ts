@@ -15,6 +15,7 @@ function setup() {
     {} as StudentProfileService,
     {} as UserService,
     { getCoveredProgramIds } as unknown as ScopeResolverService,
+    {} as never,
   );
   return { service, findMany };
 }

@@ -202,6 +202,10 @@ async function main() {
       out.course_assessments = (
         await tx.courseAssessment.deleteMany({ where: { studentProfileId: { in: profileIds } } })
       ).count;
+      // No FK, so nothing blocks; removed so no history of a demo student lingers.
+      out.audit_logs = (
+        await tx.auditLog.deleteMany({ where: { studentProfileId: { in: profileIds } } })
+      ).count;
       out.student_planned_courses = (
         await tx.studentPlannedCourse.deleteMany({
           where: { studentProfileId: { in: profileIds } },

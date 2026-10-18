@@ -8,6 +8,7 @@ import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientOrTx } from '../../prisma/prisma.types';
 import { ScopeResolverService } from '../../common/scope/scope-resolver.service';
+import { AuditLogService } from '../../common/audit/audit-log.service';
 import { StudentProfileService } from '../users/student-profile/student-profile.service';
 import { UserService } from '../users/user/user.service';
 import { RequestUser } from './request-user.interface';
@@ -36,6 +37,7 @@ export class StudentInvitationService {
     private readonly studentProfileService: StudentProfileService,
     private readonly userService: UserService,
     private readonly scopeResolverService: ScopeResolverService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async create(
@@ -168,6 +170,37 @@ export class StudentInvitationService {
       invitedByUserId,
     );
     return { token, email: existing.email, fullName: existing.fullName };
+  }
+
+  // STAFF withdrawing an invitation sent by mistake (ScopeGuard has checked the
+  // program). Deleting the row is the same end state as consume() and expiry:
+  // the token stops working at once. Audited in the same transaction, without
+  // the invitee's email, name or token hash.
+  async cancel(id: string, requester: RequestUser): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const invitation = await tx.studentInvitation.findUnique({ where: { id } });
+      // deleteMany, not delete: an invitation consumed by a sign-up in the
+      // meantime answers the same 404 as one that never existed.
+      const { count } = await tx.studentInvitation.deleteMany({ where: { id } });
+      if (!invitation || count === 0) {
+        throw new NotFoundException(`Student invitation ${id} not found`);
+      }
+      await this.auditLogService.record(tx, {
+        action: 'STUDENT_INVITATION_CANCEL',
+        actor: requester,
+        targetType: 'StudentInvitation',
+        targetId: id,
+        studentProfileId: null,
+        programId: invitation.programId,
+        before: {
+          studentCode: invitation.studentCode,
+          programId: invitation.programId,
+          curriculumId: invitation.curriculumId,
+          admissionYear: invitation.admissionYear,
+          expiresAt: invitation.expiresAt.toISOString(),
+        },
+      });
+    });
   }
 
   // §10/CONVENTIONS §3a: SUPER_ADMIN sees every pending invitation;

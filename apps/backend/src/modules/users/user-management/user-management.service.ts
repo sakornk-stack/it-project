@@ -242,6 +242,17 @@ export class UserManagementService {
     return this.toSummary(user);
   }
 
+  // findOne for the account write flows (suspend, resend setup link): a student
+  // account answers the same 404 as a missing one, for every requester. Students
+  // are managed by STAFF through /student-profiles, never through /users.
+  private async findManageable(id: string, requester: RequestUser) {
+    const target = await this.findOne(id, requester);
+    if (target.roles.includes('STUDENT')) {
+      throw new NotFoundException('User not found');
+    }
+    return target;
+  }
+
   // Flattens the userRoles relation into roles: Role[], matching the
   // convention AuthService.getMe's CurrentUserResponse already uses —
   // scopes passes through as-is (raw UserScope[] rows, no joined names;
@@ -264,8 +275,8 @@ export class UserManagementService {
       throw new ForbiddenException('ไม่สามารถระงับหรือเปลี่ยนสถานะบัญชีของตัวเองได้');
     }
     // Reuses the same scope-filtered lookup as findOne — a natural 404 if
-    // the target is outside the ADMIN's scope, no special-case branch.
-    const target = await this.findOne(id, requester);
+    // the target is outside the ADMIN's scope or is a student account.
+    const target = await this.findManageable(id, requester);
     assertMayManageTarget(target.roles, requester);
     if (target.roles.includes('SUPER_ADMIN')) {
       throw new ForbiddenException(SUPER_ADMIN_PEER_MESSAGE);
@@ -305,9 +316,10 @@ export class UserManagementService {
     if (id === requester.userId) {
       throw new ForbiddenException(SELF_RESEND_MESSAGE);
     }
-    // Natural 404 if the target is outside the ADMIN's scope; an ADMIN may
-    // then only act on STAFF-only accounts, SUPER_ADMIN on anyone but self.
-    const target = await this.findOne(id, requester);
+    // Natural 404 if the target is outside the ADMIN's scope or is a student
+    // account; an ADMIN may then only act on STAFF-only accounts, SUPER_ADMIN
+    // on anyone but self.
+    const target = await this.findManageable(id, requester);
     assertMayManageTarget(target.roles, requester);
 
     if (!target.mustChangePassword) {
