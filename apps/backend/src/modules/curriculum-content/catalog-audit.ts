@@ -1,4 +1,5 @@
 import {
+  Clo,
   Course,
   CourseCategory,
   CurriculumRequirement,
@@ -47,6 +48,17 @@ export function prerequisiteSnapshot(prerequisite: Prerequisite): AuditSnapshot 
     courseId: prerequisite.courseId,
     prerequisiteCourseId: prerequisite.prerequisiteCourseId,
     groupId: prerequisite.groupId,
+  };
+}
+
+export function cloSnapshot(clo: Clo): AuditSnapshot {
+  return {
+    code: clo.code,
+    description: clo.description,
+    achievementThreshold: clo.achievementThreshold,
+    isConfirmed: clo.isConfirmed,
+    courseId: clo.courseId,
+    isActive: clo.isActive,
   };
 }
 

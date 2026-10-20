@@ -5,12 +5,15 @@ import {
   Get,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -44,9 +47,14 @@ export class CloController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active CLOs within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of active CLOs' })
-  async findAll(@CurrentUser() user: RequestUser) {
+  @ApiQuery({ name: 'courseId', required: false })
+  async findAll(
+    @CurrentUser() user: RequestUser,
+    @Query('courseId', new ParseUUIDPipe({ optional: true })) courseId?: string,
+  ) {
     return this.cloService.findAllInCurricula(
       await this.catalogScope.curriculumWhere(user),
+      courseId,
     );
   }
 
@@ -77,8 +85,8 @@ export class CloController {
     status: 409,
     description: 'CLO code already in use within this course',
   })
-  create(@Body() dto: CreateCloDto) {
-    return this.cloService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCloDto) {
+    return this.cloService.create(dto, user);
   }
 
   @Patch(':id')
@@ -89,13 +97,17 @@ export class CloController {
   @ApiOperation({ summary: 'Update a CLO' })
   @ApiResponse({ status: 200, description: 'CLO updated' })
   @ApiResponse({ status: 403, description: 'No scope covering this CLO' })
-  @ApiResponse({ status: 404, description: 'CLO not found' })
+  @ApiResponse({ status: 404, description: 'CLO not found or deactivated' })
   @ApiResponse({
     status: 409,
     description: 'CLO code already in use within this course',
   })
-  update(@Param('id') id: string, @Body() dto: UpdateCloDto) {
-    return this.cloService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateCloDto,
+  ) {
+    return this.cloService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -109,9 +121,9 @@ export class CloController {
   @ApiResponse({ status: 404, description: 'CLO not found' })
   @ApiResponse({
     status: 409,
-    description: 'CLO still has active CLO-PLO mappings',
+    description: 'CLO still has active CLO-PLO mappings or assessment scores',
   })
-  remove(@Param('id') id: string) {
-    return this.cloService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.cloService.remove(id, user);
   }
 }

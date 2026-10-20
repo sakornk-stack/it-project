@@ -47,7 +47,7 @@ const CASES: [string, string, (prisma: never) => unknown, (c: object) => object]
   [
     'CloService',
     'clo',
-    (p) => new CloService(p, {} as never),
+    (p) => new CloService(p, {} as never, {} as never),
     (c) => ({ isActive: true, course: { curriculum: c } }),
   ],
   [

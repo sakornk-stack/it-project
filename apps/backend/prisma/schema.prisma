@@ -708,6 +708,8 @@ model Clo {
   code                 String
   description          String
   achievementThreshold Int?
+  // false = copied from another curriculum year and not yet checked by ADMIN.
+  isConfirmed          Boolean  @default(true)
   isActive             Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

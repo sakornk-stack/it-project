@@ -11,7 +11,8 @@ export type AuditTargetType =
   | 'Course'
   | 'CourseCategory'
   | 'CurriculumRequirement'
-  | 'Prerequisite';
+  | 'Prerequisite'
+  | 'Clo';
 
 export interface AuditEntry {
   action: AuditAction;
