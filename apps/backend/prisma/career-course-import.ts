@@ -65,3 +65,13 @@ export function selectStaleLinks<T extends { courseId: string }>(
 ): T[] {
   return activeLinks.filter((l) => scope.has(l.courseId) && !wantedCourseIds?.has(l.courseId));
 }
+
+// A career that already belongs to a group gets its sortOrder from import-career-groups.ts
+// (position in the groups file); re-running the course import must not overwrite it.
+// Ungrouped or new careers keep the old rule: position in the course file.
+export function careerSortOrder(
+  found: { sortOrder: number; groupId: string | null } | null,
+  fileIndex: number,
+): number {
+  return found?.groupId ? found.sortOrder : fileIndex;
+}

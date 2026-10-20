@@ -6,6 +6,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { assertSeedAllowed } from '../src/common/util/seed-guard';
 
 import {
+  careerSortOrder,
   courseIdsInScope,
   CurriculumVersion,
   parseCareerImportOptions,
@@ -255,14 +256,16 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
     // Renamed career: reuse the row (and its links) under its old name.
     if (!found && oldName)
       found = await db.career.findFirst({ where: { name: oldName, isActive: true } });
-    if (found && found.sortOrder === i && found.name === name) {
+    // A grouped career keeps its sortOrder (owned by import-career-groups.ts).
+    const sortOrder = careerSortOrder(found, i);
+    if (found && found.sortOrder === sortOrder && found.name === name) {
       careerT.skip++;
     } else {
       found ? careerT.update++ : careerT.create++;
       if (apply) {
         const saved = found
-          ? await db.career.update({ where: { id: found.id }, data: { name, sortOrder: i } })
-          : await db.career.create({ data: { name, sortOrder: i } });
+          ? await db.career.update({ where: { id: found.id }, data: { name, sortOrder } })
+          : await db.career.create({ data: { name, sortOrder } });
         careerIdByName.set(name, saved.id);
         continue;
       }

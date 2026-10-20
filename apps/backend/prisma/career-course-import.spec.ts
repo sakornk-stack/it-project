@@ -1,6 +1,7 @@
 // Run on demand (not part of `npm test`, whose jest rootDir is src/):
 //   npx jest --rootDir=. --roots=prisma --testRegex 'career-course-import\.spec\.ts$'
 import {
+  careerSortOrder,
   courseIdsInScope,
   parseCareerImportOptions,
   rowCurriculumError,
@@ -112,5 +113,16 @@ describe('stale-link scope', () => {
       const stale = selectStaleLinks(active, courseIdsInScope(year, source, target), undefined);
       expect(stale.map((l) => l.courseId)).not.toContain('outside-program');
     }
+  });
+});
+
+describe('careerSortOrder', () => {
+  it('keeps the existing sortOrder of a grouped career (owned by import-career-groups)', () => {
+    expect(careerSortOrder({ sortOrder: 5, groupId: 'g' }, 0)).toBe(5);
+  });
+
+  it('uses the file position for new and ungrouped careers (old behaviour)', () => {
+    expect(careerSortOrder(null, 3)).toBe(3);
+    expect(careerSortOrder({ sortOrder: 5, groupId: null }, 2)).toBe(2);
   });
 });
