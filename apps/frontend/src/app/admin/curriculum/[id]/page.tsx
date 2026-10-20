@@ -148,6 +148,13 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
             <ListChecks size={14} aria-hidden="true" />
             จัดการ CLO รายวิชา
           </Link>
+          <Link
+            href={`/admin/curriculum/${curriculumId}/plos`}
+            className="ml-4 mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <ListChecks size={14} aria-hidden="true" />
+            จัดการ PLO และการเชื่อม CLO↔PLO
+          </Link>
         </Reveal>
       )}
 

@@ -730,6 +730,33 @@ export interface CreateCloRequest {
 
 export type UpdateCloRequest = Partial<Omit<CreateCloRequest, 'courseId'>>;
 
+export interface CreatePloRequest {
+  code: string;
+  name: string;
+  description?: string;
+  curriculumId: string;
+}
+
+export type UpdatePloRequest = Partial<Omit<CreatePloRequest, 'curriculumId'>>;
+
+// GET /clo-plo-mappings (ADMIN); weight is a whole number 1-5.
+export interface CloPloMappingItem {
+  id: string;
+  cloId: string;
+  ploId: string;
+  weight: number;
+}
+
+export interface CreateCloPloMappingRequest {
+  cloId: string;
+  ploId: string;
+  weight: number;
+}
+
+export interface UpdateCloPloMappingRequest {
+  weight: number;
+}
+
 export interface CloScoreInput {
   cloId: string;
   score: number; // 1-5
