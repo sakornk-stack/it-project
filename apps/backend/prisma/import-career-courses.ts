@@ -5,6 +5,13 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 import { assertSeedAllowed } from '../src/common/util/seed-guard';
 
+import {
+  courseIdsInScope,
+  CurriculumVersion,
+  parseCareerImportOptions,
+  rowCurriculumError,
+  selectStaleLinks,
+} from './career-course-import';
 import { parseCsv } from './csv-util';
 
 const prisma = new PrismaClient();
@@ -22,13 +29,20 @@ const prisma = new PrismaClient();
 //   ts-node prisma/import-career-courses.ts --no-additions        # do not auto-load the default additions file
 //   ts-node prisma/import-career-courses.ts --additions-file=PATH # default private-data/career-course-additions.csv if present; extra links by course CODE in each curriculum (no name matching)
 //   ts-node prisma/import-career-courses.ts --rename-file=PATH    # CSV old,new: rename an existing career instead of creating a new one
+//   ts-node prisma/import-career-courses.ts --file=PATH --curriculum=2569|2564
+//       # one year only: course codes are read as codes of THAT curriculum (no copy to the
+//       # other year by name), additions are not loaded (and --additions-file is refused),
+//       # and the stale-link cleanup only closes links of that year's courses.
 //
-// CSV columns: career, course_code, weight (1-3), reason.
+// CSV columns: career, course_code, weight (1-3), reason. With --curriculum a "curriculum"
+// column is optional; if present, each cell must be empty or equal to the chosen year.
 // Additions CSV columns: career, course_code, weight (1-3), curriculum (2569 | 2564 | both),
 // reason (optional column). Careers must already exist (DB or main file).
 const APPLY = process.argv.includes('--apply');
 const argValues = (name: string) =>
   process.argv.filter((a) => a.startsWith(`--${name}=`)).map((a) => a.slice(name.length + 3));
+const OPTIONS = parseCareerImportOptions(process.argv);
+const CURRICULUM = OPTIONS.curriculum;
 const EXCLUDE = argValues('exclude-career');
 const FILE =
   argValues('file')[0] ?? path.join(__dirname, 'private-data', 'career-course-draft.csv');
@@ -38,7 +52,7 @@ const FILE =
 const DEFAULT_ADDITIONS = path.join(__dirname, 'private-data', 'career-course-additions.csv');
 const ADDITIONS_FILE =
   argValues('additions-file')[0] ??
-  (!process.argv.includes('--no-additions') && fs.existsSync(DEFAULT_ADDITIONS)
+  (!CURRICULUM && !process.argv.includes('--no-additions') && fs.existsSync(DEFAULT_ADDITIONS)
     ? DEFAULT_ADDITIONS
     : undefined);
 const RENAME_FILE = argValues('rename-file')[0];
@@ -129,6 +143,7 @@ function readRows() {
   }
   if (errors.length) return { rows, errors, excludedRows: 0 };
   const idx = (c: string) => header.indexOf(c);
+  const curriculumIdx = header.indexOf('curriculum'); // optional column
 
   const seen = new Set<string>();
   let excludedRows = 0;
@@ -148,6 +163,11 @@ function readRows() {
     if (!Number.isInteger(weight) || weight < 1 || weight > 3) {
       errors.push(`line ${line}: weight-not-1-to-3`);
     }
+    const curriculumError = rowCurriculumError(
+      curriculumIdx >= 0 ? cells[curriculumIdx] : undefined,
+      CURRICULUM,
+    );
+    if (curriculumError) errors.push(`line ${line}: ${curriculumError}`);
     const key = `${career}\u0000${courseCode}`;
     if (seen.has(key)) errors.push(`line ${line}: duplicate-career-course`);
     seen.add(key);
@@ -200,6 +220,11 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
   const sourceByCode = new Map(sourceCourses.map((c) => [c.code, c]));
   const targetByCode = new Map(targetCourses.map((c) => [c.code, c]));
   const targetByName = new Map(targetCourses.map((c) => [normName(c.name), c]));
+  const byCode = { [SOURCE_VERSION]: sourceByCode, [TARGET_VERSION]: targetByCode };
+  const versionOfCourse = new Map<string, CurriculumVersion>([
+    ...sourceCourses.map((c): [string, CurriculumVersion] => [c.id, SOURCE_VERSION]),
+    ...targetCourses.map((c): [string, CurriculumVersion] => [c.id, TARGET_VERSION]),
+  ]);
 
   // course code (2569) → { 2569 course id, 2564 course id | reason it has none }
   const missing: string[] = [];
@@ -280,6 +305,18 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
   };
 
   for (const row of rows) {
+    if (CURRICULUM) {
+      // Single-year import: the code is a code of that curriculum, nothing is copied across.
+      const course = byCode[CURRICULUM].get(row.courseCode);
+      if (!course) {
+        missing.push(row.courseCode);
+        continue;
+      }
+      const careerId = careerIdByName.get(row.career) ?? null;
+      await wantLink(CURRICULUM, careerId, course.id, row);
+      planned.add(`${row.career}\u0000${CURRICULUM}\u0000${course.id}`);
+      continue;
+    }
     const resolved = resolve(row.courseCode);
     if (!resolved) {
       missing.push(row.courseCode);
@@ -306,7 +343,6 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
     })) {
       knownCareers.add(c.name);
     }
-    const byCode = { [SOURCE_VERSION]: sourceByCode, [TARGET_VERSION]: targetByCode };
     const todo: { a: Addition; version: string; courseId: string }[] = [];
     for (const a of additions) {
       if (!knownCareers.has(a.career)) addErrors.push(`additions line ${a.line}: career-not-found`);
@@ -353,12 +389,30 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
 
   // --- active links of the imported careers that the file no longer asks for
   let removed = 0;
-  const courseIdsOfInterest = new Set([...sourceCourses, ...targetCourses].map((c) => c.id));
+  const removedByYear = { [SOURCE_VERSION]: 0, [TARGET_VERSION]: 0 };
+  const courseIdsOfInterest = courseIdsInScope(
+    CURRICULUM,
+    sourceCourses.map((c) => c.id),
+    targetCourses.map((c) => c.id),
+  );
   for (const careerId of [...careerIdByName.values()].filter((x): x is string => !!x)) {
-    const stale = (await db.careerCourse.findMany({ where: { careerId, isActive: true } })).filter(
-      (l) => courseIdsOfInterest.has(l.courseId) && !wanted.get(careerId)?.has(l.courseId),
+    const stale = selectStaleLinks(
+      await db.careerCourse.findMany({ where: { careerId, isActive: true } }),
+      courseIdsOfInterest,
+      wanted.get(careerId),
     );
     removed += stale.length;
+    for (const l of stale) {
+      const version = versionOfCourse.get(l.courseId);
+      if (version) removedByYear[version]++;
+    }
+    // Belt and braces: the scope above already excludes the other year.
+    if (
+      CURRICULUM &&
+      removedByYear[CURRICULUM === SOURCE_VERSION ? TARGET_VERSION : SOURCE_VERSION]
+    ) {
+      throw new Error('refusing to close links of the other curriculum');
+    }
     if (apply && stale.length) {
       await db.careerCourse.updateMany({
         where: { id: { in: stale.map((l) => l.id) } },
@@ -374,6 +428,7 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
     careerT,
     links,
     removed,
+    removedByYear,
     missing: [...new Set(missing)],
     noMatch: [...noMatch],
     ambiguous: [...ambiguous],
@@ -383,6 +438,17 @@ async function plan(db: Db, rows: Row[], additions: Addition[], apply: boolean) 
 async function main() {
   assertSeedAllowed('prisma/import-career-courses.ts');
   console.log(`Mode: ${APPLY ? 'APPLY (writing to DB)' : 'DRY RUN (no writes)'}`);
+  if (OPTIONS.errors.length) {
+    for (const e of OPTIONS.errors) console.log(`  ${e}`);
+    console.log('option ไม่ถูกต้อง — หยุด ไม่เขียนอะไร');
+    process.exitCode = 1;
+    return;
+  }
+  if (CURRICULUM) {
+    console.log(
+      `Curriculum: ${CURRICULUM} เท่านั้น (ไม่คัดลอกข้ามปี, ไม่โหลด additions, ไม่ปิดลิงก์ของอีกปี)`,
+    );
+  }
   const { rows, errors, excludedRows } = readRows();
   console.log(
     `Source: ${rows.length} แถว, ข้ามเพราะ --exclude-career ${excludedRows} แถว, error ${errors.length}`,
@@ -417,6 +483,23 @@ async function main() {
     return;
   }
 
+  if (CURRICULUM) {
+    const other = CURRICULUM === SOURCE_VERSION ? TARGET_VERSION : SOURCE_VERSION;
+    console.log(`สาย (career): ${result.careerCount}  ${fmt(result.careerT)}`);
+    console.log(
+      `ลิงก์ ${CURRICULUM}: ${fmt(result.links[CURRICULUM])} / ปิดลิงก์ ${result.removedByYear[CURRICULUM]}`,
+    );
+    console.log(`ปิดลิงก์ของอีกปี (${other}): ${result.removedByYear[other]}`);
+    console.log(
+      `รหัสวิชาไม่พบใน ${CURRICULUM} (ข้าม): ${result.missing.length}${list(result.missing)}`,
+    );
+    console.log(
+      !APPLY
+        ? 'Dry run only — rerun with --apply to write to the database.'
+        : 'Career-course import complete.',
+    );
+    return;
+  }
   console.log(`สาย (career): ${result.careerCount}  ${fmt(result.careerT)}`);
   console.log(`ลิงก์ ${SOURCE_VERSION}: ${fmt(result.links[SOURCE_VERSION])}`);
   console.log(`ลิงก์ ${TARGET_VERSION}: ${fmt(result.links[TARGET_VERSION])}`);
