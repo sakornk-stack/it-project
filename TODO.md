@@ -199,7 +199,7 @@ Three commits delivered (2026-09-30):
 
 **ความเสี่ยง/ย้อนกลับ:** การเปิดคืน **ไม่คืนข้อมูลลูกที่ถูกปิดตามกัน** (เช่น วิชาที่ปิดจะลบ prerequisite ที่ผูกไว้ถาวร ดู `course.service.ts` `remove`) ต้องบอกผู้ใช้ในกล่องยืนยัน; cache ทำให้สิทธิ์ล่าช้าสูงสุด TTL; ย้อนกลับ: ไม่มี migration แค่ revert โค้ด
 **ผลที่ทำแล้ว (2026-10-10):** `JwtStrategy`/`JwtRefreshStrategy` อ่านบทบาทจาก DB ผ่าน `UserService.findAuthContext` (ไม่ใช้ cache ตามที่แผนแนะนำ) · `GET /<x>/inactive` + `POST /<x>/:id/reactivate` (SUPER_ADMIN) ของคณะ/ภาควิชา/สาขา/หลักสูตร/ปีการศึกษา/ภาคเรียน (พาเรนต์ต้อง active, คีย์ต้องว่าง, 409 ภาษาไทย, หลักสูตรกลับมาแบบปิดรับลงทะเบียน) · หน้า `/admin/organization` และ `/admin/academic-years` มีปุ่ม "แสดงที่ปิดใช้งาน" + "เปิดใช้งานอีกครั้ง" · ผู้ใช้ใช้ `PATCH /users/:id/active-status` เดิม
-**ยังไม่ได้ทำในชุด 1:** เปิดคืนรายวิชา/CLO/PLO (นอกขอบเขตที่ตกลง) · cache บทบาท (วัดก่อนค่อยทำ) · ปุ่มเปิดคืนไม่เปิดรายการลูกให้อัตโนมัติ (ตั้งใจ) · ยังไม่ได้ลองกับเบราว์เซอร์จริง (Light/Dark/มือถือ)
+**ยังไม่ได้ทำในชุด 1:** เปิดคืน CLO/PLO (เปิดคืนรายวิชาทำแล้ว 2026-10-20 ดูหัวข้อ "จัดการหลักสูตรผ่านหน้าเว็บ") · cache บทบาท (วัดก่อนค่อยทำ) · ปุ่มเปิดคืนไม่เปิดรายการลูกให้อัตโนมัติ (ตั้งใจ) · ยังไม่ได้ลองกับเบราว์เซอร์จริง (Light/Dark/มือถือ)
 **ขนาด:** JWT = เล็ก · reactivate = กลาง–ใหญ่ (6 เอนทิตี + UI) · **โมเดล:** JWT = Impl (Sonnet Medium) · reactivate ออกแบบกฎ = Plan (Opus High) แล้ว Impl · **db:backup:** ไม่ต้องมี migration แต่ต้องสำรองก่อนทดสอบกับ Docker ตามกฎ CLAUDE.md
 
 ### ชุด 2 — ลดสิทธิ์ (least privilege)
@@ -305,7 +305,16 @@ Three commits delivered (2026-09-30):
 
 ### SUPER_ADMIN จัดการบัญชีเท่านั้น: งานค้าง (Phase 3)
 - UI เขียนหลักสูตรสำหรับ ADMIN ยังไม่มี: ตอนนี้ `POST/PATCH/DELETE /curricula` เป็นของ ADMIN (ตาม scope) แต่หน้า `/admin/organization` (SUPER_ADMIN) แสดงหลักสูตรแบบอ่านอย่างเดียว (`CurriculumPanel readOnly`) ต้องทำหน้าให้ ADMIN แล้วส่ง `readOnly={false}`
-- CLO/PLO/CLO-PLO mapping เขียนผ่าน API/seed เท่านั้น (ไม่มี UI) และสิทธิ์เขียนย้ายเป็น ADMIN แล้ว
+- CLO/PLO/CLO-PLO mapping เขียนผ่าน API/seed เท่านั้น (ไม่มี UI) และสิทธิ์เขียนย้ายเป็น ADMIN แล้ว (หน้าแก้ไขอยู่ในแผน "จัดการหลักสูตรผ่านหน้าเว็บ" เฟส 2–3)
+
+### จัดการหลักสูตรผ่านหน้าเว็บ (แผนอนุมัติ 2026-10-20)
+สิทธิ์คงเดิม: STAFF = รายวิชา/หมวด/เกณฑ์/วิชาบังคับก่อน, ADMIN = CLO/PLO/mapping, SUPER_ADMIN ไม่แตะข้อมูลวิชาการ; ไม่ทำนำเข้า CSV ผ่านเว็บ
+- **เฟส 1 (ทำแล้ว 2026-10-20, ยังไม่ push):** audit การเขียนของ STAFF ทั้งหมด (migration `20261020200000_add_curriculum_audit_actions` เพิ่มค่า enum อย่างเดียว รวมค่าของ CLO/PLO/mapping ไว้ล่วงหน้า), `POST /courses/:id/reactivate` + `GET /courses/inactive`, ปิดวิชาถูกบล็อกถ้ามีการเชื่อมโยงอาชีพ, แก้/ปิดวิชาที่ปิดอยู่แล้ว = 404, หน่วยกิต 0–12, ปิดช่องโหว่ `PATCH /curriculum-requirements` ที่รับ `curriculumId`, หน้า `/staff/curriculum` เตือนผลรวมหน่วยกิตของหมวดตอนย้ายวิชา และมีส่วน "รายวิชาที่ปิดใช้งาน" พร้อมปุ่มเปิดใช้งาน
+  - ยังไม่ได้ลองในเบราว์เซอร์ (ฟอร์มย้ายหมวด, ส่วนรายวิชาที่ปิดใช้งาน, มือถือ)
+  - ยังไม่มีหน้า/API อ่าน audit ของหลักสูตร
+  - Deploy: ต้อง `prisma migrate deploy` ก่อนเปิดโค้ด backend ใหม่ (โค้ดใหม่เขียนค่า enum ใหม่ ถ้า DB ยังไม่มีจะ error และการเขียนรายวิชาทั้งหมดล้ม)
+- **เฟส 2:** CLO ต่อวิชา (ADMIN) + `Clo.isConfirmed` (migration) + reactivate CLO + audit
+- **เฟส 3:** PLO + ตาราง mapping CLO×PLO (weight) + เปิดคืน mapping ที่ถูกปิด + audit
 - ตรวจข้อมูลจริงแบบอ่านอย่างเดียว: บัญชี SUPER_ADMIN ที่ถือบทบาทอื่นด้วย (ADMIN/STAFF/INSTRUCTOR) ยังเข้าข้อมูลวิชาการผ่านบทบาทนั้น
 - `GET /curricula/inactive` ของ ADMIN ไม่กรองตาม scope (ไม่มี `@ScopeTarget` สำหรับรายการ)
 
