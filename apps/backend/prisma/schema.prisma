@@ -448,28 +448,60 @@ enum AuditAction {
   STUDENT_REACTIVATE
   STUDENT_PROFILE_UPDATE
   STUDENT_INVITATION_CANCEL
+  // Curriculum catalogue, written by STAFF (CONVENTIONS §11).
+  COURSE_CREATE
+  COURSE_UPDATE
+  COURSE_DEACTIVATE
+  COURSE_REACTIVATE
+  COURSE_CATEGORY_CREATE
+  COURSE_CATEGORY_UPDATE
+  COURSE_CATEGORY_DEACTIVATE
+  CURRICULUM_REQUIREMENT_CREATE
+  CURRICULUM_REQUIREMENT_UPDATE
+  CURRICULUM_REQUIREMENT_DELETE
+  PREREQUISITE_CREATE
+  PREREQUISITE_UPDATE
+  PREREQUISITE_DELETE
+  // Learning outcomes, written by ADMIN. Added now so the later CLO/PLO
+  // screens need no further enum migration; not recorded by any code yet.
+  CLO_CREATE
+  CLO_UPDATE
+  CLO_DEACTIVATE
+  CLO_REACTIVATE
+  PLO_CREATE
+  PLO_UPDATE
+  PLO_DEACTIVATE
+  PLO_REACTIVATE
+  CLO_PLO_MAPPING_CREATE
+  CLO_PLO_MAPPING_UPDATE
+  CLO_PLO_MAPPING_DEACTIVATE
+  CLO_PLO_MAPPING_REACTIVATE
 }
 
-// Who changed what about a student, written in the same transaction as the
-// change itself (AuditLogService.record takes the tx client). Append-only:
-// nothing updates or deletes a row, except the demo cleanup scripts for demo
-// students. Deliberately no foreign keys, like RevokedRefreshToken: a row must
+// Who changed what about a student or the curriculum catalogue, written in the
+// same transaction as the change itself (AuditLogService.record takes the tx
+// client). Append-only: nothing updates or deletes a row, except the demo
+// cleanup scripts for demo students. Deliberately no foreign keys, like RevokedRefreshToken: a row must
 // never block a permanent user delete or the demo cleanup, and must outlive
 // its target (a cancelled invitation is gone by definition).
 // before/after hold an allow-listed snapshot per action — never an email,
-// name, password, token or hash (assertNoSecretKeys).
+// person's name, password, token or hash (assertNoSecretKeys). A course's or
+// category's own name is catalogue data and is kept.
 model AuditLog {
   id               String      @id @default(uuid())
   action           AuditAction
   actorUserId      String
   // Snapshot, same idea as StudentCourseRecord.enteredByRole.
   actorRole        Role
-  // 'StudentCourseRecord' | 'StudentProfile' | 'StudentInvitation'
+  // 'StudentCourseRecord' | 'StudentProfile' | 'StudentInvitation' | 'Course'
+  // | 'CourseCategory' | 'CurriculumRequirement' | 'Prerequisite'
   targetType       String
   targetId         String
-  // Null only for an invitation cancel (no student exists yet).
+  // Null for an invitation cancel (no student exists yet) and for every
+  // curriculum catalogue action.
   studentProfileId String?
-  // The student's (or invitation's) program when the action happened.
+  // The student's (or invitation's, or curriculum's) program when the action
+  // happened.
   programId        String
   before           Json?
   after            Json?
