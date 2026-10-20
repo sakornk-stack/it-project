@@ -29,6 +29,16 @@ packages/
 
 Setup instructions will be added as each phase is implemented (starting with database connection and Prisma schema in Phase 1).
 
+## API documentation (OpenAPI)
+
+Swagger UI (`/api/docs`) is only served outside production. For reports and slides, export the
+document offline instead (no port is opened and the database is not touched):
+
+```bash
+npm run openapi:export -w apps/backend                  # writes docs/api/openapi.json
+npx --yes @redocly/cli build-docs docs/api/openapi.json -o docs/api/index.html   # readable HTML
+```
+
 ## Database backup
 
 Run `bash scripts/db-backup.sh <label>` from the project root (the label is optional and defaults to `manual`). Dumps are written to `apps/backend/.backups/` and are git-ignored. They contain real user data, so never send anything in `.backups` off the machine. Back up before any QA or test round that touches Docker; see `apps/backend/CONVENTIONS.md` §10.

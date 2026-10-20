@@ -1,0 +1,6803 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "summary": "Health check (public) — verifies the database answers a trivial query",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/faculties": {
+      "get": {
+        "operationId": "FacultyController_findAll",
+        "summary": "List active faculties",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active faculties"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "post": {
+        "operationId": "FacultyController_create",
+        "summary": "Create a faculty",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFacultyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Faculty created"
+          },
+          "409": {
+            "description": "Faculty code already in use"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/faculties/inactive": {
+      "get": {
+        "operationId": "FacultyController_findInactive",
+        "summary": "List deactivated faculty records (SUPER_ADMIN)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated faculty records"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/faculties/{id}/reactivate": {
+      "post": {
+        "operationId": "FacultyController_reactivate",
+        "summary": "Restore a deactivated faculty (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Faculty reactivated"
+          },
+          "404": {
+            "description": "Faculty not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/faculties/{id}": {
+      "get": {
+        "operationId": "FacultyController_findOne",
+        "summary": "Get a faculty by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Faculty found"
+          },
+          "404": {
+            "description": "Faculty not found"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "patch": {
+        "operationId": "FacultyController_update",
+        "summary": "Update a faculty",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFacultyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Faculty updated"
+          },
+          "404": {
+            "description": "Faculty not found"
+          },
+          "409": {
+            "description": "Faculty code already in use"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "FacultyController_remove",
+        "summary": "Soft-delete a faculty",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Faculty deactivated"
+          },
+          "404": {
+            "description": "Faculty not found"
+          },
+          "409": {
+            "description": "Faculty still has active departments"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/faculties/{id}/permanent": {
+      "delete": {
+        "operationId": "FacultyController_hardDelete",
+        "summary": "Permanently delete a deactivated faculty that nothing references (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Faculty deleted"
+          },
+          "404": {
+            "description": "Faculty not found"
+          },
+          "409": {
+            "description": "Faculty is still active or still referenced"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/departments": {
+      "get": {
+        "operationId": "DepartmentController_findAll",
+        "summary": "List active departments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active departments"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "post": {
+        "operationId": "DepartmentController_create",
+        "summary": "Create a department",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Department created"
+          },
+          "403": {
+            "description": "No scope covering this faculty"
+          },
+          "404": {
+            "description": "Faculty not found or inactive"
+          },
+          "409": {
+            "description": "Department code already in use within this faculty"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/departments/inactive": {
+      "get": {
+        "operationId": "DepartmentController_findInactive",
+        "summary": "List deactivated department records (SUPER_ADMIN)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated department records"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/departments/{id}/reactivate": {
+      "post": {
+        "operationId": "DepartmentController_reactivate",
+        "summary": "Restore a deactivated department (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Department reactivated"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/departments/{id}": {
+      "get": {
+        "operationId": "DepartmentController_findOne",
+        "summary": "Get a department by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Department found"
+          },
+          "404": {
+            "description": "Department not found"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "patch": {
+        "operationId": "DepartmentController_update",
+        "summary": "Update a department",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Department updated"
+          },
+          "403": {
+            "description": "No scope covering this department"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Department code already in use within this faculty"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DepartmentController_remove",
+        "summary": "Soft-delete a department",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Department deactivated"
+          },
+          "403": {
+            "description": "No scope covering this department"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Department still has active programs"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/departments/{id}/permanent": {
+      "delete": {
+        "operationId": "DepartmentController_hardDelete",
+        "summary": "Permanently delete a deactivated department that nothing references (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Department deleted"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Department is still active or still referenced"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/programs": {
+      "get": {
+        "operationId": "ProgramController_findAll",
+        "summary": "List active programs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active programs"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "post": {
+        "operationId": "ProgramController_create",
+        "summary": "Create a program",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Program created"
+          },
+          "403": {
+            "description": "No scope covering this department"
+          },
+          "404": {
+            "description": "Department not found or inactive"
+          },
+          "409": {
+            "description": "Program name or code already in use within this department"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/programs/inactive": {
+      "get": {
+        "operationId": "ProgramController_findInactive",
+        "summary": "List deactivated program records (SUPER_ADMIN)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated program records"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/programs/{id}/reactivate": {
+      "post": {
+        "operationId": "ProgramController_reactivate",
+        "summary": "Restore a deactivated program (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Program reactivated"
+          },
+          "404": {
+            "description": "Program not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/programs/{id}": {
+      "get": {
+        "operationId": "ProgramController_findOne",
+        "summary": "Get a program by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program found"
+          },
+          "404": {
+            "description": "Program not found"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "patch": {
+        "operationId": "ProgramController_update",
+        "summary": "Update a program",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Program updated"
+          },
+          "403": {
+            "description": "No scope covering this program"
+          },
+          "404": {
+            "description": "Program not found"
+          },
+          "409": {
+            "description": "Program name or code already in use within this department"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "ProgramController_remove",
+        "summary": "Soft-delete a program",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program deactivated"
+          },
+          "403": {
+            "description": "No scope covering this program"
+          },
+          "404": {
+            "description": "Program not found"
+          },
+          "409": {
+            "description": "Program still has active curricula"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/programs/{id}/permanent": {
+      "delete": {
+        "operationId": "ProgramController_hardDelete",
+        "summary": "Permanently delete a deactivated program that nothing references (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Program deleted"
+          },
+          "404": {
+            "description": "Program not found"
+          },
+          "409": {
+            "description": "Program is still active or still referenced"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curricula": {
+      "get": {
+        "operationId": "CurriculumController_findAll",
+        "summary": "List active curricula",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active curricula"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "post": {
+        "operationId": "CurriculumController_create",
+        "summary": "Create a curriculum",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCurriculumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Curriculum created"
+          },
+          "403": {
+            "description": "No scope covering this program"
+          },
+          "404": {
+            "description": "Program not found or inactive"
+          },
+          "409": {
+            "description": "Curriculum version already in use within this program"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curricula/inactive": {
+      "get": {
+        "operationId": "CurriculumController_findInactive",
+        "summary": "List deactivated curriculum records in the ADMIN scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated curriculum records"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curricula/{id}/reactivate": {
+      "post": {
+        "operationId": "CurriculumController_reactivate",
+        "summary": "Restore a deactivated curriculum (ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Curriculum reactivated"
+          },
+          "404": {
+            "description": "Curriculum not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curricula/{id}": {
+      "get": {
+        "operationId": "CurriculumController_findOne",
+        "summary": "Get a curriculum by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum found"
+          },
+          "404": {
+            "description": "Curriculum not found"
+          }
+        },
+        "tags": [
+          "organization"
+        ]
+      },
+      "patch": {
+        "operationId": "CurriculumController_update",
+        "summary": "Update a curriculum",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurriculumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Curriculum updated"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum not found"
+          },
+          "409": {
+            "description": "Curriculum version already in use within this program"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CurriculumController_remove",
+        "summary": "Soft-delete a curriculum",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum deactivated"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum not found"
+          }
+        },
+        "tags": [
+          "organization"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{userId}/scopes": {
+      "get": {
+        "operationId": "UserScopeController_findAll",
+        "summary": "List a user's scopes",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of the user's scopes"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "UserScopeController_create",
+        "summary": "Grant a scope to a user",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserScopeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scope granted"
+          },
+          "403": {
+            "description": "Grant is outside your own scope"
+          },
+          "404": {
+            "description": "User or scope target not found"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{userId}/scopes/{scopeId}": {
+      "delete": {
+        "operationId": "UserScopeController_remove",
+        "summary": "Revoke a scope from a user",
+        "parameters": [
+          {
+            "name": "scopeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scope revoked"
+          },
+          "403": {
+            "description": "Revoke is outside your own scope"
+          },
+          "404": {
+            "description": "Scope not found"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-profiles/me": {
+      "get": {
+        "operationId": "StudentProfilesController_getMe",
+        "summary": "Get the current student’s own profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Own student profile"
+          },
+          "404": {
+            "description": "No student profile found for this user"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-profiles": {
+      "get": {
+        "operationId": "StudentProfilesController_findAll",
+        "summary": "List student profiles — SUPER_ADMIN sees all, ADMIN/STAFF see only students in programs their scope covers (PROJECT_CONTEXT.md §10)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of student profiles"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-profiles/{id}": {
+      "get": {
+        "operationId": "StudentProfilesController_findOne",
+        "summary": "Get a student profile by id, suspended ones included (user.isActive is sign-in)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student profile found"
+          },
+          "403": {
+            "description": "No scope covering this student"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "StudentProfilesController_update",
+        "summary": "Correct a student’s program, curriculum or admission year (never the student code), with a reason; audited",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Student profile updated"
+          },
+          "400": {
+            "description": "Nothing changed, reason missing, curriculum not in program, or studentCode sent"
+          },
+          "403": {
+            "description": "Current or new program outside your scope"
+          },
+          "404": {
+            "description": "Student profile not found"
+          },
+          "409": {
+            "description": "Student suspended, or has grades/assessments outside the new curriculum"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-profiles/{id}/active-status": {
+      "patch": {
+        "operationId": "StudentProfilesController_updateActiveStatus",
+        "summary": "Suspend or reactivate a student account (sign-in and directory status together), with a reason; audited. Never deletes.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentActiveStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          },
+          "400": {
+            "description": "Reason missing or too short"
+          },
+          "403": {
+            "description": "No scope covering this student"
+          },
+          "404": {
+            "description": "Student profile not found"
+          },
+          "409": {
+            "description": "Already in that state"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-profiles/{id}/audit-logs": {
+      "get": {
+        "operationId": "StudentProfilesController_findAuditLogs",
+        "summary": "Read-only change history of a student (grades by staff/instructors, suspensions, profile edits), newest first",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit entries (actor name, never an email)"
+          },
+          "403": {
+            "description": "No scope covering this student"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "post": {
+        "operationId": "UserManagementController_create",
+        "summary": "Create an ADMIN/STAFF/INSTRUCTOR account (SUPER_ADMIN: any of these; ADMIN: STAFF only, scope required, must be within their own scope). Returns a system-generated temporary password once — relay it to the new user out-of-band; they should change it via PATCH /auth/change-password.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created, temporary password returned"
+          },
+          "400": {
+            "description": "role:STUDENT rejected, or scope missing for ADMIN"
+          },
+          "403": {
+            "description": "Role or scope outside what the requester may grant"
+          },
+          "409": {
+            "description": "Email already in use"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "UserManagementController_findAll",
+        "summary": "List non-STUDENT users — SUPER_ADMIN sees all, ADMIN sees only users within their own scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of users"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/instructors": {
+      "get": {
+        "operationId": "UserManagementController_findInstructors",
+        "summary": "List every INSTRUCTOR-role user in the system (not filtered by the requester scope, since instructors are tied to courses via CourseInstructor rather than UserScope; STAFF-reachable, unlike GET /users) — for picking an instructor to assign to a course. Returns id/fullName/email only.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of instructors"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "UserManagementController_findOne",
+        "summary": "Get a user by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User found"
+          },
+          "404": {
+            "description": "User not found or outside your scope"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/active-status": {
+      "patch": {
+        "operationId": "UserManagementController_updateActiveStatus",
+        "summary": "Suspend or reactivate a user. Never your own account (403). ADMIN: STAFF-only targets, and suspending requires every scope of the target to be inside the ADMIN scope (403 otherwise).",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserActiveStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Active status updated"
+          },
+          "404": {
+            "description": "User not found or outside your scope"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/resend-invitation": {
+      "post": {
+        "operationId": "UserManagementController_resendInvitation",
+        "summary": "Email a fresh password-setup link to a user who has not set a password yet (replaces any unused link; ADMIN: STAFF in own scope only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Password setup email sent"
+          },
+          "403": {
+            "description": "Own account, or a target this role may not manage"
+          },
+          "404": {
+            "description": "User not found or outside your scope"
+          },
+          "409": {
+            "description": "User has already set a password"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "The email could not be sent"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/roles": {
+      "post": {
+        "operationId": "UserManagementController_assignRole",
+        "summary": "Assign an additional role to a user (ADMIN: STAFF only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Role assigned"
+          },
+          "404": {
+            "description": "User not found or outside your scope"
+          },
+          "409": {
+            "description": "User already has this role"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/roles/{role}": {
+      "delete": {
+        "operationId": "UserManagementController_revokeRole",
+        "summary": "Revoke a role from a user (ADMIN: STAFF only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Role revoked"
+          },
+          "404": {
+            "description": "User not found, outside your scope, or does not have this role"
+          },
+          "409": {
+            "description": "Cannot revoke the user’s last remaining role"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/permanent": {
+      "delete": {
+        "operationId": "UserManagementController_hardDelete",
+        "summary": "Permanently delete a suspended, unreferenced account (SUPER_ADMIN). Never your own, a SUPER_ADMIN or a STUDENT account. Login data is deleted with it.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted"
+          },
+          "403": {
+            "description": "Own account, a SUPER_ADMIN or a STUDENT account"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "409": {
+            "description": "Account is still active, or still referenced (course instructor, grade entries, invitations)"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "summary": "Register a student. With invitationToken: creates the account, sets the refresh cookie and returns the access token. Without: starts an email sign-up (allowed domains only) and returns 202 with a generic message — the account is only created by POST /auth/register/verify.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invited: access token issued, refresh cookie set"
+          },
+          "202": {
+            "description": "Self-service: check-your-email message (same for every address)"
+          },
+          "400": {
+            "description": "Domain not allowed, or invalid/mismatched program/curriculum"
+          },
+          "409": {
+            "description": "Invited: email or student code already in use"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/register/verify": {
+      "post": {
+        "operationId": "AuthController_verifyEmailSignup",
+        "summary": "Finish an email sign-up with the token from the verification mail — creates the STUDENT account, sets the refresh cookie and returns the access token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailSignupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created, access token issued, refresh cookie set"
+          },
+          "401": {
+            "description": "Link expired, already used or invalid"
+          },
+          "409": {
+            "description": "Email already has an account, or student code taken"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/register/resend": {
+      "post": {
+        "operationId": "AuthController_resendEmailSignup",
+        "summary": "Re-send the verification mail of a pending email sign-up. Always the same generic answer; per-address cooldown and daily cap apply.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendEmailSignupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Generic check-your-email message"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/invitation/{token}": {
+      "get": {
+        "operationId": "AuthController_getInvitationPreview",
+        "summary": "Preview a StudentInvitation for the register page to pre-fill",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation details"
+          },
+          "401": {
+            "description": "Invitation expired or invalid"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "Verify email + password. If the account has 2FA enabled, returns a short-lived pendingToken instead of an access token — submit it with a TOTP/recovery code to POST /auth/2fa/verify to finish logging in. Otherwise sets the refresh token as an httpOnly cookie and returns the access token in the body, unchanged from before 2FA existed.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Access token issued (refresh cookie set), or a pendingToken if 2FA is required"
+          },
+          "401": {
+            "description": "Invalid email or password"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "summary": "Exchange the httpOnly refresh cookie for a new access token — the refresh token itself is not rotated",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "New access token issued"
+          },
+          "401": {
+            "description": "Refresh cookie missing, invalid, or expired"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/accept-invitation": {
+      "post": {
+        "operationId": "AuthController_acceptInvitation",
+        "summary": "Set a password for a user created via User Management (Module 12), consuming the invitation token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Password set — log in normally next"
+          },
+          "401": {
+            "description": "Invitation expired or invalid"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "summary": "Logout — revokes the refresh token from the httpOnly cookie server-side and clears the cookie. Always succeeds.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Refresh token revoked (if valid), cookie cleared"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_getMe",
+        "summary": "Get the current authenticated user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current user"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/change-password": {
+      "patch": {
+        "operationId": "AuthController_changePassword",
+        "summary": "Change the current user’s password",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed — all other sessions are signed out"
+          },
+          "401": {
+            "description": "Current password incorrect, or no password set on this account"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword",
+        "summary": "Request a password reset link — always returns the same response whether or not the email exists (prevents account enumeration)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "If an account exists, a reset link has been sent"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "summary": "Set a new password using a forgot-password reset token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Password reset — log in normally next"
+          },
+          "401": {
+            "description": "Reset link expired or invalid"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/2fa/setup": {
+      "post": {
+        "operationId": "AuthController_twoFactorSetup",
+        "summary": "Generate a new TOTP secret + QR code (not yet active) — call POST /auth/2fa/enable with a code from the scanned app to actually turn 2FA on. Safe to call repeatedly while 2FA is not yet enabled (each call overwrites the previous unconfirmed secret); 409 once enabled — disable it first.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "QR code (data URL) + secret for manual entry"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/2fa/enable": {
+      "post": {
+        "operationId": "AuthController_twoFactorEnable",
+        "summary": "Confirm a 6-digit code from the authenticator app to actually turn 2FA on — proves the app was set up correctly before it can lock the account. Returns 8 recovery codes, shown exactly once.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorEnableDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "2FA enabled; recovery codes (plaintext, one-time)"
+          },
+          "400": {
+            "description": "No pending setup — call POST /auth/2fa/setup first"
+          },
+          "401": {
+            "description": "Invalid verification code"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/2fa/regenerate-recovery-codes": {
+      "post": {
+        "operationId": "AuthController_twoFactorRegenerateRecoveryCodes",
+        "summary": "Replace all recovery codes with a fresh set of 8 — the old set stops working immediately (useful if you suspect they leaked, or just used your last one). Requires a live TOTP code, not the password.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorRegenerateRecoveryCodesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New recovery codes (plaintext, one-time)"
+          },
+          "400": {
+            "description": "2FA is not enabled on this account"
+          },
+          "401": {
+            "description": "Invalid verification code"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/2fa/disable": {
+      "post": {
+        "operationId": "AuthController_twoFactorDisable",
+        "summary": "Turn 2FA off — requires the current password to confirm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorDisableDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "2FA disabled"
+          },
+          "401": {
+            "description": "Current password is incorrect"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/2fa/verify": {
+      "post": {
+        "operationId": "AuthController_twoFactorVerify",
+        "summary": "Second step of login for an account with 2FA enabled — submit the pendingToken from POST /auth/login (as the Authorization bearer) plus a TOTP or recovery code. Issues the same access token + refresh cookie a normal login would.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Access token issued, refresh cookie set"
+          },
+          "401": {
+            "description": "pendingToken expired/invalid, or the code is wrong"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "operationId": "AuthController_googleAuth",
+        "summary": "Start Google OAuth sign-in (redirects to Google)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleAuthCallback",
+        "summary": "Google OAuth callback — a top-level browser redirect target, not a fetch call, so it can't return JSON. Sets the refresh cookie (returning user) then redirects into the frontend.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/google/complete-registration": {
+      "post": {
+        "operationId": "AuthController_completeGoogleRegistration",
+        "summary": "Finish Google sign-up by supplying the remaining student fields — sets the refresh token as an httpOnly cookie and returns the access token in the body",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteGoogleRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Access token issued, refresh cookie set"
+          },
+          "400": {
+            "description": "Invalid or mismatched program/curriculum"
+          },
+          "401": {
+            "description": "Pending registration session expired or invalid"
+          },
+          "409": {
+            "description": "Student code already in use"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/student-invitations": {
+      "post": {
+        "operationId": "StudentInvitationController_create",
+        "summary": "Invite a prospective STUDENT — creates a token-gated draft, not an account; the invited person still self-registers via /auth/register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation created and emailed"
+          },
+          "400": {
+            "description": "Curriculum does not belong to program"
+          },
+          "403": {
+            "description": "No scope covering this program"
+          },
+          "409": {
+            "description": "Student code or email already in use"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "StudentInvitationController_findAll",
+        "summary": "List pending student invitations within the caller's scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Pending invitations"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-invitations/{id}/resend": {
+      "post": {
+        "operationId": "StudentInvitationController_resend",
+        "summary": "Reissue a fresh token+expiry and resend the invitation email",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Invitation resent"
+          },
+          "403": {
+            "description": "No scope covering this invitation"
+          },
+          "404": {
+            "description": "Invitation not found"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-invitations/{id}": {
+      "delete": {
+        "operationId": "StudentInvitationController_remove",
+        "summary": "Cancel a pending student invitation (its link stops working); audited",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation cancelled"
+          },
+          "403": {
+            "description": "No scope covering this invitation"
+          },
+          "404": {
+            "description": "Invitation not found, already used or cancelled"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-categories": {
+      "get": {
+        "operationId": "CourseCategoryController_findAll",
+        "summary": "List active course categories within the caller scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active course categories"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CourseCategoryController_create",
+        "summary": "Create a course category",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course category created"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum not found or inactive"
+          },
+          "409": {
+            "description": "Course category name already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-categories/{id}": {
+      "get": {
+        "operationId": "CourseCategoryController_findOne",
+        "summary": "Get a course category by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course category found"
+          },
+          "404": {
+            "description": "Course category not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CourseCategoryController_update",
+        "summary": "Update a course category",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course category updated"
+          },
+          "403": {
+            "description": "No scope covering this course category"
+          },
+          "404": {
+            "description": "Course category not found"
+          },
+          "409": {
+            "description": "Course category name already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CourseCategoryController_remove",
+        "summary": "Soft-delete a course category",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course category deactivated"
+          },
+          "403": {
+            "description": "No scope covering this course category"
+          },
+          "404": {
+            "description": "Course category not found"
+          },
+          "409": {
+            "description": "Course category still has active courses"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses": {
+      "get": {
+        "operationId": "CourseController_findAll",
+        "summary": "List active courses within the caller scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active courses"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CourseController_create",
+        "summary": "Create a course",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course created"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum or course category not found or inactive"
+          },
+          "409": {
+            "description": "Course code already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses/inactive": {
+      "get": {
+        "operationId": "CourseController_findInactive",
+        "summary": "List deactivated courses within the caller scope (STAFF)",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of deactivated courses"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses/{id}": {
+      "get": {
+        "operationId": "CourseController_findOne",
+        "summary": "Get a course by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course found"
+          },
+          "404": {
+            "description": "Course not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CourseController_update",
+        "summary": "Update a course",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course updated"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Course not found or deactivated"
+          },
+          "409": {
+            "description": "Course code already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CourseController_remove",
+        "summary": "Soft-delete a course",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course deactivated"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Course not found or already deactivated"
+          },
+          "409": {
+            "description": "Course is a prerequisite of another course, or still has student records, instructors, CLOs, assessments, study plans or career links"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses/{id}/reactivate": {
+      "post": {
+        "operationId": "CourseController_reactivate",
+        "summary": "Restore a deactivated course (STAFF)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Course reactivated"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "409": {
+            "description": "Already active, its curriculum or category is deactivated, or the code is taken by an active course"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-instructors": {
+      "get": {
+        "operationId": "CourseInstructorController_findAll",
+        "summary": "List course-instructor assignments within the caller scope, optionally filtered by course",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of assignments"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CourseInstructorController_create",
+        "summary": "Assign an instructor to a course",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseInstructorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assignment created"
+          },
+          "400": {
+            "description": "User does not have the INSTRUCTOR role"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "User or course not found"
+          },
+          "409": {
+            "description": "Assignment already exists"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-instructors/{id}": {
+      "delete": {
+        "operationId": "CourseInstructorController_remove",
+        "summary": "Remove an instructor from a course",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assignment removed"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-assessments": {
+      "post": {
+        "operationId": "CourseAssessmentController_create",
+        "summary": "Submit a self-assessment against a course's CLOs (1-5 scale) — supplementary to Grade-based Achievement, never replaces it (PROJECT_CONTEXT.md §27)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseAssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment submitted"
+          },
+          "400": {
+            "description": "Course not taken yet, or a CLO does not belong to this course"
+          },
+          "409": {
+            "description": "Already submitted — use PATCH to revise"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-assessments/me": {
+      "get": {
+        "operationId": "CourseAssessmentController_findAllOwn",
+        "summary": "List the current student's own assessments plus how many assessable courses are still pending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Own assessments and pending count"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-assessments/course/{courseId}/me": {
+      "get": {
+        "operationId": "CourseAssessmentController_findOwn",
+        "summary": "Get the current student's own assessment for a course",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own assessment"
+          },
+          "404": {
+            "description": "No assessment submitted for this course"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-assessments/{id}": {
+      "patch": {
+        "operationId": "CourseAssessmentController_update",
+        "summary": "Revise a previously submitted assessment (replaces all CLO scores)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseAssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment revised"
+          },
+          "400": {
+            "description": "A CLO does not belong to this assessment's course"
+          },
+          "404": {
+            "description": "Assessment not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CourseAssessmentController_remove",
+        "summary": "Delete a submitted assessment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment deleted"
+          },
+          "404": {
+            "description": "Assessment not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/course-assessments/course/{courseId}/aggregate": {
+      "get": {
+        "operationId": "CourseAssessmentController_getAggregate",
+        "summary": "Aggregate Course Assessment view (average score per CLO, submission count) — numeric only, no individual comments or student identity",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregate assessment report"
+          },
+          "403": {
+            "description": "Not assigned to this course, or no scope covering it"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curriculum-requirements": {
+      "get": {
+        "operationId": "CurriculumRequirementController_findAll",
+        "summary": "List curriculum requirements within the caller scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of curriculum requirements"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CurriculumRequirementController_create",
+        "summary": "Create a curriculum requirement",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCurriculumRequirementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Curriculum requirement created"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum or course category not found or inactive"
+          },
+          "409": {
+            "description": "Course category already has a curriculum requirement"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/curriculum-requirements/{id}": {
+      "get": {
+        "operationId": "CurriculumRequirementController_findOne",
+        "summary": "Get a curriculum requirement by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum requirement found"
+          },
+          "404": {
+            "description": "Curriculum requirement not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CurriculumRequirementController_update",
+        "summary": "Update a curriculum requirement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurriculumRequirementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Curriculum requirement updated"
+          },
+          "403": {
+            "description": "No scope covering this curriculum requirement"
+          },
+          "404": {
+            "description": "Curriculum requirement not found"
+          },
+          "409": {
+            "description": "Course category already has a curriculum requirement"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CurriculumRequirementController_remove",
+        "summary": "Delete a curriculum requirement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum requirement deleted"
+          },
+          "403": {
+            "description": "No scope covering this curriculum requirement"
+          },
+          "404": {
+            "description": "Curriculum requirement not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/prerequisites": {
+      "get": {
+        "operationId": "PrerequisiteController_findAll",
+        "summary": "List prerequisites within the caller scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of prerequisites"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "PrerequisiteController_create",
+        "summary": "Create a prerequisite",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePrerequisiteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prerequisite created"
+          },
+          "400": {
+            "description": "Invalid or cross-curriculum course pair"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          },
+          "409": {
+            "description": "Prerequisite already exists"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/prerequisites/{id}": {
+      "get": {
+        "operationId": "PrerequisiteController_findOne",
+        "summary": "Get a prerequisite by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prerequisite found"
+          },
+          "404": {
+            "description": "Prerequisite not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "PrerequisiteController_update",
+        "summary": "Update a prerequisite (groupId only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePrerequisiteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prerequisite updated"
+          },
+          "403": {
+            "description": "No scope covering this prerequisite"
+          },
+          "404": {
+            "description": "Prerequisite not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PrerequisiteController_remove",
+        "summary": "Delete a prerequisite",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prerequisite deleted"
+          },
+          "403": {
+            "description": "No scope covering this prerequisite"
+          },
+          "404": {
+            "description": "Prerequisite not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plos": {
+      "get": {
+        "operationId": "PloController_findAll",
+        "summary": "List active PLOs within the caller scope",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active PLOs"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "PloController_create",
+        "summary": "Create a PLO",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePloDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PLO created"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum not found or inactive"
+          },
+          "409": {
+            "description": "PLO code already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plos/{id}": {
+      "get": {
+        "operationId": "PloController_findOne",
+        "summary": "Get a PLO by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PLO found"
+          },
+          "404": {
+            "description": "PLO not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "PloController_update",
+        "summary": "Update a PLO",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePloDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PLO updated"
+          },
+          "403": {
+            "description": "No scope covering this PLO"
+          },
+          "404": {
+            "description": "PLO not found"
+          },
+          "409": {
+            "description": "PLO code already in use within this curriculum"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PloController_remove",
+        "summary": "Soft-delete a PLO",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PLO deactivated"
+          },
+          "403": {
+            "description": "No scope covering this PLO"
+          },
+          "404": {
+            "description": "PLO not found"
+          },
+          "409": {
+            "description": "PLO still has active CLO-PLO mappings"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/clos": {
+      "get": {
+        "operationId": "CloController_findAll",
+        "summary": "List active CLOs within the caller scope",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active CLOs"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CloController_create",
+        "summary": "Create a CLO",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCloDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "CLO created"
+          },
+          "403": {
+            "description": "No scope covering this course"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          },
+          "409": {
+            "description": "CLO code already in use within this course"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/clos/{id}": {
+      "get": {
+        "operationId": "CloController_findOne",
+        "summary": "Get a CLO by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLO found"
+          },
+          "404": {
+            "description": "CLO not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CloController_update",
+        "summary": "Update a CLO",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCloDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CLO updated"
+          },
+          "403": {
+            "description": "No scope covering this CLO"
+          },
+          "404": {
+            "description": "CLO not found or deactivated"
+          },
+          "409": {
+            "description": "CLO code already in use within this course"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CloController_remove",
+        "summary": "Soft-delete a CLO",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLO deactivated"
+          },
+          "403": {
+            "description": "No scope covering this CLO"
+          },
+          "404": {
+            "description": "CLO not found"
+          },
+          "409": {
+            "description": "CLO still has active CLO-PLO mappings or assessment scores"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/clo-plo-mappings": {
+      "get": {
+        "operationId": "CloPloMappingController_findAll",
+        "summary": "List active CLO-PLO mappings within the caller scope",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active CLO-PLO mappings"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CloPloMappingController_create",
+        "summary": "Create a CLO-PLO mapping",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCloPloMappingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "CLO-PLO mapping created"
+          },
+          "400": {
+            "description": "CLO and PLO do not belong to the same curriculum"
+          },
+          "403": {
+            "description": "No scope covering this PLO"
+          },
+          "404": {
+            "description": "CLO or PLO not found or inactive"
+          },
+          "409": {
+            "description": "CLO-PLO mapping already exists"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/clo-plo-mappings/{id}": {
+      "get": {
+        "operationId": "CloPloMappingController_findOne",
+        "summary": "Get a CLO-PLO mapping by id within the caller scope",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLO-PLO mapping found"
+          },
+          "404": {
+            "description": "CLO-PLO mapping not found or outside the caller scope"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CloPloMappingController_update",
+        "summary": "Update a CLO-PLO mapping (weight only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCloPloMappingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CLO-PLO mapping updated"
+          },
+          "403": {
+            "description": "No scope covering this CLO-PLO mapping"
+          },
+          "404": {
+            "description": "CLO-PLO mapping not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CloPloMappingController_remove",
+        "summary": "Soft-delete a CLO-PLO mapping",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLO-PLO mapping deactivated"
+          },
+          "403": {
+            "description": "No scope covering this CLO-PLO mapping"
+          },
+          "404": {
+            "description": "CLO-PLO mapping not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/clo-achievement/course/{courseId}": {
+      "get": {
+        "operationId": "CloAchievementController_calculateForCourse",
+        "summary": "CLO Achievement for a course — % of students graded B or above (Grade-based Assessment, PROJECT_CONTEXT.md §22)",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLO achievement report"
+          },
+          "403": {
+            "description": "Not assigned to this course"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-course-records": {
+      "get": {
+        "operationId": "StudentCourseRecordController_findAll",
+        "summary": "List student course records (STUDENT sees only their own; ADMIN/STAFF see students in their scope; SUPER_ADMIN sees all)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of student course records"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "StudentCourseRecordController_create",
+        "summary": "Create a student course record",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentCourseRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student course record created"
+          },
+          "404": {
+            "description": "Student profile, course, or semester not found or inactive"
+          },
+          "409": {
+            "description": "A record for this course/semester already exists"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-course-records/gpa/{studentProfileId}": {
+      "get": {
+        "operationId": "StudentCourseRecordController_calculateGpa",
+        "summary": "Calculate GPA for a student profile (deterministic, computed live)",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GPA calculation result"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/student-course-records/{id}": {
+      "get": {
+        "operationId": "StudentCourseRecordController_findOne",
+        "summary": "Get a student course record by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student course record found"
+          },
+          "404": {
+            "description": "Student course record not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "StudentCourseRecordController_update",
+        "summary": "Update a student course record (grade only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentCourseRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Student course record updated"
+          },
+          "404": {
+            "description": "Student course record not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "StudentCourseRecordController_remove",
+        "summary": "Delete a student course record",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student course record deleted"
+          },
+          "404": {
+            "description": "Student course record not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses/{courseId}/students": {
+      "get": {
+        "operationId": "CourseStudentsController_getStudentsForCourse",
+        "summary": "Student roster for a course — studentCode/fullName/latest grade only (PROJECT_CONTEXT.md §9)",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student roster for the course"
+          },
+          "403": {
+            "description": "Not assigned to this course / out of scope"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          }
+        },
+        "tags": [
+          "courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/courses/{courseId}/students/{studentProfileId}/timeline": {
+      "get": {
+        "operationId": "CourseStudentsController_getStudentTimeline",
+        "summary": "A student's grades in every course the requesting instructor teaches — never the student's full transcript. :courseId only gates access (must teach at least this course); the course list used is always this instructor's own, resolved server-side.",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Timeline scoped to the requesting instructor"
+          },
+          "403": {
+            "description": "Not assigned to :courseId"
+          },
+          "404": {
+            "description": "Student not found"
+          }
+        },
+        "tags": [
+          "courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/semesters": {
+      "get": {
+        "operationId": "SemesterController_findAll",
+        "summary": "List active semesters",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active semesters"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "SemesterController_create",
+        "summary": "Create a semester",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSemesterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Semester created"
+          },
+          "404": {
+            "description": "Academic year not found or inactive"
+          },
+          "409": {
+            "description": "Semester term already in use within this academic year"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/semesters/inactive": {
+      "get": {
+        "operationId": "SemesterController_findInactive",
+        "summary": "List deactivated semester records (SUPER_ADMIN)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated semester records"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/semesters/{id}/reactivate": {
+      "post": {
+        "operationId": "SemesterController_reactivate",
+        "summary": "Restore a deactivated semester (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Semester reactivated"
+          },
+          "404": {
+            "description": "Semester not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/semesters/{id}": {
+      "get": {
+        "operationId": "SemesterController_findOne",
+        "summary": "Get a semester by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semester found"
+          },
+          "404": {
+            "description": "Semester not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "SemesterController_update",
+        "summary": "Update a semester",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSemesterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Semester updated"
+          },
+          "404": {
+            "description": "Semester not found"
+          },
+          "409": {
+            "description": "Semester term already in use within this academic year"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SemesterController_remove",
+        "summary": "Soft-delete a semester",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semester deactivated"
+          },
+          "404": {
+            "description": "Semester not found"
+          },
+          "409": {
+            "description": "Semester still has student course records"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/semesters/{id}/permanent": {
+      "delete": {
+        "operationId": "SemesterController_hardDelete",
+        "summary": "Permanently delete a deactivated, unreferenced semester (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Semester deleted"
+          },
+          "404": {
+            "description": "Semester not found"
+          },
+          "409": {
+            "description": "Semester is still active or still referenced by records/assessments"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years": {
+      "get": {
+        "operationId": "AcademicYearController_findAll",
+        "summary": "List active academic years",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active academic years"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AcademicYearController_create",
+        "summary": "Create an academic year",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAcademicYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Academic year created"
+          },
+          "409": {
+            "description": "Academic year already exists"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/inactive": {
+      "get": {
+        "operationId": "AcademicYearController_findInactive",
+        "summary": "List deactivated academic year records (SUPER_ADMIN)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deactivated academic year records"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/{id}/reactivate": {
+      "post": {
+        "operationId": "AcademicYearController_reactivate",
+        "summary": "Restore a deactivated academic year (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Academic year reactivated"
+          },
+          "404": {
+            "description": "Academic year not found"
+          },
+          "409": {
+            "description": "Already active, parent still deactivated, or the key is taken by an active record"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/{id}": {
+      "get": {
+        "operationId": "AcademicYearController_findOne",
+        "summary": "Get an academic year by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Academic year found"
+          },
+          "404": {
+            "description": "Academic year not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "AcademicYearController_update",
+        "summary": "Update an academic year",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAcademicYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Academic year updated"
+          },
+          "404": {
+            "description": "Academic year not found"
+          },
+          "409": {
+            "description": "Academic year already exists"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AcademicYearController_remove",
+        "summary": "Soft-delete an academic year",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Academic year deactivated"
+          },
+          "404": {
+            "description": "Academic year not found"
+          },
+          "409": {
+            "description": "Academic year still has active semesters"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/bulk": {
+      "post": {
+        "operationId": "AcademicYearController_bulkCreate",
+        "summary": "Create a run of consecutive academic years and their terms atomically; existing years/terms are skipped",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCreateAcademicYearsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Per-year and per-term created/skipped status"
+          },
+          "400": {
+            "description": "Invalid range (last year above 2700) or body"
+          },
+          "409": {
+            "description": "Concurrent duplicate — nothing saved"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/{id}/permanent": {
+      "delete": {
+        "operationId": "AcademicYearController_hardDelete",
+        "summary": "Permanently delete a deactivated academic year and its semesters when nothing references them (SUPER_ADMIN)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Academic year deleted"
+          },
+          "404": {
+            "description": "Academic year not found"
+          },
+          "409": {
+            "description": "Year is still active, has active semesters, or is still referenced"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plo-achievement/student/{studentProfileId}": {
+      "get": {
+        "operationId": "PloAchievementController_calculateForStudent",
+        "summary": "PLO Achievement for a student — radar chart, strengths, areas for improvement (PROJECT_CONTEXT.md §23A/§24)",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student PLO achievement report"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plo-achievement/course/{courseId}": {
+      "get": {
+        "operationId": "PloAchievementController_calculateForCourse",
+        "summary": "PLO Achievement for a course — weighted rollup of CLO achievement % per PLO (PROJECT_CONTEXT.md §23B)",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course PLO achievement report"
+          },
+          "403": {
+            "description": "Not assigned to this course"
+          },
+          "404": {
+            "description": "Course not found or inactive"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plo-achievement/cohort/{curriculumId}/{admissionYear}": {
+      "get": {
+        "operationId": "PloAchievementController_calculateForCohort",
+        "summary": "PLO Achievement for a cohort (curriculum + admission year) — average GPA, average PLO radar, strengths/weaknesses (PROJECT_CONTEXT.md §23C)",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "admissionYear",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cohort PLO achievement report"
+          },
+          "404": {
+            "description": "Curriculum not found or inactive"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/plo-achievement/curriculum/{curriculumId}": {
+      "get": {
+        "operationId": "PloAchievementController_calculateForCurriculum",
+        "summary": "PLO Achievement for a whole curriculum — student count, average GPA, graduation readiness, students at risk, average PLO radar, lowest CLO/PLO, course analytics, cohort comparison (PROJECT_CONTEXT.md §23D)",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum PLO achievement report"
+          },
+          "404": {
+            "description": "Curriculum not found or inactive"
+          }
+        },
+        "tags": [
+          "curriculum-content"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/credit-checker/{studentProfileId}": {
+      "get": {
+        "operationId": "CreditCheckerController_checkCredits",
+        "summary": "Smart Credit Checker — degree progress report for a student profile, computed from their own curriculum version",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credit check report"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/learning-path/{studentProfileId}": {
+      "get": {
+        "operationId": "LearningPathController_getLearningPath",
+        "summary": "Learning Path Planner — courses ready to take now (prerequisite-satisfied), missing required/elective, graduation readiness (PROJECT_CONTEXT.md §28)",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Learning path report"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/credit-limit-requests/me": {
+      "get": {
+        "operationId": "CreditLimitRequestController_getMyRequest",
+        "summary": "Current student's active credit-limit request, or null if none",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Request, or null"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CreditLimitRequestController_upsertMyRequest",
+        "summary": "Create/replace the current student's credit-limit request — self-declared, takes effect immediately, no approval step",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditLimitRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request saved"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CreditLimitRequestController_deleteMyRequest",
+        "summary": "Cancel the current student's credit-limit request",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Request removed (or already absent)"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/learning-path-plan/me": {
+      "get": {
+        "operationId": "LearningPathPlanController_getMyPlan",
+        "summary": "Current student's saved next-semester plan, or null if none saved",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "{ courseIds } in plan order, or null"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "LearningPathPlanController_saveMyPlan",
+        "summary": "Replace the current student's saved next-semester plan",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLearningPathPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan saved"
+          },
+          "400": {
+            "description": "A course is already passed or has unmet prerequisites"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "LearningPathPlanController_deleteMyPlan",
+        "summary": "Discard the current student's saved plan (back to the recommendation)",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Plan removed (or already absent)"
+          }
+        },
+        "tags": [
+          "academic-record"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/student/{studentProfileId}": {
+      "get": {
+        "operationId": "DashboardController_getStudentDashboard",
+        "summary": "Student Dashboard — GPA, credits, progress %, graduation readiness, PLO radar, recent courses, missing requirements (PROJECT_CONTEXT.md §29)",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student dashboard report"
+          },
+          "404": {
+            "description": "Student profile not found"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/instructor": {
+      "get": {
+        "operationId": "DashboardController_getInstructorDashboard",
+        "summary": "Instructor Dashboard — the current instructor's own courses with student count, CLO/PLO achievement, Course Assessment aggregate (PROJECT_CONTEXT.md §30)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Instructor dashboard report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/instructor/course-timeline": {
+      "get": {
+        "operationId": "DashboardController_getInstructorCourseTimeline",
+        "summary": "Instructor course timeline — the current instructor's own courses grouped by academic year -> semester, with each course's predominant student year level",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Instructor course timeline report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/instructor/students": {
+      "get": {
+        "operationId": "DashboardController_getInstructorStudents",
+        "summary": "Student Monitoring — one row per (student, course) pair across ALL of the instructor's own courses, filterable by course/risk level",
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "riskLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "CRITICAL",
+                "WATCH",
+                "NORMAL"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instructor students report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/instructor/year-levels": {
+      "get": {
+        "operationId": "DashboardController_getInstructorYearLevels",
+        "summary": "Year Level Overview — students grouped by year level (1-4), scoped to only students who have taken a course with this instructor",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Instructor year-levels report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/staff": {
+      "get": {
+        "operationId": "DashboardController_getStaffOverview",
+        "summary": "Staff Dashboard — program/curriculum overview within scope: student count, average GPA, courses missing CLOs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Staff overview report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/staff/students": {
+      "get": {
+        "operationId": "DashboardController_getStaffStudentRisk",
+        "summary": "Staff student directory — every student in scope with GPA and risk level, for filtering the directory by risk",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Risk-annotated student list"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/staff/year-levels": {
+      "get": {
+        "operationId": "DashboardController_getStaffYearLevels",
+        "summary": "Staff Year Level Overview — active students in scope grouped by year level (1-4), each with GPA and risk level",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Staff year-levels report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/curriculum/{curriculumId}": {
+      "get": {
+        "operationId": "DashboardController_getCurriculumDashboard",
+        "summary": "Curriculum/Program Analytics Dashboard — student count, average GPA, graduation readiness, students at risk, PLO radar, cohort comparison, course analytics, lowest CLO/PLO (PROJECT_CONTEXT.md §31)",
+        "parameters": [
+          {
+            "name": "curriculumId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculum dashboard report"
+          },
+          "403": {
+            "description": "No scope covering this curriculum"
+          },
+          "404": {
+            "description": "Curriculum not found or inactive"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/admin/scope-overview": {
+      "get": {
+        "operationId": "DashboardController_getAdminScopeOverview",
+        "summary": "ADMIN Scope Overview — the Faculty/Department/Program footprint the requester's own UserScope covers, user counts by role within it, and the same 3-tier curriculum classification as the system-wide dashboard, narrowed to scope",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Admin scope overview report"
+          }
+        },
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/ai-analysis/student/{studentProfileId}": {
+      "get": {
+        "operationId": "AiAnalysisController_getStudentAnalysis",
+        "summary": "AI Skill Analysis — hedged Thai-language interpretation of already-computed GPA/CLO/PLO/learning-path data (PROJECT_CONTEXT.md §25-26)",
+        "parameters": [
+          {
+            "name": "studentProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AI skill analysis report"
+          },
+          "404": {
+            "description": "Student profile not found"
+          },
+          "503": {
+            "description": "AI analysis service temporarily unavailable"
+          }
+        },
+        "tags": [
+          "ai-analysis"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/api/students/me/career-fit": {
+      "get": {
+        "operationId": "CareerFitController_getMyCareerFit",
+        "summary": "ความเหมาะสมกับสายอาชีพของนิสิต (เฉพาะของตนเอง) คำนวณจากผลการเรียนและหลักสูตรของนิสิต",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerFitReportDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ไม่พบข้อมูลนิสิต"
+          }
+        },
+        "tags": [
+          "career-fit"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "EduAnalyzeAI API",
+    "description": "Academic progress tracking and learning outcome analytics system",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "access-token": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CreateFacultyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Faculty of Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "ENG"
+          }
+        },
+        "required": [
+          "name",
+          "code"
+        ]
+      },
+      "UpdateFacultyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Faculty of Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "ENG"
+          }
+        }
+      },
+      "CreateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Department of Computer Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "CPE"
+          },
+          "facultyId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "facultyId"
+        ]
+      },
+      "UpdateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Department of Computer Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "CPE"
+          }
+        }
+      },
+      "CreateProgramDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bachelor of Computer Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "BCPE"
+          },
+          "departmentId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "departmentId"
+        ]
+      },
+      "UpdateProgramDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bachelor of Computer Engineering"
+          },
+          "code": {
+            "type": "string",
+            "example": "BCPE"
+          }
+        }
+      },
+      "CreateCurriculumDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "version": {
+            "type": "string",
+            "example": "2026"
+          },
+          "effectiveYear": {
+            "type": "number",
+            "example": 2026
+          },
+          "totalCredits": {
+            "type": "number",
+            "example": 132
+          },
+          "isOpenForRegistration": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          },
+          "defaultAchievementThreshold": {
+            "type": "number",
+            "example": 70,
+            "default": 70,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "maxCreditsPerSemester": {
+            "type": "number",
+            "example": 22,
+            "default": 22,
+            "minimum": 1,
+            "description": "Semester Planning credit cap (§28) — 22 is KU Kamphaeng Saen's default, override per curriculum for other institutions"
+          },
+          "durationYears": {
+            "type": "number",
+            "example": 4,
+            "default": 4,
+            "minimum": 1,
+            "maximum": 8,
+            "description": "Nominal program length in years, used for the on-track expected-credits rule"
+          }
+        },
+        "required": [
+          "programId",
+          "version",
+          "effectiveYear",
+          "totalCredits"
+        ]
+      },
+      "UpdateCurriculumDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "2026"
+          },
+          "effectiveYear": {
+            "type": "number",
+            "example": 2026
+          },
+          "totalCredits": {
+            "type": "number",
+            "example": 132
+          },
+          "isOpenForRegistration": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          },
+          "defaultAchievementThreshold": {
+            "type": "number",
+            "example": 70,
+            "default": 70,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "maxCreditsPerSemester": {
+            "type": "number",
+            "example": 22,
+            "default": 22,
+            "minimum": 1,
+            "description": "Semester Planning credit cap (§28) — 22 is KU Kamphaeng Saen's default, override per curriculum for other institutions"
+          },
+          "durationYears": {
+            "type": "number",
+            "example": 4,
+            "default": 4,
+            "minimum": 1,
+            "maximum": 8,
+            "description": "Nominal program length in years, used for the on-track expected-credits rule"
+          }
+        }
+      },
+      "CreateUserScopeDto": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "FACULTY",
+              "DEPARTMENT",
+              "PROGRAM"
+            ],
+            "example": "DEPARTMENT"
+          },
+          "targetId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "level",
+          "targetId"
+        ]
+      },
+      "UpdateStudentProfileDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "example": "6f1c…",
+            "description": "Must be inside your scope too"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "9a2e…",
+            "description": "Must belong to the (new) program"
+          },
+          "admissionYear": {
+            "type": "number",
+            "example": 2026
+          },
+          "reason": {
+            "type": "string",
+            "example": "แก้ปีเข้าที่กรอกผิดตอนเชิญ",
+            "minLength": 5,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "UpdateStudentActiveStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "example": false
+          },
+          "reason": {
+            "type": "string",
+            "example": "ลาออกตามคำร้องเลขที่ 12/2569",
+            "minLength": 5,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "isActive",
+          "reason"
+        ]
+      },
+      "InitialScopeDto": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "FACULTY",
+              "DEPARTMENT",
+              "PROGRAM"
+            ],
+            "example": "DEPARTMENT"
+          },
+          "targetId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "level",
+          "targetId"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "staff@example.ac.th"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Somchai Jaidee"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "INSTRUCTOR",
+              "STAFF",
+              "ADMIN",
+              "SUPER_ADMIN"
+            ],
+            "example": "STAFF"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/InitialScopeDto"
+          }
+        },
+        "required": [
+          "email",
+          "fullName",
+          "role"
+        ]
+      },
+      "UpdateUserActiveStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "isActive"
+        ]
+      },
+      "AssignRoleDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "INSTRUCTOR",
+              "STAFF",
+              "ADMIN",
+              "SUPER_ADMIN"
+            ],
+            "example": "STAFF"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "student@example.ac.th"
+          },
+          "password": {
+            "type": "string",
+            "example": "P@ssw0rd123"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Somchai Jaidee"
+          },
+          "invitationToken": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "studentCode": {
+            "type": "string",
+            "example": "6512345678"
+          },
+          "programId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "admissionYear": {
+            "type": "number",
+            "example": 2026
+          },
+          "acceptPrivacyPolicy": {
+            "type": "boolean",
+            "example": true
+          },
+          "privacyPolicyVersion": {
+            "type": "string",
+            "example": "2026-10-18-draft.1"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "acceptPrivacyPolicy",
+          "privacyPolicyVersion"
+        ]
+      },
+      "VerifyEmailSignupDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "ResendEmailSignupDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "student@ku.th"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "student@example.ac.th"
+          },
+          "password": {
+            "type": "string",
+            "example": "P@ssw0rd123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AcceptInvitationDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "password": {
+            "type": "string",
+            "example": "P@ssw0rd123"
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "example": "OldP@ssw0rd123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewP@ssw0rd456"
+          }
+        },
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "student@example.ac.th"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewP@ssw0rd456"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "TwoFactorEnableDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "6-digit code from the authenticator app"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "TwoFactorRegenerateRecoveryCodesDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "6-digit code from the authenticator app"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "TwoFactorDisableDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "example": "CurrentP@ssw0rd123"
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "TwoFactorVerifyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "TOTP code or a recovery code (XXXX-XXXX)"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "CompleteGoogleRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "studentCode": {
+            "type": "string",
+            "example": "6512345678"
+          },
+          "programId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "admissionYear": {
+            "type": "number",
+            "example": 2026
+          },
+          "acceptPrivacyPolicy": {
+            "type": "boolean",
+            "example": true
+          },
+          "privacyPolicyVersion": {
+            "type": "string",
+            "example": "2026-10-18-draft.1"
+          }
+        },
+        "required": [
+          "pendingToken",
+          "studentCode",
+          "programId",
+          "curriculumId",
+          "admissionYear",
+          "acceptPrivacyPolicy",
+          "privacyPolicyVersion"
+        ]
+      },
+      "CreateStudentInvitationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "incoming-student@example.ac.th"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Somchai Jaidee"
+          },
+          "studentCode": {
+            "type": "string",
+            "example": "6712345678"
+          },
+          "programId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "admissionYear": {
+            "type": "number",
+            "example": 2027
+          }
+        },
+        "required": [
+          "email",
+          "fullName",
+          "studentCode",
+          "programId",
+          "curriculumId",
+          "admissionYear"
+        ]
+      },
+      "CreateCourseCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "หมวดวิชาศึกษาทั่วไป"
+          },
+          "code": {
+            "type": "string",
+            "example": "GENED"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "name",
+          "curriculumId"
+        ]
+      },
+      "UpdateCourseCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "หมวดวิชาศึกษาทั่วไป"
+          },
+          "code": {
+            "type": "string",
+            "example": "GENED"
+          }
+        }
+      },
+      "CreateCourseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CS101"
+          },
+          "name": {
+            "type": "string",
+            "example": "หลักการเขียนโปรแกรม"
+          },
+          "nameEn": {
+            "type": "string",
+            "example": "Principles of Programming"
+          },
+          "credits": {
+            "type": "number",
+            "example": 3,
+            "minimum": 0,
+            "maximum": 12
+          },
+          "description": {
+            "type": "string",
+            "example": "Fundamentals of programming using Python"
+          },
+          "isRequired": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "credits",
+          "curriculumId",
+          "categoryId"
+        ]
+      },
+      "UpdateCourseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CS101"
+          },
+          "name": {
+            "type": "string",
+            "example": "หลักการเขียนโปรแกรม"
+          },
+          "nameEn": {
+            "type": "string",
+            "example": "Principles of Programming"
+          },
+          "credits": {
+            "type": "number",
+            "example": 3,
+            "minimum": 0,
+            "maximum": 12
+          },
+          "description": {
+            "type": "string",
+            "example": "Fundamentals of programming using Python"
+          },
+          "isRequired": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        }
+      },
+      "CreateCourseInstructorDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "courseId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "userId",
+          "courseId"
+        ]
+      },
+      "CloScoreDto": {
+        "type": "object",
+        "properties": {
+          "cloId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "score": {
+            "type": "number",
+            "example": 4,
+            "minimum": 1,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "cloId",
+          "score"
+        ]
+      },
+      "CreateCourseAssessmentDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "cloScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CloScoreDto"
+            }
+          },
+          "comment": {
+            "type": "string",
+            "example": "Course นี้ช่วยให้เข้าใจการเขียนโปรแกรมมากขึ้น"
+          }
+        },
+        "required": [
+          "courseId",
+          "cloScores"
+        ]
+      },
+      "UpdateCourseAssessmentDto": {
+        "type": "object",
+        "properties": {
+          "cloScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CloScoreDto"
+            }
+          },
+          "comment": {
+            "type": "string",
+            "example": "Course นี้ช่วยให้เข้าใจการเขียนโปรแกรมมากขึ้น"
+          }
+        },
+        "required": [
+          "cloScores"
+        ]
+      },
+      "CreateCurriculumRequirementDto": {
+        "type": "object",
+        "properties": {
+          "curriculumId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "minCredits": {
+            "type": "number",
+            "example": 30
+          },
+          "minCourses": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "curriculumId",
+          "categoryId",
+          "minCredits"
+        ]
+      },
+      "UpdateCurriculumRequirementDto": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "minCredits": {
+            "type": "number",
+            "example": 30
+          },
+          "minCourses": {
+            "type": "number",
+            "example": 10
+          }
+        }
+      },
+      "CreatePrerequisiteDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "prerequisiteCourseId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "groupId": {
+            "type": "string",
+            "example": null,
+            "description": "Null = plain AND requirement. Rows sharing the same groupId will represent an OR group (\"pass at least one\") once that checker logic is built — reserved for future use, not evaluated yet."
+          }
+        },
+        "required": [
+          "courseId",
+          "prerequisiteCourseId"
+        ]
+      },
+      "UpdatePrerequisiteDto": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "example": "group-1",
+            "description": "Assign/reassign this prerequisite to an OR group."
+          }
+        }
+      },
+      "CreatePloDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "PLO1"
+          },
+          "name": {
+            "type": "string",
+            "example": "บูรณาการความรู้ทางไอที"
+          },
+          "description": {
+            "type": "string",
+            "example": "ประยุกต์ใช้แนวคิด ทฤษฎี หลักการทางเทคโนโลยีสารสนเทศแก้ปัญหาได้"
+          },
+          "curriculumId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "curriculumId"
+        ]
+      },
+      "UpdatePloDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "PLO1"
+          },
+          "name": {
+            "type": "string",
+            "example": "บูรณาการความรู้ทางไอที"
+          },
+          "description": {
+            "type": "string",
+            "example": "ประยุกต์ใช้แนวคิด ทฤษฎี หลักการทางเทคโนโลยีสารสนเทศแก้ปัญหาได้"
+          }
+        }
+      },
+      "CreateCloDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CLO1"
+          },
+          "description": {
+            "type": "string",
+            "example": "สามารถเขียนโปรแกรมเชิงโครงสร้างแก้ปัญหาพื้นฐานได้"
+          },
+          "achievementThreshold": {
+            "type": "number",
+            "example": 70,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Overrides Curriculum.defaultAchievementThreshold for this CLO. Omit to use the curriculum default."
+          },
+          "isConfirmed": {
+            "type": "boolean",
+            "example": true,
+            "description": "false marks a CLO copied from another curriculum year that ADMIN has not checked."
+          },
+          "courseId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "code",
+          "description",
+          "courseId"
+        ]
+      },
+      "UpdateCloDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CLO1"
+          },
+          "description": {
+            "type": "string",
+            "example": "สามารถเขียนโปรแกรมเชิงโครงสร้างแก้ปัญหาพื้นฐานได้"
+          },
+          "achievementThreshold": {
+            "type": "number",
+            "example": 70,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Overrides Curriculum.defaultAchievementThreshold for this CLO. Omit to use the curriculum default."
+          },
+          "isConfirmed": {
+            "type": "boolean",
+            "example": true,
+            "description": "false marks a CLO copied from another curriculum year that ADMIN has not checked."
+          }
+        }
+      },
+      "CreateCloPloMappingDto": {
+        "type": "object",
+        "properties": {
+          "cloId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "ploId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "weight": {
+            "type": "number",
+            "example": 3,
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Strength of the CLO→PLO relationship, 1 (weakest) to 5 (strongest)."
+          }
+        },
+        "required": [
+          "cloId",
+          "ploId",
+          "weight"
+        ]
+      },
+      "UpdateCloPloMappingDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "example": 4,
+            "minimum": 1,
+            "maximum": 5
+          }
+        }
+      },
+      "CreateStudentCourseRecordDto": {
+        "type": "object",
+        "properties": {
+          "studentProfileId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "courseId": {
+            "type": "string",
+            "example": "b4f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "semesterId": {
+            "type": "string",
+            "example": "c5f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          },
+          "grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B_PLUS",
+              "B",
+              "C_PLUS",
+              "C",
+              "D_PLUS",
+              "D",
+              "F",
+              "W",
+              "I",
+              "S",
+              "U"
+            ],
+            "example": "B_PLUS"
+          }
+        },
+        "required": [
+          "studentProfileId",
+          "courseId",
+          "semesterId",
+          "grade"
+        ]
+      },
+      "UpdateStudentCourseRecordDto": {
+        "type": "object",
+        "properties": {
+          "grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B_PLUS",
+              "B",
+              "C_PLUS",
+              "C",
+              "D_PLUS",
+              "D",
+              "F",
+              "W",
+              "I",
+              "S",
+              "U"
+            ],
+            "example": "A"
+          }
+        },
+        "required": [
+          "grade"
+        ]
+      },
+      "CreateSemesterDto": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "enum": [
+              "FIRST",
+              "SECOND",
+              "SUMMER"
+            ],
+            "example": "FIRST"
+          },
+          "academicYearId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        },
+        "required": [
+          "term",
+          "academicYearId"
+        ]
+      },
+      "UpdateSemesterDto": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "enum": [
+              "FIRST",
+              "SECOND",
+              "SUMMER"
+            ],
+            "example": "FIRST"
+          },
+          "academicYearId": {
+            "type": "string",
+            "example": "a3f1c2e4-1234-4a5b-9c6d-7e8f9a0b1c2d"
+          }
+        }
+      },
+      "CreateAcademicYearDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number",
+            "example": 2568,
+            "description": "Buddhist Era (พ.ศ.) year"
+          }
+        },
+        "required": [
+          "year"
+        ]
+      },
+      "BulkCreateAcademicYearsDto": {
+        "type": "object",
+        "properties": {
+          "startYear": {
+            "type": "number",
+            "example": 2570,
+            "description": "First year (พ.ศ.)"
+          },
+          "yearCount": {
+            "type": "number",
+            "example": 4,
+            "description": "Number of consecutive years (1-10); last year must stay within 2700"
+          },
+          "terms": {
+            "type": "array",
+            "example": [
+              "FIRST",
+              "SECOND"
+            ],
+            "description": "Terms to create in every year; empty = years only",
+            "items": {
+              "type": "string",
+              "enum": [
+                "FIRST",
+                "SECOND",
+                "SUMMER"
+              ]
+            }
+          }
+        },
+        "required": [
+          "startYear",
+          "yearCount",
+          "terms"
+        ]
+      },
+      "UpdateAcademicYearDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number",
+            "example": 2568,
+            "description": "Buddhist Era (พ.ศ.) year"
+          }
+        }
+      },
+      "CreateCreditLimitRequestDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXCEED_MAX",
+              "BELOW_MIN"
+            ],
+            "example": "EXCEED_MAX"
+          },
+          "reason": {
+            "type": "string",
+            "example": "ชั้นปีสุดท้าย ต้องการเก็บวิชาให้จบตามกำหนด"
+          }
+        },
+        "required": [
+          "type",
+          "reason"
+        ]
+      },
+      "SaveLearningPathPlanDto": {
+        "type": "object",
+        "properties": {
+          "courseIds": {
+            "description": "Planned course ids in display order; replaces the whole saved plan",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "courseIds"
+        ]
+      },
+      "CareerFitGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "ชื่อกลุ่มอาชีพ"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "คำอธิบายกลุ่ม (อาจว่าง)"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "ลำดับการแสดงกลุ่ม (น้อยไปมาก)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "sortOrder"
+        ]
+      },
+      "CareerFitTopCourseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "รหัสวิชา"
+          },
+          "name": {
+            "type": "string",
+            "description": "ชื่อวิชา"
+          },
+          "grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B_PLUS",
+              "B",
+              "C_PLUS",
+              "C",
+              "D_PLUS",
+              "D",
+              "F",
+              "W",
+              "I",
+              "S",
+              "U"
+            ],
+            "description": "เกรดที่ได้ (ครั้งล่าสุด)"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "grade"
+        ]
+      },
+      "CareerFitCourseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "รหัสวิชา"
+          },
+          "name": {
+            "type": "string",
+            "description": "ชื่อวิชา"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "CareerFitEntryDto": {
+        "type": "object",
+        "properties": {
+          "careerId": {
+            "type": "string"
+          },
+          "careerName": {
+            "type": "string",
+            "description": "ชื่อสายอาชีพ"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "คำอธิบายสายอาชีพ (อาจว่าง)"
+          },
+          "group": {
+            "nullable": true,
+            "description": "กลุ่มอาชีพที่สายนี้อยู่ (ว่างเมื่อยังไม่จัดกลุ่ม)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CareerFitGroupDto"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "INSUFFICIENT_DATA"
+            ]
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "description": "คะแนนความเหมาะสม 0-100 (ว่างเมื่อข้อมูลไม่เพียงพอ)"
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "coverage": {
+            "type": "number",
+            "description": "สัดส่วนวิชาของสายที่มีเกรด 0-1"
+          },
+          "gradedCourseCount": {
+            "type": "number"
+          },
+          "totalCourseCount": {
+            "type": "number"
+          },
+          "topCourses": {
+            "description": "วิชาเด่น",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerFitTopCourseDto"
+            }
+          },
+          "recommendedCourses": {
+            "description": "วิชาแนะนำที่ยังไม่ได้เรียน",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerFitCourseDto"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "ข้อความอธิบายสำหรับผู้ใช้"
+          }
+        },
+        "required": [
+          "careerId",
+          "careerName",
+          "description",
+          "group",
+          "status",
+          "score",
+          "level",
+          "coverage",
+          "gradedCourseCount",
+          "totalCourseCount",
+          "topCourses",
+          "recommendedCourses"
+        ]
+      },
+      "CareerFitReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "NO_GRADES",
+              "NO_CAREERS"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "ข้อความอธิบายสถานะ"
+          },
+          "careers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerFitEntryDto"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "careers"
+        ]
+      }
+    }
+  }
+}
