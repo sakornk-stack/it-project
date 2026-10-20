@@ -2,11 +2,14 @@ import type { CareerFitEntry, CareerFitReport } from '@eduanalyze-ai/shared-type
 import {
   buildCareerFitGroups,
   buildCareerFitView,
+  CAREER_FIT_LEVEL_TICKS,
   CAREER_GROUP_OTHER_NAME,
   CAREER_FIT_FEW_COURSES_TEXT,
   careerCoverageText,
   isFewCourseCareer,
+  careerRankText,
   MAX_RANKED_CAREERS,
+  topCareerSummary,
 } from './career-fit';
 
 const entry = (id: string, over: Partial<CareerFitEntry> = {}): CareerFitEntry => ({
@@ -130,14 +133,56 @@ const group = (id: string, sortOrder: number, description: string | null = null)
 });
 
 describe('buildCareerFitGroups', () => {
-  it('orders groups by their sortOrder, not by score, and puts ungrouped careers last', () => {
+  it('orders groups best-first by the level of their best career, not by sortOrder', () => {
+    const med = { level: 'MEDIUM', score: 70 } as const;
     const groups = buildCareerFitGroups([
-      entry('hi', { group: group('g2', 2), score: 95 }),
-      entry('free'),
-      entry('lo', { group: group('g1', 1), score: 60, level: 'LOW' }),
+      entry('hi', { group: group('g2', 2) }),
+      entry('mid', { group: group('g1', 1), ...med }),
+      entry('lo', { group: group('g0', 0), level: 'LOW', score: 40 }),
     ]);
-    expect(groups.map((g) => g.key)).toEqual(['g1', 'g2', 'other']);
-    expect(groups[2]).toMatchObject({ name: CAREER_GROUP_OTHER_NAME, isOther: true });
+    expect(groups.map((g) => g.key)).toEqual(['g2', 'g1', 'g0']);
+  });
+
+  it('breaks a level tie by the group holding the better-ranked career', () => {
+    const groups = buildCareerFitGroups([
+      entry('first', { group: group('g3', 3) }),
+      entry('second', { group: group('g1', 1) }),
+      entry('third', { group: group('g2', 2) }),
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['g3', 'g1', 'g2']);
+    expect(groups.map((g) => g.bestIndex)).toEqual([0, 1, 2]);
+  });
+
+  it('uses the group sortOrder (then name) only when nothing else separates groups', () => {
+    const none = { status: 'INSUFFICIENT_DATA', score: null, level: null } as const;
+    const groups = buildCareerFitGroups([
+      entry('a', { group: group('late', 5), ...none }),
+      entry('b', { group: group('early', 1), ...none }),
+      entry('c', { group: group('same-a', 3), ...none }),
+      entry('d', { group: { ...group('same-b', 3), name: 'ก' }, ...none }),
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['early', 'same-b', 'same-a', 'late']);
+  });
+
+  it('puts groups with no analysable career last, even with a lower sortOrder', () => {
+    const groups = buildCareerFitGroups([
+      entry('low', { group: group('g9', 9), level: 'LOW', score: 30 }),
+      {
+        ...insufficient('x'),
+        group: group('g0', 0),
+      },
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['g9', 'g0']);
+    expect(groups[1].level).toBeNull();
+  });
+
+  it('lets ungrouped careers form an "other" group that competes by performance', () => {
+    const groups = buildCareerFitGroups([
+      entry('free'),
+      entry('grouped', { group: group('g1', 1), level: 'MEDIUM', score: 70 }),
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['other', 'g1']);
+    expect(groups[0]).toMatchObject({ name: CAREER_GROUP_OTHER_NAME, isOther: true });
   });
 
   it('takes the group level from its best analysable career (no averaging)', () => {
@@ -196,5 +241,26 @@ describe('buildCareerFitView groups', () => {
   it('has no groups for the empty states', () => {
     expect(buildCareerFitView(report('NO_GRADES', [])).groups).toEqual([]);
     expect(buildCareerFitView(report('NO_CAREERS', [])).hasGroups).toBe(false);
+  });
+});
+
+describe('careerRankText / level ticks / topCareerSummary', () => {
+  it('spells out the overall rank so a group never shows an unexplained number', () => {
+    expect(careerRankText(4, 12)).toBe('อันดับ #4 จาก 12 สาย');
+  });
+
+  it('maps each level to a distinct, increasing number of ticks (max 3)', () => {
+    expect(CAREER_FIT_LEVEL_TICKS).toEqual({ HIGH: 3, MEDIUM: 2, LOW: 1 });
+  });
+
+  it('summarises the top career with its group, or without one when ungrouped', () => {
+    expect(
+      topCareerSummary(entry('a', { careerName: 'นักวิเคราะห์', group: group('g', 1) })),
+    ).toEqual({
+      careerName: 'นักวิเคราะห์',
+      groupName: 'กลุ่ม g',
+    });
+    expect(topCareerSummary(entry('b'))?.groupName).toBeNull();
+    expect(topCareerSummary(undefined)).toBeNull();
   });
 });

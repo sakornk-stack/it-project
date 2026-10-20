@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Compass } from 'lucide-react';
 import type { CareerFitEntry } from '@eduanalyze-ai/shared-types';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
-import { LEVEL_SHORT, RankBadge } from '@/components/career-fit/career-fit-card';
+import { CareerGroupLabel, LEVEL_SHORT, RankBadge } from '@/components/career-fit/career-fit-card';
 import { Reveal } from '@/components/layout/reveal';
 import { PageSection } from '@/components/layout/page-section';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,7 @@ function CareerTile({ career, rank }: Readonly<{ career: CareerFitEntry; rank: n
               className="mt-1 shrink-0 -translate-x-1 text-muted-foreground opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 motion-reduce:transition-none"
             />
           </div>
-          {career.group && (
-            <p className="break-words text-xs text-muted-foreground">กลุ่ม: {career.group.name}</p>
-          )}
+          {career.group && <CareerGroupLabel name={career.group.name} />}
           <span
             className={cn(
               'inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',

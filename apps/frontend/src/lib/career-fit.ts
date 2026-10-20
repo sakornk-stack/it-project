@@ -36,6 +36,17 @@ export const careerCoverageText = (
   c: Pick<CareerFitEntry, 'gradedCourseCount' | 'totalCourseCount'>,
 ) => `ใช้ข้อมูลจาก ${c.gradedCourseCount} จาก ${c.totalCourseCount} วิชาของสายนี้`;
 
+// Number of filled ticks in the 3-tick level bar (visual only; the label carries the meaning).
+export const CAREER_FIT_LEVEL_TICKS: Record<CareerFitLevel, number> = {
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+};
+
+const LEVEL_ORDER: Record<CareerFitLevel, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+export const careerRankText = (rank: number, total: number) => `อันดับ #${rank} จาก ${total} สาย`;
+
 export const CAREER_GROUP_OTHER_NAME = 'อื่น ๆ';
 export const CAREER_GROUP_OTHER_KEY = 'other';
 export const CAREER_GROUP_INSUFFICIENT_TEXT = 'ข้อมูลยังไม่เพียงพอ';
@@ -52,13 +63,18 @@ export interface CareerFitGroupView {
   // Careers of the group in the API's order: ranked by score, insufficient last.
   careers: CareerFitEntry[];
   analyzedCount: number;
+  // Position (0-based, API order) of the group's best analysable career; null = none.
+  bestIndex: number | null;
 }
 
-// Pure. Groups ordered by their sortOrder (then name); "other" always last. A group
-// appears only when at least one of its careers is in the report.
+// Pure. Groups ordered best-first: highest level of any analysable career in the group, then
+// the group holding the better-ranked career, then the group's sortOrder (then name) as the
+// final tie-break. Groups with nothing analysable come last (by sortOrder). Ungrouped careers
+// form the "other" group, which takes part like any group but loses every sortOrder tie. A
+// group appears only when at least one of its careers is in the report.
 export function buildCareerFitGroups(careers: CareerFitEntry[]): CareerFitGroupView[] {
   const byKey = new Map<string, { view: CareerFitGroupView; sortOrder: number }>();
-  for (const career of careers) {
+  careers.forEach((career, index) => {
     const g = career.group;
     const key = g?.id ?? CAREER_GROUP_OTHER_KEY;
     let entry = byKey.get(key);
@@ -72,6 +88,7 @@ export function buildCareerFitGroups(careers: CareerFitEntry[]): CareerFitGroupV
           level: null,
           careers: [],
           analyzedCount: 0,
+          bestIndex: null,
         },
         sortOrder: g?.sortOrder ?? Number.MAX_SAFE_INTEGER,
       };
@@ -83,11 +100,28 @@ export function buildCareerFitGroups(careers: CareerFitEntry[]): CareerFitGroupV
       view.analyzedCount++;
       // careers arrive best-first, so the first analysable one is the group's best.
       view.level ??= career.level;
+      view.bestIndex ??= index;
     }
-  }
+  });
+  const levelOf = (v: CareerFitGroupView) => (v.level ? LEVEL_ORDER[v.level] : 0);
   return [...byKey.values()]
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.view.name.localeCompare(b.view.name))
+    .sort(
+      (a, b) =>
+        levelOf(b.view) - levelOf(a.view) ||
+        (a.view.bestIndex ?? Number.MAX_SAFE_INTEGER) -
+          (b.view.bestIndex ?? Number.MAX_SAFE_INTEGER) ||
+        a.sortOrder - b.sortOrder ||
+        a.view.name.localeCompare(b.view.name),
+    )
     .map((e) => e.view);
+}
+
+// "Best career: X (group Y)" headline; the group part is dropped for an ungrouped career.
+export function topCareerSummary(
+  top: CareerFitEntry | undefined,
+): { careerName: string; groupName: string | null } | null {
+  if (!top) return null;
+  return { careerName: top.careerName, groupName: top.group?.name ?? null };
 }
 
 export interface CareerFitView {
