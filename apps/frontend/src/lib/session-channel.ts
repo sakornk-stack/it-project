@@ -46,6 +46,14 @@ function isEnvelope(value: unknown): value is Envelope {
   return typeof v.senderId === 'string' && typeof v.message === 'object' && v.message !== null;
 }
 
+// Per-tab id used only to ignore our own broadcasts; getRandomValues (unlike randomUUID)
+// also works outside secure contexts.
+function randomSenderId(): string {
+  const bytes = new Uint8Array(8);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function defaultDeps(): Required<SessionChannelDeps> {
   const g = globalThis as {
     BroadcastChannel?: new (name: string) => BroadcastChannelLike;
@@ -68,7 +76,7 @@ function defaultDeps(): Required<SessionChannelDeps> {
       g.addEventListener?.('storage', listener);
       return () => g.removeEventListener?.('storage', listener);
     },
-    senderId: Math.random().toString(36).slice(2),
+    senderId: randomSenderId(),
   };
 }
 

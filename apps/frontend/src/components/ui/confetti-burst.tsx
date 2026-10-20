@@ -14,6 +14,7 @@ const VARIANTS = {
 } as const;
 
 function between(min: number, max: number) {
+  // Visual jitter only, not security-relevant: Math.random is fine here (Sonar S2245).
   return min + Math.random() * (max - min);
 }
 

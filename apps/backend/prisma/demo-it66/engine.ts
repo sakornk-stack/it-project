@@ -248,7 +248,7 @@ export function validatePlan(catalog: Catalog): string[] {
   const required = [...catalog.byCode.values()]
     .filter((c) => c.isRequired)
     .map((c) => c.code)
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
   const planned = Object.values(PLAN).flat();
   if (new Set(planned).size !== planned.length) problems.push('a course appears twice in PLAN');
   const missing = required.filter((c) => !planned.includes(c));
@@ -356,7 +356,7 @@ export function simulateStudent(catalog: Catalog, opt: SimOptions): AttemptRecor
     const failed = [...state]
       .filter(([, s]) => !s.passed && s.attempts > 0 && s.attempts < MAX_ATTEMPTS_PER_COURSE)
       .map(([c]) => c)
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
     if (slot.regularTerm === null) {
       // Summer: only retakes, and only of courses that block something.
       if (opt.summer && failed.some((c) => !isLeaf(c)) && rng() < 0.25) {

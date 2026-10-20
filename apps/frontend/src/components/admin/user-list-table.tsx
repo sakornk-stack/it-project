@@ -274,7 +274,11 @@ function SuperAdminRowActions({
   return (
     // The menu's items and the dialogs below render inside this wrapper (in the React
     // tree), so it also keeps their clicks from reaching the row.
-    <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+    <div
+      role="presentation"
+      className="flex items-center gap-1"
+      onClick={(event) => event.stopPropagation()}
+    >
       {status.blockReason && (
         <UserManageBlocked reason={status.blockReason} showReason={showReason} />
       )}
@@ -290,6 +294,17 @@ function SuperAdminRowActions({
 function rowClick(router: ReturnType<typeof useRouter>, href: string) {
   return () => {
     if (window.getSelection()?.toString()) return;
+    router.push(href);
+  };
+}
+
+// Keyboard twin of rowClick for the card itself; keys pressed on the link or menu inside
+// are theirs, so only Enter/Space with the card focused opens the person.
+function rowKeyDown(router: ReturnType<typeof useRouter>, href: string) {
+  return (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
     router.push(href);
   };
 }
@@ -372,8 +387,10 @@ export function UserListTable({
                   <li
                     key={user.id}
                     onClick={rowClick(router, href)}
+                    onKeyDown={rowKeyDown(router, href)}
+                    tabIndex={0}
                     className={cn(
-                      'interactive-row cursor-pointer space-y-3 rounded-lg border p-4',
+                      'interactive-row cursor-pointer space-y-3 rounded-lg border p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       !user.isActive && 'bg-slate-50/60',
                     )}
                   >

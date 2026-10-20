@@ -107,6 +107,7 @@ export function OrgNodeRow({
     <div id={`org-node-${item.id}`} className="rounded-lg border border-slate-200 bg-background">
       {/* The whole row toggles; the controls inside stop the click so they do not. */}
       <div
+        role="presentation"
         onClick={onToggle}
         className="interactive-row flex cursor-pointer flex-wrap items-start justify-between gap-2 rounded-lg px-3 py-2"
       >
@@ -150,7 +151,11 @@ export function OrgNodeRow({
             <span className="block text-xs tabular-nums text-muted-foreground">{summary}</span>
           </span>
         </button>
-        <div className="ml-auto shrink-0" onClick={(event) => event.stopPropagation()}>
+        <div
+          role="presentation"
+          className="ml-auto shrink-0"
+          onClick={(event) => event.stopPropagation()}
+        >
           <OrgNodeMenu
             nodeLabel={nodeLabel}
             onEdit={() => setEditing(true)}

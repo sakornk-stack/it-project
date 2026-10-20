@@ -220,6 +220,7 @@ export function AcademicYearCard({
     >
       {/* The whole row folds the card; the controls inside stop the click so they do not. */}
       <div
+        role="presentation"
         onClick={editingYear ? undefined : toggleOpen}
         className={cn(
           'flex items-center gap-2 rounded-xl px-4 py-3 sm:px-5',
@@ -286,7 +287,11 @@ export function AcademicYearCard({
             </span>
           </span>
         </button>
-        <div className="shrink-0" onClick={(event) => event.stopPropagation()}>
+        <div
+          role="presentation"
+          className="shrink-0"
+          onClick={(event) => event.stopPropagation()}
+        >
           <UserRowMenu
             userName={`ปีการศึกษา ${academicYear.year}`}
             items={[
