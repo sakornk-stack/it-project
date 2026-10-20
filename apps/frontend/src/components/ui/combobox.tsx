@@ -52,7 +52,10 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
     }, [options, query]);
 
     return (
+      // modal: inside a Dialog/Sheet the dialog's scroll lock swallows wheel and
+      // touch on a portaled popover; a modal popover brings its own scroll lock.
       <PopoverPrimitive.Root
+        modal
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
