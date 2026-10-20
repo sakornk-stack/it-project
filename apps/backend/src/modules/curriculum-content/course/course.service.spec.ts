@@ -6,7 +6,6 @@ type Counts = Partial<{
   records: number;
   instructors: number;
   clos: number;
-  definitions: number;
   assessments: number;
   plans: number;
 }>;
@@ -22,7 +21,6 @@ function setup(counts: Counts = {}) {
     studentCourseRecord: { count: jest.fn().mockResolvedValue(counts.records ?? 0) },
     courseInstructor: { count: jest.fn().mockResolvedValue(counts.instructors ?? 0) },
     clo: { count: jest.fn().mockResolvedValue(counts.clos ?? 0) },
-    assessmentDefinition: { count: jest.fn().mockResolvedValue(counts.definitions ?? 0) },
     courseAssessment: { count: jest.fn().mockResolvedValue(counts.assessments ?? 0) },
     studentPlannedCourse: { count: jest.fn().mockResolvedValue(counts.plans ?? 0) },
     $transaction: jest.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
@@ -48,7 +46,6 @@ describe('CourseService.remove', () => {
     const active = { where: { courseId: 'c1', isActive: true } };
     expect(prisma.studentCourseRecord.count).toHaveBeenCalledWith(active);
     expect(prisma.clo.count).toHaveBeenCalledWith(active);
-    expect(prisma.assessmentDefinition.count).toHaveBeenCalledWith(active);
     expect(prisma.courseInstructor.count).toHaveBeenCalledWith({ where: { courseId: 'c1' } });
     expect(prisma.courseAssessment.count).toHaveBeenCalledWith({ where: { courseId: 'c1' } });
     expect(prisma.studentPlannedCourse.count).toHaveBeenCalledWith({ where: { courseId: 'c1' } });
@@ -59,7 +56,6 @@ describe('CourseService.remove', () => {
     ['a student course record', { records: 3 }, 'ผลการเรียนของนิสิต 3 รายการ'],
     ['an assigned instructor', { instructors: 1 }, 'อาจารย์ผู้สอน 1 รายการ'],
     ['a CLO', { clos: 2 }, 'CLO 2 รายการ'],
-    ['an assessment definition', { definitions: 1 }, 'รายการประเมินผล 1 รายการ'],
     ['a course assessment', { assessments: 1 }, 'การประเมินรายวิชา 1 รายการ'],
     ['a planned course', { plans: 4 }, 'แผนการเรียนของนิสิต 4 รายการ'],
   ])('rejects with a Thai 409 and keeps prerequisites when it has %s', async (_n, counts, text) => {

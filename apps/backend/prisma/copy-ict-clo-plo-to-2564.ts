@@ -177,8 +177,6 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
   const cloT = tally();
   const mapT = tally();
   const removed = { clos: 0, mappings: 0 };
-  const protectedClos = { count: 0, courses: new Set<string>() };
-  let updatedWithLinkedData = 0;
   let missingPlo = 0;
 
   for (const course of targetCourses) {
@@ -202,10 +200,7 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
 
     const existing = await db.clo.findMany({
       where: { courseId: course.id, isActive: true },
-      include: {
-        ploMappings: true,
-        _count: { select: { assessmentScores: true, assessmentCloMappings: true } },
-      },
+      include: { ploMappings: true },
     });
     const existingByCode = new Map(existing.map((c) => [c.code, c]));
     const keptIds = new Set<string>();
@@ -219,9 +214,6 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
       } else {
         if (found) {
           cloT.update++;
-          if (found._count.assessmentScores + found._count.assessmentCloMappings > 0) {
-            updatedWithLinkedData++;
-          }
         } else {
           cloT.create++;
         }
@@ -280,14 +272,9 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
       }
     }
 
-    // existing CLOs outside the copied set: soft-delete unless evidence hangs on them
+    // existing CLOs outside the copied set: soft-delete
     for (const clo of existing) {
       if (keptIds.has(clo.id)) continue;
-      if (clo._count.assessmentScores + clo._count.assessmentCloMappings > 0) {
-        protectedClos.count++;
-        protectedClos.courses.add(course.code);
-        continue;
-      }
       removed.clos++;
       removed.mappings += clo.ploMappings.filter((m) => m.isActive).length;
       if (apply) {
@@ -306,8 +293,6 @@ async function plan(db: Db, changedCodes: Set<string> | null, apply: boolean) {
     cloT,
     mapT,
     removed,
-    protectedClos,
-    updatedWithLinkedData,
     missingPlo,
   };
 }
@@ -337,14 +322,9 @@ async function main() {
       ? `  (ฉ) คัดลอกแล้วแต่อยู่ในรายการ "เปลี่ยนแปลง" ของเล่ม ${SOURCE_VERSION}: ${g.inChangeList.length}${list(g.inChangeList)}`
       : '  (ฉ) ตรวจไม่ได้: ไม่พบไฟล์ใน private-data/',
   );
-  console.log(
-    `CLO:     ${fmt(result.cloT)}  (update ที่มีข้อมูลผูก ${result.updatedWithLinkedData})`,
-  );
+  console.log(`CLO:     ${fmt(result.cloT)}`);
   console.log(`Mapping: ${fmt(result.mapT)}  (weight=${MAPPING_WEIGHT})`);
-  console.log(
-    `soft-delete: CLO ${result.removed.clos}, mapping ${result.removed.mappings}; ` +
-      `ข้ามเพราะมีข้อมูลผูก: CLO ${result.protectedClos.count}${list([...result.protectedClos.courses])}`,
-  );
+  console.log(`soft-delete: CLO ${result.removed.clos}, mapping ${result.removed.mappings}`);
   console.log(`PLO ของ ${TARGET_VERSION} ที่หาไม่พบ (mapping ข้าม): ${result.missingPlo}`);
 
   const status = [

@@ -99,7 +99,6 @@ async function main() {
 
   const before = await protectedCounts(prisma);
   const dependents = {
-    student_assessment_scores: await prisma.studentAssessmentScore.count({ where: { studentCourseRecordId: { in: recordIds } } }),
     course_assessments: await prisma.courseAssessment.count({ where: { studentProfileId: { in: profileIds } } }),
     student_planned_courses: await prisma.studentPlannedCourse.count({ where: { studentProfileId: { in: profileIds } } }),
     student_credit_limit_requests: await prisma.studentCreditLimitRequest.count({ where: { studentProfileId: { in: profileIds } } }),
@@ -119,7 +118,6 @@ async function main() {
   const deleted = await prisma.$transaction(
     async (tx) => {
       const out: Record<string, number> = {};
-      out.student_assessment_scores = (await tx.studentAssessmentScore.deleteMany({ where: { studentCourseRecordId: { in: recordIds } } })).count;
       out.course_assessments = (await tx.courseAssessment.deleteMany({ where: { studentProfileId: { in: profileIds } } })).count;
       // No FK, so nothing blocks; removed so no history of a demo student lingers.
       out.audit_logs = (await tx.auditLog.deleteMany({ where: { studentProfileId: { in: profileIds } } })).count;

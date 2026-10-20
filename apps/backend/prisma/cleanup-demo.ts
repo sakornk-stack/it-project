@@ -60,7 +60,6 @@ async function main() {
     select: { id: true },
   });
   const recordIds = records.map((r) => r.id).filter(inManifest(manifest?.studentCourseRecords));
-  const scores = await prisma.studentAssessmentScore.count({ where: { studentCourseRecordId: { in: recordIds } } });
   const roleRows = await prisma.userRole.findMany({ where: { userId: { in: userIds } }, select: { id: true } });
   const roleIds = roleRows.map((r) => r.id);
 
@@ -77,7 +76,6 @@ async function main() {
 
   const counts = {
     course_instructors: assignmentIds.length,
-    student_assessment_scores: scores,
     student_course_records: recordIds.length,
     student_profiles: profileIds.length,
     user_roles: roleIds.length,
@@ -92,14 +90,13 @@ async function main() {
   const deleted = await prisma.$transaction(
     async (tx) => {
       const ci = await tx.courseInstructor.deleteMany({ where: { id: { in: assignmentIds } } });
-      const s = await tx.studentAssessmentScore.deleteMany({ where: { studentCourseRecordId: { in: recordIds } } });
       const r = await tx.studentCourseRecord.deleteMany({ where: { id: { in: recordIds } } });
       // No FK, so nothing blocks; removed so no history of a demo student lingers.
       const a = await tx.auditLog.deleteMany({ where: { studentProfileId: { in: profileIds } } });
       const p = await tx.studentProfile.deleteMany({ where: { id: { in: profileIds } } });
       const ur = await tx.userRole.deleteMany({ where: { id: { in: roleIds } } });
       const u = await tx.user.deleteMany({ where: { id: { in: userIds } } });
-      return { course_instructors: ci.count, student_assessment_scores: s.count, student_course_records: r.count, audit_logs: a.count, student_profiles: p.count, user_roles: ur.count, users: u.count };
+      return { course_instructors: ci.count, student_course_records: r.count, audit_logs: a.count, student_profiles: p.count, user_roles: ur.count, users: u.count };
     },
     { timeout: 120000, maxWait: 30000 },
   );

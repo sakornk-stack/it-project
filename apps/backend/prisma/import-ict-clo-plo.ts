@@ -261,7 +261,6 @@ async function plan(db: Db, src: Source, apply: boolean) {
   const cloT = tally();
   const mapT = tally();
   const sampleCloRemoved = { onImportedCourse: 0, onOtherCourse: 0 };
-  const sampleCloProtected: string[] = [];
   const sampleMappingsRemoved = { fromRemovedClo: 0, fromKeptClo: 0 };
   const missingCourses: string[] = [];
   const skippedForErrors: string[] = [];
@@ -332,10 +331,7 @@ async function plan(db: Db, src: Source, apply: boolean) {
 
     const existing = await db.clo.findMany({
       where: { courseId: dbCourse.id, isActive: true },
-      include: {
-        ploMappings: true,
-        _count: { select: { assessmentScores: true, assessmentCloMappings: true } },
-      },
+      include: { ploMappings: true },
     });
     const existingByCode = new Map(existing.map((c) => [c.code, c]));
     const keptCloIds = new Set<string>();
@@ -404,13 +400,9 @@ async function plan(db: Db, src: Source, apply: boolean) {
       // (code undefined => not wanted => soft-deleted).
     }
 
-    // active CLOs not in the real data: soft-delete unless evidence hangs on them
+    // active CLOs not in the real data: soft-delete
     for (const clo of existing) {
       if (keptCloIds.has(clo.id)) continue;
-      if (clo._count.assessmentScores + clo._count.assessmentCloMappings > 0) {
-        sampleCloProtected.push(`${dbCourse.code}`);
-        continue;
-      }
       doc ? sampleCloRemoved.onImportedCourse++ : sampleCloRemoved.onOtherCourse++;
       sampleMappingsRemoved.fromRemovedClo += clo.ploMappings.filter((m) => m.isActive).length;
       if (apply) {
@@ -433,7 +425,6 @@ async function plan(db: Db, src: Source, apply: boolean) {
     skippedForErrors,
     oldCodesInDb,
     sampleCloRemoved,
-    sampleCloProtected,
     sampleMappingsRemoved,
   };
 }
@@ -523,10 +514,6 @@ async function main() {
       `${result.sampleCloRemoved.onOtherCourse} ในวิชาที่ไม่มีข้อมูลจริง; ` +
       `mapping ที่จะ soft-delete: ${result.sampleMappingsRemoved.fromRemovedClo} (ของ CLO ที่ลบ) + ` +
       `${result.sampleMappingsRemoved.fromKeptClo} (ของ CLO ที่คงไว้)`,
-  );
-  console.log(
-    `CLO ที่มีข้อมูลผูก (ไม่ลบ): ${result.sampleCloProtected.length}` +
-      (result.sampleCloProtected.length ? ` [วิชา ${result.sampleCloProtected.join(', ')}]` : ''),
   );
   console.log(
     `วิชาไม่พบใน DB (ข้าม): ${result.missingCourses.length}` +

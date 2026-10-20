@@ -34,13 +34,11 @@ export interface InactiveRow {
 
 export function permanentDeleteBlockedReason(refs: {
   records: number;
-  assessments: number;
   activeSemesters?: number;
 }): string | null {
   const parts = [
     refs.activeSemesters ? `ภาคเรียนที่ใช้งานอยู่ ${refs.activeSemesters} ภาค` : null,
     refs.records ? `ผลการเรียน ${refs.records} รายการ` : null,
-    refs.assessments ? `การประเมิน ${refs.assessments} รายการ` : null,
   ].filter(Boolean);
   return parts.length > 0 ? `ลบถาวรไม่ได้: ยังมี${parts.join(' และ')} อ้างอิงอยู่` : null;
 }

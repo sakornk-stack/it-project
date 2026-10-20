@@ -934,7 +934,6 @@ export interface Semester {
 // Permanent delete is only possible when all of these are 0.
 export interface SemesterReferences {
   records: number;
-  assessments: number;
 }
 
 export interface InactiveSemester extends Semester {
@@ -987,8 +986,7 @@ export type RiskLevel = 'CRITICAL' | 'WATCH' | 'NORMAL';
 
 export interface StudentRosterEntry {
   studentProfileId: string;
-  // The student's latest attempt of this course — needed to key
-  // StudentAssessmentScore upserts (see assessment-evidence types below).
+  // The student's latest attempt of this course, so its grade can be edited or deleted.
   studentCourseRecordId: string;
   studentCode: string;
   fullName: string;
@@ -996,41 +994,11 @@ export interface StudentRosterEntry {
   riskLevel: RiskLevel;
 }
 
-// ---- Evidence-based CLO/PLO infrastructure (assessment-evidence module) ----
-// Completely separate from grade-based CloAchievementService/
-// PloAchievementService and from the 1-5 self-assessment
-// (CourseAssessmentCloScore) above — see backend schema.prisma's
-// "Evidence-based CLO/PLO infrastructure" comment block. Decimal fields
-// (maxScore/weight/maxScoreOverride/score/coverage weights) come back as
-// strings over the wire (Prisma.Decimal's JSON serialization), never
-// numbers — parse with Number()/parseFloat() at the display boundary,
-// never compare/sum them as strings.
-export type MissingScorePolicy = 'EXCLUDE' | 'TREAT_AS_ZERO';
+// ---- Leftovers of the removed assessment-evidence feature ----
+// The module, its tables and these request/response types are gone. Only the two types below
+// stay because frontend/src/lib/score-multi-clo.ts and grade-label.ts (themselves unused)
+// still reference them; delete them together with those files.
 export type AssessmentScoreStatus = 'PENDING' | 'GRADED' | 'ABSENT' | 'EXCUSED';
-export type EvidenceSource = 'EVIDENCE_BASED' | 'LEGACY_GRADE_ESTIMATE' | 'NO_EVIDENCE';
-export type AchievementStatus = 'NO_EVIDENCE' | 'PARTIAL' | 'COMPLETE';
-
-export interface AssessmentDefinition {
-  id: string;
-  title: string;
-  kind: string;
-  maxScore: string;
-  missingScorePolicy: MissingScorePolicy;
-  isActive: boolean;
-  courseId: string;
-  semesterId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateAssessmentDefinitionRequest {
-  title: string;
-  kind: string;
-  maxScore: number;
-  missingScorePolicy?: MissingScorePolicy;
-  courseId: string;
-  semesterId: string;
-}
 
 export interface AssessmentCloMapping {
   id: string;
@@ -1041,63 +1009,6 @@ export interface AssessmentCloMapping {
   cloId: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CreateAssessmentCloMappingRequest {
-  assessmentDefinitionId: string;
-  cloId: string;
-  weight: number;
-  maxScoreOverride?: number;
-  courseId: string;
-}
-
-export interface StudentAssessmentScore {
-  id: string;
-  score: string | null;
-  status: AssessmentScoreStatus;
-  assessmentCloMappingId: string;
-  studentCourseRecordId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpsertStudentAssessmentScoreRequest {
-  assessmentCloMappingId: string;
-  studentCourseRecordId: string;
-  score?: number;
-  status: AssessmentScoreStatus;
-  courseId: string;
-}
-
-export interface BulkUpsertStudentAssessmentScoresRequest {
-  courseId: string;
-  assessmentDefinitionId: string;
-  assessmentCloMappingIds: string[];
-  entries: {
-    studentCourseRecordId: string;
-    status: AssessmentScoreStatus;
-    score?: number;
-  }[];
-}
-
-export interface BulkUpsertStudentAssessmentScoresResponse {
-  mappingCount: number;
-  entryCount: number;
-  written: number;
-}
-
-export interface CoverageInfo {
-  validCount: number;
-  totalCount: number;
-  validWeight: string;
-  totalWeight: string;
-}
-
-export interface AchievementResult {
-  score: string | null;
-  status: AchievementStatus;
-  source: EvidenceSource;
-  coverage: CoverageInfo;
 }
 
 // ---- Instructor dashboard (GET /dashboard/instructor) and course-level

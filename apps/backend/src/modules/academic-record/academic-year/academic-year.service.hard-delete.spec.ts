@@ -7,7 +7,6 @@ function setup(opts: {
   year?: object | null;
   semesters?: { id: string; isActive: boolean }[];
   records?: number;
-  assessments?: number;
   failYearDelete?: boolean;
 }) {
   const semesters = (opts.semesters ?? [{ id: 's1', isActive: false }]).map((s) => ({
@@ -31,17 +30,7 @@ function setup(opts: {
       .fn()
       .mockResolvedValue(opts.records ? [{ semesterId: 's1', _count: { _all: opts.records } }] : []),
   };
-  const assessmentDefinition = {
-    groupBy: jest
-      .fn()
-      .mockResolvedValue(
-        opts.assessments ? [{ semesterId: 's1', _count: { _all: opts.assessments } }] : [],
-      ),
-  };
-  const prisma = { academicYear, semester, studentCourseRecord, assessmentDefinition } as Record<
-    string,
-    unknown
-  >;
+  const prisma = { academicYear, semester, studentCourseRecord } as Record<string, unknown>;
   // Mimics a real transaction: a throw inside discards the writes made so far.
   const committed: string[] = [];
   prisma.$transaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
@@ -82,10 +71,8 @@ describe('AcademicYearService hardDelete', () => {
   });
 
   it('409 with the counts when its semesters are referenced', async () => {
-    const { service, semester, academicYear } = setup({ records: 4, assessments: 2 });
-    await expect(service.hardDelete('y1', 'u1')).rejects.toThrow(
-      /ผลการเรียน 4 รายการ และการประเมิน 2 รายการ/,
-    );
+    const { service, semester, academicYear } = setup({ records: 4 });
+    await expect(service.hardDelete('y1', 'u1')).rejects.toThrow(/ผลการเรียน 4 รายการ/);
     expect(semester.deleteMany).not.toHaveBeenCalled();
     expect(academicYear.delete).not.toHaveBeenCalled();
   });
@@ -99,12 +86,12 @@ describe('AcademicYearService hardDelete', () => {
 
 describe('AcademicYearService findInactive', () => {
   it('reports the references summed over the semesters of each year', async () => {
-    const { service, academicYear } = setup({ records: 5, assessments: 1 });
+    const { service, academicYear } = setup({ records: 5 });
     Object.assign(academicYear, {
       findMany: jest.fn().mockResolvedValue([{ id: 'y1', year: 2699, isActive: false }]),
     });
     const [row] = await service.findInactive();
-    expect(row.references).toEqual({ activeSemesters: 0, records: 5, assessments: 1 });
+    expect(row.references).toEqual({ activeSemesters: 0, records: 5 });
   });
 });
 

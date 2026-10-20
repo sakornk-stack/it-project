@@ -4,7 +4,7 @@ import { ROLES_KEY } from '../../../common/decorators/roles.decorator';
 import { SemesterController } from './semester.controller';
 import { SemesterService } from './semester.service';
 
-function setup(opts: { semester?: object | null; records?: number; assessments?: number }) {
+function setup(opts: { semester?: object | null; records?: number }) {
   const semester = {
     findUnique: jest.fn().mockResolvedValue(
       opts.semester === undefined
@@ -18,14 +18,7 @@ function setup(opts: { semester?: object | null; records?: number; assessments?:
       .fn()
       .mockResolvedValue(opts.records ? [{ semesterId: 's1', _count: { _all: opts.records } }] : []),
   };
-  const assessmentDefinition = {
-    groupBy: jest
-      .fn()
-      .mockResolvedValue(
-        opts.assessments ? [{ semesterId: 's1', _count: { _all: opts.assessments } }] : [],
-      ),
-  };
-  const prisma = { semester, studentCourseRecord, assessmentDefinition } as Record<string, unknown>;
+  const prisma = { semester, studentCourseRecord } as Record<string, unknown>;
   prisma.$transaction = jest.fn((fn: (tx: unknown) => unknown) => fn(prisma));
   return { service: new SemesterService(prisma as never, {} as never), semester };
 }
@@ -50,11 +43,9 @@ describe('SemesterService hardDelete', () => {
     expect(semester.delete).not.toHaveBeenCalled();
   });
 
-  it('409 with the counts when records or assessments reference it', async () => {
-    const { service, semester } = setup({ records: 12, assessments: 3 });
-    await expect(service.hardDelete('s1', 'u1')).rejects.toThrow(
-      /ผลการเรียน 12 รายการ และการประเมิน 3 รายการ/,
-    );
+  it('409 with the count when records reference it', async () => {
+    const { service, semester } = setup({ records: 12 });
+    await expect(service.hardDelete('s1', 'u1')).rejects.toThrow(/ผลการเรียน 12 รายการ/);
     expect(semester.delete).not.toHaveBeenCalled();
   });
 

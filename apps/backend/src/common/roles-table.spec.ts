@@ -2,8 +2,6 @@ import 'reflect-metadata';
 import { Role } from '@prisma/client';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { ROLES_KEY } from './decorators/roles.decorator';
-import { InstructorGuard } from './guards/instructor.guard';
-import { InstructorOrScopeGuard } from './guards/instructor-or-scope.guard';
 import { ScopeGuard } from './guards/scope.guard';
 import { AiAnalysisController } from '../modules/ai-analysis/ai-analysis.controller';
 import { CreditCheckerController } from '../modules/academic-record/credit-checker/credit-checker.controller';
@@ -11,10 +9,6 @@ import { LearningPathController } from '../modules/academic-record/learning-path
 import { CourseStudentsController } from '../modules/academic-record/student-course-record/course-students.controller';
 import { CloAchievementController } from '../modules/curriculum-content/clo-achievement/clo-achievement.controller';
 import { PloAchievementController } from '../modules/curriculum-content/plo-achievement/plo-achievement.controller';
-import { ActualAchievementController } from '../modules/curriculum-content/assessment-evidence/actual-achievement.controller';
-import { AssessmentCloMappingController } from '../modules/curriculum-content/assessment-evidence/assessment-clo-mapping.controller';
-import { AssessmentDefinitionController } from '../modules/curriculum-content/assessment-evidence/assessment-definition.controller';
-import { StudentAssessmentScoreController } from '../modules/curriculum-content/assessment-evidence/student-assessment-score.controller';
 import { CourseAssessmentController } from '../modules/curriculum-content/course-assessment/course-assessment.controller';
 import { DashboardController } from '../modules/dashboard/dashboard.controller';
 import { StudentProfilesController } from '../modules/users/student-profile/student-profiles.controller';
@@ -141,33 +135,7 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       updateActiveStatus: ['SUPER_ADMIN', 'ADMIN'],
     },
   ],
-  // Assessment evidence: only the assigned instructor writes; ADMIN may still read.
-  ['AssessmentDefinitionController', AssessmentDefinitionController, { create: ['INSTRUCTOR'] }],
-  ['AssessmentCloMappingController', AssessmentCloMappingController, { create: ['INSTRUCTOR'] }],
-  [
-    'StudentAssessmentScoreController',
-    StudentAssessmentScoreController,
-    { upsert: ['INSTRUCTOR'], bulkUpsert: ['INSTRUCTOR'] },
-  ],
 ];
-
-// The assessment write handlers check course assignment with InstructorGuard, not the
-// instructor-or-ADMIN guard, so an ADMIN in scope cannot write either.
-const ASSESSMENT_WRITES: [string, { prototype: object }, string][] = [
-  ['AssessmentDefinitionController', AssessmentDefinitionController, 'create'],
-  ['AssessmentCloMappingController', AssessmentCloMappingController, 'create'],
-  ['StudentAssessmentScoreController', StudentAssessmentScoreController, 'upsert'],
-  ['StudentAssessmentScoreController', StudentAssessmentScoreController, 'bulkUpsert'],
-];
-
-describe('assessment writes are guarded by InstructorGuard', () => {
-  it.each(ASSESSMENT_WRITES)('%s.%s', (_name, controller, method) => {
-    const handler = (controller.prototype as Record<string, unknown>)[method] as object;
-    const guards = Reflect.getMetadata(GUARDS_METADATA, handler) as unknown[];
-    expect(guards).toContain(InstructorGuard);
-    expect(guards).not.toContain(InstructorOrScopeGuard);
-  });
-});
 
 // STAFF's student-account handlers act on one student or invitation, so the
 // role alone is not enough: ScopeGuard must check its program.
@@ -209,10 +177,6 @@ const ACADEMIC_CONTROLLERS: [string, { prototype: object }][] = [
   ['CourseStudentsController', CourseStudentsController],
   ['CloAchievementController', CloAchievementController],
   ['PloAchievementController', PloAchievementController],
-  ['ActualAchievementController', ActualAchievementController],
-  ['AssessmentCloMappingController', AssessmentCloMappingController],
-  ['AssessmentDefinitionController', AssessmentDefinitionController],
-  ['StudentAssessmentScoreController', StudentAssessmentScoreController],
   ['CourseAssessmentController', CourseAssessmentController],
   ['DashboardController', DashboardController],
   ['StudentProfilesController', StudentProfilesController],

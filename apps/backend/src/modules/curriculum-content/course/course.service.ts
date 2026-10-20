@@ -145,16 +145,13 @@ export class CourseService {
   // active-only; CourseInstructor, CourseAssessment and StudentPlannedCourse
   // have no isActive, so every row counts.
   private async assertNoAttachedData(id: string) {
-    const [records, instructors, clos, definitions, assessments, plans] =
+    const [records, instructors, clos, assessments, plans] =
       await Promise.all([
         this.prisma.studentCourseRecord.count({
           where: { courseId: id, isActive: true },
         }),
         this.prisma.courseInstructor.count({ where: { courseId: id } }),
         this.prisma.clo.count({ where: { courseId: id, isActive: true } }),
-        this.prisma.assessmentDefinition.count({
-          where: { courseId: id, isActive: true },
-        }),
         this.prisma.courseAssessment.count({ where: { courseId: id } }),
         this.prisma.studentPlannedCourse.count({ where: { courseId: id } }),
       ]);
@@ -163,7 +160,6 @@ export class CourseService {
       [records, 'ผลการเรียนของนิสิต'],
       [instructors, 'อาจารย์ผู้สอน'],
       [clos, 'CLO'],
-      [definitions, 'รายการประเมินผล'],
       [assessments, 'การประเมินรายวิชา'],
       [plans, 'แผนการเรียนของนิสิต'],
     ]

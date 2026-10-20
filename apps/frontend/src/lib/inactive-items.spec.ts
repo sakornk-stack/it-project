@@ -89,7 +89,7 @@ describe('buildInactiveOrgRows', () => {
   });
 });
 
-const none = { records: 0, assessments: 0, activeSemesters: 0 };
+const none = { records: 0, activeSemesters: 0 };
 
 describe('buildInactiveCalendarRows', () => {
   it('lists years newest first and semesters with their year', () => {
@@ -122,13 +122,13 @@ describe('buildInactiveCalendarRows', () => {
           id: 'y1',
           year: 2565,
           isActive: false,
-          references: { ...none, records: 12, assessments: 3 },
+          references: { ...none, records: 12 },
         },
       ],
       [{ id: 's1', term: 'FIRST', isActive: false, academicYearId: 'y2', references: none }],
     );
     expect(rows[0].permanentDelete?.blockedReason).toBe(
-      'ลบถาวรไม่ได้: ยังมีผลการเรียน 12 รายการ และการประเมิน 3 รายการ อ้างอิงอยู่',
+      'ลบถาวรไม่ได้: ยังมีผลการเรียน 12 รายการ อ้างอิงอยู่',
     );
     expect(rows[1].permanentDelete?.blockedReason).toBeNull();
   });

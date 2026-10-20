@@ -162,9 +162,6 @@ async function main() {
 
   const before = await protectedCounts(prisma);
   const dependents = {
-    student_assessment_scores: await prisma.studentAssessmentScore.count({
-      where: { studentCourseRecordId: { in: recordIds } },
-    }),
     course_assessments: await prisma.courseAssessment.count({
       where: { studentProfileId: { in: profileIds } },
     }),
@@ -194,11 +191,6 @@ async function main() {
   const deleted = await prisma.$transaction(
     async (tx) => {
       const out: Record<string, number> = {};
-      out.student_assessment_scores = (
-        await tx.studentAssessmentScore.deleteMany({
-          where: { studentCourseRecordId: { in: recordIds } },
-        })
-      ).count;
       out.course_assessments = (
         await tx.courseAssessment.deleteMany({ where: { studentProfileId: { in: profileIds } } })
       ).count;

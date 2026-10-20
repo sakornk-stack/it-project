@@ -51,11 +51,9 @@ export type LatestCourseAttemptWithProfile = Prisma.StudentCourseRecordGetPayloa
 
 export interface StudentRosterEntry {
   studentProfileId: string;
-  // The specific latest-attempt record id — additive field (Phase 2.1
-  // assessment-evidence UI) so the roster can double as the row source
-  // for StudentAssessmentScore upserts, which key off the attempt, not
-  // just the student. Computed for free from the same latestAttempts Map
-  // this method already builds — no extra query.
+  // The specific latest-attempt record id, so the roster can edit or delete that attempt's
+  // grade. Computed for free from the same latestAttempts Map this method already builds —
+  // no extra query.
   studentCourseRecordId: string;
   studentCode: string;
   fullName: string;
