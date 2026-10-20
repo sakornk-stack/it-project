@@ -323,6 +323,47 @@ rm -f ~/seed-files/*.ts      # จะเก็บ .ts ไว้รันซ้�
 
 หมายเหตุ: `totalCredits` ส่วนใหญ่เป็นค่าชั่วคราว 132 (จริงเฉพาะ ICT 2564 = 126 และ ICT 2569 = 120) ให้แก้เป็นค่าจริงผ่านหน้าเว็บของ SUPER_ADMIN
 
+### 3.8.1 สายอาชีพ กลุ่มอาชีพ (ฟีเจอร์ "แนวทางอาชีพ") — หลัง 3.8
+
+ไม่อยู่ใน `seed-all.sh` ต้องรันแยก 3 รอบตามลำดับนี้ (ทุกสคริปต์เป็น dry-run โดยปริยาย ใส่ `--apply` เมื่อพร้อม และรันซ้ำได้):
+
+| ลำดับ | สคริปต์ | ไฟล์ใน `private-data/` | ผล |
+|---|---|---|---|
+| 1 | `import-career-courses.ts --curriculum=2569` | `career-course-2569.csv` | สร้างสาย 7 สาย + ลิงก์ 2569 (64) |
+| 2 | `import-career-courses.ts --curriculum=2564` | `career-course-2564.csv` | ลิงก์ 2564 (38) ไม่แตะลิงก์ 2569 |
+| 3 | `import-career-groups.ts` | `career-groups.csv` | จัดสายเป็น 4 กลุ่ม + คำอธิบายสาย (ไม่แตะลิงก์) |
+
+- `import-career-groups.ts` **ไม่สร้างสาย** ต้องรันหลังขั้น 1; ถ้าไม่พบสายจะหยุดโดยไม่เขียนอะไร
+- ไม่ทับคำอธิบายที่มีอยู่แล้วใน DB ถ้าต่างจากไฟล์ (รายงานเป็นรายชื่อ); ใช้ `--overwrite-descriptions` ถ้าต้องการทับ
+- รัน `import-career-courses.ts` ซ้ำภายหลังไม่ทำให้ลำดับสายเปลี่ยน (สายที่มีกลุ่มแล้วคง `sortOrder` ไว้)
+- ก่อนรอบแรกต้อง migrate ก่อน (`20261020120000_add_career_groups` เพิ่มตาราง `career_groups` และคอลัมน์ `careers.groupId` แบบเพิ่มอย่างเดียว) — `remote-deploy` รัน migrate ให้ก่อนอยู่แล้ว
+
+```bash
+# บน Mac: ส่งเฉพาะสคริปต์และ CSV ของสายอาชีพ (ห้ามส่ง career-*.txt, *.bak-*, table_*.csv, curriculum.txt)
+ssh -o ServerAliveInterval=30 root@<VPS_HOST> 'mkdir -p ~/seed-files/private-data'
+scp apps/backend/prisma/{import-career-courses,import-career-groups,career-course-import,career-group-import,csv-util}.ts root@<VPS_HOST>:~/seed-files/
+scp apps/backend/prisma/private-data/{career-course-2569,career-course-2564,career-groups}.csv root@<VPS_HOST>:~/seed-files/private-data/
+```
+
+```bash
+# บน VPS: backup ก่อน แล้วรัน dry-run ทีละไฟล์ (ตัวอย่างขั้น 1; ขั้น 2 และ 3 เปลี่ยนชื่อสคริปต์/ไฟล์)
+cd ~/eduanalyze && bash scripts/db-backup.sh before-career-groups
+SRC="$HOME/seed-files"; P=/app/apps/backend/prisma
+docker compose run --rm --no-deps -T -e ALLOW_PROD_SEED=yes \
+  -v "$SRC/import-career-courses.ts:$P/import-career-courses.ts:ro" \
+  -v "$SRC/career-course-import.ts:$P/career-course-import.ts:ro" \
+  -v "$SRC/csv-util.ts:$P/csv-util.ts:ro" \
+  -v "$SRC/private-data/career-course-2569.csv:$P/private-data/career-course-2569.csv:ro" \
+  migrate /app/node_modules/.bin/ts-node prisma/import-career-courses.ts \
+  --file=prisma/private-data/career-course-2569.csv --curriculum=2569 </dev/null
+# ขั้น 3: mount import-career-groups.ts, career-group-import.ts, csv-util.ts และ career-groups.csv
+#         แล้วรัน prisma/import-career-groups.ts (ไม่ต้องมี --file ถ้าวางที่ private-data/career-groups.csv)
+```
+
+ตรวจผล: dry-run ขั้น 1–2 ต้องแสดง "ปิดลิงก์ของอีกปี: 0"; หลัง apply ครบ `career_courses` ที่ active = **102** (64 + 38), `careers` = 7, `career_groups` = 4
+
+Rollback: ถ้าต้องถอย ให้ revert image ก่อน (โค้ดเก่าไม่สนใจคอลัมน์ใหม่) แล้วค่อยใช้ SQL ย้อนกลับในคอมเมนต์ต้นไฟล์ migration หรือ restore จาก backup ที่ทำไว้ก่อนรัน
+
 ### 3.9 ผู้ดูแลระบบคนแรก (SUPER_ADMIN)
 
 API ไม่อนุญาตให้สร้าง SUPER_ADMIN จึงใช้สคริปต์นี้ครั้งเดียว สคริปต์จะ **ถาม** อีเมลและชื่อ (ไม่รับเป็น argument เพื่อไม่ให้ไปอยู่ใน `ps` หรือ history):
