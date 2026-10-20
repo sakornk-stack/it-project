@@ -2,30 +2,20 @@ import type {
   AchievementResult,
   AssessmentCloMapping,
   AssessmentDefinition,
-  BulkUpsertStudentAssessmentScoresRequest,
-  BulkUpsertStudentAssessmentScoresResponse,
-  CreateAssessmentCloMappingRequest,
-  CreateAssessmentDefinitionRequest,
   StudentAssessmentScore,
-  UpsertStudentAssessmentScoreRequest,
 } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '../api-client';
 
-// Wraps the 7 Phase 1 assessment-evidence endpoints — completely separate
-// from lib/api/course-assessment.ts (1-5 self-assessment) and the
-// grade-based endpoints in lib/api/instructor.ts. Plain thin functions,
-// same pattern as course-assessment.ts: no useQuery/useMutation colocated
-// here, callers wire these into React Query themselves.
+// Read-only wrappers for the assessment-evidence endpoints (no screen writes scores any
+// more) — completely separate from lib/api/course-assessment.ts (1-5 self-assessment) and
+// the grade-based endpoints in lib/api/instructor.ts. Plain thin functions, same pattern as
+// course-assessment.ts: no useQuery/useMutation colocated here, callers wire these into
+// React Query themselves.
 
 export async function fetchAssessmentDefinitions(courseId: string) {
   const { data } = await apiClient.get<AssessmentDefinition[]>(
     `/assessment-definitions/course/${courseId}`,
   );
-  return data;
-}
-
-export async function createAssessmentDefinition(dto: CreateAssessmentDefinitionRequest) {
-  const { data } = await apiClient.post<AssessmentDefinition>('/assessment-definitions', dto);
   return data;
 }
 
@@ -37,11 +27,6 @@ export async function fetchAssessmentCloMappings(assessmentDefinitionId: string,
   return data;
 }
 
-export async function createAssessmentCloMapping(dto: CreateAssessmentCloMappingRequest) {
-  const { data } = await apiClient.post<AssessmentCloMapping>('/assessment-clo-mappings', dto);
-  return data;
-}
-
 export async function fetchStudentAssessmentScores(assessmentCloMappingId: string, courseId: string) {
   const { data } = await apiClient.get<StudentAssessmentScore[]>(
     `/student-assessment-scores/clo-mapping/${assessmentCloMappingId}`,
@@ -50,25 +35,8 @@ export async function fetchStudentAssessmentScores(assessmentCloMappingId: strin
   return data;
 }
 
-export async function upsertStudentAssessmentScore(dto: UpsertStudentAssessmentScoreRequest) {
-  const { data } = await apiClient.put<StudentAssessmentScore>('/student-assessment-scores', dto);
-  return data;
-}
-
-// All-or-nothing: one invalid item rejects the whole batch (400) and nothing
-// is written, so callers never have to reason about a half-saved state.
-export async function bulkUpsertStudentAssessmentScores(
-  dto: BulkUpsertStudentAssessmentScoresRequest,
-) {
-  const { data } = await apiClient.put<BulkUpsertStudentAssessmentScoresResponse>(
-    '/student-assessment-scores/bulk',
-    dto,
-  );
-  return data;
-}
-
-// Evidence-based Actual CLO Achievement for one attempt — used here only
-// to show a coverage badge after scores are entered. Never confuse with
+// Evidence-based Actual CLO Achievement for one attempt — shown on the instructor student
+// timeline and in the coverage badge when scores exist. Never confuse with
 // the grade-based CLO achievement in lib/api/instructor.ts.
 export async function fetchActualCloAchievement(
   courseId: string,
