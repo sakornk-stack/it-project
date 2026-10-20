@@ -2,6 +2,7 @@ import { AxiosError, type AxiosResponse } from 'axios';
 import type { CloDetail } from '@eduanalyze-ai/shared-types';
 import {
   cloEditSchema,
+  closOfCourse,
   cloToFormValues,
   describeCloError,
   sortClos,
@@ -102,5 +103,34 @@ describe('describeCloError', () => {
 
   it('names the scope problem on 403', () => {
     expect(describeCloError(httpError(403, 'Forbidden'))).toContain('นอกขอบเขต');
+  });
+});
+
+describe('closOfCourse', () => {
+  it('keeps only the selected course, so other courses never show or count as unconfirmed', () => {
+    const all = [
+      { ...CLO, id: 'a', courseId: 'c1', isConfirmed: false },
+      { ...CLO, id: 'b', courseId: 'c2', isConfirmed: false },
+      { ...CLO, id: 'c', courseId: 'c1', isConfirmed: true },
+    ];
+    const shown = closOfCourse(all, 'c1');
+    expect(shown.map((c) => c.id)).toEqual(['a', 'c']);
+    expect(unconfirmedCount(shown)).toBe(1);
+  });
+});
+
+describe('describeCloError on a rejected body', () => {
+  it('names the field the API refused instead of the generic sentence', () => {
+    const error = httpError(400, 'x');
+    (error.response as AxiosResponse).data = { message: ['property isConfirmed should not exist'] };
+    expect(describeCloError(error)).toContain('isConfirmed');
+  });
+
+  it('names the field of a value rule', () => {
+    const error = httpError(400, 'x');
+    (error.response as AxiosResponse).data = {
+      message: ['achievementThreshold must not be greater than 100'],
+    };
+    expect(describeCloError(error)).toContain('achievementThreshold');
   });
 });

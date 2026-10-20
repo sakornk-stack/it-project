@@ -29,7 +29,7 @@ import {
   CLO_EFFECT_WARNING,
   cloConfirmTitle,
   describeCloError,
-  sortClos,
+  closOfCourse,
   unconfirmedCount,
 } from '@/components/admin/clo-edit';
 
@@ -66,7 +66,7 @@ function OutcomesContent({ curriculumId }: Readonly<{ curriculumId: string }>) {
     queryFn: () => fetchCourseClos(courseId as string),
     enabled: courseId !== undefined,
   });
-  const clos = sortClos(closQuery.data ?? []);
+  const clos = courseId ? closOfCourse(closQuery.data ?? [], courseId) : [];
   const entry = overviewQuery.data
     ? findCurriculum(overviewQuery.data.entries, curriculumId)
     : null;
