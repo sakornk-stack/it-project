@@ -3,7 +3,15 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, CheckCircle2, GraduationCap, Sigma, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  GraduationCap,
+  ListChecks,
+  Sigma,
+  Users,
+} from 'lucide-react';
 import { fetchCurriculumQuality } from '@/lib/api/admin';
 import { fetchCurriculum } from '@/lib/api/plo-achievement';
 import { findCurriculum, placeOf } from '@/lib/admin-curricula';
@@ -133,6 +141,13 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
               </span>
             }
           />
+          <Link
+            href={`/admin/curriculum/${curriculumId}/outcomes`}
+            className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <ListChecks size={14} aria-hidden="true" />
+            จัดการ CLO รายวิชา
+          </Link>
         </Reveal>
       )}
 

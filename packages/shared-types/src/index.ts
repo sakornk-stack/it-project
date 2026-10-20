@@ -712,6 +712,24 @@ export interface CloListItem {
   courseId: string;
 }
 
+// What GET /clos returns to ADMIN for the outcomes page (a student only needs
+// CloListItem). isConfirmed=false: copied from another curriculum year, not yet checked.
+export interface CloDetail extends CloListItem {
+  achievementThreshold: number | null;
+  isConfirmed: boolean;
+  isActive: boolean;
+}
+
+export interface CreateCloRequest {
+  code: string;
+  description: string;
+  achievementThreshold?: number | null;
+  isConfirmed?: boolean;
+  courseId: string;
+}
+
+export type UpdateCloRequest = Partial<Omit<CreateCloRequest, 'courseId'>>;
+
 export interface CloScoreInput {
   cloId: string;
   score: number; // 1-5
