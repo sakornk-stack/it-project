@@ -14,6 +14,9 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { PloRadarChart } from '@/components/aptitude-analysis/plo-radar-chart';
 import { PloInterpretationCard } from '@/components/aptitude-analysis/plo-interpretation-card';
 import { AptitudeAnalysisSkeleton } from '@/components/aptitude-analysis/aptitude-analysis-skeleton';
+import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
+import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
+import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
 import { CareerFitCard } from '@/components/career-fit/career-fit-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -98,17 +101,31 @@ export default function AptitudeAnalysisPage() {
         }
       />
 
-      <Reveal index={1} className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <PloRadarChart
-            radar={ploQuery.data.radar}
-            threshold={curriculumQuery.data.defaultAchievementThreshold}
-          />
-        </div>
-        <div className="lg:col-span-3">
-          <PloInterpretationCard report={interpretation} />
-        </div>
-      </Reveal>
+      {ploQuery.data.radar.length === 0 ? (
+        <Reveal index={1}>
+          <NoPloNotice />
+        </Reveal>
+      ) : (
+        <Reveal index={1} className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <PloRadarChart
+              radar={ploQuery.data.radar}
+              threshold={curriculumQuery.data.defaultAchievementThreshold}
+              footer={
+                <PloMethodNote
+                  radar={ploQuery.data.radar}
+                  showThreshold
+                  showCoverage
+                  preliminary={isPreliminaryCloCurriculum(curriculumQuery.data)}
+                />
+              }
+            />
+          </div>
+          <div className="lg:col-span-3">
+            <PloInterpretationCard report={interpretation} />
+          </div>
+        </Reveal>
+      )}
 
       <Reveal index={2} className="mt-6">
         <CareerFitCard />

@@ -17,6 +17,9 @@ import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { PageLoadError } from '@/components/layout/page-states';
 import { OverallAchievementCard } from '@/components/clo-plo-analysis/overall-achievement-card';
+import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
+import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
+import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
 import { PloCard } from '@/components/clo-plo-analysis/plo-card';
 import { SCORE_BANDS, scoreBandKey } from '@/lib/plo-score-bands';
 import { Card, CardContent } from '@/components/ui/card';
@@ -189,52 +192,68 @@ export default function CloPloAnalysisPage() {
           }
         />
 
-        <Reveal index={1}>
-          <OverallAchievementCard
-            percent={overallPercent}
-            isAchieved={overallAchieved}
-            threshold={threshold}
-            bandCounts={statusCounts.counts}
-            noDataCount={statusCounts.noDataCount}
-          />
-        </Reveal>
+        {sortedRadar.length === 0 ? (
+          <Reveal index={1}>
+            <NoPloNotice />
+          </Reveal>
+        ) : (
+          <>
+            <Reveal index={1}>
+              <OverallAchievementCard
+                percent={overallPercent}
+                isAchieved={overallAchieved}
+                threshold={threshold}
+                bandCounts={statusCounts.counts}
+                noDataCount={statusCounts.noDataCount}
+              />
+            </Reveal>
 
-        <Reveal index={2}>
-          <PageSection
-            title="ผลการวิเคราะห์ราย PLO"
-            description="คลิกแต่ละ PLO เพื่อดูผลลัพธ์การเรียนรู้ระดับรายวิชา (CLO) ที่เกี่ยวข้อง"
-            actions={
-              <Select value={sortMode} onValueChange={(value) => setSortMode(value as SortMode)}>
-                <SelectTrigger aria-label="เรียงลำดับ PLO" className="w-full sm:w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lowest">เรียง: ต้องพัฒนาก่อน</SelectItem>
-                  <SelectItem value="highest">เรียง: คะแนนสูงสุด</SelectItem>
-                  <SelectItem value="code">เรียงตาม PLO</SelectItem>
-                </SelectContent>
-              </Select>
-            }
-          >
-            <div
-                className={`grid grid-cols-1 gap-4 lg:grid-cols-2 ${
-                  expandedPloIds.size > 0 ? 'items-start' : 'items-stretch'
-                }`}
+            <Reveal index={2}>
+              <PloMethodNote
+                radar={achievementQuery.data.radar}
+                showThreshold={false}
+                preliminary={curriculumQuery.data ? isPreliminaryCloCurriculum(curriculumQuery.data) : false}
+              />
+            </Reveal>
+
+            <Reveal index={3}>
+              <PageSection
+                title="ผลการวิเคราะห์ราย PLO"
+                description="คลิกแต่ละ PLO เพื่อดูผลลัพธ์การเรียนรู้ระดับรายวิชา (CLO) ที่เกี่ยวข้อง"
+                actions={
+                  <Select value={sortMode} onValueChange={(value) => setSortMode(value as SortMode)}>
+                    <SelectTrigger aria-label="เรียงลำดับ PLO" className="w-full sm:w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lowest">เรียง: ต้องพัฒนาก่อน</SelectItem>
+                      <SelectItem value="highest">เรียง: คะแนนสูงสุด</SelectItem>
+                      <SelectItem value="code">เรียงตาม PLO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                }
               >
-              {sortedRadar.map((plo) => (
-                <PloCard
-                  key={plo.ploId}
-                  plo={plo}
-                  description={descriptionByPloId.get(plo.ploId) ?? null}
-                  isAchieved={threshold !== null && plo.value !== null && plo.value >= threshold}
-                  threshold={threshold}
-                  expanded={expandedPloIds.has(plo.ploId)}
-                  onExpandedChange={handleExpandedChange}
-                />
-              ))}
-            </div>
-          </PageSection>
-        </Reveal>
+                <div
+                    className={`grid grid-cols-1 gap-4 lg:grid-cols-2 ${
+                      expandedPloIds.size > 0 ? 'items-start' : 'items-stretch'
+                    }`}
+                  >
+                  {sortedRadar.map((plo) => (
+                    <PloCard
+                      key={plo.ploId}
+                      plo={plo}
+                      description={descriptionByPloId.get(plo.ploId) ?? null}
+                      isAchieved={threshold !== null && plo.value !== null && plo.value >= threshold}
+                      threshold={threshold}
+                      expanded={expandedPloIds.has(plo.ploId)}
+                      onExpandedChange={handleExpandedChange}
+                    />
+                  ))}
+                </div>
+              </PageSection>
+            </Reveal>
+          </>
+        )}
       </>
     </DashboardShell>
   );

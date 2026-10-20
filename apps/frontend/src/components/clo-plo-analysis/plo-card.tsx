@@ -10,6 +10,11 @@ import {
   formatFiveScaleAgainstThreshold,
   percentToFiveScale,
 } from '@/lib/five-scale';
+import {
+  INSTRUCTOR_ASSESSED_COURSE_CODES,
+  INSTRUCTOR_ASSESSED_NOTE,
+  ploCoverage,
+} from '@/lib/plo-notes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,6 +41,7 @@ export function PloCard({
   const isExpanded = expanded;
   const hasBreakdown = plo.cloBreakdown.length > 0;
   const breakdownId = useId();
+  const coverage = ploCoverage(plo);
 
   return (
     <Card className="flex flex-col">
@@ -82,6 +88,11 @@ export function PloCard({
               />
             )}
           </div>
+          {coverage.total > 0 && (
+            <p className="text-xs text-muted-foreground">
+              คำนวณจาก {coverage.used} จาก {coverage.total} วิชา
+            </p>
+          )}
           {threshold !== null && (
             <p className="text-xs text-muted-foreground">
               เกณฑ์ผ่าน ≥ {percentToFiveScale(threshold).toFixed(1)} / 5.0
@@ -123,6 +134,11 @@ export function PloCard({
                     {clo.code} · {clo.courseCode} {clo.courseName}
                   </p>
                   <p className="text-sm text-primary">{clo.description}</p>
+                  {INSTRUCTOR_ASSESSED_COURSE_CODES.has(clo.courseCode) && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {INSTRUCTOR_ASSESSED_NOTE}
+                    </p>
+                  )}
                 </div>
                 <Badge
                   tone={clo.score === null ? 'neutral' : clo.isAchieved ? 'success' : 'warning'}

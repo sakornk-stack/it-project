@@ -34,6 +34,9 @@ import { PendingAssessmentPanel } from '@/components/dashboard/pending-assessmen
 import { ElectiveProgressPanel } from '@/components/dashboard/elective-progress-panel';
 import { CareerFitSummary } from '@/components/dashboard/career-fit-summary';
 import { PloOverview } from '@/components/dashboard/plo-overview';
+import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
+import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
+import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
 import { ReadinessChecklist } from '@/components/dashboard/readiness-checklist';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -94,7 +97,14 @@ export default function DashboardPage() {
       ready={!isLoading}
     >
       {dashboard && (
-        <DashboardCards fullName={user.fullName} dashboard={dashboard} threshold={threshold} />
+        <DashboardCards
+          fullName={user.fullName}
+          dashboard={dashboard}
+          threshold={threshold}
+          preliminaryClo={
+            curriculumQuery.data ? isPreliminaryCloCurriculum(curriculumQuery.data) : false
+          }
+        />
       )}
     </DashboardShell>
   );
@@ -104,10 +114,12 @@ function DashboardCards({
   fullName,
   dashboard,
   threshold,
+  preliminaryClo,
 }: Readonly<{
   fullName: string;
   dashboard: StudentDashboardResponse;
   threshold: number | null;
+  preliminaryClo: boolean;
 }>) {
   const animatedGpa = useCountUp(dashboard.gpa ?? 0, {
     duration: COUNT_UP_MS,
@@ -261,12 +273,23 @@ function DashboardCards({
             </div>
           }
         >
-          <PloOverview
-            radar={dashboard.radar}
-            strengths={dashboard.strengths}
-            areasForImprovement={dashboard.areasForImprovement}
-            threshold={threshold}
-          />
+          {dashboard.radar.length === 0 ? (
+            <NoPloNotice />
+          ) : (
+            <div className="space-y-4">
+              <PloOverview
+                radar={dashboard.radar}
+                strengths={dashboard.strengths}
+                areasForImprovement={dashboard.areasForImprovement}
+                threshold={threshold}
+              />
+              <PloMethodNote
+                radar={[]}
+                showThreshold={threshold !== null}
+                preliminary={preliminaryClo}
+              />
+            </div>
+          )}
         </PageSection>
       </RevealOnScroll>
 

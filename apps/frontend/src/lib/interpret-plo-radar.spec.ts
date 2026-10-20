@@ -23,3 +23,18 @@ describe('interpretPloRadar weakness values', () => {
     expect(weaknesses).toHaveLength(0);
   });
 });
+
+describe('interpretPloRadar PLOs without data', () => {
+  it('lists a PLO with no data under noData, never under weaknesses or recommendations', () => {
+    const r = interpretPloRadar([point('PLO1', 90), point('PLO2', null)], 70);
+    expect(r.weaknesses).toHaveLength(0);
+    expect(r.recommendations.join(' ')).not.toContain('ด้าน PLO2');
+    expect(r.noData).toHaveLength(1);
+    expect(r.noData[0]).toContain('ด้าน PLO2');
+  });
+
+  it('counts only PLOs with data in the summary', () => {
+    const r = interpretPloRadar([point('PLO1', 90), point('PLO2', null), point('PLO3', null)], 70);
+    expect(r.summary).toContain('1 ด้าน');
+  });
+});

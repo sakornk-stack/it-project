@@ -1,4 +1,4 @@
-import { ClipboardList, Lightbulb, TrendingDown, TrendingUp } from 'lucide-react';
+import { ClipboardList, Info, Lightbulb, TrendingDown, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NO_DATA_SUMMARY, type PloInterpretation } from '@/lib/interpret-plo-radar';
@@ -18,7 +18,7 @@ function IconList({
   title: string;
   items: string[];
   icon: LucideIcon;
-  tone: 'strength' | 'weakness' | 'neutral';
+  tone: 'strength' | 'weakness' | 'neutral' | 'muted';
 }) {
   if (items.length === 0) return null;
   return (
@@ -34,6 +34,7 @@ function IconList({
                 tone === 'strength' && 'text-emerald-600',
                 tone === 'weakness' && 'text-amber-600',
                 tone === 'neutral' && 'text-primary',
+                tone === 'muted' && 'text-slate-400',
               )}
             />
             <span>{item}</span>
@@ -68,6 +69,7 @@ export function PloInterpretationCard({ report }: { report: PloInterpretation })
             <IconList title="จุดแข็ง" items={report.strengths} icon={TrendingUp} tone="strength" />
             <IconList title="จุดที่ควรพัฒนา" items={report.weaknesses} icon={TrendingDown} tone="weakness" />
             <IconList title="คำแนะนำ" items={report.recommendations} icon={Lightbulb} tone="neutral" />
+            <IconList title="ยังไม่มีข้อมูล" items={report.noData} icon={Info} tone="muted" />
           </>
         )}
       </CardContent>

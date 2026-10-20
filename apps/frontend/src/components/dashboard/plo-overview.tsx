@@ -115,7 +115,7 @@ export function PloOverview({
           <CardContent className="space-y-4">
             {passedCount !== null && (
               <p className="text-sm font-medium text-primary">
-                ผ่านเกณฑ์ {passedCount} จาก {radar.length} PLO
+                ผ่านเกณฑ์ {passedCount} จาก {radar.filter((p) => p.value !== null).length} PLO ที่มีข้อมูล
               </p>
             )}
             {hasHighlights && (
