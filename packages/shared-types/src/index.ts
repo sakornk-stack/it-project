@@ -994,23 +994,6 @@ export interface StudentRosterEntry {
   riskLevel: RiskLevel;
 }
 
-// ---- Leftovers of the removed assessment-evidence feature ----
-// The module, its tables and these request/response types are gone. Only the two types below
-// stay because frontend/src/lib/score-multi-clo.ts and grade-label.ts (themselves unused)
-// still reference them; delete them together with those files.
-export type AssessmentScoreStatus = 'PENDING' | 'GRADED' | 'ABSENT' | 'EXCUSED';
-
-export interface AssessmentCloMapping {
-  id: string;
-  weight: string;
-  maxScoreOverride: string | null;
-  isActive: boolean;
-  assessmentDefinitionId: string;
-  cloId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // ---- Instructor dashboard (GET /dashboard/instructor) and course-level
 // CLO achievement (GET /clo-achievement/course/:courseId) share this shape.
 export interface CloAchievementEntry {
