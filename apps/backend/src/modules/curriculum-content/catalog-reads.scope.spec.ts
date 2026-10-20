@@ -53,13 +53,13 @@ const CASES: [string, string, (prisma: never) => unknown, (c: object) => object]
   [
     'PloService',
     'plo',
-    (p) => new PloService(p, {} as never),
+    (p) => new PloService(p, {} as never, {} as never),
     (c) => ({ isActive: true, curriculum: c }),
   ],
   [
     'CloPloMappingService',
     'cloPloMapping',
-    (p) => new CloPloMappingService(p, {} as never, {} as never, {} as never),
+    (p) => new CloPloMappingService(p, {} as never, {} as never, {} as never, {} as never),
     (c) => ({ isActive: true, plo: { curriculum: c } }),
   ],
 ];

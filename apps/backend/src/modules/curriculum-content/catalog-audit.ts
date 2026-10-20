@@ -1,8 +1,10 @@
 import {
   Clo,
+  CloPloMapping,
   Course,
   CourseCategory,
   CurriculumRequirement,
+  Plo,
   Prerequisite,
   Prisma,
 } from '@prisma/client';
@@ -59,6 +61,25 @@ export function cloSnapshot(clo: Clo): AuditSnapshot {
     isConfirmed: clo.isConfirmed,
     courseId: clo.courseId,
     isActive: clo.isActive,
+  };
+}
+
+export function ploSnapshot(plo: Plo): AuditSnapshot {
+  return {
+    code: plo.code,
+    name: plo.name,
+    description: plo.description,
+    curriculumId: plo.curriculumId,
+    isActive: plo.isActive,
+  };
+}
+
+export function cloPloMappingSnapshot(mapping: CloPloMapping): AuditSnapshot {
+  return {
+    cloId: mapping.cloId,
+    ploId: mapping.ploId,
+    weight: mapping.weight,
+    isActive: mapping.isActive,
   };
 }
 

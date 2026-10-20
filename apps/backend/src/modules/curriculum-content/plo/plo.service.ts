@@ -1,11 +1,11 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AuditAction, Plo, Prisma } from '@prisma/client';
+import { AuditLogService } from '../../../common/audit/audit-log.service';
+import type { AuditSnapshot } from '../../../common/audit/audit-log.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
+import { curriculumProgramId, ploSnapshot } from '../catalog-audit';
 import { CreatePloDto } from './dto/create-plo.dto';
 import { UpdatePloDto } from './dto/update-plo.dto';
 
@@ -14,12 +14,17 @@ export class PloService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly curriculumService: CurriculumService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(dto: CreatePloDto) {
+  async create(dto: CreatePloDto, actor: RequestUser) {
     await this.curriculumService.findActiveByIdOrThrow(dto.curriculumId);
     await this.assertCodeAvailable(dto.curriculumId, dto.code);
-    return this.prisma.plo.create({ data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.plo.create({ data: dto });
+      await this.recordAudit(tx, actor, 'PLO_CREATE', created, null, ploSnapshot(created));
+      return created;
+    });
   }
 
   findAll() {
@@ -27,9 +32,11 @@ export class PloService {
   }
 
   // Controller-facing reads, limited to the caller's curricula — see
-  // CourseService.findAllInCurricula.
-  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
-    return this.prisma.plo.findMany({ where: { isActive: true, curriculum } });
+  // CourseService.findAllInCurricula. `curriculumId` narrows to one curriculum.
+  findAllInCurricula(curriculum: Prisma.CurriculumWhereInput, curriculumId?: string) {
+    return this.prisma.plo.findMany({
+      where: { isActive: true, ...(curriculumId ? { curriculumId } : {}), curriculum },
+    });
   }
 
   async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
@@ -59,43 +66,80 @@ export class PloService {
     return plo;
   }
 
-  async update(id: string, dto: UpdatePloDto) {
-    const { curriculumId } = await this.findOne(id);
+  // A deactivated PLO is a 404: editing it would change data nobody sees.
+  async update(id: string, dto: UpdatePloDto, actor: RequestUser) {
+    const current = await this.findActiveByIdOrThrow(id);
 
     if (dto.code) {
-      await this.assertCodeAvailable(curriculumId, dto.code, id);
+      await this.assertCodeAvailable(current.curriculumId, dto.code, id);
     }
 
-    return this.prisma.plo.update({ where: { id }, data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.plo.update({ where: { id }, data: dto });
+      await this.recordAudit(
+        tx,
+        actor,
+        'PLO_UPDATE',
+        updated,
+        ploSnapshot(current),
+        ploSnapshot(updated),
+      );
+      return updated;
+    });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, actor: RequestUser) {
+    const current = await this.findActiveByIdOrThrow(id);
 
     const activeMappingCount = await this.prisma.cloPloMapping.count({
       where: { ploId: id, isActive: true },
     });
     if (activeMappingCount > 0) {
       throw new ConflictException(
-        `Cannot deactivate PLO ${id}: ${activeMappingCount} active CLO-PLO mapping(s) still reference it`,
+        `ลบ PLO นี้ไม่ได้ เพราะยังมีการเชื่อมโยงกับ CLO ${activeMappingCount} รายการ ให้ลบการเชื่อมโยงก่อน`,
       );
     }
 
-    return this.prisma.plo.update({ where: { id }, data: { isActive: false } });
+    return this.prisma.$transaction(async (tx) => {
+      const deactivated = await tx.plo.update({ where: { id }, data: { isActive: false } });
+      await this.recordAudit(
+        tx,
+        actor,
+        'PLO_DEACTIVATE',
+        deactivated,
+        ploSnapshot(current),
+        ploSnapshot(deactivated),
+      );
+      return deactivated;
+    });
   }
 
-  private async assertCodeAvailable(
-    curriculumId: string,
-    code: string,
-    excludeId?: string,
+  private async recordAudit(
+    tx: Prisma.TransactionClient,
+    actor: RequestUser,
+    action: AuditAction,
+    plo: Plo,
+    before: AuditSnapshot | null,
+    after: AuditSnapshot,
   ) {
+    await this.auditLogService.record(tx, {
+      action,
+      actor,
+      targetType: 'Plo',
+      targetId: plo.id,
+      studentProfileId: null,
+      programId: await curriculumProgramId(tx, plo.curriculumId),
+      before,
+      after,
+    });
+  }
+
+  private async assertCodeAvailable(curriculumId: string, code: string, excludeId?: string) {
     const existing = await this.prisma.plo.findFirst({
       where: { curriculumId, code, isActive: true },
     });
     if (existing && existing.id !== excludeId) {
-      throw new ConflictException(
-        `PLO code "${code}" is already in use within this curriculum`,
-      );
+      throw new ConflictException(`รหัส PLO "${code}" ถูกใช้แล้วในหลักสูตรนี้`);
     }
   }
 }

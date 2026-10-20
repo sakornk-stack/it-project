@@ -5,12 +5,15 @@ import {
   Get,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -44,9 +47,14 @@ export class CloPloMappingController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active CLO-PLO mappings within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of active CLO-PLO mappings' })
-  async findAll(@CurrentUser() user: RequestUser) {
+  @ApiQuery({ name: 'curriculumId', required: false })
+  async findAll(
+    @CurrentUser() user: RequestUser,
+    @Query('curriculumId', new ParseUUIDPipe({ optional: true })) curriculumId?: string,
+  ) {
     return this.cloPloMappingService.findAllInCurricula(
       await this.catalogScope.curriculumWhere(user),
+      curriculumId,
     );
   }
 
@@ -75,8 +83,8 @@ export class CloPloMappingController {
   @ApiResponse({ status: 403, description: 'No scope covering this PLO' })
   @ApiResponse({ status: 404, description: 'CLO or PLO not found or inactive' })
   @ApiResponse({ status: 409, description: 'CLO-PLO mapping already exists' })
-  create(@Body() dto: CreateCloPloMappingDto) {
-    return this.cloPloMappingService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCloPloMappingDto) {
+    return this.cloPloMappingService.create(dto, user);
   }
 
   @Patch(':id')
@@ -88,8 +96,12 @@ export class CloPloMappingController {
   @ApiResponse({ status: 200, description: 'CLO-PLO mapping updated' })
   @ApiResponse({ status: 403, description: 'No scope covering this CLO-PLO mapping' })
   @ApiResponse({ status: 404, description: 'CLO-PLO mapping not found' })
-  update(@Param('id') id: string, @Body() dto: UpdateCloPloMappingDto) {
-    return this.cloPloMappingService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateCloPloMappingDto,
+  ) {
+    return this.cloPloMappingService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -101,7 +113,7 @@ export class CloPloMappingController {
   @ApiResponse({ status: 200, description: 'CLO-PLO mapping deactivated' })
   @ApiResponse({ status: 403, description: 'No scope covering this CLO-PLO mapping' })
   @ApiResponse({ status: 404, description: 'CLO-PLO mapping not found' })
-  remove(@Param('id') id: string) {
-    return this.cloPloMappingService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.cloPloMappingService.remove(id, user);
   }
 }

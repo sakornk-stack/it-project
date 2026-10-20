@@ -12,7 +12,9 @@ export type AuditTargetType =
   | 'CourseCategory'
   | 'CurriculumRequirement'
   | 'Prerequisite'
-  | 'Clo';
+  | 'Clo'
+  | 'Plo'
+  | 'CloPloMapping';
 
 export interface AuditEntry {
   action: AuditAction;

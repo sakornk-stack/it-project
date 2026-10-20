@@ -5,12 +5,15 @@ import {
   Get,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -44,9 +47,14 @@ export class PloController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List active PLOs within the caller scope' })
   @ApiResponse({ status: 200, description: 'List of active PLOs' })
-  async findAll(@CurrentUser() user: RequestUser) {
+  @ApiQuery({ name: 'curriculumId', required: false })
+  async findAll(
+    @CurrentUser() user: RequestUser,
+    @Query('curriculumId', new ParseUUIDPipe({ optional: true })) curriculumId?: string,
+  ) {
     return this.ploService.findAllInCurricula(
       await this.catalogScope.curriculumWhere(user),
+      curriculumId,
     );
   }
 
@@ -77,8 +85,8 @@ export class PloController {
     status: 409,
     description: 'PLO code already in use within this curriculum',
   })
-  create(@Body() dto: CreatePloDto) {
-    return this.ploService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreatePloDto) {
+    return this.ploService.create(dto, user);
   }
 
   @Patch(':id')
@@ -94,8 +102,12 @@ export class PloController {
     status: 409,
     description: 'PLO code already in use within this curriculum',
   })
-  update(@Param('id') id: string, @Body() dto: UpdatePloDto) {
-    return this.ploService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePloDto,
+  ) {
+    return this.ploService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -111,7 +123,7 @@ export class PloController {
     status: 409,
     description: 'PLO still has active CLO-PLO mappings',
   })
-  remove(@Param('id') id: string) {
-    return this.ploService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.ploService.remove(id, user);
   }
 }
