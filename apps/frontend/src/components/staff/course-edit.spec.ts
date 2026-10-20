@@ -59,6 +59,10 @@ describe('courseEditSchema', () => {
     expect(courseEditSchema.safeParse(ok).success).toBe(true);
   });
 
+  it.each([0, 12])('accepts %d credits (the backend range is 0–12)', (credits) => {
+    expect(courseEditSchema.safeParse({ ...ok, credits }).success).toBe(true);
+  });
+
   it.each([
     ['code over 20', { code: 'x'.repeat(21) }],
     ['empty name', { name: '' }],
@@ -66,6 +70,7 @@ describe('courseEditSchema', () => {
     ['English name over 255', { nameEn: 'a'.repeat(256) }],
     ['fractional credits', { credits: 2.5 }],
     ['negative credits', { credits: -1 }],
+    ['credits over 12', { credits: 13 }],
     ['category that is not an id', { categoryId: 'K1' }],
   ])('refuses %s', (_label, change) => {
     expect(courseEditSchema.safeParse({ ...ok, ...change }).success).toBe(false);
@@ -85,6 +90,7 @@ describe('deleting a course', () => {
       'ลบรายวิชา CPE101 การเขียนโปรแกรม?',
     );
     expect(COURSE_DELETE_WARNING).toContain('ผลการเรียน อาจารย์ผู้รับผิดชอบ');
+    expect(COURSE_DELETE_WARNING).toContain('เปิดใช้งานกลับได้');
   });
 
   it('shows the Thai 409 message from the server as is', () => {

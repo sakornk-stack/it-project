@@ -70,7 +70,7 @@ export function toCreateBody(curriculumId: string, values: CourseEditValues): Cr
 }
 
 export const COURSE_DELETE_WARNING =
-  'รายวิชานี้จะถูกนำออกจากหลักสูตร ไม่สามารถลบได้หากมีผลการเรียน อาจารย์ผู้รับผิดชอบ หรือผลลัพธ์การเรียนรู้ผูกอยู่';
+  'รายวิชานี้จะถูกปิดใช้งานและนำออกจากหลักสูตร (เปิดใช้งานกลับได้ภายหลัง) ไม่สามารถลบได้หากมีผลการเรียน อาจารย์ผู้รับผิดชอบ ผลลัพธ์การเรียนรู้ หรือการเชื่อมโยงกับอาชีพผูกอยู่ วิชาบังคับก่อนของวิชานี้จะถูกลบออก';
 
 export function courseDeleteTitle(course: Pick<CourseListItem, 'code' | 'name'>): string {
   return `ลบรายวิชา ${course.code} ${course.name}?`;

@@ -4,13 +4,18 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
-import type { CourseCategory, CourseListItem, Prerequisite } from '@eduanalyze-ai/shared-types';
+import type {
+  CourseCategory,
+  CourseListItem,
+  CurriculumRequirement,
+  Prerequisite,
+} from '@eduanalyze-ai/shared-types';
 import { createCourse, deleteCourse, updateCourse } from '@/lib/api/staff';
 import { describeApiError } from '@/lib/describe-api-error';
 import { OWN_SENTENCE_ONLY, STAFF_WRITE_ERRORS } from '@/lib/api-error-presets';
 import { useConfirm } from '@/lib/use-confirm';
 import { useToast } from '@/lib/toast-context';
-import { ApiErrorAlert } from '@/components/ui/api-error-alert';
+import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/ui/api-error-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +45,7 @@ import {
   toUpdateBody,
   type CourseEditValues,
 } from './course-edit';
+import { categoryMoveImpact, categoryMoveMessages } from './category-move';
 import { PrerequisiteEditor } from './prerequisite-editor';
 import { StaffSheet } from './staff-sheet';
 
@@ -66,6 +72,7 @@ export function CourseEditSheet({
   curriculumLabel,
   categories,
   coursesInCurriculum,
+  requirements,
   prerequisites,
   onChanged,
 }: Readonly<{
@@ -75,6 +82,7 @@ export function CourseEditSheet({
   curriculumLabel: string;
   categories: CourseCategory[];
   coursesInCurriculum: CourseListItem[];
+  requirements: CurriculumRequirement[];
   prerequisites: Prerequisite[];
   onChanged: () => void;
 }>) {
@@ -88,6 +96,18 @@ export function CourseEditSheet({
     defaultValues: EMPTY,
   });
   const editing = target?.kind === 'edit' ? target.course : null;
+  const watchedCategoryId = form.watch('categoryId');
+  const watchedCredits = Number(form.watch('credits'));
+  const move = editing
+    ? categoryMoveImpact(
+        editing,
+        { categoryId: watchedCategoryId, credits: watchedCredits },
+        coursesInCurriculum,
+        categories,
+        requirements,
+      )
+    : null;
+  const moveMessages = move ? categoryMoveMessages(move) : null;
 
   useEffect(() => {
     if (!target) return;
@@ -268,6 +288,16 @@ export function CourseEditSheet({
                   </SelectContent>
                 </Select>
                 <FormMessage />
+                {moveMessages && (
+                  <div role="status" aria-live="polite" className="space-y-2 pt-1">
+                    {moveMessages.warning && (
+                      <Alert className={WARNING_ALERT_CLASS}>
+                        <AlertDescription>{moveMessages.warning}</AlertDescription>
+                      </Alert>
+                    )}
+                    <p className="text-xs text-muted-foreground">{moveMessages.info}</p>
+                  </div>
+                )}
               </FormItem>
             )}
           />

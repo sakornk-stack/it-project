@@ -2,6 +2,7 @@ import type {
   AuditLogEntry,
   CourseCategory,
   CourseInstructor,
+  CourseListItem,
   CreateCourseCategoryRequest,
   CreateCourseInstructorRequest,
   CreateCourseRequest,
@@ -129,6 +130,19 @@ export async function updateCourse(id: string, dto: UpdateCourseRequest) {
 
 export async function deleteCourse(id: string) {
   await apiClient.delete(`/courses/${id}`);
+}
+
+// STAFF only: deactivated courses of one curriculum, so one can be reactivated.
+export async function fetchInactiveCourses(curriculumId: string) {
+  const { data } = await apiClient.get<CourseListItem[]>('/courses/inactive', {
+    params: { curriculumId },
+  });
+  return data;
+}
+
+export async function reactivateCourse(id: string) {
+  const { data } = await apiClient.post<CourseListItem>(`/courses/${id}/reactivate`);
+  return data;
 }
 
 export async function fetchPrerequisites() {

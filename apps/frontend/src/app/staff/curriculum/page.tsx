@@ -29,6 +29,7 @@ import { AssignInstructorSheet } from '@/components/staff/assign-instructor-shee
 import { CourseEditSheet, type CourseSheetTarget } from '@/components/staff/course-edit-sheet';
 import { CourseRows } from '@/components/staff/course-rows';
 import { CurriculumInstructorsTab } from '@/components/staff/curriculum-instructors-tab';
+import { InactiveCoursesSection } from '@/components/staff/inactive-courses-section';
 import {
   buildCurriculumView,
   categoryOpenByDefault,
@@ -589,6 +590,12 @@ function StaffCurriculumContent() {
                   );
                 })
               )}
+
+              <InactiveCoursesSection
+                curriculumId={curriculumId}
+                categories={curriculumCategories}
+                onChanged={refetchAll}
+              />
             </>
           )}
         </>
@@ -601,6 +608,9 @@ function StaffCurriculumContent() {
           curriculumLabel={curricula.find((c) => c.id === curriculumId)?.label ?? ''}
           categories={curriculumCategories}
           coursesInCurriculum={activeCoursesInCurriculum}
+          requirements={(requirementsQuery.data ?? []).filter(
+            (r) => r.curriculumId === curriculumId,
+          )}
           prerequisites={prerequisitesQuery.data ?? []}
           onChanged={refetchAll}
         />
