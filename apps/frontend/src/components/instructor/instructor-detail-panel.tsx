@@ -6,7 +6,6 @@ import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
 import {
   invalidateAfterGradeChange,
   useCourseCloAchievement,
-  useCourseEvidenceCoverage,
   useCourseRoster,
 } from '@/lib/instructor-queries';
 import { nextTabIndex } from '@/lib/tab-keys';
@@ -96,12 +95,6 @@ export function InstructorDetailPanel({
     enabled: isInstructor && (activeTab === 'students' || activeTab === 'clo'),
   });
 
-  // Evidence coverage sits beside the grade-based numbers on the CLO tab so
-  // the two are never confused for one another.
-  const evidenceCoverageQuery = useCourseEvidenceCoverage(course.courseId, {
-    enabled: isInstructor && activeTab === 'clo',
-  });
-
   function handleGradebookChanged() {
     invalidateAfterGradeChange(queryClient, course.courseId);
   }
@@ -174,10 +167,6 @@ export function InstructorDetailPanel({
               isLoading={cloQuery.isLoading}
               isError={cloQuery.isError}
               onRetry={() => void cloQuery.refetch()}
-              evidenceCoverage={evidenceCoverageQuery.data}
-              evidenceTotal={rosterQuery.data?.length}
-              evidenceError={evidenceCoverageQuery.isError}
-              onEvidenceRetry={() => void evidenceCoverageQuery.refetch()}
             />
           </Reveal>
         </div>
@@ -189,7 +178,6 @@ export function InstructorDetailPanel({
             <StudentRosterTable
               courseId={course.courseId}
               courseCode={course.code}
-              clos={course.clos}
               roster={rosterQuery.data}
               isLoading={rosterQuery.isLoading}
               isError={rosterQuery.isError}

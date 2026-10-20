@@ -1,7 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { fetchCourses } from '@/lib/api/academic-record';
-import { fetchActualCloAchievement } from '@/lib/api/assessment-evidence';
-import { fetchCourseEvidenceCoverage } from '@/lib/evidence-coverage';
 import {
   fetchCourseCloAchievement,
   fetchCourseRoster,
@@ -27,14 +25,10 @@ export const instructorKeys = {
   courseRoster: (courseId: string) => ['instructor-course-roster', courseId] as const,
   courseCloAchievement: (courseId: string) =>
     ['instructor-course-clo-achievement', courseId] as const,
-  courseEvidenceCoverage: (courseId: string) =>
-    ['instructor-course-evidence-coverage', courseId] as const,
   studentTimeline: (courseId: string, studentProfileId: string) =>
     ['instructor-student-timeline', courseId, studentProfileId] as const,
   // Prefix of every student timeline of one course, for invalidation.
   studentTimelinesOfCourse: (courseId: string) => ['instructor-student-timeline', courseId] as const,
-  actualCloAchievement: (courseId: string, courseRecordId: string, cloId: string) =>
-    ['instructor-actual-clo-achievement', courseId, courseRecordId, cloId] as const,
 };
 
 // `enabled` is the page's role check (the caller is an instructor); components
@@ -82,27 +76,11 @@ export const useCourseCloAchievement = (courseId: string, { enabled = true }: Ga
     enabled,
   });
 
-export const useCourseEvidenceCoverage = (courseId: string, { enabled = true }: Gate = {}) =>
-  useQuery({
-    queryKey: instructorKeys.courseEvidenceCoverage(courseId),
-    queryFn: () => fetchCourseEvidenceCoverage(courseId),
-    enabled,
-  });
-
 export const useStudentTimeline = (courseId: string, studentProfileId: string) =>
   useQuery({
     queryKey: instructorKeys.studentTimeline(courseId, studentProfileId),
     queryFn: () => fetchStudentTimeline(courseId, studentProfileId),
   });
-
-export const actualCloAchievementQuery = (
-  courseId: string,
-  courseRecordId: string,
-  cloId: string,
-) => ({
-  queryKey: instructorKeys.actualCloAchievement(courseId, courseRecordId, cloId),
-  queryFn: () => fetchActualCloAchievement(courseId, courseRecordId, cloId),
-});
 
 // After a grade is saved: everything that is computed from grades. The dashboard
 // and CLO figures of the course, the roster, the students page, the year-level
@@ -111,7 +89,6 @@ export function invalidateAfterGradeChange(queryClient: QueryClient, courseId: s
   const keys: readonly (readonly unknown[])[] = [
     instructorKeys.courseRoster(courseId),
     instructorKeys.courseCloAchievement(courseId),
-    instructorKeys.courseEvidenceCoverage(courseId),
     instructorKeys.studentTimelinesOfCourse(courseId),
     instructorKeys.dashboard,
     instructorKeys.students,

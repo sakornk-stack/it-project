@@ -1,52 +1,25 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useQueries } from '@tanstack/react-query';
-import type { CloAchievementEntry } from '@eduanalyze-ai/shared-types';
-import { actualCloAchievementQuery, useStudentTimeline } from '@/lib/instructor-queries';
-import { hasActualCloEvidence } from '@/lib/actual-clo-evidence';
-import { formatPercent } from '@/lib/format-percent';
+import { useStudentTimeline } from '@/lib/instructor-queries';
 import { gradeBadgeTone } from '@/lib/grade-badge-color';
 import { GRADE_LABELS, formatSemesterLabel } from '@/lib/grade-label';
-import { AchievementSourceBadge } from './achievement-source-badge';
-import { EvidenceCoverageBadge } from './evidence-coverage-badge';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListSkeleton, Skeleton } from '@/components/ui/skeleton';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 export function StudentTimelineCard({
   courseId,
-  courseCode,
   studentProfileId,
-  studentCourseRecordId,
-  clos,
   onClose,
 }: {
   courseId: string;
-  courseCode: string;
   studentProfileId: string;
-  // The course attempt this card was opened from — evidence-based CLO
-  // results are scoped to one attempt, unlike the grade timeline below
-  // which spans every course this instructor teaches the student.
-  studentCourseRecordId: string;
-  clos: CloAchievementEntry[];
   onClose: () => void;
 }) {
   const query = useStudentTimeline(courseId, studentProfileId);
-
-  // One request per CLO of this course, fired only while this card is
-  // mounted (i.e. only for the one student currently selected in the
-  // roster) — never fanned out across the whole class.
-  const cloAchievementQueries = useQueries({
-    queries: clos.map((clo) => actualCloAchievementQuery(courseId, studentCourseRecordId, clo.cloId)),
-  });
-
-  // Scored-evidence results only appear once at least one CLO has a real score;
-  // before that every row would read "no score" and the block says nothing.
-  const hasEvidence = cloAchievementQueries.some((q) => hasActualCloEvidence(q.data));
-  const hasEvidenceError = cloAchievementQueries.some((q) => q.isError);
 
   return (
     <Card>
@@ -94,58 +67,6 @@ export function StudentTimelineCard({
               </li>
             ))}
           </ul>
-        )}
-
-        {clos.length > 0 && (hasEvidence || hasEvidenceError) && (
-          <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-            {hasEvidenceError && (
-              <ApiErrorAlert
-                message="ไม่สามารถโหลดผลเป้าการเรียนรู้บางข้อได้ กรุณาลองใหม่อีกครั้ง"
-                onRetry={() =>
-                  cloAchievementQueries.forEach((q) => {
-                    if (q.isError) void q.refetch();
-                  })
-                }
-              />
-            )}
-            {hasEvidence && (
-              <>
-                <p className="text-sm font-medium text-primary">
-                  ผลเป้าการเรียนรู้จากคะแนนที่กรอกจริง ({courseCode})
-                </p>
-                <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
-                  {clos.map((clo, i) => {
-                    const cloQuery = cloAchievementQueries[i];
-                    return (
-                      <li
-                        key={clo.cloId}
-                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
-                      >
-                        <span className="min-w-0 text-muted-foreground">{clo.code}</span>
-                        {cloQuery.isLoading && <Skeleton className="h-5 w-24" />}
-                        {cloQuery.isError && (
-                          <span className="text-xs text-muted-foreground">โหลดไม่ได้</span>
-                        )}
-                        {cloQuery.data && (
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-medium tabular-nums text-primary">
-                              {formatPercent(
-                                cloQuery.data.score === null
-                                  ? null
-                                  : Number.parseFloat(cloQuery.data.score),
-                              )}
-                            </span>
-                            <AchievementSourceBadge source={cloQuery.data.source} />
-                            <EvidenceCoverageBadge coverage={cloQuery.data.coverage} />
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-          </div>
         )}
       </CardContent>
     </Card>

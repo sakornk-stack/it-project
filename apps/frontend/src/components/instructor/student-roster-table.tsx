@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Users } from 'lucide-react';
-import type { CloAchievementEntry, StudentRosterEntry } from '@eduanalyze-ai/shared-types';
+import type { StudentRosterEntry } from '@eduanalyze-ai/shared-types';
 import { deleteCourseRecord, updateCourseRecordGrade } from '@/lib/api/academic-record';
 import {
   GRADE_WRITE_ERRORS,
@@ -39,7 +39,6 @@ import { StudentTimelineCard } from './student-timeline-card';
 export function StudentRosterTable({
   courseId,
   courseCode,
-  clos,
   roster,
   isLoading,
   isError,
@@ -49,7 +48,6 @@ export function StudentRosterTable({
 }: {
   courseId: string;
   courseCode: string;
-  clos: CloAchievementEntry[];
   roster: StudentRosterEntry[] | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -282,10 +280,7 @@ export function StudentRosterTable({
               <div ref={panelRef} className="scroll-mt-4 lg:sticky lg:top-4 lg:self-start">
                 <StudentTimelineCard
                   courseId={courseId}
-                  courseCode={courseCode}
                   studentProfileId={selectedStudentId}
-                  studentCourseRecordId={selected.studentCourseRecordId}
-                  clos={clos}
                   onClose={() => setSelectedStudentId(null)}
                 />
               </div>

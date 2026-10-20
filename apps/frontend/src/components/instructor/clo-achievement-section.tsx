@@ -23,7 +23,6 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
-import { EvidenceCoverageBadge } from './evidence-coverage-badge';
 import { LowSampleTag } from './overview-parts';
 import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
 
@@ -64,10 +63,6 @@ export function CloAchievementSection({
   isLoading,
   isError,
   onRetry,
-  evidenceCoverage,
-  evidenceTotal,
-  evidenceError,
-  onEvidenceRetry,
 }: Readonly<{
   // People counted in the B-or-above share (W and I left out): how much the
   // share can be trusted.
@@ -81,15 +76,6 @@ export function CloAchievementSection({
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  // Per-CLO count of students with a graded score. Sits *beside* the
-  // grade-based percentages above — never replaces them: there is no
-  // course-level evidence endpoint, and computing that percentage in the
-  // browser would fork the backend's Decimal arithmetic. See
-  // lib/evidence-coverage.ts.
-  evidenceCoverage: Map<string, number> | undefined;
-  evidenceTotal: number | undefined;
-  evidenceError: boolean;
-  onEvidenceRetry: () => void;
 }>) {
   const level = dataLevelOf(gradedPeople);
   const sortedClos = useMemo(
@@ -124,13 +110,6 @@ export function CloAchievementSection({
           ).cloId,
     [scoredAssessmentClos],
   );
-
-  // Per-CLO score counts are shown only when at least one CLO has a real graded
-  // score; otherwise every row would say "no score yet" and say nothing useful.
-  const hasScores =
-    !!evidenceCoverage &&
-    evidenceTotal !== undefined &&
-    [...evidenceCoverage.values()].some((n) => n > 0);
 
   return (
     <div className="space-y-6">
@@ -185,11 +164,7 @@ export function CloAchievementSection({
       <SectionCard
         icon={ListChecks}
         title="เป้าการเรียนรู้แต่ละข้อ"
-        description={
-          hasScores
-            ? 'เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา ระบบยังไม่มีร้อยละรายข้อ จึงแสดงเฉพาะจำนวนคนที่มีคะแนนของแต่ละข้อ'
-            : 'เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา'
-        }
+        description="เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา"
       >
         <ul className="-my-3 divide-y divide-slate-100">
           {sortedClos.map((clo) => (
@@ -203,25 +178,9 @@ export function CloAchievementSection({
               >
                 {clo.description}
               </p>
-              {hasScores && evidenceTotal !== undefined && evidenceCoverage && (
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <EvidenceCoverageBadge
-                    coverage={{
-                      validCount: evidenceCoverage.get(clo.cloId) ?? 0,
-                      totalCount: evidenceTotal,
-                    }}
-                  />
-                </div>
-              )}
             </li>
           ))}
         </ul>
-        {evidenceError && (
-          <ApiErrorAlert
-            message="ไม่สามารถโหลดจำนวนคะแนนของแต่ละข้อได้ กรุณาลองใหม่อีกครั้ง"
-            onRetry={onEvidenceRetry}
-          />
-        )}
       </SectionCard>
 
       {(plos.length > 0 || scoredAssessmentClos.length > 0) && (
