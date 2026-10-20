@@ -12,6 +12,7 @@ import {
   courseRows,
   filterCourseRows,
   ploChips,
+  outcomeStats,
 } from './outcomes-view';
 
 const course = (
@@ -115,5 +116,15 @@ describe('PLO chips', () => {
   });
   it('counts the CLOs that answer a PLO', () => {
     expect(cloCountOfPlo('p1', mappings)).toBe(2);
+  });
+});
+
+describe('outcomeStats', () => {
+  it('counts courses, courses with a CLO and unconfirmed CLOs', () => {
+    expect(outcomeStats(courseRows(courses, clos, 'cur-1'))).toEqual({
+      courses: 3,
+      coursesWithClo: 2,
+      unconfirmed: 2,
+    });
   });
 });

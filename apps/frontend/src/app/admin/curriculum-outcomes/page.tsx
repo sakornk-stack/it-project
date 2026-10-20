@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCheck, ListChecks, Pencil, Plus, Search } from 'lucide-react';
+import { ArrowLeft, CheckCheck, ListChecks, Plus, Search } from 'lucide-react';
 import type { CloDetail } from '@eduanalyze-ai/shared-types';
 import { fetchCourses } from '@/lib/api/academic-record';
 import {
@@ -21,11 +21,8 @@ import { AuthLoadingScreen } from '@/components/auth/auth-loading-screen';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageLoadError } from '@/components/layout/page-states';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/ui/api-error-alert';
-import { Badge } from '@/components/ui/badge';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import {
@@ -41,13 +38,19 @@ import { cloConfirmTitle, describeCloError } from '@/components/admin/clo-edit';
 import { PloTab } from '@/components/admin/plo-tab';
 import { plosOfCurriculum } from '@/components/admin/plo-edit';
 import {
-  COURSE_FLAG_LABELS,
-  OUTCOME_EFFECT_WARNING,
-  chipLabel,
+  CloCard,
+  CourseHeading,
+  CourseListItemButton,
+  EffectNote,
+  EmptyPane,
+  StatsStrip,
+  UnderlineTabs,
+} from '@/components/admin/outcomes-panels';
+import {
   cloCards,
-  courseFlag,
   courseRows,
   filterCourseRows,
+  outcomeStats,
   ploChips,
 } from '@/components/admin/outcomes-view';
 
@@ -190,8 +193,8 @@ function OutcomesContent() {
 
       {entry && !loading && !loadError && (
         <>
-          <div className="space-y-4">
-            <div className="max-w-xl space-y-1.5">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+            <div className="w-full max-w-xl space-y-1.5">
               <label htmlFor="outcomes-curriculum" className="text-sm font-medium">
                 หลักสูตร
               </label>
@@ -208,39 +211,21 @@ function OutcomesContent() {
                 </SelectContent>
               </Select>
             </div>
-            <Alert className={WARNING_ALERT_CLASS}>
-              <AlertDescription>{OUTCOME_EFFECT_WARNING}</AlertDescription>
-            </Alert>
+            <EffectNote />
           </div>
 
-          <div
-            role="tablist"
-            aria-label="เลือกดู"
-            className="flex flex-wrap gap-1 rounded-lg border bg-card p-1 sm:w-fit"
-          >
-            {(
+          <StatsStrip stats={outcomeStats(rows)} />
+
+          <UnderlineTabs
+            value={tab}
+            onChange={setTab}
+            tabs={
               [
                 ['courses', 'ตามรายวิชา'],
                 ['plos', `PLO ของหลักสูตร (${plos.length})`],
               ] as const
-            ).map(([value, text]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={tab === value}
-                onClick={() => setTab(value)}
-                className={cn(
-                  'min-h-11 flex-1 rounded-md px-3.5 text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none sm:flex-none',
-                  tab === value
-                    ? 'bg-brand text-brand-foreground'
-                    : 'text-muted-foreground hover:bg-slate-50',
-                )}
-              >
-                {text}
-              </button>
-            ))}
-          </div>
+            }
+          />
 
           {tab === 'plos' && (
             <PloTab
@@ -253,89 +238,75 @@ function OutcomesContent() {
           )}
 
           {tab === 'courses' && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-6 lg:h-[max(32rem,calc(100dvh-24rem))] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
               {/* On a phone the course list and the CLO cards take turns. */}
               <section
                 aria-label="รายวิชา"
-                className={cn('space-y-3', selected ? 'hidden lg:block' : 'block')}
+                className={cn(
+                  'min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm lg:flex',
+                  selected ? 'hidden' : 'flex',
+                )}
               >
-                <div className="relative">
-                  <Search
-                    size={16}
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="ค้นหารหัสหรือชื่อวิชา"
-                    aria-label="ค้นหารายวิชา"
-                    className="pl-9"
-                  />
+                <div className="space-y-2 border-b p-3">
+                  <div className="relative">
+                    <Search
+                      size={16}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="ค้นหารหัสหรือชื่อวิชา"
+                      aria-label="ค้นหารายวิชา"
+                      className="pl-9"
+                    />
+                  </div>
+                  <label className="flex min-h-9 items-center gap-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 shrink-0"
+                      checked={onlyUnconfirmed}
+                      onChange={(e) => setOnlyUnconfirmed(e.target.checked)}
+                    />
+                    เฉพาะที่ยังไม่ยืนยัน
+                  </label>
                 </div>
-                <label className="flex min-h-11 items-center gap-3 text-sm">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 shrink-0"
-                    checked={onlyUnconfirmed}
-                    onChange={(e) => setOnlyUnconfirmed(e.target.checked)}
-                  />
-                  เฉพาะที่ยังไม่ยืนยัน
-                </label>
                 {visibleRows.length === 0 ? (
-                  <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                    ไม่พบรายวิชาที่ตรงกัน
-                  </p>
+                  <EmptyPane title="ไม่พบรายวิชา" hint="ลองเปลี่ยนคำค้นหา หรือปิดตัวกรองด้านบน" />
                 ) : (
-                  <ul className="max-h-[70vh] divide-y divide-slate-200 overflow-y-auto rounded-lg border border-slate-200 bg-card">
-                    {visibleRows.map((row) => {
-                      const flag = courseFlag(row);
-                      const active = row.course.id === courseId;
-                      return (
-                        <li key={row.course.id}>
-                          <button
-                            type="button"
-                            aria-current={active ? 'true' : undefined}
-                            onClick={() => {
-                              setCourseId(row.course.id);
-                              setActionError(null);
-                            }}
-                            className={cn(
-                              'flex min-h-11 w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-slate-50',
-                              active && 'bg-slate-50 ring-2 ring-inset ring-brand',
-                            )}
-                          >
-                            <span className="flex items-start justify-between gap-2">
-                              <span className="min-w-0 break-words text-sm">
-                                <span className="font-semibold">{row.course.code}</span>{' '}
-                                {row.course.name}
-                              </span>
-                              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                                {row.cloCount} CLO
-                              </span>
-                            </span>
-                            {flag && (
-                              <Badge tone="warning" className="self-start">
-                                {COURSE_FLAG_LABELS[flag]}
-                              </Badge>
-                            )}
-                          </button>
-                        </li>
-                      );
-                    })}
+                  <ul className="max-h-[70vh] min-h-0 flex-1 divide-y overflow-y-auto lg:max-h-none">
+                    {visibleRows.map((row) => (
+                      <li key={row.course.id}>
+                        <CourseListItemButton
+                          row={row}
+                          active={row.course.id === courseId}
+                          onSelect={() => {
+                            setCourseId(row.course.id);
+                            setActionError(null);
+                          }}
+                        />
+                      </li>
+                    ))}
                   </ul>
                 )}
               </section>
 
               <section
                 aria-label="CLO ของรายวิชา"
-                className={cn('min-w-0 space-y-4', selected ? 'block' : 'hidden lg:block')}
+                className={cn(
+                  'min-h-0 min-w-0 overflow-y-auto rounded-xl border bg-muted/30 lg:block',
+                  selected ? 'block' : 'hidden',
+                )}
               >
                 {!selected && (
-                  <EmptyState icon={ListChecks} description="เลือกรายวิชาทางซ้ายเพื่อดู CLO" />
+                  <EmptyPane
+                    title="เลือกรายวิชาทางซ้าย"
+                    hint="แล้วจะเห็น CLO ของวิชานั้น และ PLO ที่แต่ละ CLO ตอบ"
+                  />
                 )}
                 {selected && (
-                  <>
+                  <div className="space-y-4 p-4 sm:p-5">
                     <Button
                       variant="ghost"
                       className="-ml-3 gap-1.5 lg:hidden"
@@ -344,102 +315,61 @@ function OutcomesContent() {
                       <ArrowLeft size={14} aria-hidden="true" />
                       เลือกวิชาอื่น
                     </Button>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <h2 className="min-w-0 break-words text-lg font-semibold text-primary">
-                        {selected.course.code} {selected.course.name}
-                      </h2>
-                      <div className="flex flex-wrap gap-2">
-                        {unconfirmedOfCourse.length > 0 && (
-                          <Button
-                            variant="outline"
-                            disabled={busy !== null}
-                            onClick={() =>
-                              confirmClos(
-                                unconfirmedOfCourse,
-                                `ยืนยัน CLO ทั้งวิชา ${selected.course.code}?`,
-                              )
-                            }
-                          >
-                            <CheckCheck size={16} aria-hidden="true" className="mr-1.5" />
-                            ยืนยันทั้งวิชา
+                    <CourseHeading
+                      course={selected.course}
+                      cloCount={selected.cloCount}
+                      actions={
+                        <>
+                          {unconfirmedOfCourse.length > 0 && (
+                            <Button
+                              variant="outline"
+                              disabled={busy !== null}
+                              onClick={() =>
+                                confirmClos(
+                                  unconfirmedOfCourse,
+                                  `ยืนยัน CLO ทั้งวิชา ${selected.course.code}?`,
+                                )
+                              }
+                            >
+                              <CheckCheck size={16} aria-hidden="true" className="mr-1.5" />
+                              ยืนยันทั้งวิชา
+                            </Button>
+                          )}
+                          <Button onClick={() => setPanel({ kind: 'create' })}>
+                            <Plus size={16} aria-hidden="true" className="mr-1.5" />
+                            เพิ่ม CLO
                           </Button>
-                        )}
-                        <Button onClick={() => setPanel({ kind: 'create' })}>
-                          <Plus size={16} aria-hidden="true" className="mr-1.5" />
-                          เพิ่ม CLO
-                        </Button>
-                      </div>
-                    </div>
+                        </>
+                      }
+                    />
                     {actionError && <ApiErrorAlert message={actionError} />}
-                    {cards.length === 0 && (
-                      <EmptyState
-                        icon={ListChecks}
-                        description={
-                          onlyUnconfirmed && selected.cloCount > 0
-                            ? 'CLO ของวิชานี้ยืนยันครบแล้ว'
-                            : 'รายวิชานี้ยังไม่มี CLO'
-                        }
-                      />
-                    )}
+                    {cards.length === 0 &&
+                      (selected.cloCount === 0 ? (
+                        <EmptyPane
+                          title="วิชานี้ยังไม่มี CLO"
+                          hint="เพิ่ม CLO แรกของวิชา แล้วเลือก PLO ที่ CLO นั้นตอบได้ในหน้าต่างเดียวกัน"
+                          onAdd={() => setPanel({ kind: 'create' })}
+                        />
+                      ) : (
+                        <EmptyPane
+                          title="ยืนยันครบแล้ว"
+                          hint="CLO ของวิชานี้ยืนยันครบทุกรายการ ปิดตัวกรองเพื่อดูทั้งหมด"
+                        />
+                      ))}
                     <ul className="space-y-3">
-                      {cards.map((clo) => {
-                        const chips = ploChips(clo.id, mappings, plos);
-                        return (
-                          <li key={clo.id}>
-                            <Card>
-                              <CardContent className="space-y-3 p-4 sm:p-5">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-semibold">{clo.code}</span>
-                                  <Badge tone={clo.isConfirmed ? 'success' : 'warning'}>
-                                    {clo.isConfirmed ? 'ยืนยันแล้ว' : 'ยังไม่ยืนยัน'}
-                                  </Badge>
-                                  <span className="text-xs tabular-nums text-muted-foreground">
-                                    {clo.achievementThreshold === null
-                                      ? 'เกณฑ์ผ่าน: ตามหลักสูตร'
-                                      : `เกณฑ์ผ่าน: ร้อยละ ${clo.achievementThreshold}`}
-                                  </span>
-                                </div>
-                                <p className="break-words text-sm">{clo.description}</p>
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  <span className="text-xs text-muted-foreground">PLO ที่ตอบ:</span>
-                                  {chips.length === 0 ? (
-                                    <span className="text-xs text-muted-foreground">
-                                      ยังไม่ได้เลือก
-                                    </span>
-                                  ) : (
-                                    chips.map((chip) => (
-                                      <Badge key={chip.ploId} tone="neutral">
-                                        {chipLabel(chip)}
-                                      </Badge>
-                                    ))
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  <Button
-                                    variant="outline"
-                                    aria-label={`แก้ไข ${clo.code}`}
-                                    onClick={() => setPanel({ kind: 'edit', clo })}
-                                  >
-                                    <Pencil size={14} aria-hidden="true" className="mr-1.5" />
-                                    แก้ไข
-                                  </Button>
-                                  {!clo.isConfirmed && (
-                                    <Button
-                                      variant="outline"
-                                      disabled={busy !== null}
-                                      onClick={() => confirmClos([clo], cloConfirmTitle(clo))}
-                                    >
-                                      ยืนยัน
-                                    </Button>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </li>
-                        );
-                      })}
+                      {cards.map((clo) => (
+                        <li key={clo.id}>
+                          <CloCard
+                            clo={clo}
+                            chips={ploChips(clo.id, mappings, plos)}
+                            disabled={busy !== null}
+                            onEdit={() => setPanel({ kind: 'edit', clo })}
+                            onConfirm={() => confirmClos([clo], cloConfirmTitle(clo))}
+                          />
+                        </li>
+                      ))}
                     </ul>
-                  </>
+                  </div>
                 )}
               </section>
             </div>

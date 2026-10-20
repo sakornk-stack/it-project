@@ -104,3 +104,18 @@ export const chipLabel = (chip: PloChip) => `${chip.code} ×${chip.weight}`;
 export function cloCountOfPlo(ploId: string, mappings: CloPloMappingItem[]): number {
   return mappings.filter((m) => m.ploId === ploId).length;
 }
+
+export interface OutcomeStats {
+  courses: number;
+  coursesWithClo: number;
+  unconfirmed: number;
+}
+
+// The three figures above the page, from the rows already loaded.
+export function outcomeStats(rows: CourseRow[]): OutcomeStats {
+  return {
+    courses: rows.length,
+    coursesWithClo: rows.filter((r) => r.cloCount > 0).length,
+    unconfirmed: rows.reduce((sum, r) => sum + r.unconfirmedCount, 0),
+  };
+}
