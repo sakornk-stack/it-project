@@ -580,7 +580,6 @@ model Course {
   studentRecords        StudentCourseRecord[]
   instructors           CourseInstructor[]
   assessments           CourseAssessment[]
-  assessmentDefinitions AssessmentDefinition[]
   plannedBy             StudentPlannedCourse[]
   careerCourses         CareerCourse[]
 
@@ -684,13 +683,8 @@ model Clo {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
 
-  ploMappings           CloPloMapping[]
-  assessmentScores      CourseAssessmentCloScore[]
-  // Distinct from assessmentScores above: that's the 1-5 self-assessment
-  // (CourseAssessmentCloScore) — this is the evidence-based side
-  // (AssessmentCloMapping), a completely separate system. See
-  // AssessmentCloMapping's own comment for why they must never merge.
-  assessmentCloMappings AssessmentCloMapping[]
+  ploMappings      CloPloMapping[]
+  assessmentScores CourseAssessmentCloScore[]
 
   // No @@unique([courseId, code]) here on purpose — see Faculty.code
   // comment above. Real constraint: partial unique index on (courseId,
@@ -721,7 +715,7 @@ model CloPloMapping {
 }
 
 // A career path a graduate can enter (e.g. the careers listed in the curriculum
-// book). Global like AssessmentDefinition: the same career applies to every
+// book). Global, not scoped to a curriculum: the same career applies to every
 // curriculum, and CareerCourse (below) is what ties it to a curriculum's courses.
 // Soft-delete because it parameterizes the career-fit scores shown to students.
 model Career {
@@ -862,8 +856,7 @@ model Semester {
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
 
-  records               StudentCourseRecord[]
-  assessmentDefinitions AssessmentDefinition[]
+  records StudentCourseRecord[]
 
   // No @@unique([academicYearId, term]) here on purpose — see Faculty.code
   // comment above. Real constraint: partial unique index on
@@ -929,12 +922,6 @@ model StudentCourseRecord {
   semesterId String
   semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Restrict)
 
-  // Evidence-based assessment scores keyed off the specific attempt, not
-  // just (studentProfileId, courseId) — a retake gets its own
-  // StudentCourseRecord row, and therefore its own independent set of
-  // evidence scores, never merged with a prior attempt's.
-  assessmentScores StudentAssessmentScore[]
-
   // No @@unique here on purpose — Prisma has no schema-level syntax for a
   // filtered/partial unique index. The real constraint enforced in
   // Postgres is a partial unique index on (studentProfileId, courseId,
@@ -944,129 +931,4 @@ model StudentCourseRecord {
   // since it isn't declared here, and may propose dropping it as drift —
   // always review with --create-only, never auto-accept.
   @@map("student_course_records")
-}
-
-// ============================================================
-// Evidence-based CLO/PLO infrastructure (Architecture Proposal Phase 1)
-//
-// AssessmentDefinition -> AssessmentCloMapping -> StudentAssessmentScore
-//   -> (pure calculation) -> Actual CLO Achievement
-//   -> existing CloPloMapping -> (pure calculation) -> Actual PLO Achievement
-//
-// This is a completely separate system from CourseAssessment/
-// CourseAssessmentCloScore (the 1-5 student self-assessment) and from
-// CloAchievementService/PloAchievementService (the existing grade-based
-// "% of students graded B or above" calculation) — neither of those is
-// modified by this addition. Self-assessment scores are NEVER read as
-// input to the calculation functions in src/modules/curriculum-content/
-// assessment-evidence/calculation/ — only used downstream, by the
-// caller, to derive a gap-insight comparison. See CONVENTIONS.md for the
-// full writeup of why these three systems must stay independent.
-// ============================================================
-
-enum MissingScorePolicy {
-  EXCLUDE // ABSENT scores are dropped from both numerator and denominator
-  TREAT_AS_ZERO // ABSENT scores count as 0 in the numerator, still count toward the denominator
-}
-
-enum AssessmentScoreStatus {
-  PENDING // not yet graded — excluded from calculation entirely
-  GRADED // score is a real, valid data point
-  ABSENT // no score by design (student did not attempt it) — behavior set by AssessmentDefinition.missingScorePolicy
-  EXCUSED // excluded from calculation entirely, unlike ABSENT (never counted, regardless of missingScorePolicy)
-}
-
-// One gradable item (a quiz, an assignment, an exam...) that produces
-// evidence toward one or more CLOs. Scoped to a specific Course +
-// Semester offering, not just Course — the same course taught in two
-// semesters gets independent AssessmentDefinition rows, matching how
-// StudentCourseRecord itself is scoped per-semester.
-model AssessmentDefinition {
-  id                 String             @id @default(uuid())
-  title              String
-  // Freeform category label (e.g. "Quiz", "Midterm Exam", "Project") —
-  // not an enum: the source document never specified a closed taxonomy,
-  // and inventing one here risks being wrong about real instructor
-  // workflows. Revisit as an enum once real usage data exists.
-  kind               String
-  maxScore           Decimal            @db.Decimal(6, 2)
-  missingScorePolicy MissingScorePolicy @default(EXCLUDE)
-  isActive           Boolean            @default(true)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
-
-  semesterId String
-  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Restrict)
-
-  cloMappings AssessmentCloMapping[]
-
-  @@map("assessment_definitions")
-}
-
-// Weight of one AssessmentDefinition toward one Clo — NOT the same
-// weight as CloPloMapping.weight (that's a CLO's weight toward a PLO, one
-// level up). Never conflate the two: this is
-// assessment-contributes-to-CLO, CloPloMapping is CLO-contributes-to-PLO.
-// weight is validated > 0 at the DTO layer; the calculation normalizes by
-// the sum of weights actually used as evidence, so weights are not
-// required to sum to 100 across a CLO's mappings.
-model AssessmentCloMapping {
-  id               String   @id @default(uuid())
-  weight           Decimal  @db.Decimal(5, 2)
-  // Per-mapping override of AssessmentDefinition.maxScore — lets the same
-  // assessment (e.g. a 100-point exam) contribute to one CLO out of a
-  // 40-point subsection and another CLO out of a 60-point subsection.
-  // Null means "use the assessment's own maxScore unchanged".
-  maxScoreOverride Decimal? @db.Decimal(6, 2)
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  assessmentDefinitionId String
-  assessmentDefinition   AssessmentDefinition @relation(fields: [assessmentDefinitionId], references: [id], onDelete: Restrict)
-
-  cloId String
-  clo   Clo    @relation(fields: [cloId], references: [id], onDelete: Restrict)
-
-  scores StudentAssessmentScore[]
-
-  // No @@unique([assessmentDefinitionId, cloId]) here on purpose — see
-  // Faculty.code comment earlier in this file. Real constraint: partial
-  // unique index on (assessmentDefinitionId, cloId) WHERE isActive = true
-  // (CONVENTIONS.md §7 — combining isActive soft-delete with a
-  // schema-level @@unique blocks re-creating a soft-deleted mapping).
-  @@map("assessment_clo_mappings")
-}
-
-// One student's score on one (AssessmentCloMapping, StudentCourseRecord)
-// pair — keyed by StudentCourseRecord, not StudentProfile+Course
-// directly, so a retake (a new StudentCourseRecord row for the same
-// student+course) gets its own independent set of evidence, never
-// silently merged with a prior attempt's scores.
-model StudentAssessmentScore {
-  id     String                @id @default(uuid())
-  // Null whenever status is not GRADED (PENDING/ABSENT/EXCUSED never
-  // carry a numeric score) — enforced at the service layer, not a DB
-  // CHECK constraint, matching this schema's existing convention (see
-  // CourseAssessmentCloScore's comment on the same tradeoff).
-  score  Decimal?              @db.Decimal(6, 2)
-  status AssessmentScoreStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  assessmentCloMappingId String
-  assessmentCloMapping   AssessmentCloMapping @relation(fields: [assessmentCloMappingId], references: [id], onDelete: Restrict)
-
-  studentCourseRecordId String
-  studentCourseRecord   StudentCourseRecord @relation(fields: [studentCourseRecordId], references: [id], onDelete: Restrict)
-
-  // No isActive field on this model, so the ordinary schema-level
-  // @@unique is safe here — unlike AssessmentCloMapping above, there is
-  // no soft-delete state for the partial-index problem to apply to.
-  @@unique([assessmentCloMappingId, studentCourseRecordId])
-  @@map("student_assessment_scores")
 }
