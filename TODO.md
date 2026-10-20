@@ -313,7 +313,10 @@ Three commits delivered (2026-09-30):
   - ยังไม่ได้ลองในเบราว์เซอร์ (ฟอร์มย้ายหมวด, ส่วนรายวิชาที่ปิดใช้งาน, มือถือ)
   - ยังไม่มีหน้า/API อ่าน audit ของหลักสูตร
   - Deploy: ต้อง `prisma migrate deploy` ก่อนเปิดโค้ด backend ใหม่ (โค้ดใหม่เขียนค่า enum ใหม่ ถ้า DB ยังไม่มีจะ error และการเขียนรายวิชาทั้งหมดล้ม)
-- **เฟส 2:** CLO ต่อวิชา (ADMIN) + `Clo.isConfirmed` (migration) + reactivate CLO + audit
+- **เฟส 2 (ทำแล้ว 2026-10-21, ยังไม่ push):** CLO ต่อวิชา (ADMIN) หน้า `/admin/curriculum/[id]/outcomes` (เลือกวิชา → เพิ่ม/แก้/ลบ/ยืนยัน CLO ในแผงข้าง), `GET /clos?courseId=`, migration `20261021100000_add_clo_is_confirmed` (`Clo.isConfirmed` default true), audit `CLO_CREATE/UPDATE/DEACTIVATE` (`targetType` `Clo`), ลบ CLO ถูกบล็อก 409 ถ้ามีลิงก์ PLO ที่ใช้งานหรือคะแนนการประเมินรายวิชา, แก้/ลบ CLO ที่ปิดแล้ว = 404
+  - ยังไม่ทำ: เปิดคืน CLO (reactivate) และรายการ CLO ที่ปิดแล้ว
+  - สคริปต์ครั้งเดียว `apps/backend/prisma/mark-ict-2564-clos-unconfirmed.sql` (ยังไม่ได้รัน) ตั้ง `isConfirmed=false` ให้ CLO ที่ใช้งานอยู่ของ ICT 2564 — DB dev นับได้ 70 ตัว ไม่ใช่ 85 ตรวจตัวเลขก่อนรัน
+  - ยังไม่ได้ลองในเบราว์เซอร์ (หน้า outcomes, แผงเพิ่ม/แก้/ลบ, ปุ่มยืนยัน, มือถือ)
 - **เฟส 3:** PLO + ตาราง mapping CLO×PLO (weight) + เปิดคืน mapping ที่ถูกปิด + audit
 - ตรวจข้อมูลจริงแบบอ่านอย่างเดียว: บัญชี SUPER_ADMIN ที่ถือบทบาทอื่นด้วย (ADMIN/STAFF/INSTRUCTOR) ยังเข้าข้อมูลวิชาการผ่านบทบาทนั้น
 - `GET /curricula/inactive` ของ ADMIN ไม่กรองตาม scope (ไม่มี `@ScopeTarget` สำหรับรายการ)
