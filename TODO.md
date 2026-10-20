@@ -317,7 +317,9 @@ Three commits delivered (2026-09-30):
   - ยังไม่ทำ: เปิดคืน CLO (reactivate) และรายการ CLO ที่ปิดแล้ว
   - สคริปต์ครั้งเดียว `apps/backend/prisma/mark-ict-2564-clos-unconfirmed.sql` (ยังไม่ได้รัน) ตั้ง `isConfirmed=false` ให้ CLO ที่ใช้งานอยู่ของ ICT 2564 — DB dev นับได้ 70 ตัว ไม่ใช่ 85 ตรวจตัวเลขก่อนรัน
   - ยังไม่ได้ลองในเบราว์เซอร์ (หน้า outcomes, แผงเพิ่ม/แก้/ลบ, ปุ่มยืนยัน, มือถือ)
-- **เฟส 3:** PLO + ตาราง mapping CLO×PLO (weight) + เปิดคืน mapping ที่ถูกปิด + audit
+- **เฟส 3 (ทำแล้ว 2026-10-21, ยังไม่ push, ไม่มี migration — ใช้ค่า enum เดิม):** PLO ต่อหลักสูตร (ADMIN) หน้า `/admin/curriculum/[id]/plos` และการเชื่อม CLO↔PLO หน้า `/admin/curriculum/[id]/mappings` (เลือกวิชา → ติ๊ก PLO + น้ำหนัก 1–5 → บันทึกเป็นชุดพร้อมยืนยัน) `GET /plos?curriculumId=`, `GET /clo-plo-mappings?curriculumId=`, audit `PLO_*` และ `CLO_PLO_MAPPING_*` ใน transaction เดียวกับการเขียน, ลบ PLO ที่ยังเชื่อมกับ CLO = 409 บอกจำนวน, `POST /clo-plo-mappings` กับคู่ที่เคยลบจะเปิดแถวเดิมพร้อมน้ำหนักใหม่ (audit `REACTIVATE`) แทน 409, แก้/ลบ PLO หรือ mapping ที่ปิดแล้ว = 404; สูตร PLO ไม่เปลี่ยน
+  - ยังไม่ทำ: เปิดคืน PLO/CLO และรายการที่ปิดแล้ว, จัด layout/เมนูใหม่ (ลิงก์อยู่ใต้หัวหน้า `/admin/curriculum/[id]` เท่านั้น)
+  - ยังไม่ได้ลองในเบราว์เซอร์ (หน้า PLO, หน้าเชื่อมโยง, มือถือ)
 - ตรวจข้อมูลจริงแบบอ่านอย่างเดียว: บัญชี SUPER_ADMIN ที่ถือบทบาทอื่นด้วย (ADMIN/STAFF/INSTRUCTOR) ยังเข้าข้อมูลวิชาการผ่านบทบาทนั้น
 - `GET /curricula/inactive` ของ ADMIN ไม่กรองตาม scope (ไม่มี `@ScopeTarget` สำหรับรายการ)
 
