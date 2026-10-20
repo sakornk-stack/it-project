@@ -84,4 +84,49 @@ describe('CareerFitService', () => {
     const r = await service.getMyCareerFit({ userId: 'u1' } as RequestUser);
     expect(r.careers[0]).toMatchObject({ score: 100, level: 'HIGH' });
   });
+  describe('career groups', () => {
+    const grouped = (over: Record<string, unknown>) => ({
+      ...career('a', 3),
+      description: 'คำอธิบายสาย',
+      ...over,
+    });
+    const group = (isActive: boolean) => ({
+      id: 'g1',
+      name: 'Software Development',
+      description: null,
+      sortOrder: 0,
+      isActive,
+    });
+
+    it('asks for the group and passes description and active group through', async () => {
+      const { service, prisma, records } = build();
+      records.getLatestAttemptsPerCourse.mockResolvedValue(
+        new Map(['a0', 'a1', 'a2'].map((id) => [id, { grade: 'A' }])),
+      );
+      prisma.career.findMany.mockResolvedValue([grouped({ group: group(true) })]);
+      const r = await service.getMyCareerFit({ userId: 'u1' } as RequestUser);
+      expect(prisma.career.findMany.mock.calls[0][0].include.group).toBeDefined();
+      expect(r.careers[0].description).toBe('คำอธิบายสาย');
+      expect(r.careers[0].group).toEqual({
+        id: 'g1',
+        name: 'Software Development',
+        description: null,
+        sortOrder: 0,
+      });
+    });
+
+    it('treats a deactivated group and a missing group as no group', async () => {
+      const { service, prisma, records } = build();
+      records.getLatestAttemptsPerCourse.mockResolvedValue(
+        new Map(['a0', 'a1', 'a2', 'b0', 'b1', 'b2'].map((id) => [id, { grade: 'A' }])),
+      );
+      prisma.career.findMany.mockResolvedValue([
+        grouped({ group: group(false) }),
+        { ...career('b', 3), description: null, group: null },
+      ]);
+      const r = await service.getMyCareerFit({ userId: 'u1' } as RequestUser);
+      expect(r.careers.map((c) => c.group)).toEqual([null, null]);
+      expect(r.careers.find((c) => c.careerId === 'b')?.description).toBeNull();
+    });
+  });
 });

@@ -14,11 +14,34 @@ export class CareerFitTopCourseDto extends CareerFitCourseDto {
   grade!: Grade;
 }
 
+export class CareerFitGroupDto {
+  @ApiProperty() id!: string;
+
+  @ApiProperty({ description: 'ชื่อกลุ่มอาชีพ' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, type: String, description: 'คำอธิบายกลุ่ม (อาจว่าง)' })
+  description!: string | null;
+
+  @ApiProperty({ description: 'ลำดับการแสดงกลุ่ม (น้อยไปมาก)' })
+  sortOrder!: number;
+}
+
 export class CareerFitEntryDto {
   @ApiProperty() careerId!: string;
 
   @ApiProperty({ description: 'ชื่อสายอาชีพ' })
   careerName!: string;
+
+  @ApiProperty({ nullable: true, type: String, description: 'คำอธิบายสายอาชีพ (อาจว่าง)' })
+  description!: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: CareerFitGroupDto,
+    description: 'กลุ่มอาชีพที่สายนี้อยู่ (ว่างเมื่อยังไม่จัดกลุ่ม)',
+  })
+  group!: CareerFitGroupDto | null;
 
   @ApiProperty({ enum: ['OK', 'INSUFFICIENT_DATA'] })
   status!: 'OK' | 'INSUFFICIENT_DATA';

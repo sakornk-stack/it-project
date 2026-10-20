@@ -645,9 +645,19 @@ export interface StudentPloAchievementResponse {
 export type CareerFitStatus = 'OK' | 'NO_GRADES' | 'NO_CAREERS';
 export type CareerFitLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 
+export interface CareerFitGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+}
+
 export interface CareerFitEntry {
   careerId: string;
   careerName: string;
+  // Optional so a response from an older backend (no groups yet) still type-checks.
+  description?: string | null;
+  group?: CareerFitGroup | null;
   status: 'OK' | 'INSUFFICIENT_DATA';
   score: number | null;
   level: CareerFitLevel | null;

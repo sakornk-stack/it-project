@@ -12,6 +12,8 @@ export interface CareerInput {
   id: string;
   name: string;
   sortOrder: number;
+  description?: string | null;
+  group?: { id: string; name: string; description: string | null; sortOrder: number } | null;
   courses: { weight: number; courseId: string; code: string; name: string }[];
 }
 
@@ -58,6 +60,8 @@ export function computeCareerFit(
     const entry: CareerFitEntryDto = {
       careerId: career.id,
       careerName: career.name,
+      description: career.description ?? null,
+      group: career.group ?? null,
       status: insufficient ? 'INSUFFICIENT_DATA' : 'OK',
       score,
       level: score === null ? null : careerFitLevel(score),

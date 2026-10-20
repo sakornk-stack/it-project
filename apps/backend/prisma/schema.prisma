@@ -728,17 +728,41 @@ model Career {
   id          String   @id @default(uuid())
   name        String
   description String?
-  // Display order, set by the import (file order).
+  // Display order, set by the import (file order). Once a career has a group,
+  // import-career-groups.ts owns it (position in the groups file).
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // One group at most; null = shown under "อื่น ๆ" by the UI.
+  groupId String?
+  group   CareerGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict)
+
   courses CareerCourse[]
 
+  @@index([groupId])
   // No @@unique([name]) here on purpose — see Faculty.code comment above.
   // Real constraint: partial unique index on (name) WHERE isActive = true.
   @@map("careers")
+}
+
+// A broad group of careers (e.g. "Software Development") shown to students as one
+// card. Global like Career. description is optional and may stay empty.
+model CareerGroup {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  careers Career[]
+
+  // No @@unique([name]) here on purpose — see Faculty.code comment above.
+  // Real constraint: partial unique index on (name) WHERE isActive = true.
+  @@map("career_groups")
 }
 
 // Course → career link with a 1-3 relevance weight (3 = core). Course is

@@ -24,6 +24,9 @@ export class CareerFitService {
         where: { isActive: true },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         include: {
+          group: {
+            select: { id: true, name: true, description: true, sortOrder: true, isActive: true },
+          },
           courses: {
             where: {
               isActive: true,
@@ -48,6 +51,17 @@ export class CareerFitService {
           id: c.id,
           name: c.name,
           sortOrder: c.sortOrder,
+          description: c.description,
+          // A deactivated group counts as no group.
+          group:
+            c.group && c.group.isActive
+              ? {
+                  id: c.group.id,
+                  name: c.group.name,
+                  description: c.group.description,
+                  sortOrder: c.group.sortOrder,
+                }
+              : null,
           courses: c.courses.map((cc) => ({
             weight: cc.weight,
             courseId: cc.course.id,

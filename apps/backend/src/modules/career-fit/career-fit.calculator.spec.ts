@@ -214,4 +214,22 @@ describe('computeCareerFit', () => {
       careers: [],
     });
   });
+
+  it('carries description and group through and does not let the group change score or rank', () => {
+    const ids: [string, number][] = [
+      ['1', 1],
+      ['2', 1],
+      ['3', 1],
+    ];
+    const group = { id: 'g', name: 'กลุ่ม', description: null, sortOrder: 2 };
+    const plain = computeCareerFit([career('x', ids)], grades({ '1': 'B', '2': 'B', '3': 'B' }));
+    const grouped = computeCareerFit(
+      [{ ...career('x', ids), description: 'อธิบาย', group }],
+      grades({ '1': 'B', '2': 'B', '3': 'B' }),
+    );
+    expect(plain.careers[0]).toMatchObject({ description: null, group: null });
+    expect(grouped.careers[0]).toMatchObject({ description: 'อธิบาย', group });
+    expect(grouped.careers[0].score).toBe(plain.careers[0].score);
+    expect(grouped.careers[0].level).toBe(plain.careers[0].level);
+  });
 });
