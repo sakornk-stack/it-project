@@ -41,11 +41,8 @@ export function plosOfCurriculum(plos: PloListItem[], curriculumId: string): Plo
   return sortPlos(plos.filter((p) => p.curriculumId === curriculumId));
 }
 
-export const OUTCOME_EFFECT_WARNING =
-  'การแก้ไข PLO หรือการเชื่อมโยง CLO↔PLO มีผลกับผล PLO ของนิสิตทุกคนในหลักสูตรนี้ทันที';
-
 export const PLO_DELETE_WARNING =
-  'PLO นี้จะถูกปิดใช้งาน ลบไม่ได้หากยังเชื่อมโยงกับ CLO อยู่ ให้ลบการเชื่อมโยงที่หน้า "เชื่อม CLO↔PLO" ก่อน';
+  'PLO นี้จะถูกซ่อนจากรายการ ลบไม่ได้ถ้ายังมี CLO ที่ตอบ PLO นี้อยู่ ให้เอาออกจาก CLO เหล่านั้นก่อน (แก้ที่แท็บ "ตามรายวิชา")';
 
 export function ploDeleteTitle(plo: Pick<PloListItem, 'code'>): string {
   return `ลบ ${plo.code}?`;

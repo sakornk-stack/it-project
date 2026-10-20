@@ -27,11 +27,12 @@ const PINNED: Record<string, [string, string][]> = {
 };
 
 describe('navItemsForRole', () => {
-  it('gives Admin three items, in this order', () => {
+  it('gives Admin four items, in this order', () => {
     expect(navItemsForRole('ADMIN').map((i) => [i.label, i.href])).toEqual([
       ['ภาพรวมขอบเขต', '/admin/overview'],
       ['ผู้ใช้งาน', '/admin/users'],
       ['คุณภาพหลักสูตร', '/admin/curriculum'],
+      ['จัดการ CLO/PLO', '/admin/curriculum-outcomes'],
     ]);
   });
 
@@ -65,6 +66,7 @@ describe('isNavItemActive', () => {
     expect(active('ADMIN', '/admin/users/abc')).toEqual(['ผู้ใช้งาน']);
     expect(active('ADMIN', '/admin/curriculum')).toEqual(['คุณภาพหลักสูตร']);
     expect(active('ADMIN', '/admin/curriculum/abc')).toEqual(['คุณภาพหลักสูตร']);
+    expect(active('ADMIN', '/admin/curriculum-outcomes')).toEqual(['จัดการ CLO/PLO']);
   });
 
   it('keeps the Super Admin menu lit below a user, and never on /admin paths', () => {

@@ -46,20 +46,8 @@ export function toUpdateCloBody(values: CloEditValues): UpdateCloRequest {
   };
 }
 
-// Natural order, so CLO2 comes before CLO10.
-export function sortClos(clos: CloDetail[]): CloDetail[] {
-  return [...clos].sort((a, b) => a.code.localeCompare(b.code, 'en', { numeric: true }));
-}
-
-export function unconfirmedCount(clos: CloDetail[]): number {
-  return clos.filter((c) => !c.isConfirmed).length;
-}
-
-export const CLO_EFFECT_WARNING =
-  'การแก้ไขหรือลบ CLO มีผลกับผล CLO/PLO ของนิสิตทุกคนในหลักสูตรนี้ทันที';
-
 export const CLO_DELETE_WARNING =
-  'CLO นี้จะถูกปิดใช้งาน ลบไม่ได้หากยังเชื่อมโยงกับ PLO หรือมีคะแนนการประเมินรายวิชาอยู่';
+  'CLO นี้จะถูกซ่อนจากรายการและเอาออกจาก PLO ที่ตอบอยู่ ลบไม่ได้ถ้ามีคะแนนประเมินของรายวิชาผูกอยู่';
 
 export function cloDeleteTitle(clo: Pick<CloDetail, 'code'>): string {
   return `ลบ ${clo.code}?`;
@@ -73,12 +61,6 @@ export const CLO_WRITE_ERRORS: Partial<Record<number, string>> = {
   403: 'คุณไม่มีสิทธิ์แก้ไข CLO ของหลักสูตรนี้ — อยู่นอกขอบเขตที่คุณดูแล',
   404: 'ไม่พบ CLO นี้แล้ว อาจถูกลบไปก่อนหน้า',
 };
-
-// Only this course's CLOs, in natural order. The server already filters by course; this keeps the
-// list and the "not confirmed" count right even if an older API answers with every CLO.
-export function closOfCourse(clos: CloDetail[], courseId: string): CloDetail[] {
-  return sortClos(clos.filter((c) => c.courseId === courseId));
-}
 
 // The API's validation text is English ("property isConfirmed should not exist"), which describeApiError
 // hides; the field names in it are what the user can act on, so they are named in a Thai sentence.

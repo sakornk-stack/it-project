@@ -2,13 +2,10 @@ import { AxiosError, type AxiosResponse } from 'axios';
 import type { CloDetail } from '@eduanalyze-ai/shared-types';
 import {
   cloEditSchema,
-  closOfCourse,
   cloToFormValues,
   describeCloError,
-  sortClos,
   toCreateCloBody,
   toUpdateCloBody,
-  unconfirmedCount,
 } from './clo-edit';
 
 const CLO: CloDetail = {
@@ -82,19 +79,6 @@ describe('request bodies', () => {
   });
 });
 
-describe('list helpers', () => {
-  it('sorts codes naturally and counts unconfirmed ones', () => {
-    const clos = ['CLO10', 'CLO2', 'CLO1'].map((code, i) => ({
-      ...CLO,
-      id: String(i),
-      code,
-      isConfirmed: code !== 'CLO2',
-    }));
-    expect(sortClos(clos).map((c) => c.code)).toEqual(['CLO1', 'CLO2', 'CLO10']);
-    expect(unconfirmedCount(clos)).toBe(1);
-  });
-});
-
 describe('describeCloError', () => {
   it('shows the Thai reason of a blocked delete', () => {
     const message = 'ลบ CLO นี้ไม่ได้ เพราะยังมีข้อมูลผูกอยู่: การเชื่อมโยงกับ PLO 3 รายการ';
@@ -103,19 +87,6 @@ describe('describeCloError', () => {
 
   it('names the scope problem on 403', () => {
     expect(describeCloError(httpError(403, 'Forbidden'))).toContain('นอกขอบเขต');
-  });
-});
-
-describe('closOfCourse', () => {
-  it('keeps only the selected course, so other courses never show or count as unconfirmed', () => {
-    const all = [
-      { ...CLO, id: 'a', courseId: 'c1', isConfirmed: false },
-      { ...CLO, id: 'b', courseId: 'c2', isConfirmed: false },
-      { ...CLO, id: 'c', courseId: 'c1', isConfirmed: true },
-    ];
-    const shown = closOfCourse(all, 'c1');
-    expect(shown.map((c) => c.id)).toEqual(['a', 'c']);
-    expect(unconfirmedCount(shown)).toBe(1);
   });
 });
 

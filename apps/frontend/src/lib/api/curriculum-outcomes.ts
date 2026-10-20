@@ -11,9 +11,9 @@ import type {
 } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '../api-client';
 
-// ADMIN: the active CLOs of one course (the server also limits them to the caller's scope).
-export async function fetchCourseClos(courseId: string) {
-  const { data } = await apiClient.get<CloDetail[]>('/clos', { params: { courseId } });
+// ADMIN: every active CLO in the caller's scope; the page keeps those of the chosen curriculum.
+export async function fetchAllClos() {
+  const { data } = await apiClient.get<CloDetail[]>('/clos');
   return data;
 }
 
@@ -35,7 +35,9 @@ export async function deleteClo(id: string) {
 // ---- PLO of a curriculum (ADMIN) ----
 
 export async function fetchCurriculumPlos(curriculumId: string) {
-  const { data } = await apiClient.get<PloListItem[]>('/plos', { params: { curriculumId } });
+  const { data } = await apiClient.get<PloListItem[]>('/plos', {
+    params: { curriculumId },
+  });
   return data;
 }
 

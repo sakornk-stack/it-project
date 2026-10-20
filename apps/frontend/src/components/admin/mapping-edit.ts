@@ -3,99 +3,65 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { rejectedFields } from './clo-edit';
 import { PLO_WRITE_ERRORS } from './plo-edit';
 
-// Logic of the CLO↔PLO link page. The page edits a draft (which PLOs each CLO is linked to,
-// and the weight) and saves the difference to the stored links in one go.
+// Logic of the "PLO ที่ CLO นี้ตอบ" list in the CLO panel. The panel edits a draft (which PLOs
+// one CLO answers, and the weight of each) and saves the difference to the stored links.
 
 export const MIN_WEIGHT = 1;
 export const MAX_WEIGHT = 5;
-// Weight given to a link when it is first ticked (the middle of 1-5).
+// Weight given to a PLO when it is first ticked (the middle of 1-5).
 export const DEFAULT_WEIGHT = 3;
 
 export const WEIGHT_OPTIONS = [1, 2, 3, 4, 5] as const;
 
-// cloId:ploId -> weight; a pair that is not in the draft is not linked.
-export type MappingDraft = Record<string, number>;
+export const WEIGHT_HELP =
+  'น้ำหนัก 1–5 บอกว่า CLO นี้มีผลต่อคะแนน PLO ข้อนั้นมากแค่ไหน (มาก = มีผลมาก) ผล PLO ของนิสิตคิดเป็นค่าเฉลี่ยถ่วงน้ำหนักของ CLO ที่ตอบ PLO ข้อนั้น';
 
-export const mappingKey = (cloId: string, ploId: string) => `${cloId}:${ploId}`;
+// ploId -> weight; a PLO that is not in the draft is not answered by this CLO.
+export type LinkDraft = Record<string, number>;
 
-export function draftFromMappings(mappings: CloPloMappingItem[]): MappingDraft {
-  const draft: MappingDraft = {};
-  for (const m of mappings) draft[mappingKey(m.cloId, m.ploId)] = m.weight;
+export function draftFromMappings(mappings: CloPloMappingItem[]): LinkDraft {
+  const draft: LinkDraft = {};
+  for (const m of mappings) draft[m.ploId] = m.weight;
   return draft;
 }
 
-export interface MappingDiff {
-  creates: { cloId: string; ploId: string; weight: number }[];
-  updates: { id: string; cloId: string; ploId: string; weight: number }[];
-  removes: { id: string; cloId: string; ploId: string }[];
+export interface LinkDiff {
+  creates: { ploId: string; weight: number }[];
+  updates: { id: string; ploId: string; weight: number }[];
+  removes: { id: string; ploId: string }[];
 }
 
-// Only links of `cloIds` (the selected course) are looked at, so a link of another course
-// is never removed because it is missing from the draft.
-export function diffMappings(
-  stored: CloPloMappingItem[],
-  draft: MappingDraft,
-  cloIds: string[],
-): MappingDiff {
-  const scope = new Set(cloIds);
-  const diff: MappingDiff = { creates: [], updates: [], removes: [] };
+// `stored` must be the links of this one CLO.
+export function diffLinks(stored: CloPloMappingItem[], draft: LinkDraft): LinkDiff {
+  const diff: LinkDiff = { creates: [], updates: [], removes: [] };
   const seen = new Set<string>();
   for (const m of stored) {
-    if (!scope.has(m.cloId)) continue;
-    const key = mappingKey(m.cloId, m.ploId);
-    seen.add(key);
-    const weight = draft[key];
-    if (weight === undefined) diff.removes.push({ id: m.id, cloId: m.cloId, ploId: m.ploId });
-    else if (weight !== m.weight) {
-      diff.updates.push({ id: m.id, cloId: m.cloId, ploId: m.ploId, weight });
-    }
+    seen.add(m.ploId);
+    const weight = draft[m.ploId];
+    if (weight === undefined) diff.removes.push({ id: m.id, ploId: m.ploId });
+    else if (weight !== m.weight) diff.updates.push({ id: m.id, ploId: m.ploId, weight });
   }
-  for (const [key, weight] of Object.entries(draft)) {
-    if (seen.has(key)) continue;
-    const [cloId, ploId] = key.split(':');
-    if (scope.has(cloId)) diff.creates.push({ cloId, ploId, weight });
+  for (const [ploId, weight] of Object.entries(draft)) {
+    if (!seen.has(ploId)) diff.creates.push({ ploId, weight });
   }
   return diff;
 }
 
-export function diffCount(diff: MappingDiff): number {
-  return diff.creates.length + diff.updates.length + diff.removes.length;
-}
-
-export function diffSummary(diff: MappingDiff): string {
-  const parts = [
-    diff.creates.length > 0 ? `เพิ่มการเชื่อมโยง ${diff.creates.length} รายการ` : null,
-    diff.updates.length > 0 ? `เปลี่ยนน้ำหนัก ${diff.updates.length} รายการ` : null,
-    diff.removes.length > 0 ? `ลบการเชื่อมโยง ${diff.removes.length} รายการ` : null,
-  ].filter((p): p is string => p !== null);
-  return parts.join(' · ');
-}
-
-export const MAPPING_SAVE_NOTE = 'การเปลี่ยนแปลงนี้มีผลกับผล PLO ของนิสิตทุกคนในหลักสูตรนี้ทันที';
-
-// Ticking links with the default weight; unticking removes the pair from the draft.
-export function setLinked(
-  draft: MappingDraft,
-  cloId: string,
-  ploId: string,
-  linked: boolean,
-): MappingDraft {
+// Ticking adds the PLO with the default weight (or keeps the weight already chosen);
+// unticking takes it out of the draft.
+export function setLinked(draft: LinkDraft, ploId: string, linked: boolean): LinkDraft {
   const next = { ...draft };
-  const key = mappingKey(cloId, ploId);
-  if (linked) next[key] = next[key] ?? DEFAULT_WEIGHT;
-  else delete next[key];
+  if (linked) next[ploId] = next[ploId] ?? DEFAULT_WEIGHT;
+  else delete next[ploId];
   return next;
 }
 
-export function setWeight(
-  draft: MappingDraft,
-  cloId: string,
-  ploId: string,
-  weight: number,
-): MappingDraft {
-  const key = mappingKey(cloId, ploId);
-  if (draft[key] === undefined) return draft;
-  return { ...draft, [key]: Math.min(MAX_WEIGHT, Math.max(MIN_WEIGHT, Math.round(weight))) };
+export function setWeight(draft: LinkDraft, ploId: string, weight: number): LinkDraft {
+  if (draft[ploId] === undefined) return draft;
+  return {
+    ...draft,
+    [ploId]: Math.min(MAX_WEIGHT, Math.max(MIN_WEIGHT, Math.round(weight))),
+  };
 }
 
 export function describeMappingError(error: unknown): string {

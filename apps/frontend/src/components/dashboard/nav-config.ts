@@ -73,6 +73,9 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     // The list and each curriculum's quality page (/admin/curriculum/[id]).
     matchPrefixes: ['/admin/curriculum'],
   },
+  // CLO/PLO of a curriculum: one page, kept apart from /admin/curriculum so the quality
+  // item above does not stay lit on it.
+  { label: 'จัดการ CLO/PLO', icon: Network, href: '/admin/curriculum-outcomes' },
 ];
 
 const STAFF_NAV_ITEMS: NavItem[] = [

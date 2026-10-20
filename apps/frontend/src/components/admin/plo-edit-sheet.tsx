@@ -8,7 +8,7 @@ import { createPlo, deletePlo, updatePlo } from '@/lib/api/curriculum-outcomes';
 import { useConfirm } from '@/lib/use-confirm';
 import { useToast } from '@/lib/toast-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ApiErrorAlert, WARNING_ALERT_CLASS } from '@/components/ui/api-error-alert';
+import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -22,7 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { StaffSheet } from '@/components/staff/staff-sheet';
 import {
-  OUTCOME_EFFECT_WARNING,
   PLO_DELETE_WARNING,
   PLO_EMPTY,
   describePloError,
@@ -95,7 +94,7 @@ export function PloEditSheet({
     if (!editing) return;
     const confirmed = await confirm({
       title: ploDeleteTitle(editing),
-      description: `${PLO_DELETE_WARNING} ${OUTCOME_EFFECT_WARNING}`,
+      description: PLO_DELETE_WARNING,
       confirmLabel: 'ลบ PLO',
     });
     if (!confirmed) return;
@@ -118,18 +117,13 @@ export function PloEditSheet({
       open={target !== null}
       onOpenChange={(open) => !open && onClose()}
       title={editing ? `แก้ไข ${editing.code}` : 'เพิ่ม PLO ใหม่'}
-      description={`หลักสูตร: ${curriculumLabel}`}
+      description={curriculumLabel}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {serverError && (
             <Alert variant="destructive">
               <AlertDescription>{serverError}</AlertDescription>
-            </Alert>
-          )}
-          {editing && (
-            <Alert className={WARNING_ALERT_CLASS}>
-              <AlertDescription>{OUTCOME_EFFECT_WARNING}</AlertDescription>
             </Alert>
           )}
 
