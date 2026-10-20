@@ -1,6 +1,8 @@
 import type { CareerFitEntry, CareerFitReport } from '@eduanalyze-ai/shared-types';
 import {
+  buildCareerFitGroups,
   buildCareerFitView,
+  CAREER_GROUP_OTHER_NAME,
   CAREER_FIT_FEW_COURSES_TEXT,
   careerCoverageText,
   isFewCourseCareer,
@@ -117,5 +119,82 @@ describe('careerCoverageText', () => {
     expect(careerCoverageText({ gradedCourseCount: 3, totalCourseCount: 5 })).toBe(
       'ใช้ข้อมูลจาก 3 จาก 5 วิชาของสายนี้',
     );
+  });
+});
+
+const group = (id: string, sortOrder: number, description: string | null = null) => ({
+  id,
+  name: `กลุ่ม ${id}`,
+  description,
+  sortOrder,
+});
+
+describe('buildCareerFitGroups', () => {
+  it('orders groups by their sortOrder, not by score, and puts ungrouped careers last', () => {
+    const groups = buildCareerFitGroups([
+      entry('hi', { group: group('g2', 2), score: 95 }),
+      entry('free'),
+      entry('lo', { group: group('g1', 1), score: 60, level: 'LOW' }),
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['g1', 'g2', 'other']);
+    expect(groups[2]).toMatchObject({ name: CAREER_GROUP_OTHER_NAME, isOther: true });
+  });
+
+  it('takes the group level from its best analysable career (no averaging)', () => {
+    const [g] = buildCareerFitGroups([
+      entry('best', { group: group('g', 0), level: 'HIGH' }),
+      entry('weak', { group: group('g', 0), level: 'LOW', score: 40 }),
+      { ...insufficient('x'), group: group('g', 0) },
+    ]);
+    expect(g.level).toBe('HIGH');
+    expect(g.analyzedCount).toBe(2);
+    expect(g.careers.map((c) => c.careerId)).toEqual(['best', 'weak', 'x']);
+  });
+
+  it('has a null level when no career in the group is analysable', () => {
+    const [g] = buildCareerFitGroups([
+      entry('a', { group: group('g', 0), status: 'INSUFFICIENT_DATA', score: null, level: null }),
+    ]);
+    expect(g.level).toBeNull();
+    expect(g.analyzedCount).toBe(0);
+  });
+
+  it('copes with an empty or missing group description', () => {
+    const [a, b, c] = buildCareerFitGroups([
+      entry('1', { group: group('g1', 1, '  ') }),
+      entry('2', { group: group('g2', 2, null) }),
+      entry('3', { group: group('g3', 3, 'มีข้อความ') }),
+    ]);
+    expect([a.description, b.description, c.description]).toEqual([null, null, 'มีข้อความ']);
+  });
+
+  it('does not change which careers are ranked (same top 3 as without groups)', () => {
+    const careers = [
+      entry('a', { group: group('g2', 2) }),
+      entry('b', { group: group('g1', 1) }),
+      entry('c'),
+      entry('d', { group: group('g1', 1) }),
+    ];
+    const v = buildCareerFitView(report('OK', careers));
+    expect(v.ranked.map((c) => c.careerId)).toEqual(['a', 'b', 'c']);
+    expect(v.others.map((c) => c.careerId)).toEqual(['d']);
+  });
+});
+
+describe('buildCareerFitView groups', () => {
+  it('is not grouped when no career has a group (old data, nothing breaks)', () => {
+    const v = buildCareerFitView(report('OK', [entry('a'), entry('b')]));
+    expect(v.hasGroups).toBe(false);
+  });
+
+  it('is grouped as soon as one career has a group; the rest fall into "other"', () => {
+    const v = buildCareerFitView(report('OK', [entry('a', { group: group('g', 0) }), entry('b')]));
+    expect(v.hasGroups).toBe(true);
+    expect(v.groups.map((g) => g.key)).toEqual(['g', 'other']);
+  });
+
+  it('has no groups for the empty states', () => {
+    expect(buildCareerFitView(report('NO_GRADES', [])).groups).toEqual([]);
+    expect(buildCareerFitView(report('NO_CAREERS', [])).hasGroups).toBe(false);
   });
 });

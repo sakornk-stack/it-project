@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { fetchMyCareerFit } from '@/lib/api/career-fit';
 import {
   buildCareerFitView,
+  CAREER_GROUP_INSUFFICIENT_TEXT,
   CAREER_FIT_DISCLAIMER,
   CAREER_FIT_INSUFFICIENT_TEXT,
   CAREER_FIT_LEVEL_TEXT,
@@ -22,6 +23,8 @@ import {
   CAREER_FIT_FEW_COURSES_TEXT,
   careerCoverageText,
   isFewCourseCareer,
+  type CareerFitGroupView,
+  type CareerFitView,
 } from '@/lib/career-fit';
 import { describeApiError } from '@/lib/describe-api-error';
 import { GRADE_LABELS } from '@/lib/grade-label';
@@ -90,6 +93,13 @@ function ChipGroup({ title, children }: Readonly<{ title: string; children: Reac
   );
 }
 
+// Optional text; renders nothing when the career has no description yet.
+function CareerDescription({ career }: Readonly<{ career: CareerFitEntry }>) {
+  const text = career.description?.trim();
+  if (!text) return null;
+  return <p className="break-words text-sm text-muted-foreground">{text}</p>;
+}
+
 function FeaturedCareer({ career }: Readonly<{ career: CareerFitEntry }>) {
   const level = career.level!;
   return (
@@ -103,6 +113,7 @@ function FeaturedCareer({ career }: Readonly<{ career: CareerFitEntry }>) {
             </h3>
           </div>
           <p className="text-sm font-medium">{CAREER_FIT_LEVEL_TEXT[level]}</p>
+          <CareerDescription career={career} />
           <p className="text-xs text-muted-foreground">{careerCoverageText(career)}</p>
         </div>
         <ProgressRing
@@ -159,6 +170,7 @@ function SecondaryCareer({ career, rank }: Readonly<{ career: CareerFitEntry; ra
         <Icon size={12} aria-hidden="true" />
         {text}
       </span>
+      <CareerDescription career={career} />
       <div className="space-y-1">
         <Progress
           value={career.score ?? 0}
@@ -227,6 +239,7 @@ function OtherCareerRow({ career, rank }: Readonly<{ career: CareerFitEntry; ran
         />
       </button>
       <div id={panelId} hidden={!open} className="space-y-3 px-3 pb-3">
+        <CareerDescription career={career} />
         {career.topCourses.length > 0 && (
           <ChipGroup title="วิชาเด่นของคุณ">
             {career.topCourses.map((c) => (
@@ -244,6 +257,87 @@ function OtherCareerRow({ career, rank }: Readonly<{ career: CareerFitEntry; ran
         <p className="text-xs text-muted-foreground">{careerCoverageText(career)}</p>
       </div>
     </li>
+  );
+}
+
+function GroupLevelPill({ group }: Readonly<{ group: CareerFitGroupView }>) {
+  if (!group.level) {
+    return (
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+          BADGE_TONE_CLASSES.neutral,
+        )}
+      >
+        <CircleDashed size={12} aria-hidden="true" />
+        {CAREER_GROUP_INSUFFICIENT_TEXT}
+      </span>
+    );
+  }
+  const { text, icon: Icon } = LEVEL_SHORT[group.level];
+  return (
+    <span
+      role="img"
+      aria-label={`${text} (ประเมินจากสายที่เด่นที่สุดในกลุ่ม)`}
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+        BADGE_TONE_CLASSES[CAREER_FIT_LEVEL_TONE[group.level]],
+      )}
+    >
+      <Icon size={12} aria-hidden="true" />
+      {text}
+    </span>
+  );
+}
+
+// One collapsible card per career group. The group's level is its best career's level;
+// the per-career scores and ranking inside are exactly the ungrouped ones.
+function CareerGroupsList({ view }: Readonly<{ view: CareerFitView }>) {
+  const rankById = new Map([...view.ranked, ...view.others].map((c, i) => [c.careerId, i + 1]));
+  const topKey = view.ranked[0]?.group?.id ?? 'other';
+  return (
+    <ul className="space-y-3">
+      {view.groups.map((group) => (
+        <li key={group.key}>
+          <CollapsibleSection
+            framed={false}
+            defaultOpen={group.key === topKey}
+            title={group.name}
+            meta={
+              <>
+                <GroupLevelPill group={group} />
+                <span className="text-xs font-normal text-muted-foreground">
+                  {group.careers.length} สาย
+                </span>
+              </>
+            }
+          >
+            {group.description && (
+              <p className="break-words text-sm text-muted-foreground">{group.description}</p>
+            )}
+            <ul className="space-y-2">
+              {group.careers.map((c) =>
+                c.level !== null && c.status === 'OK' ? (
+                  <OtherCareerRow
+                    key={c.careerId}
+                    career={c}
+                    rank={rankById.get(c.careerId) ?? 0}
+                  />
+                ) : (
+                  <li key={c.careerId} className="rounded-lg border bg-card p-3 text-sm">
+                    <p className="font-medium">{c.careerName}</p>
+                    <CareerDescription career={c} />
+                    <p className="text-xs text-muted-foreground">
+                      {isFewCourseCareer(c) ? CAREER_FIT_FEW_COURSES_TEXT : careerCoverageText(c)}
+                    </p>
+                  </li>
+                ),
+              )}
+            </ul>
+          </CollapsibleSection>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -293,56 +387,76 @@ export function CareerFitCard() {
           <p className="text-xs text-muted-foreground">
             วิเคราะห์ได้ {view.analyzedCount} จาก {view.totalCount} สาย
           </p>
-          {view.ranked.length > 0 ? (
-            <ol className="space-y-3">
-              <FeaturedCareer career={view.ranked[0]} />
-              {view.ranked.length > 1 && (
-                <li className="list-none">
-                  <ol className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2">
-                    {view.ranked.slice(1).map((c, i) => (
-                      <SecondaryCareer key={c.careerId} career={c} rank={i + 2} />
-                    ))}
-                  </ol>
-                </li>
+          {view.hasGroups ? (
+            <>
+              {view.ranked.length === 0 && (
+                <EmptyState
+                  icon={Compass}
+                  description="ยังมีผลการเรียนในแต่ละสายไม่เพียงพอสำหรับการประเมิน"
+                />
               )}
-            </ol>
+              <CareerGroupsList view={view} />
+            </>
           ) : (
-            <EmptyState
-              icon={Compass}
-              description="ยังมีผลการเรียนในแต่ละสายไม่เพียงพอสำหรับการประเมิน"
-            />
-          )}
-          {view.others.length > 0 && (
-            <CollapsibleSection
-              title={`สายอื่นที่วิเคราะห์ได้ (${view.others.length} สาย)`}
-              framed={false}
-            >
-              <ul className="space-y-2">
-                {view.others.map((c, i) => (
-                  <OtherCareerRow key={c.careerId} career={c} rank={view.ranked.length + i + 1} />
-                ))}
-              </ul>
-            </CollapsibleSection>
-          )}
-          {view.insufficient.length > 0 && (
-            <CollapsibleSection
-              title={`สายที่ข้อมูลยังไม่เพียงพอ (${view.insufficient.length} สาย)`}
-              framed={false}
-            >
-              {view.insufficient.some((c) => !isFewCourseCareer(c)) && (
-                <p className="text-sm text-muted-foreground">{CAREER_FIT_INSUFFICIENT_TEXT}</p>
+            <>
+              {view.ranked.length > 0 ? (
+                <ol className="space-y-3">
+                  <FeaturedCareer career={view.ranked[0]} />
+                  {view.ranked.length > 1 && (
+                    <li className="list-none">
+                      <ol className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2">
+                        {view.ranked.slice(1).map((c, i) => (
+                          <SecondaryCareer key={c.careerId} career={c} rank={i + 2} />
+                        ))}
+                      </ol>
+                    </li>
+                  )}
+                </ol>
+              ) : (
+                <EmptyState
+                  icon={Compass}
+                  description="ยังมีผลการเรียนในแต่ละสายไม่เพียงพอสำหรับการประเมิน"
+                />
               )}
-              <ul className="space-y-2">
-                {view.insufficient.map((c) => (
-                  <li key={c.careerId} className="rounded-lg border p-3 text-sm">
-                    <p className="font-medium">{c.careerName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {isFewCourseCareer(c) ? CAREER_FIT_FEW_COURSES_TEXT : careerCoverageText(c)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </CollapsibleSection>
+              {view.others.length > 0 && (
+                <CollapsibleSection
+                  title={`สายอื่นที่วิเคราะห์ได้ (${view.others.length} สาย)`}
+                  framed={false}
+                >
+                  <ul className="space-y-2">
+                    {view.others.map((c, i) => (
+                      <OtherCareerRow
+                        key={c.careerId}
+                        career={c}
+                        rank={view.ranked.length + i + 1}
+                      />
+                    ))}
+                  </ul>
+                </CollapsibleSection>
+              )}
+              {view.insufficient.length > 0 && (
+                <CollapsibleSection
+                  title={`สายที่ข้อมูลยังไม่เพียงพอ (${view.insufficient.length} สาย)`}
+                  framed={false}
+                >
+                  {view.insufficient.some((c) => !isFewCourseCareer(c)) && (
+                    <p className="text-sm text-muted-foreground">{CAREER_FIT_INSUFFICIENT_TEXT}</p>
+                  )}
+                  <ul className="space-y-2">
+                    {view.insufficient.map((c) => (
+                      <li key={c.careerId} className="rounded-lg border p-3 text-sm">
+                        <p className="font-medium">{c.careerName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isFewCourseCareer(c)
+                            ? CAREER_FIT_FEW_COURSES_TEXT
+                            : careerCoverageText(c)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleSection>
+              )}
+            </>
           )}
         </div>
       );

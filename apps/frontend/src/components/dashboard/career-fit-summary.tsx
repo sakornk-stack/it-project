@@ -45,6 +45,9 @@ function CareerTile({ career, rank }: Readonly<{ career: CareerFitEntry; rank: n
               className="mt-1 shrink-0 -translate-x-1 text-muted-foreground opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 motion-reduce:transition-none"
             />
           </div>
+          {career.group && (
+            <p className="break-words text-xs text-muted-foreground">กลุ่ม: {career.group.name}</p>
+          )}
           <span
             className={cn(
               'inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',

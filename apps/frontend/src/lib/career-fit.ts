@@ -36,9 +36,66 @@ export const careerCoverageText = (
   c: Pick<CareerFitEntry, 'gradedCourseCount' | 'totalCourseCount'>,
 ) => `ใช้ข้อมูลจาก ${c.gradedCourseCount} จาก ${c.totalCourseCount} วิชาของสายนี้`;
 
+export const CAREER_GROUP_OTHER_NAME = 'อื่น ๆ';
+export const CAREER_GROUP_OTHER_KEY = 'other';
+export const CAREER_GROUP_INSUFFICIENT_TEXT = 'ข้อมูลยังไม่เพียงพอ';
+
+export interface CareerFitGroupView {
+  // Group id, or CAREER_GROUP_OTHER_KEY for careers that have no group yet.
+  key: string;
+  name: string;
+  description: string | null;
+  isOther: boolean;
+  // Level of the best analysable career in the group (the per-career formula is
+  // unchanged: the group is only as high as its best career); null = none analysable.
+  level: CareerFitLevel | null;
+  // Careers of the group in the API's order: ranked by score, insufficient last.
+  careers: CareerFitEntry[];
+  analyzedCount: number;
+}
+
+// Pure. Groups ordered by their sortOrder (then name); "other" always last. A group
+// appears only when at least one of its careers is in the report.
+export function buildCareerFitGroups(careers: CareerFitEntry[]): CareerFitGroupView[] {
+  const byKey = new Map<string, { view: CareerFitGroupView; sortOrder: number }>();
+  for (const career of careers) {
+    const g = career.group;
+    const key = g?.id ?? CAREER_GROUP_OTHER_KEY;
+    let entry = byKey.get(key);
+    if (!entry) {
+      entry = {
+        view: {
+          key,
+          name: g?.name ?? CAREER_GROUP_OTHER_NAME,
+          description: g?.description?.trim() || null,
+          isOther: !g,
+          level: null,
+          careers: [],
+          analyzedCount: 0,
+        },
+        sortOrder: g?.sortOrder ?? Number.MAX_SAFE_INTEGER,
+      };
+      byKey.set(key, entry);
+    }
+    const { view } = entry;
+    view.careers.push(career);
+    if (career.status === 'OK' && career.level !== null) {
+      view.analyzedCount++;
+      // careers arrive best-first, so the first analysable one is the group's best.
+      view.level ??= career.level;
+    }
+  }
+  return [...byKey.values()]
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.view.name.localeCompare(b.view.name))
+    .map((e) => e.view);
+}
+
 export interface CareerFitView {
   kind: 'ranked' | 'empty';
   emptyText?: string;
+  // True when at least one career belongs to a group; the page then groups its list.
+  hasGroups: boolean;
+  groups: CareerFitGroupView[];
   ranked: CareerFitEntry[];
   // Analysable careers beyond the top MAX_RANKED_CAREERS, in rank order.
   others: CareerFitEntry[];
@@ -53,6 +110,8 @@ export function buildCareerFitView(report: CareerFitReport): CareerFitView {
     return {
       kind: 'empty',
       emptyText: CAREER_FIT_NO_GRADES_TEXT,
+      hasGroups: false,
+      groups: [],
       ranked: [],
       others: [],
       insufficient: [],
@@ -64,6 +123,8 @@ export function buildCareerFitView(report: CareerFitReport): CareerFitView {
     return {
       kind: 'empty',
       emptyText: CAREER_FIT_NO_CAREERS_TEXT,
+      hasGroups: false,
+      groups: [],
       ranked: [],
       others: [],
       insufficient: [],
@@ -74,6 +135,8 @@ export function buildCareerFitView(report: CareerFitReport): CareerFitView {
   const ok = report.careers.filter((c) => c.status === 'OK' && c.level !== null);
   return {
     kind: 'ranked',
+    hasGroups: report.careers.some((c) => !!c.group),
+    groups: buildCareerFitGroups(report.careers),
     ranked: ok.slice(0, MAX_RANKED_CAREERS),
     others: ok.slice(MAX_RANKED_CAREERS),
     insufficient: report.careers.filter((c) => c.status === 'INSUFFICIENT_DATA'),
