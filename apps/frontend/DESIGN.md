@@ -42,7 +42,7 @@
 | Switch | `components/ui/switch.tsx` | สวิตช์เปิด/ปิด (`role=switch`) | สูง 44px ทั้งแถว |
 | SectionCard / CollapsibleCard | `components/ui/section-card.tsx` | การ์ดส่วนของหน้ารายวิชาทุกแท็บ (หัว `DetailSectionHeader` ไอคอน+ชื่อ+คำอธิบาย) | การ์ดไม่ซ้อนการ์ด; แบบพับได้ใช้ `aria-expanded` + animate ความสูงด้วย grid-rows เนื้อหาที่พับเป็น `invisible` |
 | Reveal / ScrollReveal | `components/layout/reveal.tsx` | เข้าฉากของบล็อก | ดูข้อ 5 |
-| GradeEstimateBadge | `components/ui/grade-estimate-badge.tsx`, `lib/grade-estimate.ts` | ป้าย "ประมาณจากเกรด" กำกับ CLO%/PLO% ที่คำนวณจากเกรด (หัวการ์ด: radar, ภาพรวม PLO, หน้าวิชาของอาจารย์, PLO/CLO ต่ำสุดของ admin) | ข้อความกลางอยู่ที่ `GRADE_ESTIMATE_*` ห้ามพิมพ์ถ้อยคำเอง; วางที่หัวการ์ดละหนึ่งป้าย ไม่ซ้ำการ์ดข้างเคียง; ค่าที่มาจากคะแนนประเมินจริงใช้ `AchievementSourceBadge` |
+| GradeEstimateBadge | `components/ui/grade-estimate-badge.tsx`, `lib/grade-estimate.ts` | ป้าย "ประมาณจากเกรด" กำกับ CLO%/PLO% ที่คำนวณจากเกรด (หัวการ์ด: radar, ภาพรวม PLO, หน้าวิชาของอาจารย์, PLO/CLO ต่ำสุดของ admin) | ข้อความกลางอยู่ที่ `GRADE_ESTIMATE_*` ห้ามพิมพ์ถ้อยคำเอง; วางที่หัวการ์ดละหนึ่งป้าย ไม่ซ้ำการ์ดข้างเคียง |
 | PrivacyConsentField | `components/auth/privacy-consent-field.tsx` | ช่องยอมรับนโยบายในฟอร์มสมัครทุกเส้นทาง (สมัครเอง/ใบเชิญ/Google) | อยู่ใน `<Form>` ผูกกับ `acceptPrivacyPolicy` (`acceptPrivacyPolicySchema`); ทั้งแถวเป็น label สูง ≥44px; ลิงก์เปิดแท็บใหม่; payload ต้องส่ง `PRIVACY_POLICY_VERSION` |
 | SignupCheckEmail | `components/auth/signup-check-email.tsx` | หลังสมัครด้วยอีเมล: บอกให้ตรวจอีเมล + ปุ่มส่งซ้ำ (นับถอยหลัง 60 วินาที) | ข้อความต้องไม่บอกว่าอีเมลมีบัญชีแล้วหรือไม่; ยืนยันจริงที่ `/register/verify` ซึ่งต้องกดปุ่มก่อน POST (กันโปรแกรมสแกนลิงก์) |
 | PrivacyFooterLink | `components/layout/privacy-footer-link.tsx` | ลิงก์ "นโยบายความเป็นส่วนตัว" ท้าย `AuthSplitLayout` และ `DashboardShell` | — |
@@ -102,7 +102,6 @@
 - ห้ามใช้สี GPA ตามช่วงของนิสิตกับค่าเฉลี่ยรายวิชา (ตรวจสอบ — ยังไม่พบคอมเมนต์ในโค้ด)
 - ห้ามสร้างปุ่มลบถาวรเอง ต้องใช้ `PermanentDeleteButton`/`PermanentDeleteDialog`; หน้าโครงสร้างองค์กร (`inactive-org-section.tsx`) ลบถาวรได้เฉพาะคณะ/ภาควิชา/สาขาที่ปิดใช้งาน (`PermanentlyDeletableOrgResource` ใน `lib/api/organization.ts`) หลักสูตรไม่มีลบถาวรในหน้านี้
 - ห้ามแต่งตัวเลข/เปอร์เซ็นต์/แนวโน้มที่ API ไม่มี (ดูคอมเมนต์ใน `stat-card.tsx`) เช่น ไม่มี "ปีการศึกษาปัจจุบัน" (`academic-years/page.tsx`)
-- ห้ามแสดงแถว/ศูนย์/NaN ของคะแนนประเมินจริงเมื่อไม่มีข้อมูล (`student_assessment_scores` ว่าง): ซ่อนส่วนนั้น (`hasActualCloEvidence` ใน `lib/actual-clo-evidence.ts`, `hasScores` ใน `clo-achievement-section.tsx`)
 - ชื่อตัวเลขหน่วยกิต (`lib/credit-labels.ts`): "ความคืบหน้าหน่วยกิต" = สัดส่วนหน่วยกิตอย่างเดียว; "ความพร้อมสำเร็จการศึกษา" = `GraduationReadiness.isReady` (หน่วยกิต + วิชาบังคับ + หมวดวิชา) เท่านั้น; "หน่วยกิตสะสม" = วิชาในหลักสูตรที่ผ่าน (รวม S ไม่รวม F/U/W/I); "หน่วยกิตที่นับ GPA" รวม F แยกชื่อ
 - ปุ่ม "ปรับช่วงหน่วยกิตในแผน" ตั้งเองได้ ไม่มีผู้อนุมัติ/ไม่มีการแจ้งใคร: ถ้อยคำใช้ "ตั้ง/บันทึก" ห้ามใช้ "ขอ/ส่งคำขอ" (`CREDIT_LIMIT_SELF_SET_NOTE`)
 - สมัครด้วยตนเอง: โดเมนกลางอยู่ที่ `lib/signup-domain.ts` (ใบ้/ตรวจล่วงหน้าเท่านั้น backend ตัดสิน); ข้อความ error ของ Google อยู่ที่ `lib/google-login-error.ts` (whitelist code)
