@@ -23,25 +23,25 @@ const CASES: [string, string, (prisma: never) => unknown, (c: object) => object]
   [
     'CourseService',
     'course',
-    (p) => new CourseService(p, {} as never, {} as never),
+    (p) => new CourseService(p, {} as never, {} as never, {} as never),
     (c) => ({ isActive: true, curriculum: c }),
   ],
   [
     'PrerequisiteService',
     'prerequisite',
-    (p) => new PrerequisiteService(p, {} as never),
+    (p) => new PrerequisiteService(p, {} as never, {} as never),
     (c) => ({ course: { curriculum: c } }),
   ],
   [
     'CourseCategoryService',
     'courseCategory',
-    (p) => new CourseCategoryService(p, {} as never),
+    (p) => new CourseCategoryService(p, {} as never, {} as never),
     (c) => ({ isActive: true, curriculum: c }),
   ],
   [
     'CurriculumRequirementService',
     'curriculumRequirement',
-    (p) => new CurriculumRequirementService(p, {} as never, {} as never),
+    (p) => new CurriculumRequirementService(p, {} as never, {} as never, {} as never),
     (c) => ({ curriculum: c }),
   ],
   [

@@ -73,8 +73,8 @@ export class PrerequisiteController {
   @ApiResponse({ status: 403, description: 'No scope covering this course' })
   @ApiResponse({ status: 404, description: 'Course not found or inactive' })
   @ApiResponse({ status: 409, description: 'Prerequisite already exists' })
-  create(@Body() dto: CreatePrerequisiteDto) {
-    return this.prerequisiteService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreatePrerequisiteDto) {
+    return this.prerequisiteService.create(dto, user);
   }
 
   @Patch(':id')
@@ -86,8 +86,12 @@ export class PrerequisiteController {
   @ApiResponse({ status: 200, description: 'Prerequisite updated' })
   @ApiResponse({ status: 403, description: 'No scope covering this prerequisite' })
   @ApiResponse({ status: 404, description: 'Prerequisite not found' })
-  update(@Param('id') id: string, @Body() dto: UpdatePrerequisiteDto) {
-    return this.prerequisiteService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePrerequisiteDto,
+  ) {
+    return this.prerequisiteService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -99,7 +103,7 @@ export class PrerequisiteController {
   @ApiResponse({ status: 200, description: 'Prerequisite deleted' })
   @ApiResponse({ status: 403, description: 'No scope covering this prerequisite' })
   @ApiResponse({ status: 404, description: 'Prerequisite not found' })
-  remove(@Param('id') id: string) {
-    return this.prerequisiteService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.prerequisiteService.remove(id, user);
   }
 }

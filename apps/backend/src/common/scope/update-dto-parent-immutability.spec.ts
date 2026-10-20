@@ -3,6 +3,7 @@ import { validate } from 'class-validator';
 import { UpdateCloDto } from '../../modules/curriculum-content/clo/dto/update-clo.dto';
 import { UpdateCourseCategoryDto } from '../../modules/curriculum-content/course-category/dto/update-course-category.dto';
 import { UpdateCourseDto } from '../../modules/curriculum-content/course/dto/update-course.dto';
+import { UpdateCurriculumRequirementDto } from '../../modules/curriculum-content/curriculum-requirement/dto/update-curriculum-requirement.dto';
 import { UpdatePloDto } from '../../modules/curriculum-content/plo/dto/update-plo.dto';
 import { UpdateCurriculumDto } from '../../modules/organization/curriculum/dto/update-curriculum.dto';
 import { UpdateDepartmentDto } from '../../modules/organization/department/dto/update-department.dto';
@@ -29,6 +30,11 @@ const cases: Array<{
   { dto: UpdateCurriculumDto, parentKey: 'programId', allowedBody: { version: '2570' } },
   { dto: UpdateCourseDto, parentKey: 'curriculumId', allowedBody: { name: 'Renamed' } },
   { dto: UpdateCourseCategoryDto, parentKey: 'curriculumId', allowedBody: { name: 'Renamed' } },
+  {
+    dto: UpdateCurriculumRequirementDto,
+    parentKey: 'curriculumId',
+    allowedBody: { minCredits: 24 },
+  },
   { dto: UpdateCloDto, parentKey: 'courseId', allowedBody: { description: 'Updated' } },
   { dto: UpdatePloDto, parentKey: 'curriculumId', allowedBody: { name: 'Renamed' } },
 ];
@@ -45,5 +51,11 @@ describe('Update DTOs keep the parent immutable', () => {
 
   it('UpdateCourseDto still accepts categoryId', async () => {
     expect(await validationErrors(UpdateCourseDto, { categoryId: SOME_UUID })).toEqual([]);
+  });
+
+  it('UpdateCurriculumRequirementDto still accepts categoryId', async () => {
+    expect(
+      await validationErrors(UpdateCurriculumRequirementDto, { categoryId: SOME_UUID }),
+    ).toEqual([]);
   });
 });

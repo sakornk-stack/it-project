@@ -3,9 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AuditAction, CourseCategory, Prisma } from '@prisma/client';
+import { AuditLogService } from '../../../common/audit/audit-log.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
+import { courseCategorySnapshot, curriculumProgramId } from '../catalog-audit';
 import { CreateCourseCategoryDto } from './dto/create-course-category.dto';
 import { UpdateCourseCategoryDto } from './dto/update-course-category.dto';
 
@@ -14,12 +17,17 @@ export class CourseCategoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly curriculumService: CurriculumService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(dto: CreateCourseCategoryDto) {
+  async create(dto: CreateCourseCategoryDto, actor: RequestUser) {
     await this.curriculumService.findActiveByIdOrThrow(dto.curriculumId);
     await this.assertNameAvailable(dto.curriculumId, dto.name);
-    return this.prisma.courseCategory.create({ data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.courseCategory.create({ data: dto });
+      await this.recordAudit(tx, actor, 'COURSE_CATEGORY_CREATE', created, null);
+      return created;
+    });
   }
 
   findAll() {
@@ -64,18 +72,22 @@ export class CourseCategoryService {
     return category;
   }
 
-  async update(id: string, dto: UpdateCourseCategoryDto) {
-    const { curriculumId } = await this.findOne(id);
+  async update(id: string, dto: UpdateCourseCategoryDto, actor: RequestUser) {
+    const current = await this.findOne(id);
 
     if (dto.name) {
-      await this.assertNameAvailable(curriculumId, dto.name, id);
+      await this.assertNameAvailable(current.curriculumId, dto.name, id);
     }
 
-    return this.prisma.courseCategory.update({ where: { id }, data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.courseCategory.update({ where: { id }, data: dto });
+      await this.recordAudit(tx, actor, 'COURSE_CATEGORY_UPDATE', updated, current);
+      return updated;
+    });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, actor: RequestUser) {
+    const current = await this.findOne(id);
 
     const activeCourseCount = await this.prisma.course.count({
       where: { categoryId: id, isActive: true },
@@ -86,9 +98,32 @@ export class CourseCategoryService {
       );
     }
 
-    return this.prisma.courseCategory.update({
-      where: { id },
-      data: { isActive: false },
+    return this.prisma.$transaction(async (tx) => {
+      const deactivated = await tx.courseCategory.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      await this.recordAudit(tx, actor, 'COURSE_CATEGORY_DEACTIVATE', deactivated, current);
+      return deactivated;
+    });
+  }
+
+  private async recordAudit(
+    tx: Prisma.TransactionClient,
+    actor: RequestUser,
+    action: AuditAction,
+    after: CourseCategory,
+    before: CourseCategory | null,
+  ) {
+    await this.auditLogService.record(tx, {
+      action,
+      actor,
+      targetType: 'CourseCategory',
+      targetId: after.id,
+      studentProfileId: null,
+      programId: await curriculumProgramId(tx, after.curriculumId),
+      before: before && courseCategorySnapshot(before),
+      after: courseCategorySnapshot(after),
     });
   }
 

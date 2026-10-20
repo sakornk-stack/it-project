@@ -4,13 +4,16 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -48,6 +51,25 @@ export class CourseController {
     );
   }
 
+  // Declared before ':id' so "inactive" is not taken for a course id. STAFF only:
+  // the list exists to reactivate from, and reactivating is a STAFF write.
+  @Get('inactive')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'List deactivated courses within the caller scope (STAFF)' })
+  @ApiQuery({ name: 'curriculumId', required: false })
+  @ApiResponse({ status: 200, description: 'List of deactivated courses' })
+  async findInactive(
+    @CurrentUser() user: RequestUser,
+    @Query('curriculumId', new ParseUUIDPipe({ optional: true })) curriculumId?: string,
+  ) {
+    return this.courseService.findInactiveInCurricula(
+      await this.catalogScope.curriculumWhere(user),
+      curriculumId,
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STUDENT', 'INSTRUCTOR', 'STAFF', 'ADMIN')
@@ -78,8 +100,8 @@ export class CourseController {
     status: 409,
     description: 'Course code already in use within this curriculum',
   })
-  create(@Body() dto: CreateCourseDto) {
-    return this.courseService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCourseDto) {
+    return this.courseService.create(dto, user);
   }
 
   @Patch(':id')
@@ -90,13 +112,17 @@ export class CourseController {
   @ApiOperation({ summary: 'Update a course' })
   @ApiResponse({ status: 200, description: 'Course updated' })
   @ApiResponse({ status: 403, description: 'No scope covering this course' })
-  @ApiResponse({ status: 404, description: 'Course not found' })
+  @ApiResponse({ status: 404, description: 'Course not found or deactivated' })
   @ApiResponse({
     status: 409,
     description: 'Course code already in use within this curriculum',
   })
-  update(@Param('id') id: string, @Body() dto: UpdateCourseDto) {
-    return this.courseService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateCourseDto,
+  ) {
+    return this.courseService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -107,12 +133,31 @@ export class CourseController {
   @ApiOperation({ summary: 'Soft-delete a course' })
   @ApiResponse({ status: 200, description: 'Course deactivated' })
   @ApiResponse({ status: 403, description: 'No scope covering this course' })
+  @ApiResponse({ status: 404, description: 'Course not found or already deactivated' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Course is a prerequisite of another course, or still has student records, instructors, CLOs, assessments, study plans or career links',
+  })
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.courseService.remove(id, user);
+  }
+
+  @Post(':id/reactivate')
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('STAFF')
+  @ScopeTarget('course', { from: 'param', key: 'id' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Restore a deactivated course (STAFF)' })
+  @ApiResponse({ status: 201, description: 'Course reactivated' })
+  @ApiResponse({ status: 403, description: 'No scope covering this course' })
   @ApiResponse({ status: 404, description: 'Course not found' })
   @ApiResponse({
     status: 409,
-    description: 'Course is still required as a prerequisite by another course',
+    description:
+      'Already active, its curriculum or category is deactivated, or the code is taken by an active course',
   })
-  remove(@Param('id') id: string) {
-    return this.courseService.remove(id);
+  reactivate(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.courseService.reactivate(id, user);
   }
 }

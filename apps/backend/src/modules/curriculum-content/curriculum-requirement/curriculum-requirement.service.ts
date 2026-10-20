@@ -4,9 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AuditAction, CurriculumRequirement, Prisma } from '@prisma/client';
+import { AuditLogService } from '../../../common/audit/audit-log.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
+import { curriculumProgramId, curriculumRequirementSnapshot } from '../catalog-audit';
 import { CourseCategoryService } from '../course-category/course-category.service';
 import { CreateCurriculumRequirementDto } from './dto/create-curriculum-requirement.dto';
 import { UpdateCurriculumRequirementDto } from './dto/update-curriculum-requirement.dto';
@@ -17,9 +20,10 @@ export class CurriculumRequirementService {
     private readonly prisma: PrismaService,
     private readonly curriculumService: CurriculumService,
     private readonly courseCategoryService: CourseCategoryService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(dto: CreateCurriculumRequirementDto) {
+  async create(dto: CreateCurriculumRequirementDto, actor: RequestUser) {
     await this.curriculumService.findActiveByIdOrThrow(dto.curriculumId);
     const category = await this.courseCategoryService.findActiveByIdOrThrow(
       dto.categoryId,
@@ -31,8 +35,13 @@ export class CurriculumRequirementService {
       );
     }
 
+    // The P2002 below aborts this transaction too, so the catch wraps it whole.
     try {
-      return await this.prisma.curriculumRequirement.create({ data: dto });
+      return await this.prisma.$transaction(async (tx) => {
+        const created = await tx.curriculumRequirement.create({ data: dto });
+        await this.recordAudit(tx, actor, 'CURRICULUM_REQUIREMENT_CREATE', created, null, created);
+        return created;
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -76,13 +85,9 @@ export class CurriculumRequirementService {
     return requirement;
   }
 
-  async update(id: string, dto: UpdateCurriculumRequirementDto) {
+  async update(id: string, dto: UpdateCurriculumRequirementDto, actor: RequestUser) {
     const requirement = await this.findOne(id);
-
-    if (dto.curriculumId) {
-      await this.curriculumService.findActiveByIdOrThrow(dto.curriculumId);
-    }
-    const curriculumId = dto.curriculumId ?? requirement.curriculumId;
+    const { curriculumId } = requirement;
 
     if (dto.categoryId) {
       const category = await this.courseCategoryService.findActiveByIdOrThrow(
@@ -96,9 +101,20 @@ export class CurriculumRequirementService {
     }
 
     try {
-      return await this.prisma.curriculumRequirement.update({
-        where: { id },
-        data: dto,
+      return await this.prisma.$transaction(async (tx) => {
+        const updated = await tx.curriculumRequirement.update({
+          where: { id },
+          data: dto,
+        });
+        await this.recordAudit(
+          tx,
+          actor,
+          'CURRICULUM_REQUIREMENT_UPDATE',
+          updated,
+          requirement,
+          updated,
+        );
+        return updated;
       });
     } catch (error) {
       if (
@@ -115,8 +131,39 @@ export class CurriculumRequirementService {
 
   // No soft-delete: CurriculumRequirement is a mapping-style entity (like
   // UserRole/UserAuthMethod), not a hierarchy entity — CRUD directly.
-  async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.curriculumRequirement.delete({ where: { id } });
+  async remove(id: string, actor: RequestUser) {
+    const requirement = await this.findOne(id);
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.curriculumRequirement.delete({ where: { id } });
+      await this.recordAudit(
+        tx,
+        actor,
+        'CURRICULUM_REQUIREMENT_DELETE',
+        deleted,
+        requirement,
+        null,
+      );
+      return deleted;
+    });
+  }
+
+  private async recordAudit(
+    tx: Prisma.TransactionClient,
+    actor: RequestUser,
+    action: AuditAction,
+    target: CurriculumRequirement,
+    before: CurriculumRequirement | null,
+    after: CurriculumRequirement | null,
+  ) {
+    await this.auditLogService.record(tx, {
+      action,
+      actor,
+      targetType: 'CurriculumRequirement',
+      targetId: target.id,
+      studentProfileId: null,
+      programId: await curriculumProgramId(tx, target.curriculumId),
+      before: before && curriculumRequirementSnapshot(before),
+      after: after && curriculumRequirementSnapshot(after),
+    });
   }
 }

@@ -4,7 +4,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RequestUser } from '../../modules/auth/request-user.interface';
 import { actingRole, assertNoSecretKeys, type AuditSnapshot } from './audit-log.util';
 
-export type AuditTargetType = 'StudentCourseRecord' | 'StudentProfile' | 'StudentInvitation';
+export type AuditTargetType =
+  | 'StudentCourseRecord'
+  | 'StudentProfile'
+  | 'StudentInvitation'
+  | 'Course'
+  | 'CourseCategory'
+  | 'CurriculumRequirement'
+  | 'Prerequisite';
 
 export interface AuditEntry {
   action: AuditAction;

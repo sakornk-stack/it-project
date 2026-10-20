@@ -78,8 +78,8 @@ export class CurriculumRequirementController {
     status: 409,
     description: 'Course category already has a curriculum requirement',
   })
-  create(@Body() dto: CreateCurriculumRequirementDto) {
-    return this.curriculumRequirementService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCurriculumRequirementDto) {
+    return this.curriculumRequirementService.create(dto, user);
   }
 
   @Patch(':id')
@@ -96,10 +96,11 @@ export class CurriculumRequirementController {
     description: 'Course category already has a curriculum requirement',
   })
   update(
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body() dto: UpdateCurriculumRequirementDto,
   ) {
-    return this.curriculumRequirementService.update(id, dto);
+    return this.curriculumRequirementService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -111,7 +112,7 @@ export class CurriculumRequirementController {
   @ApiResponse({ status: 200, description: 'Curriculum requirement deleted' })
   @ApiResponse({ status: 403, description: 'No scope covering this curriculum requirement' })
   @ApiResponse({ status: 404, description: 'Curriculum requirement not found' })
-  remove(@Param('id') id: string) {
-    return this.curriculumRequirementService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.curriculumRequirementService.remove(id, user);
   }
 }

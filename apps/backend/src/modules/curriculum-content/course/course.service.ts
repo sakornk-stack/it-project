@@ -4,9 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AuditAction, Course, Prisma } from '@prisma/client';
+import { AuditLogService } from '../../../common/audit/audit-log.service';
+import type { AuditSnapshot } from '../../../common/audit/audit-log.util';
+import { conflictOnDuplicate } from '../../../common/util/reactivate.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RequestUser } from '../../auth/request-user.interface';
 import { CurriculumService } from '../../organization/curriculum/curriculum.service';
+import { courseSnapshot, curriculumProgramId } from '../catalog-audit';
 import { CourseCategoryService } from '../course-category/course-category.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -17,9 +22,10 @@ export class CourseService {
     private readonly prisma: PrismaService,
     private readonly curriculumService: CurriculumService,
     private readonly courseCategoryService: CourseCategoryService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(dto: CreateCourseDto) {
+  async create(dto: CreateCourseDto, actor: RequestUser) {
     await this.curriculumService.findActiveByIdOrThrow(dto.curriculumId);
     const category = await this.courseCategoryService.findActiveByIdOrThrow(
       dto.categoryId,
@@ -35,7 +41,11 @@ export class CourseService {
     }
 
     await this.assertCodeAvailable(dto.curriculumId, dto.code);
-    return this.prisma.course.create({ data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.course.create({ data: dto });
+      await this.recordAudit(tx, actor, 'COURSE_CREATE', created, null, courseSnapshot(created));
+      return created;
+    });
   }
 
   findAll() {
@@ -48,6 +58,18 @@ export class CourseService {
   // is a 404, same as a missing or inactive one, so existence isn't leaked.
   findAllInCurricula(curriculum: Prisma.CurriculumWhereInput) {
     return this.prisma.course.findMany({ where: { isActive: true, curriculum } });
+  }
+
+  // STAFF's list of deactivated courses, so one can be reactivated. Same
+  // curriculum filter as the active list; optionally narrowed to one curriculum.
+  findInactiveInCurricula(curriculum: Prisma.CurriculumWhereInput, curriculumId?: string) {
+    return this.prisma.course.findMany({
+      where: {
+        isActive: false,
+        curriculum: curriculumId ? { AND: [curriculum, { id: curriculumId }] } : curriculum,
+      },
+      orderBy: { code: 'asc' },
+    });
   }
 
   async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {
@@ -87,8 +109,11 @@ export class CourseService {
     return course;
   }
 
-  async update(id: string, dto: UpdateCourseDto) {
-    const { curriculumId } = await this.findOne(id);
+  // A deactivated course is a 404 here: it has to be reactivated first, so an
+  // edit can't slip past the checks reactivate() makes.
+  async update(id: string, dto: UpdateCourseDto, actor: RequestUser) {
+    const current = await this.findActiveByIdOrThrow(id);
+    const { curriculumId } = current;
 
     if (dto.categoryId) {
       const category = await this.courseCategoryService.findActiveByIdOrThrow(
@@ -105,11 +130,23 @@ export class CourseService {
       await this.assertCodeAvailable(curriculumId, dto.code, id);
     }
 
-    return this.prisma.course.update({ where: { id }, data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.course.update({ where: { id }, data: dto });
+      await this.recordAudit(
+        tx,
+        actor,
+        'COURSE_UPDATE',
+        updated,
+        courseSnapshot(current),
+        courseSnapshot(updated),
+      );
+      return updated;
+    });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  // An already deactivated course is a 404 (it used to be re-deactivated silently).
+  async remove(id: string, actor: RequestUser) {
+    const current = await this.findActiveByIdOrThrow(id);
 
     // Direction 1: other courses depend on this one as a prerequisite —
     // block, same shape as the hierarchy soft-delete convention.
@@ -132,12 +169,81 @@ export class CourseService {
     // deactivated, so they're cascade-deleted in the same transaction as
     // the soft-delete, atomically.
     return this.prisma.$transaction(async (tx) => {
-      await tx.prerequisite.deleteMany({ where: { courseId: id } });
+      const { count: removedPrerequisites } = await tx.prerequisite.deleteMany({
+        where: { courseId: id },
+      });
 
-      return tx.course.update({
+      const deactivated = await tx.course.update({
         where: { id },
         data: { isActive: false },
       });
+      await this.recordAudit(tx, actor, 'COURSE_DEACTIVATE', deactivated, courseSnapshot(current), {
+        ...courseSnapshot(deactivated),
+        removedPrerequisites,
+      });
+      return deactivated;
+    });
+  }
+
+  // Restores a deactivated course. Its prerequisites were deleted on deactivate
+  // and are not brought back; STAFF adds them again if still needed.
+  async reactivate(id: string, actor: RequestUser) {
+    const course = await this.findOne(id);
+    if (course.isActive) {
+      throw new ConflictException('รายวิชานี้เปิดใช้งานอยู่แล้ว');
+    }
+    const [curriculum, category] = await Promise.all([
+      this.prisma.curriculum.findUnique({ where: { id: course.curriculumId } }),
+      this.prisma.courseCategory.findUnique({ where: { id: course.categoryId } }),
+    ]);
+    if (!curriculum?.isActive) {
+      throw new ConflictException('เปิดใช้งานไม่ได้ เพราะหลักสูตรของวิชานี้ปิดใช้งานอยู่');
+    }
+    if (!category?.isActive) {
+      throw new ConflictException(
+        `เปิดใช้งานไม่ได้ เพราะหมวดวิชา "${category?.name ?? ''}" ปิดใช้งานอยู่ ให้ย้ายวิชาหรือเปิดหมวดก่อน`,
+      );
+    }
+    const message = `เปิดใช้งานไม่ได้ เพราะรหัสวิชา "${course.code}" ถูกใช้โดยวิชาอื่นที่ใช้งานอยู่ในหลักสูตรนี้`;
+    const clash = await this.prisma.course.findFirst({
+      where: { curriculumId: course.curriculumId, code: course.code, isActive: true },
+    });
+    if (clash) throw new ConflictException(message);
+
+    return conflictOnDuplicate(
+      this.prisma.$transaction(async (tx) => {
+        const reactivated = await tx.course.update({ where: { id }, data: { isActive: true } });
+        await this.recordAudit(
+          tx,
+          actor,
+          'COURSE_REACTIVATE',
+          reactivated,
+          courseSnapshot(course),
+          courseSnapshot(reactivated),
+        );
+        return reactivated;
+      }),
+      message,
+    );
+  }
+
+  private async recordAudit(
+    tx: Prisma.TransactionClient,
+    actor: RequestUser,
+    action: AuditAction,
+    course: Course,
+    before: AuditSnapshot | null,
+    after: AuditSnapshot,
+  ) {
+    await this.auditLogService.record(tx, {
+      action,
+      actor,
+      targetType: 'Course',
+      targetId: course.id,
+      studentProfileId: null,
+      programId: await curriculumProgramId(tx, course.curriculumId),
+      before,
+      after,
     });
   }
 
@@ -145,7 +251,7 @@ export class CourseService {
   // active-only; CourseInstructor, CourseAssessment and StudentPlannedCourse
   // have no isActive, so every row counts.
   private async assertNoAttachedData(id: string) {
-    const [records, instructors, clos, assessments, plans] =
+    const [records, instructors, clos, assessments, plans, careers] =
       await Promise.all([
         this.prisma.studentCourseRecord.count({
           where: { courseId: id, isActive: true },
@@ -154,6 +260,7 @@ export class CourseService {
         this.prisma.clo.count({ where: { courseId: id, isActive: true } }),
         this.prisma.courseAssessment.count({ where: { courseId: id } }),
         this.prisma.studentPlannedCourse.count({ where: { courseId: id } }),
+        this.prisma.careerCourse.count({ where: { courseId: id, isActive: true } }),
       ]);
 
     const attached = [
@@ -162,6 +269,7 @@ export class CourseService {
       [clos, 'CLO'],
       [assessments, 'การประเมินรายวิชา'],
       [plans, 'แผนการเรียนของนิสิต'],
+      [careers, 'การเชื่อมโยงกับอาชีพ'],
     ]
       .filter(([count]) => (count as number) > 0)
       .map(([count, label]) => `${label} ${count} รายการ`);

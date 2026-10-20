@@ -75,8 +75,8 @@ export class CourseCategoryController {
     status: 409,
     description: 'Course category name already in use within this curriculum',
   })
-  create(@Body() dto: CreateCourseCategoryDto) {
-    return this.courseCategoryService.create(dto);
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCourseCategoryDto) {
+    return this.courseCategoryService.create(dto, user);
   }
 
   @Patch(':id')
@@ -92,8 +92,12 @@ export class CourseCategoryController {
     status: 409,
     description: 'Course category name already in use within this curriculum',
   })
-  update(@Param('id') id: string, @Body() dto: UpdateCourseCategoryDto) {
-    return this.courseCategoryService.update(id, dto);
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateCourseCategoryDto,
+  ) {
+    return this.courseCategoryService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -109,7 +113,7 @@ export class CourseCategoryController {
     status: 409,
     description: 'Course category still has active courses',
   })
-  remove(@Param('id') id: string) {
-    return this.courseCategoryService.remove(id);
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.courseCategoryService.remove(id, user);
   }
 }

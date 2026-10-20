@@ -6,8 +6,14 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
+
+// Whole credits per course; 12 covers the largest single courses (co-op, thesis).
+export const MIN_COURSE_CREDITS = 0;
+export const MAX_COURSE_CREDITS = 12;
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'CS101' })
@@ -28,8 +34,10 @@ export class CreateCourseDto {
   @MaxLength(255)
   nameEn?: string;
 
-  @ApiProperty({ example: 3 })
+  @ApiProperty({ example: 3, minimum: MIN_COURSE_CREDITS, maximum: MAX_COURSE_CREDITS })
   @IsInt()
+  @Min(MIN_COURSE_CREDITS)
+  @Max(MAX_COURSE_CREDITS)
   credits!: number;
 
   @ApiPropertyOptional({ example: 'Fundamentals of programming using Python' })
