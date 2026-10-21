@@ -14,6 +14,7 @@ import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { StateBlock } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GradeSelectConfirm } from './grade-select-confirm';
 import { SemesterGroupHeader } from './semester-group-header';
@@ -207,7 +208,7 @@ export function RecordTimeline({
     <Card>
       <CardContent className="pt-6">
         {semestersWithRecords.length === 0 && (
-          <p className="py-6 text-center text-muted-foreground">ยังไม่มีรายวิชาที่บันทึกไว้</p>
+          <StateBlock illustration="no-data" description="ยังไม่มีรายวิชาที่บันทึกไว้" />
         )}
 
         {semestersWithRecords.length > 0 && assessmentStatusFailed && (
