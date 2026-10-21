@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   GraduationCap,
-  ListChecks,
   Sigma,
   Users,
 } from 'lucide-react';
@@ -141,13 +140,6 @@ function AdminCurriculumQualityContent({ curriculumId }: Readonly<{ curriculumId
               </span>
             }
           />
-          <Link
-            href={`/admin/curriculum-outcomes?curriculum=${curriculumId}`}
-            className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            <ListChecks size={14} aria-hidden="true" />
-            จัดการ CLO และ PLO ของหลักสูตรนี้
-          </Link>
         </Reveal>
       )}
 
