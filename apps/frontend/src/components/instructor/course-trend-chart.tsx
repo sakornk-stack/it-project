@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
-import { SPARSE_LABEL, formatPointsChange, type TrendTerm } from '@/lib/course-snapshot';
+import { fewStudentsLabel, formatPointsChange, type TrendTerm } from '@/lib/course-snapshot';
 import { formatPercent } from '@/lib/format-percent';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { LowSampleTag } from './overview-parts';
 const TERM_MIN_PX = 76;
 
 // One wording for a term with too few people, here and in the overview.
-export const sparseTermText = (students: number) => `${SPARSE_LABEL} (${students} คน)`;
+export const sparseTermText = fewStudentsLabel;
 
 const columnCentre = (index: number, count: number) => ((index + 0.5) / count) * 100;
 const clampPercent = (percent: number) => Math.min(100, Math.max(0, percent));

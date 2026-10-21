@@ -23,7 +23,14 @@ export function SummarySection({
   const center = useMemo(() => summarizeGradeCenter(stats.counts), [stats.counts]);
   const values = center.values;
   return (
-    <PageSection title="สรุปผล" description={termLabel ? `รอบล่าสุด ${termLabel}` : undefined}>
+    <PageSection
+      title="สรุปผล"
+      description={
+        termLabel
+          ? `เกรดล่าสุดของนิสิตแต่ละคน รวมทุกภาคเรียนที่สอน (ล่าสุด ${termLabel})`
+          : 'เกรดล่าสุดของนิสิตแต่ละคน รวมทุกภาคเรียนที่สอน'
+      }
+    >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <div className="col-span-2">
           <StatCard
@@ -72,7 +79,7 @@ export function SummarySection({
         />
         <CountCard
           icon={XCircle}
-          tone={stats.f > 0 ? 'danger' : 'neutral'}
+          tone={stats.f > 0 ? 'warning' : 'neutral'}
           label="ได้ F"
           count={stats.f}
           total={stats.seats}
@@ -99,7 +106,7 @@ function CountCard({
   note,
 }: Readonly<{
   icon: typeof Users;
-  tone: 'neutral' | 'success' | 'warning' | 'danger';
+  tone: 'neutral' | 'success' | 'warning';
   label: string;
   count: number;
   total?: number;

@@ -4,7 +4,7 @@ import type {
   InstructorCourseTimelineCourse,
   InstructorCourseTimelineSemester,
 } from '@eduanalyze-ai/shared-types';
-import { dataLevelOf, SPARSE_LABEL } from '@/lib/course-snapshot';
+import { dataLevelOf, fewStudentsLabel } from '@/lib/course-snapshot';
 import { formatSemesterLabel } from '@/lib/grade-label';
 import { predominantYearLevel, yearLevelLabel } from '@/lib/course-timeline-summary';
 import { BADGE_TONE_CLASSES, BAR_TONE_CLASSES } from '@/lib/tone';
@@ -21,7 +21,7 @@ function SampleTag({ gradedCount }: Readonly<{ gradedCount: number }>) {
   if (level === 'ok') return null;
   return level === 'insufficient' ? (
     <Badge tone="neutral" className="px-2.5 py-0.5 text-[13px]">
-      {SPARSE_LABEL}
+      {fewStudentsLabel(gradedCount)}
     </Badge>
   ) : (
     <LowSampleTag counted={gradedCount} />

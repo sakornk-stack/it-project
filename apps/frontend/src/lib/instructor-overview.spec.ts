@@ -211,7 +211,7 @@ describe('buildOverviewSentence', () => {
     const credits = new Map([['a', 3], ['b', 3]]);
     const ov = buildCourseOverviews([course('a', 'CS101', { A: 2, F: 2 }), course('b', 'CS102', { B: 3 })], credits);
     expect(buildOverviewSentence(buildOverallOverview(ov, credits), ov)).toBe(
-      'ได้ B ขึ้นไป 71% จากเป้า 70% (ผ่านเป้า) · เกรดเฉลี่ย 2.43 · ห่างเป้ามากสุด CS101 วิชา CS101 50% · ตัวอย่างน้อย (7 คน)',
+      'ได้ B ขึ้นไป 71% จากเกณฑ์ 70% (ถึงเกณฑ์) · เกรดเฉลี่ย 2.43 · ห่างเกณฑ์มากสุด CS101 วิชา CS101 50% · นิสิตน้อย (7 คน)',
     );
   });
 

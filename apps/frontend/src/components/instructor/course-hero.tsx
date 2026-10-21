@@ -7,7 +7,7 @@ import type { InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
 import { useInstructorCourseTimeline } from '@/lib/instructor-queries';
 import {
   DATA_SOURCE_NOTE,
-  SPARSE_LABEL,
+  fewStudentsLabel,
   courseTermInfo,
   excludedNote,
   gradedPeopleParts,
@@ -106,7 +106,7 @@ export function CourseHero({
   const sparseTag = sparse && (
     <Badge tone="neutral" className="gap-1 px-2.5 py-1 text-[13px]">
       <CircleDashed size={14} aria-hidden="true" />
-      {SPARSE_LABEL}
+      {fewStudentsLabel(stats.graded)}
     </Badge>
   );
 

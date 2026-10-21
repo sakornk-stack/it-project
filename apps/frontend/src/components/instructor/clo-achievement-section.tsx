@@ -7,7 +7,8 @@ import type {
   CoursePloEntry,
   CourseCloAchievementReport,
 } from '@eduanalyze-ai/shared-types';
-import { SPARSE_SUMMARY, dataLevelOf } from '@/lib/course-snapshot';
+import { dataLevelOf, fewStudentsLabel } from '@/lib/course-snapshot';
+import { GRADE_BASIS_LABEL } from '@/lib/grade-estimate';
 import { ploProgressBarColorClassName } from '@/lib/plo-color';
 import { TEXT_TONE_CLASSES } from '@/lib/tone';
 import { cn } from '@/lib/utils';
@@ -115,9 +116,9 @@ export function CloAchievementSection({
     <div className="space-y-6">
       <SectionCard
         icon={Target}
-        title="ภาพรวมเป้าการเรียนรู้"
+        title="ภาพรวม CLO"
         description="สัดส่วนนิสิตที่ได้ B ขึ้นไปของวิชานี้"
-        aside={<GradeEstimateBadge />}
+        aside={<GradeEstimateBadge label={GRADE_BASIS_LABEL} />}
       >
         {!hasCloPercent(achievementPercent) ? (
           <div className="space-y-1">
@@ -125,7 +126,9 @@ export function CloAchievementSection({
             <p className="text-xs text-muted-foreground">{NO_CLO_DATA_HINT}</p>
           </div>
         ) : level === 'insufficient' ? (
-          <p className="text-sm text-muted-foreground">{SPARSE_SUMMARY}</p>
+          <p className="text-sm text-muted-foreground">
+            {fewStudentsLabel(gradedPeople)} — สรุปได้เบื้องต้น
+          </p>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -164,8 +167,8 @@ export function CloAchievementSection({
 
       <SectionCard
         icon={ListChecks}
-        title="เป้าการเรียนรู้แต่ละข้อ"
-        description="เป้าการเรียนรู้ (CLO) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา"
+        title="CLO แต่ละข้อ"
+        description="CLO (ผลลัพธ์การเรียนรู้รายวิชา) คือสิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา"
       >
         <ul className="-my-3 divide-y divide-slate-100">
           {sortedClos.map((clo) => (
@@ -187,14 +190,14 @@ export function CloAchievementSection({
       {(plos.length > 0 || scoredAssessmentClos.length > 0) && (
         <CollapsibleCard
           icon={Layers}
-          title="เป้าหมายของหลักสูตรและคะแนนประเมินตนเอง"
+          title="PLO และคะแนนประเมินตนเอง"
           description="ข้อมูลประกอบ ไม่ต้องดูทุกครั้ง"
         >
           {plos.length > 0 && (
             <SubBlock
-              title="เป้าหมายของหลักสูตรที่เกี่ยวข้อง"
-              description="เป้าหมายของหลักสูตร (PLO) คือผลลัพธ์ที่หลักสูตรคาดหวังจากนิสิต"
-              aside={<GradeEstimateBadge />}
+              title="PLO ที่วิชานี้เชื่อม"
+              description="PLO (ผลลัพธ์ของหลักสูตร) คือสิ่งที่หลักสูตรคาดหวังจากนิสิต"
+              aside={<GradeEstimateBadge label={GRADE_BASIS_LABEL} />}
             >
               {plos.map((plo) => (
                 <div key={plo.ploId} className="space-y-1">
@@ -220,7 +223,7 @@ export function CloAchievementSection({
           )}
 
           {scoredAssessmentClos.length > 0 && (
-            <SubBlock title="คะแนนประเมินตนเองเฉลี่ยของแต่ละเป้า (เต็ม 5)">
+            <SubBlock title="คะแนนประเมินตนเองเฉลี่ยของแต่ละ CLO (เต็ม 5)">
               {scoredAssessmentClos.map((c) => (
                 <div key={c.cloId} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">

@@ -49,7 +49,7 @@ function Figure({
           </>
         ) : (
           <span className="inline-flex whitespace-nowrap rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-xs text-muted-foreground">
-            ข้อมูลยังน้อย
+            นิสิตน้อย
           </span>
         )}
       </span>

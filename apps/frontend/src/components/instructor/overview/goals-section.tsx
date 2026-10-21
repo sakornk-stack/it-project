@@ -30,15 +30,15 @@ export function GoalsSection({ snapshot }: Readonly<{ snapshot: CourseSnapshot }
   return (
     <SectionCard
       icon={Target}
-      title="เป้าการเรียนรู้"
-      description="สิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา"
+      title="CLO ของวิชา"
+      description="ผลลัพธ์การเรียนรู้รายวิชา: สิ่งที่นิสิตควรทำได้เมื่อเรียนจบวิชา"
       aside={level === 'low' ? <LowSampleTag counted={stats.graded} /> : undefined}
     >
       {goals.items.length === 0 ? (
         <EmptyState
           icon={Target}
           className="py-4"
-          description="ยังไม่มีเป้าการเรียนรู้ที่กำหนดไว้ในวิชานี้ เมื่อผู้ดูแลระบบกำหนดแล้ว จะแสดงที่นี่"
+          description="ยังไม่มี CLO ที่กำหนดไว้ในวิชานี้ เมื่อผู้ดูแลระบบกำหนดแล้ว จะแสดงที่นี่"
         />
       ) : (
         <ul className="-my-3 divide-y divide-slate-100">

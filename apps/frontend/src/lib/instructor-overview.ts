@@ -128,9 +128,10 @@ export function summarizeParts(parts: readonly Part[]): GroupStats {
 export type OverviewStatus = 'met' | 'near' | 'below' | 'none';
 
 export const STATUS_META: Record<OverviewStatus, { label: string; tone: SemanticTone }> = {
-  met: { label: 'ผ่านเป้า', tone: 'success' },
-  near: { label: 'ใกล้เป้า', tone: 'warning' },
-  below: { label: 'ยังไม่ถึงเป้า', tone: 'danger' },
+  met: { label: 'ถึงเกณฑ์', tone: 'success' },
+  near: { label: 'ใกล้เกณฑ์', tone: 'warning' },
+  // Amber, never red: under the bar is a to-do, the same rule as plo-color.ts.
+  below: { label: 'ต่ำกว่าเกณฑ์', tone: 'warning' },
   none: { label: 'ยังไม่มีเกรด', tone: 'neutral' },
 };
 
@@ -318,12 +319,12 @@ export function buildOverviewSentence(
   const meta = STATUS_META[overall.status];
   parts.push(
     `ได้ B ขึ้นไป ${formatPercent(stats.achievedPercent)}` +
-      (overall.target !== null ? ` จากเป้า ${formatPercent(overall.target)} (${meta.label})` : ''),
+      (overall.target !== null ? ` จากเกณฑ์ ${formatPercent(overall.target)} (${meta.label})` : ''),
   );
   if (stats.gpa !== null) parts.push(`เกรดเฉลี่ย ${formatGpa(stats.gpa)}`);
   const worst = sortByGap(overviews).find((o) => o.gap !== null && o.gap > 0);
-  if (worst) parts.push(`ห่างเป้ามากสุด ${worst.course.code} ${worst.course.name} ${formatPercent(worst.stats.achievedPercent)}`);
-  if (stats.lowSample) parts.push(`ตัวอย่างน้อย (${stats.graded} คน)`);
+  if (worst) parts.push(`ห่างเกณฑ์มากสุด ${worst.course.code} ${worst.course.name} ${formatPercent(worst.stats.achievedPercent)}`);
+  if (stats.lowSample) parts.push(`นิสิตน้อย (${stats.graded} คน)`);
   return parts.join(' · ');
 }
 

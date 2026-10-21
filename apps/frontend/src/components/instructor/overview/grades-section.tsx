@@ -11,13 +11,9 @@ import { SectionCard } from '@/components/ui/section-card';
 const oneDecimal = (n: number) => `${n.toFixed(1)}%`;
 
 // One cell of the strip under the distribution: a muted label over a figure.
-function Figure({
-  label,
-  value,
-  note,
-}: Readonly<{ label: string; value: ReactNode; note?: string }>) {
+function Figure({ label, value }: Readonly<{ label: string; value: ReactNode }>) {
   return (
-    <div className="min-w-0 px-3 py-3 sm:px-4" title={note}>
+    <div className="min-w-0 px-3 py-3 sm:px-4">
       <dt className="break-words text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-1 break-words text-lg font-semibold tabular-nums text-primary">{value}</dd>
     </div>
@@ -26,19 +22,15 @@ function Figure({
 
 // The middle of the grade spread: the bars already show the highest, the lowest
 // and the most common grade, so only what they do not show is written out, as
-// one strip of three equal cells.
+// one strip of two equal cells. No standard deviation: it is a statistic an
+// instructor does not act on.
 function GradeCenterFigures({ snapshot }: Readonly<{ snapshot: CourseSnapshot }>) {
   const values = summarizeGradeCenter(snapshot.stats.counts).values;
   if (!values) return null;
   return (
-    <dl className="grid grid-cols-3 divide-x overflow-hidden rounded-lg border bg-slate-50">
+    <dl className="grid grid-cols-2 divide-x overflow-hidden rounded-lg border bg-slate-50">
       <Figure label="เกรดกลาง" value={formatMedian(values.median)} />
       <Figure label="เกรดที่พบมากที่สุด" value={formatGradeList(values.modes)} />
-      <Figure
-        label="ส่วนเบี่ยงเบนมาตรฐาน"
-        value={values.stdDev.toFixed(2)}
-        note="ส่วนเบี่ยงเบนมาตรฐานของแต้มเกรด: ยิ่งมาก เกรดยิ่งกระจายห่างกัน"
-      />
     </dl>
   );
 }
@@ -58,7 +50,7 @@ export function GradesSection({ snapshot }: Readonly<{ snapshot: CourseSnapshot 
     <SectionCard
       icon={BarChart3}
       title="การกระจายเกรด"
-      description="เกรดล่าสุดของนิสิตแต่ละคนในวิชานี้ (A ถึง F) พร้อมเกรดกลางและส่วนเบี่ยงเบนของวิชา"
+      description="เกรดล่าสุดของนิสิตแต่ละคนในวิชานี้ (A ถึง F) พร้อมเกรดกลางของวิชา"
       aside={`รวม A ถึง F ${grades.scored} คน`}
     >
       {fewPeople ? (

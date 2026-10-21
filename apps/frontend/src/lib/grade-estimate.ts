@@ -3,3 +3,6 @@
 // (components/ui/grade-estimate-badge.tsx) reads it.
 export const GRADE_ESTIMATE_LABEL = 'ประมาณจากเกรด';
 export const GRADE_ESTIMATE_HINT = 'คำนวณจากเกรดของรายวิชา ไม่ใช่คะแนนประเมินจริง';
+// The instructor pages say the same thing in the words an instructor uses: the
+// figure is worked out from the grades they gave, not a guess.
+export const GRADE_BASIS_LABEL = 'คิดจากเกรด';

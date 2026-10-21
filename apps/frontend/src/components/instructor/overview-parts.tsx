@@ -1,5 +1,6 @@
-import { CheckCircle2, CircleDashed, CircleMinus, XCircle, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleDashed, CircleMinus, type LucideIcon } from 'lucide-react';
 import { STATUS_META, type OverviewStatus } from '@/lib/instructor-overview';
+import { fewStudentsLabel } from '@/lib/course-snapshot';
 import { formatPercent } from '@/lib/format-percent';
 import { BAR_TONE_CLASSES } from '@/lib/tone';
 import { cn } from '@/lib/utils';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 const STATUS_ICON: Record<OverviewStatus, LucideIcon> = {
   met: CheckCircle2,
   near: CircleMinus,
-  below: XCircle,
+  below: AlertTriangle,
   none: CircleDashed,
 };
 
@@ -31,10 +32,10 @@ export function StatusBadge({
 export function LowSampleTag({ counted }: Readonly<{ counted: number }>) {
   return (
     <span
-      className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+      className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
       title={`มีนิสิตที่ได้เกรดเพียง ${counted} คน ตัวเลขเปอร์เซ็นต์จึงเปลี่ยนมากเมื่อเพิ่มหรือลดหนึ่งคน`}
     >
-      ตัวอย่างน้อย
+      {fewStudentsLabel(counted)}
     </span>
   );
 }
@@ -48,18 +49,16 @@ export function GoalBar({
 }: Readonly<{ percent: number | null; target: number | null; status: OverviewStatus; className?: string }>) {
   const width = percent === null ? 0 : Math.min(100, Math.max(0, percent));
   const mark = target === null ? null : Math.min(100, Math.max(0, target));
+  const goal = target === null ? '' : ` เกณฑ์ ${formatPercent(target)} ${STATUS_META[status].label}`;
+  const label = percent === null ? 'ยังไม่มีเกรด' : `ได้ B ขึ้นไป ${formatPercent(percent)}${goal}`;
   return (
     <div
       role="img"
-      aria-label={
-        percent === null
-          ? 'ยังไม่มีเกรด'
-          : `ได้ B ขึ้นไป ${formatPercent(percent)}${target === null ? '' : ` เป้า ${formatPercent(target)}`}`
-      }
+      aria-label={label}
       className={cn('relative h-3 rounded-full bg-slate-100', className)}
     >
       <span
-        className={cn('absolute inset-y-0 left-0 rounded-full', BAR_TONE_CLASSES[STATUS_TONE[status]])}
+        className={cn('absolute inset-y-0 left-0 rounded-full', BAR_TONE_CLASSES[STATUS_META[status].tone])}
         style={{ width: `${width}%` }}
       />
       {mark !== null && (
@@ -68,10 +67,3 @@ export function GoalBar({
     </div>
   );
 }
-
-const STATUS_TONE = {
-  met: 'success',
-  near: 'warning',
-  below: 'danger',
-  none: 'neutral',
-} as const;

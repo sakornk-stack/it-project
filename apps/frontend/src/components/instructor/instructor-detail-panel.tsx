@@ -29,7 +29,7 @@ export type InstructorTab = 'overview' | 'students' | 'clo';
 const TABS: { key: InstructorTab; label: string }[] = [
   { key: 'overview', label: 'ภาพรวม' },
   { key: 'students', label: 'นิสิต' },
-  { key: 'clo', label: 'เป้าการเรียนรู้' },
+  { key: 'clo', label: 'CLO และ PLO' },
 ];
 
 // Backward-compat for bookmarked/shared links from before the restructure:

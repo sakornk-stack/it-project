@@ -247,9 +247,12 @@ export function buildCourseSnapshot({
 
 // ---- words ----
 
-export const SPARSE_LABEL = 'ข้อมูลยังน้อย';
-export const SPARSE_SUMMARY = 'ข้อมูลยังน้อย — สรุปได้เบื้องต้น';
-export const SPARSE_TREND = 'ข้อมูลยังน้อย — ยังไม่ควรสรุปแนวโน้ม';
+// One word for "too few people to trust the figure" on every instructor page,
+// with the head count whenever it is known.
+export const SPARSE_LABEL = 'นิสิตน้อย';
+export const fewStudentsLabel = (people: number) => `${SPARSE_LABEL} (${people} คน)`;
+export const SPARSE_SUMMARY = 'นิสิตน้อย — สรุปได้เบื้องต้น';
+export const SPARSE_TREND = 'นิสิตน้อย — ยังไม่ควรสรุปแนวโน้ม';
 export const EMPTY_SNAPSHOT = 'ยังไม่มีเกรดที่กรอก — เมื่อมีข้อมูล ระบบจะแสดงภาพรวมที่นี่';
 export const DATA_SOURCE_NOTE = 'ข้อมูลล่าสุดจากเกรดที่บันทึกในระบบ';
 export const SPARSE_YEAR_NOTE =

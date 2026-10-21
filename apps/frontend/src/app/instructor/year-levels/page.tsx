@@ -31,9 +31,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatCardsSkeleton } from '@/components/ui/skeleton';
 import { PageSection } from '@/components/layout/page-section';
 
-// At or above this share of the students, a count is shown as danger, not warning.
-const HIGH_SHARE_PERCENT = 25;
-
 // "x% of all students" as a thin bar and one line of words.
 function ShareFooter({
   count,
@@ -107,16 +104,8 @@ function InstructorYearLevelsContent() {
     { failed: dashboardQuery.isError, label: 'รายวิชาที่สอน', refetch: dashboardQuery.refetch },
   ].filter((l) => l.failed);
   const figures = ready ? buildYearLevelsFigures(buckets, lowIds) : null;
-  const lowShare =
-    figures && figures.lowGrade !== null && figures.total > 0
-      ? (figures.lowGrade / figures.total) * 100
-      : 0;
-  const lowTone: SemanticTone =
-    !figures || !figures.lowGrade
-      ? 'neutral'
-      : lowShare >= HIGH_SHARE_PERCENT
-        ? 'danger'
-        : 'warning';
+  // Amber however many there are: a low grade is someone to follow up, not a red verdict.
+  const lowTone: SemanticTone = figures?.lowGrade ? 'warning' : 'neutral';
 
   // The layout's guard renders nothing below it until the user is known.
   if (!user) return null;
@@ -262,7 +251,7 @@ function InstructorYearLevelsContent() {
                   <li>ช่อง – คือวิชานั้นไม่มีนิสิตในชั้นปีนั้น</li>
                   <li>
                     ช่องที่มีการลงทะเบียนซึ่งได้เกรด A ถึง F ไม่ถึง 5 รายการ ไม่แสดงเกรดกลาง
-                    แสดงเป็นข้อความ &ldquo;ข้อมูลยังน้อย&rdquo;
+                    แสดงเป็นข้อความ &ldquo;นิสิตน้อย&rdquo;
                   </li>
                   <li>
                     คอลัมน์ &ldquo;รวมวิชานี้&rdquo; รวมทุกชั้นปีของวิชา
