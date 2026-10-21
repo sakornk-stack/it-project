@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import { RequestUser } from '../../auth/request-user.interface';
 import { StudentCourseRecordService } from './student-course-record.service';
@@ -18,7 +18,8 @@ function user(roles: Role[]): RequestUser {
   return { userId: 'actor', email: 'actor@x.test', roles, mustChangePassword: false };
 }
 
-function setup(opts: { duplicate?: boolean } = {}) {
+function setup(opts: { duplicate?: boolean; enteredByRole?: Role | null } = {}) {
+  const row = { ...ROW, enteredByRole: 'enteredByRole' in opts ? opts.enteredByRole : 'STUDENT' };
   const tx = {
     studentCourseRecord: {
       create: opts.duplicate
@@ -31,14 +32,15 @@ function setup(opts: { duplicate?: boolean } = {}) {
               }),
             )
         : jest.fn().mockResolvedValue({ ...ROW, grade: 'A' }),
-      findUniqueOrThrow: jest.fn().mockResolvedValue(ROW),
-      update: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...ROW, ...data })),
+      findUniqueOrThrow: jest.fn().mockResolvedValue(row),
+      update: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...row, ...data })),
+      delete: jest.fn().mockResolvedValue(row),
     },
   };
   const prisma = {
     $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     studentCourseRecord: {
-      findFirst: jest.fn().mockResolvedValue(ROW),
+      findFirst: jest.fn().mockResolvedValue(row),
       create: jest.fn().mockResolvedValue(ROW),
       update: jest.fn().mockResolvedValue(ROW),
       delete: jest.fn().mockResolvedValue(ROW),
@@ -140,16 +142,73 @@ describe('StudentCourseRecordService grade audit', () => {
     },
   );
 
-  it('a student editing their own grades is not audited', async () => {
+  it('a student adding a grade of their own is not audited', async () => {
     const { service, prisma, audit } = setup();
-    const student = user(['STUDENT']);
-    await service.create(createDto, student);
-    await service.update('r1', { grade: 'A' } as never, student);
-    await service.remove('r1', student);
+    await service.create(createDto, user(['STUDENT']));
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.studentCourseRecord.create).toHaveBeenCalled();
-    expect(prisma.studentCourseRecord.update).toHaveBeenCalled();
-    expect(prisma.studentCourseRecord.delete).toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
+
+  it.each([['STUDENT'], [null]] as [Role | null][])(
+    'a student may edit a row entered by %s, audited',
+    async (enteredByRole) => {
+      const { service, prisma, tx, audit } = setup({ enteredByRole });
+      await service.update('r1', { grade: 'A' } as never, user(['STUDENT']));
+      expect(prisma.studentCourseRecord.update).not.toHaveBeenCalled();
+      expect(tx.studentCourseRecord.update).toHaveBeenCalled();
+      expect(audit.record).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          action: 'GRADE_UPDATE',
+          actor: expect.objectContaining({ roles: ['STUDENT'] }),
+          before: { grade: 'B', courseId: 'c1', semesterId: 's1' },
+          after: { grade: 'A', courseId: 'c1', semesterId: 's1' },
+        }),
+      );
+    },
+  );
+
+  it.each([['STUDENT'], [null]] as [Role | null][])(
+    'a student may delete a row entered by %s: hard delete, audited',
+    async (enteredByRole) => {
+      const { service, prisma, tx, audit } = setup({ enteredByRole });
+      await service.remove('r1', user(['STUDENT']));
+      expect(tx.studentCourseRecord.delete).toHaveBeenCalledWith({ where: { id: 'r1' } });
+      expect(prisma.studentCourseRecord.delete).not.toHaveBeenCalled();
+      expect(audit.record).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          action: 'GRADE_DELETE',
+          before: { grade: 'B', courseId: 'c1', semesterId: 's1' },
+        }),
+      );
+    },
+  );
+
+  it.each([['STAFF'], ['INSTRUCTOR'], ['ADMIN'], ['SUPER_ADMIN']] as [Role][])(
+    'a student may not edit or delete a row entered by %s (403, nothing written)',
+    async (enteredByRole) => {
+      const { service, prisma, tx, audit } = setup({ enteredByRole });
+      const student = user(['STUDENT']);
+      await expect(service.update('r1', { grade: 'A' } as never, student)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      await expect(service.remove('r1', student)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(tx.studentCourseRecord.update).not.toHaveBeenCalled();
+      expect(tx.studentCourseRecord.delete).not.toHaveBeenCalled();
+      expect(audit.record).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([['STAFF'], ['INSTRUCTOR']] as [Role][])(
+    '%s may still edit and delete a row the student entered',
+    async (role) => {
+      const { service, tx } = setup({ enteredByRole: 'STUDENT' });
+      await service.update('r1', { grade: 'A' } as never, user([role]));
+      await service.remove('r1', user([role]));
+      expect(tx.studentCourseRecord.update).toHaveBeenCalledTimes(2);
+    },
+  );
 });

@@ -7,6 +7,7 @@ import type { CourseListItem, Grade, SemesterGpa, StudentCourseRecord } from '@e
 import { deleteCourseRecord, updateCourseRecordGrade } from '@/lib/api/academic-record';
 import { fetchClos, fetchMyAssessments } from '@/lib/api/course-assessment';
 import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
+import { isSelfEnteredRecord, LOCKED_RECORD_NOTE } from '@/lib/record-ownership';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
 import { INFO_TONE_CLASSES, TINT_TONE_CLASSES } from '@/lib/tone';
@@ -299,6 +300,7 @@ export function RecordTimeline({
                       const retake = retakeInfoByRecordId.get(record.id);
                       const isExiting = exitingRecordId === record.id;
                       const isHighlighted = highlightRecordId === record.id;
+                      const isEditable = isSelfEnteredRecord(record);
 
                       return (
                         <div
@@ -318,6 +320,11 @@ export function RecordTimeline({
                               {course?.code ?? '—'} — {course?.name ?? '—'}
                             </p>
                             <p className="text-xs text-muted-foreground">{record.credits} หน่วยกิต</p>
+                            {!isEditable && (
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {LOCKED_RECORD_NOTE}
+                              </p>
+                            )}
                             {retake?.isLatest && retake.previousGrade && (
                               <p className="mt-0.5 text-xs text-muted-foreground">
                                 เกรดเดิม{' '}
@@ -351,7 +358,7 @@ export function RecordTimeline({
                           <GradeSelectConfirm
                             value={record.grade}
                             subject={`${course?.code ?? 'วิชานี้'}`}
-                            disabled={isBusy}
+                            disabled={isBusy || !isEditable}
                             onConfirm={(grade) => handleGradeChange(record.id, grade)}
                           />
 
@@ -392,16 +399,18 @@ export function RecordTimeline({
                                   </Button>
                                 </Link>
                               )}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                aria-label={`ลบผลการเรียน ${course?.code ?? ''}`}
-                                onClick={() => setConfirmingId(record.id)}
-                              >
-                                ลบ
-                              </Button>
+                              {isEditable && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  aria-label={`ลบผลการเรียน ${course?.code ?? ''}`}
+                                  onClick={() => setConfirmingId(record.id)}
+                                >
+                                  ลบ
+                                </Button>
+                              )}
                             </div>
                           )}
                         </div>

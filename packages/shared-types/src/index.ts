@@ -911,6 +911,9 @@ export interface StudentCourseRecord {
   studentProfileId: string;
   courseId: string;
   semesterId: string;
+  // Last writer's role; null for rows from before it was recorded. A student
+  // may edit/delete only rows with STUDENT or null (enforced server-side).
+  enteredByRole: Role | null;
 }
 
 export interface CreateStudentCourseRecordRequest {

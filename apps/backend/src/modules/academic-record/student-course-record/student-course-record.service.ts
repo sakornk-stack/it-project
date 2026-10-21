@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Grade, Prisma, SemesterTerm } from '@prisma/client';
+import { Grade, Prisma, Role, SemesterTerm } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RequestUser } from '../../auth/request-user.interface';
 import { CourseService } from '../../curriculum-content/course/course.service';
@@ -188,7 +188,7 @@ export class StudentCourseRecordService {
       enteredByRole: actingRole(user.roles),
     };
     try {
-      if (!this.isAudited(user)) {
+      if (!this.isAudited(user) || this.isSelfServiceOnly(user)) {
         return await this.prisma.studentCourseRecord.create({ data });
       }
       // The P2002 below aborts this transaction too, so the catch wraps it whole.
@@ -284,7 +284,8 @@ export class StudentCourseRecordService {
   }
 
   async update(id: string, dto: UpdateStudentCourseRecordDto, user: RequestUser) {
-    await this.findOne(id, user);
+    const record = await this.findOne(id, user);
+    this.assertStudentMayChange(record, user);
     const args = {
       where: { id },
       data: {
@@ -318,11 +319,29 @@ export class StudentCourseRecordService {
 
   // STUDENT deleting their own mis-entered row, or SUPER_ADMIN: hard
   // delete, unchanged (PROJECT_CONTEXT.md §16's original framing still
-  // holds for self-correction). ADMIN/STAFF/INSTRUCTOR deleting a record
-  // that isn't theirs: soft delete — higher risk than correcting your own
-  // row, so it stays recoverable/auditable rather than gone outright.
+  // holds for self-correction); the student's delete is still audited, in
+  // the same transaction. ADMIN/STAFF/INSTRUCTOR deleting a record that
+  // isn't theirs: soft delete — higher risk than correcting your own row,
+  // so it stays recoverable/auditable rather than gone outright.
   async remove(id: string, user: RequestUser) {
-    await this.findOne(id, user);
+    const record = await this.findOne(id, user);
+    this.assertStudentMayChange(record, user);
+    if (this.isSelfServiceOnly(user)) {
+      return this.prisma.$transaction(async (tx) => {
+        const before = await this.findForAudit(tx, id);
+        const removed = await tx.studentCourseRecord.delete({ where: { id } });
+        await this.auditLogService.record(tx, {
+          action: 'GRADE_DELETE',
+          actor: user,
+          targetType: 'StudentCourseRecord',
+          targetId: id,
+          studentProfileId: before.studentProfileId,
+          programId: before.studentProfile.programId,
+          before: gradeSnapshot(before),
+        });
+        return removed;
+      });
+    }
     if (this.isAudited(user)) {
       return this.prisma.$transaction(async (tx) => {
         const before = await this.findForAudit(tx, id);
@@ -925,10 +944,28 @@ export class StudentCourseRecordService {
     }
   }
 
-  // Grade writes by someone other than the student (STAFF, INSTRUCTOR) go to
-  // the audit log; a student's own entries and corrections do not.
+  // Grade changes by STAFF/INSTRUCTOR, and a student's own edits and deletes,
+  // go to the audit log. A student adding a new row of their own does not
+  // (create checks isSelfServiceOnly itself).
   private isAudited(user: RequestUser) {
-    return this.isStaffTier(user) || this.isInstructorTier(user);
+    return (
+      this.isStaffTier(user) || this.isInstructorTier(user) || this.isSelfServiceOnly(user)
+    );
+  }
+
+  // A student may change only the rows they entered themselves. enteredByRole
+  // is the last writer, so a row STAFF/INSTRUCTOR/ADMIN entered or corrected
+  // is theirs to change; NULL is a legacy row from before that field, when
+  // only the student could write grades.
+  private assertStudentMayChange(
+    record: { enteredByRole: Role | null },
+    user: RequestUser,
+  ) {
+    if (!this.isSelfServiceOnly(user)) return;
+    if (!record.enteredByRole || record.enteredByRole === Role.STUDENT) return;
+    throw new ForbiddenException(
+      'ผลการเรียนนี้บันทึกโดยเจ้าหน้าที่หรืออาจารย์ นิสิตแก้ไขหรือลบเองไม่ได้',
+    );
   }
 
   private async assertStaffScopeCovers(
