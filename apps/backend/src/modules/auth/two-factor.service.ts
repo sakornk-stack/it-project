@@ -13,6 +13,7 @@ import {
 } from '../../common/util/crypto.util';
 
 const RECOVERY_CODE_COUNT = 8;
+const TOTP_CODE_FORMAT = /^\d{6}$/;
 const ISSUER = 'EduAnalyzeAI';
 export const TWO_FACTOR_ALREADY_ENABLED_MESSAGE =
   'เปิดใช้งานการยืนยันตัวตนสองขั้นตอนอยู่แล้ว กรุณาปิดก่อน (ต้องยืนยันรหัสผ่าน) จึงจะตั้งค่าใหม่ได้';
@@ -77,9 +78,7 @@ export class TwoFactorService {
       throw new BadRequestException('Call POST /auth/2fa/setup first');
     }
 
-    const secret = decryptSecret(credential.secretCiphertext, this.encryptionKey());
-    const result = await verifyTotp({ token: code, secret });
-    if (!result.valid) {
+    if (!(await this.isValidTotp(credential.secretCiphertext, code))) {
       throw new UnauthorizedException('Invalid verification code');
     }
 
@@ -106,9 +105,7 @@ export class TwoFactorService {
       throw new BadRequestException('2FA is not enabled on this account');
     }
 
-    const secret = decryptSecret(credential.secretCiphertext, this.encryptionKey());
-    const result = await verifyTotp({ token: code, secret });
-    if (!result.valid) {
+    if (!(await this.isValidTotp(credential.secretCiphertext, code))) {
       throw new UnauthorizedException('Invalid verification code');
     }
 
@@ -157,7 +154,17 @@ export class TwoFactorService {
       return true;
     }
 
-    const secret = decryptSecret(credential.secretCiphertext, this.encryptionKey());
+    return this.isValidTotp(credential.secretCiphertext, code);
+  }
+
+  // The one place a TOTP code is checked. otplib throws (not returns false) on
+  // anything but exactly 6 digits, which would surface as a 500; a malformed
+  // code is just a wrong code, so it is answered like one, before decrypting.
+  private async isValidTotp(secretCiphertext: string, code: string): Promise<boolean> {
+    if (!TOTP_CODE_FORMAT.test(code)) {
+      return false;
+    }
+    const secret = decryptSecret(secretCiphertext, this.encryptionKey());
     const result = await verifyTotp({ token: code, secret });
     return result.valid;
   }
