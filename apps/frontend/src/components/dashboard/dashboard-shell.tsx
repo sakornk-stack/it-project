@@ -150,12 +150,12 @@ export function DashboardShell({
       >
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/40 p-6 md:sticky md:top-0 md:flex md:h-dvh md:self-start">
+      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/40 p-6 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start">
         {sidebarContent}
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent side="left" className="md:hidden">
+        <SheetContent side="left" className="lg:hidden">
           {sidebarContent}
         </SheetContent>
       </Sheet>
@@ -164,11 +164,11 @@ export function DashboardShell({
           min-content width, so a wide table's overflow-x-auto wrapper never got
           narrower than the table and the whole page scrolled sideways. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:justify-end md:px-8">
+        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8 lg:justify-end">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="เปิดเมนู"
           >
             <Menu size={20} aria-hidden="true" />
