@@ -1,5 +1,6 @@
 import type { CreatePloRequest, PloListItem, UpdatePloRequest } from '@eduanalyze-ai/shared-types';
 import { describeApiError } from '@/lib/describe-api-error';
+import { sortByPloCode } from '@/lib/plo-order';
 import { ploSchema, type PloFormValues } from '@/lib/validation/plo.schema';
 import { rejectedFields } from './clo-edit';
 
@@ -34,7 +35,7 @@ export function toUpdatePloBody(values: PloEditValues): UpdatePloRequest {
 
 // Natural order, so PLO2 comes before PLO10.
 export function sortPlos<T extends { code: string }>(plos: T[]): T[] {
-  return [...plos].sort((a, b) => a.code.localeCompare(b.code, 'en', { numeric: true }));
+  return sortByPloCode(plos);
 }
 
 export function plosOfCurriculum(plos: PloListItem[], curriculumId: string): PloListItem[] {

@@ -1,3 +1,4 @@
+import { sortByPloCode } from '../../../common/util/plo-order.util';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, StudentProfile } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -106,7 +107,7 @@ export class PloAchievementService {
       profile.curriculumId,
     );
 
-    const plos: PloWithMappingsAndCloDetail[] = await this.prisma.plo.findMany({
+    const plos: PloWithMappingsAndCloDetail[] = sortByPloCode(await this.prisma.plo.findMany({
       where: { curriculumId: profile.curriculumId, isActive: true },
       include: {
         cloMappings: {
@@ -125,7 +126,7 @@ export class PloAchievementService {
           },
         },
       },
-    });
+    }));
 
     const latestAttemptsByCourse =
       await this.studentCourseRecordService.getLatestAttemptsPerCourse(
@@ -219,7 +220,7 @@ export class PloAchievementService {
     // regardless of weight today — the formula is still correct and
     // becomes meaningful once CLO-specific grades or cross-course PLO
     // aggregation exist. Don't "simplify" this away.
-    const plos = Array.from(entriesByPlo.values()).map((entry) => ({
+    const plos = sortByPloCode(Array.from(entriesByPlo.values())).map((entry) => ({
       ...entry,
       achievementPercent:
         weightSumByPlo.get(entry.ploId)! > 0
@@ -250,7 +251,7 @@ export class PloAchievementService {
   ): Promise<CohortPloAchievementReport> {
     await this.curriculumService.findActiveByIdOrThrow(curriculumId);
 
-    const plos = await this.prisma.plo.findMany({
+    const plos = sortByPloCode(await this.prisma.plo.findMany({
       where: { curriculumId, isActive: true },
       include: {
         cloMappings: {
@@ -258,7 +259,7 @@ export class PloAchievementService {
           include: { clo: { select: { id: true, courseId: true } } },
         },
       },
-    });
+    }));
 
     const students = await this.prisma.studentProfile.findMany({
       where: { curriculumId, admissionYear, isActive: true },
@@ -327,7 +328,7 @@ export class PloAchievementService {
   ): Promise<CurriculumPloAchievementReport> {
     await this.curriculumService.findActiveByIdOrThrow(curriculumId);
 
-    const plos = await this.prisma.plo.findMany({
+    const plos = sortByPloCode(await this.prisma.plo.findMany({
       where: { curriculumId, isActive: true },
       include: {
         cloMappings: {
@@ -335,7 +336,7 @@ export class PloAchievementService {
           include: { clo: { select: { id: true, courseId: true } } },
         },
       },
-    });
+    }));
     const curriculumTree = await this.creditCheckerService.loadCurriculumTree(
       curriculumId,
     );

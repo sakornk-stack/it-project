@@ -1,3 +1,4 @@
+import { sortByPloCode } from '../../../common/util/plo-order.util';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditAction, Plo, Prisma } from '@prisma/client';
 import { AuditLogService } from '../../../common/audit/audit-log.service';
@@ -28,15 +29,17 @@ export class PloService {
   }
 
   findAll() {
-    return this.prisma.plo.findMany({ where: { isActive: true } });
+    return this.prisma.plo.findMany({ where: { isActive: true } }).then(sortByPloCode);
   }
 
   // Controller-facing reads, limited to the caller's curricula — see
   // CourseService.findAllInCurricula. `curriculumId` narrows to one curriculum.
   findAllInCurricula(curriculum: Prisma.CurriculumWhereInput, curriculumId?: string) {
-    return this.prisma.plo.findMany({
-      where: { isActive: true, ...(curriculumId ? { curriculumId } : {}), curriculum },
-    });
+    return this.prisma.plo
+      .findMany({
+        where: { isActive: true, ...(curriculumId ? { curriculumId } : {}), curriculum },
+      })
+      .then(sortByPloCode);
   }
 
   async findOneInCurricula(id: string, curriculum: Prisma.CurriculumWhereInput) {

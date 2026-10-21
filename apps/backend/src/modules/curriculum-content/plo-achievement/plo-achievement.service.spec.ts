@@ -104,3 +104,54 @@ describe('PloAchievementService.buildCourseAnalytics — lowest CLOs', () => {
     expect(lowestClos).toEqual([]);
   });
 });
+
+describe('PloAchievementService: PLOs come out in code order, whatever order the database returns', () => {
+  // PLO has no sortOrder and its queries have no orderBy, so rows arrive in
+  // physical order. PLO5 first is the case seen on the ADMIN curriculum page.
+  const unordered = ['PLO5', 'PLO1', 'PLO10', 'PLO2', 'PLO3', 'PLO4', 'PLO6'].map((code) => ({
+    id: `id-${code}`,
+    code,
+    name: code,
+    cloMappings: [],
+  }));
+  const ordered = ['PLO1', 'PLO2', 'PLO3', 'PLO4', 'PLO5', 'PLO6', 'PLO10'];
+
+  it('calculateForCurriculum (ADMIN page): the radar axes follow the code order', async () => {
+    const prisma = {
+      plo: { findMany: jest.fn().mockResolvedValue(unordered) },
+      studentProfile: { findMany: jest.fn().mockResolvedValue([]) },
+      course: { findMany: jest.fn().mockResolvedValue([]) },
+      clo: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    const service = new PloAchievementService(
+      prisma as never,
+      undefined as never,
+      {
+        findActiveRecordsForStudents: jest.fn().mockResolvedValue([]),
+        findActiveRecordsForCourses: jest.fn().mockResolvedValue([]),
+      } as never,
+      undefined as never,
+      { findActiveByIdOrThrow: jest.fn().mockResolvedValue({ id: 'cur' }) } as never,
+      { loadCurriculumTree: jest.fn().mockResolvedValue({}) } as never,
+    );
+    const report = await service.calculateForCurriculum('cur');
+    expect(report.radar.map((p) => p.code)).toEqual(ordered);
+    // Order only: nothing was measured, so every value is still "no data".
+    expect(report.radar.every((p) => p.value === null)).toBe(true);
+  });
+
+  it('calculateForCourse: the PLO entries follow the code order', async () => {
+    const service = build({
+      cloReport: { courseId: 'x', achievementPercent: 80, clos: [{ cloId: 'c1', code: 'CLO1' }] },
+      mappings: ['PLO5', 'PLO1', 'PLO10', 'PLO2'].map((code) => ({
+        cloId: 'c1',
+        ploId: `p-${code}`,
+        weight: 1,
+        plo: { id: `p-${code}`, code, name: code },
+      })),
+    });
+    const report = await service.calculateForCourse('x');
+    expect(report.plos.map((p) => p.code)).toEqual(['PLO1', 'PLO2', 'PLO5', 'PLO10']);
+    expect(report.plos.every((p) => p.achievementPercent === 80)).toBe(true);
+  });
+});

@@ -20,6 +20,7 @@ import { OverallAchievementCard } from '@/components/clo-plo-analysis/overall-ac
 import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
 import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
+import { comparePloCode } from '@/lib/plo-order';
 import { PloCard } from '@/components/clo-plo-analysis/plo-card';
 import { SCORE_BANDS, scoreBandKey } from '@/lib/plo-score-bands';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,15 +72,16 @@ export default function CloPloAnalysisPage() {
   // Lowest achievement first — surfaces what needs work before what's
   // already fine. PLOs with no data (null) go last: "no data" isn't the
   // same signal as "needs improvement", so it shouldn't compete for the
-  // top of the list.
+  // top of the list. (Not in the "by code" mode, which is code order only.)
   const sortedRadar = useMemo(() => {
     const radar = achievementQuery.data?.radar ?? [];
     return [...radar].sort((a, b) => {
+      // By code is pure code order: a PLO with no data stays in its place.
+      if (sortMode === 'code') return comparePloCode(a.code, b.code);
       if (a.value === null && b.value === null) return 0;
       if (a.value === null) return 1;
       if (b.value === null) return -1;
       if (sortMode === 'highest') return b.value - a.value;
-      if (sortMode === 'code') return a.code.localeCompare(b.code);
       return a.value - b.value;
     });
   }, [achievementQuery.data, sortMode]);

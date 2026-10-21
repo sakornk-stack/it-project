@@ -115,6 +115,17 @@ describe('PloService writes', () => {
     await expect(service.update('plo-1', { name: 'z' }, admin)).rejects.toThrow('audit down');
   });
 
+  it('findAll and findAllInCurricula return PLOs in code order (PLO2 before PLO10)', async () => {
+    const { service, prisma } = setup();
+    const rows = ['PLO5', 'PLO10', 'PLO1', 'PLO2'].map((code) => ({ ...PLO, code }));
+    prisma.plo.findMany.mockResolvedValue(rows);
+    const expected = ['PLO1', 'PLO2', 'PLO5', 'PLO10'];
+    expect((await service.findAll()).map((p) => p.code)).toEqual(expected);
+    expect((await service.findAllInCurricula({ isActive: true })).map((p) => p.code)).toEqual(
+      expected,
+    );
+  });
+
   it('findAllInCurricula narrows to the curriculum and the caller scope', async () => {
     const { service, prisma } = setup();
     await service.findAllInCurricula({ isActive: true }, 'cur-1');
