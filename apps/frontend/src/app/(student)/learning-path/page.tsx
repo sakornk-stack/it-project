@@ -187,7 +187,7 @@ export default function LearningPathPage() {
     >
       <PageHeader
         title="แผนการเรียน"
-        description="แนะนำวิชาที่ควรเรียนต่อ ตามผลการเรียนและวิชาที่ต้องผ่านก่อน (Prerequisite) ของคุณ"
+        description="แนะนำวิชาที่ควรเรียนต่อ ตามผลการเรียนและวิชาที่ต้องผ่านก่อน (Prerequisite) ของนิสิต"
       />
 
       <Reveal index={1}>

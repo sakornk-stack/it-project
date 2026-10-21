@@ -149,7 +149,7 @@ export function CareerFitSummary() {
 
   return (
     <PageSection
-      title="แนวทางอาชีพที่เหมาะกับคุณ"
+      title="แนวทางอาชีพที่เหมาะกับนิสิต"
       actions={
         <Button asChild variant="outline" size="sm">
           <Link href="/aptitude-analysis">ดูทุกสายอาชีพ</Link>

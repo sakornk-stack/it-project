@@ -29,7 +29,7 @@ export function buildDashboardSummary(input: DashboardSummaryInput): string | nu
       : null;
 
   if (isReady) {
-    return ['ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา', hasGpa ? `GPA ${gpa.toFixed(2)}` : null, credits]
+    return ['ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา', hasGpa ? `GPA ${gpa.toFixed(2)}` : null, credits]
       .filter((part): part is string => part !== null)
       .join(' · ');
   }

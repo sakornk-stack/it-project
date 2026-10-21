@@ -17,7 +17,7 @@ export function ElectiveCategoryList({
       </CardHeader>
       <CardContent className="space-y-6">
         {categories.length === 0 && (
-          <EmptyState illustration="all-done" size="sm" description="คุณผ่านหมวดวิชาเลือกครบตามเกณฑ์แล้ว" />
+          <EmptyState illustration="all-done" size="sm" description="นิสิตผ่านหมวดวิชาเลือกครบตามเกณฑ์แล้ว" />
         )}
         {categories.map((category) => {
           const hasCatalog = (courseCountByCategory.get(category.categoryId) ?? 0) > 0;

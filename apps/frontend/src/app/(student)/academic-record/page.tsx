@@ -224,7 +224,7 @@ export default function AcademicRecordPage() {
     >
       <PageHeader
         title="การติดตามผลการเรียน"
-        description="บันทึกและจัดการรายวิชาที่คุณเรียนไปแล้ว"
+        description="บันทึกและจัดการรายวิชาที่นิสิตเรียนไปแล้ว"
         actions={
           <Button
             ref={addFormToggleRef}

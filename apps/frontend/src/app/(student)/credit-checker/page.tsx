@@ -139,7 +139,7 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
     <>
       <PageHeader
         title="ตรวจสอบหน่วยกิต"
-        description="ตรวจสอบความคืบหน้าการเรียนเทียบกับโครงสร้างหลักสูตรของคุณแบบละเอียด"
+        description="ตรวจสอบความคืบหน้าการเรียนเทียบกับโครงสร้างหลักสูตรของนิสิตแบบละเอียด"
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -193,7 +193,7 @@ function CreditCheckReportView({ report }: Readonly<{ report: CreditCheckReport 
         {report.missingRequiredCourses.length === 0 && !hasFailed ? (
           <SuccessStrip
             label="ต้องจัดการ"
-            message="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว"
+            message="นิสิตผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว"
             action={
               <Button asChild variant="ghost" size="sm" className="gap-1.5 self-start sm:self-auto">
                 <Link href="/learning-path">

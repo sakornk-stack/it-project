@@ -162,7 +162,7 @@ function RecommendedCareer({ career, rank }: Readonly<{ career: CareerFitEntry; 
       </div>
       <CareerDescription career={career} />
       {career.topCourses.length > 0 && (
-        <ChipGroup title="วิชาเด่นของคุณในสายนี้">
+        <ChipGroup title="วิชาเด่นของนิสิตในสายนี้">
           {career.topCourses.map((c) => (
             <CourseChip
               key={c.code}
@@ -224,7 +224,7 @@ function CareerRow({
       <div id={panelId} hidden={!open} className="space-y-3 px-3 pb-3">
         <p className="text-sm font-medium">{CAREER_FIT_LEVEL_TEXT[level]}</p>
         {career.topCourses.length > 0 && (
-          <ChipGroup title="วิชาเด่นของคุณ">
+          <ChipGroup title="วิชาเด่นของนิสิต">
             {career.topCourses.map((c) => (
               <CourseChip
                 key={c.code}
@@ -394,7 +394,7 @@ export function CareerFitCard() {
           <div className="space-y-1">
             {summary && (
               <p className="break-words text-sm">
-                สายที่เหมาะกับคุณที่สุด:{' '}
+                สายที่เหมาะกับนิสิตที่สุด:{' '}
                 <span className="font-semibold text-primary">{summary.careerName}</span>
                 {summary.groupName && <> (กลุ่ม {summary.groupName})</>}
               </p>
@@ -406,7 +406,7 @@ export function CareerFitCard() {
 
           <section aria-labelledby={`${headingId}-top`} className="space-y-3">
             <h4 id={`${headingId}-top`} className="text-base font-semibold">
-              แนะนำสำหรับคุณ
+              แนะนำสำหรับนิสิต
             </h4>
             {view.ranked.length > 0 ? (
               <ol className="grid grid-cols-1 items-stretch gap-3 xl:grid-cols-3">

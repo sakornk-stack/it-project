@@ -93,7 +93,7 @@ export default function AptitudeAnalysisPage() {
     >
       <PageHeader
         title="สรุปความถนัด"
-        description="สรุปจุดเด่นและจุดที่ควรพัฒนาจากผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLO) ของคุณ ไม่ต้องทำแบบทดสอบเพิ่ม"
+        description="สรุปจุดเด่นและจุดที่ควรพัฒนาจากผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLO) ของนิสิต ไม่ต้องทำแบบทดสอบเพิ่ม"
         actions={
           <Button asChild variant="outline" size="sm">
             <Link href="/clo-plo-analysis">ดูรายละเอียดราย PLO/CLO</Link>

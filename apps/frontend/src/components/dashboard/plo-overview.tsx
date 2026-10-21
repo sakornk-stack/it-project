@@ -43,7 +43,7 @@ export function RadarLegend() {
         <svg width="24" height="8" aria-hidden="true">
           <line x1="0" y1="4" x2="24" y2="4" className="stroke-brand" strokeWidth={2} />
         </svg>
-        คะแนนของคุณ
+        คะแนนของนิสิต
       </li>
       <li className="flex items-center gap-2">
         <svg width="24" height="8" aria-hidden="true">

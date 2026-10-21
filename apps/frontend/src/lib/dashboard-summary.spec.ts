@@ -117,7 +117,7 @@ describe('buildDashboardSummary', () => {
 
     it('congratulates, with GPA and credits', () => {
       expect(buildDashboardSummary(graduated)).toBe(
-        'ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา · GPA 3.61 · สะสม 132/132 หน่วยกิต',
+        'ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา · GPA 3.61 · สะสม 132/132 หน่วยกิต',
       );
     });
 
@@ -135,7 +135,7 @@ describe('buildDashboardSummary', () => {
     it('still congratulates when GPA and credits are unavailable', () => {
       expect(
         buildDashboardSummary({ ...graduated, gpa: null, creditsEarned: Number.NaN }),
-      ).toBe('ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา');
+      ).toBe('ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา');
     });
   });
 });

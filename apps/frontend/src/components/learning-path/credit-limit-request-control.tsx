@@ -118,7 +118,7 @@ function CreditLimitRequestForm({
     try {
       await upsertCreditLimitRequest(values);
       onSubmitted();
-      toast.success('บันทึกช่วงหน่วยกิตในแผนของคุณแล้ว');
+      toast.success('บันทึกช่วงหน่วยกิตในแผนของนิสิตแล้ว');
     } catch {
       setServerError('บันทึกช่วงหน่วยกิตไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     }

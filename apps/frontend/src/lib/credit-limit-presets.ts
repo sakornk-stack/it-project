@@ -18,4 +18,4 @@ export const CREDIT_LIMIT_PRESETS: Record<
 
 // Shown inside the form: the setting is the student's own and nobody reviews it.
 export const CREDIT_LIMIT_SELF_SET_NOTE =
-  'ตั้งค่านี้ใช้กับแผนของคุณเท่านั้น ไม่ได้ส่งให้ผู้อนุมัติ และไม่ใช่การลงทะเบียน';
+  'ตั้งค่านี้ใช้กับแผนของนิสิตเท่านั้น ไม่ได้ส่งให้ผู้อนุมัติ และไม่ใช่การลงทะเบียน';

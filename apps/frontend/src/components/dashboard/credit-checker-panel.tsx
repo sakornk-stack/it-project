@@ -11,7 +11,7 @@ const PREVIEW_COUNT = 3;
 // otherwise (the Figma text said "ระบบ AI ได้วิเคราะห์...").
 export function CreditCheckerPanel({ courses }: Readonly<{ courses: MissingRequiredCourse[] }>) {
   if (courses.length === 0) {
-    return <SuccessStrip label="วิชาบังคับ" message="คุณผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว" />;
+    return <SuccessStrip label="วิชาบังคับ" message="นิสิตผ่านรายวิชาบังคับครบตามเกณฑ์แล้ว" />;
   }
 
   const hiddenCount = courses.length - PREVIEW_COUNT;
@@ -22,7 +22,7 @@ export function CreditCheckerPanel({ courses }: Readonly<{ courses: MissingRequi
         <div className="space-y-1.5">
           <CardTitle>วิชาบังคับที่ยังขาด {courses.length} รายวิชา</CardTitle>
           <CardDescription>
-            เทียบผลการเรียนของคุณกับโครงสร้างหลักสูตรปัจจุบัน — ต้องผ่านวิชาเหล่านี้ก่อนสำเร็จการศึกษา
+            เทียบผลการเรียนของนิสิตกับโครงสร้างหลักสูตรปัจจุบัน — ต้องผ่านวิชาเหล่านี้ก่อนสำเร็จการศึกษา
           </CardDescription>
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0">

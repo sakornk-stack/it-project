@@ -184,7 +184,7 @@ export default function CloPloAnalysisPage() {
       <>
         <PageHeader
           title="การวิเคราะห์ CLO/PLO"
-          description="ความสำเร็จของผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLO) จากผลการเรียนของคุณ"
+          description="ความสำเร็จของผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLO) จากผลการเรียนของนิสิต"
           actions={
             <Button asChild variant="outline" size="sm">
               <Link href="/aptitude-analysis">ดูสรุปความถนัด</Link>

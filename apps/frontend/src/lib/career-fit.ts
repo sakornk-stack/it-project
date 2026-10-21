@@ -4,9 +4,9 @@ import type { SemanticTone } from '@/lib/tone';
 export const MAX_RANKED_CAREERS = 3;
 
 export const CAREER_FIT_LEVEL_TEXT: Record<CareerFitLevel, string> = {
-  HIGH: 'ผลการเรียนของคุณสอดคล้องกับสายนี้มาก',
-  MEDIUM: 'ผลการเรียนของคุณสอดคล้องกับสายนี้ในระดับปานกลาง',
-  LOW: 'ผลการเรียนของคุณสอดคล้องกับสายนี้น้อย',
+  HIGH: 'ผลการเรียนของนิสิตสอดคล้องกับสายนี้มาก',
+  MEDIUM: 'ผลการเรียนของนิสิตสอดคล้องกับสายนี้ในระดับปานกลาง',
+  LOW: 'ผลการเรียนของนิสิตสอดคล้องกับสายนี้น้อย',
 };
 
 // LOW is "neutral", not danger: a low fit is information, not a failure.
@@ -21,13 +21,13 @@ export const CAREER_FIT_DISCLAIMER =
 
 export const CAREER_FIT_NO_GRADES_TEXT =
   'ยังไม่มีผลการเรียนที่ใช้วิเคราะห์ได้ เมื่อบันทึกผลการเรียนแล้ว ระบบจะแสดงแนวทางอาชีพให้ที่นี่';
-export const CAREER_FIT_NO_CAREERS_TEXT = 'หลักสูตรของคุณยังไม่มีข้อมูลสายอาชีพสำหรับวิเคราะห์';
+export const CAREER_FIT_NO_CAREERS_TEXT = 'หลักสูตรของนิสิตยังไม่มีข้อมูลสายอาชีพสำหรับวิเคราะห์';
 export const CAREER_FIT_INSUFFICIENT_TEXT =
   'ต้องมีผลการเรียนอย่างน้อย 3 วิชาของสายนั้น จึงจะประเมินได้';
 
 // Fewer linked courses than this can never reach the 3-graded-course minimum.
 export const CAREER_FIT_MIN_COURSES = 3;
-export const CAREER_FIT_FEW_COURSES_TEXT = 'หลักสูตรของคุณมีวิชาในสายนี้น้อย จึงยังประเมินไม่ได้';
+export const CAREER_FIT_FEW_COURSES_TEXT = 'หลักสูตรของนิสิตมีวิชาในสายนี้น้อย จึงยังประเมินไม่ได้';
 
 export const isFewCourseCareer = (c: Pick<CareerFitEntry, 'totalCourseCount'>) =>
   c.totalCourseCount < CAREER_FIT_MIN_COURSES;

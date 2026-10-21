@@ -35,10 +35,10 @@ export function GraduationCelebration({
               <GraduationCap size={28} aria-hidden="true" />
             </div>
             <DialogPrimitive.Title className="mt-4 text-xl font-semibold text-primary">
-              ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา
+              ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา
             </DialogPrimitive.Title>
             <DialogPrimitive.Description className="mt-2 text-sm text-muted-foreground">
-              คุณผ่านเกณฑ์หน่วยกิต หมวดวิชา และวิชาบังคับครบแล้ว
+              นิสิตผ่านเกณฑ์หน่วยกิต หมวดวิชา และวิชาบังคับครบแล้ว
             </DialogPrimitive.Description>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Button asChild>
