@@ -21,13 +21,17 @@ export function PageHeader({
 }) {
   return (
     <div
-      className={cn('flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between', className)}
+      className={cn(
+        'flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between',
+        className,
+      )}
     >
-      <div className="min-w-0 space-y-1.5">
+      {/* The title keeps room for one line; a wide action group drops below it instead of squeezing it. */}
+      <div className="min-w-0 space-y-1.5 sm:flex-1 sm:basis-[26rem]">
         <h1 className={cn(PAGE_TITLE_CLASS, titleClassName)}>{title}</h1>
         {description && <p className="course-name-break text-sm text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="shrink-0">{actions}</div>}
+      {actions && <div className="max-w-full shrink-0">{actions}</div>}
     </div>
   );
 }

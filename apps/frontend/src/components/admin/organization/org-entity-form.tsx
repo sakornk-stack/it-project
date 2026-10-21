@@ -7,6 +7,7 @@ import { orgEntitySchema, type OrgEntityFormValues } from '@/lib/validation/orga
 import { describeApiError } from '@/lib/describe-api-error';
 import { orgWriteErrors } from '@/lib/api-error-presets';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import {
@@ -81,14 +82,14 @@ export function OrgEntityForm({
             )}
           />
         </div>
-        <div className="flex gap-2">
+        <FormActions>
           <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'กำลังบันทึก...' : submitLabel}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             ยกเลิก
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

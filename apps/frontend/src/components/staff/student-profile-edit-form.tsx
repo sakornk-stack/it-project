@@ -6,6 +6,7 @@ import { updateStudentProfile } from '@/lib/api/staff';
 import { describeApiError } from '@/lib/describe-api-error';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -153,7 +154,7 @@ export function StudentProfileEditForm({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <FormActions>
             <Button type="submit" className="px-5" disabled={!canSave}>
               {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
             </Button>
@@ -166,7 +167,7 @@ export function StudentProfileEditForm({
             >
               ยกเลิกการแก้ไข
             </Button>
-          </div>
+          </FormActions>
         </CardContent>
       </form>
     </Card>

@@ -14,6 +14,7 @@ import { DeactivateButton } from './deactivate-button';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import {
   Form,
@@ -279,14 +280,14 @@ function CurriculumForm({
             />
           ))}
         </div>
-        <div className="flex gap-2">
+        <FormActions>
           <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? 'กำลังบันทึก...' : submitLabel}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             ยกเลิก
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

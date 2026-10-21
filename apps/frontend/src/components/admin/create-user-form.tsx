@@ -11,6 +11,7 @@ import { createUser, fetchUser } from '@/lib/api/user-management';
 import { useAuth } from '@/lib/auth-context';
 import { createUserSchema, type CreateUserFormValues } from '@/lib/validation/create-user.schema';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -254,7 +255,7 @@ export function CreateUserForm({
               </>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            <FormActions>
               <Button
                 type="submit"
                 disabled={
@@ -274,7 +275,7 @@ export function CreateUserForm({
               >
                 ยกเลิก
               </Button>
-            </div>
+            </FormActions>
           </CardContent>
         </form>
       </Form>

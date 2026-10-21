@@ -261,7 +261,6 @@ function StaffCurriculumContent() {
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
         <PageHeader
-          className="sm:flex-col sm:items-stretch lg:flex-row lg:items-end"
           title="การจัดการหลักสูตรและรายวิชา"
           description="จัดการหมวดวิชา รายวิชา วิชาบังคับก่อน และอาจารย์ผู้รับผิดชอบวิชา ภายในขอบเขตของคุณ"
           actions={

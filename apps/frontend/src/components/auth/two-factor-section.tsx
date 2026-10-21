@@ -316,7 +316,7 @@ function TwoFactorSetupFlow({
               )}
               {form.formState.isSubmitting ? 'กำลังยืนยัน...' : 'ยืนยันและเปิดใช้งาน'}
             </Button>
-            <Button type="button" variant="ghost" onClick={onCancel} disabled={verified}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={verified}>
               ยกเลิก
             </Button>
           </div>
@@ -447,7 +447,7 @@ function TwoFactorDisableFlow({
             )}
             {form.formState.isSubmitting ? 'กำลังปิดใช้งาน...' : 'ยืนยันปิดใช้งาน 2FA'}
           </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel}>
             ยกเลิก
           </Button>
         </div>

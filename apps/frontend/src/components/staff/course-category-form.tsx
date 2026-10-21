@@ -10,6 +10,7 @@ import {
   type CourseCategoryFormValues,
 } from '@/lib/validation/course-category.schema';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { useToast } from '@/lib/toast-context';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -106,14 +107,14 @@ export function CourseCategoryForm({
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <FormActions>
               <Button type="submit" className="px-5" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เพิ่มหมวดวิชา'}
               </Button>
               <Button type="button" variant="outline" className="px-5" onClick={onCancel}>
                 ยกเลิก
               </Button>
-            </div>
+            </FormActions>
           </CardContent>
         </form>
       </Form>

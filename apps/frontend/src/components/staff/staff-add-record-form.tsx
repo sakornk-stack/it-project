@@ -13,6 +13,7 @@ import {
 import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -170,7 +171,7 @@ export function StaffAddRecordForm({
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <FormActions>
               <Button type="submit" className="px-5" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'กำลังบันทึก...' : 'เพิ่มรายวิชา'}
               </Button>
@@ -183,7 +184,7 @@ export function StaffAddRecordForm({
               >
                 ยกเลิก
               </Button>
-            </div>
+            </FormActions>
           </CardContent>
         </form>
       </Form>
