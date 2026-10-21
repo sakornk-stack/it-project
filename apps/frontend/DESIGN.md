@@ -47,6 +47,10 @@
 | SignupCheckEmail | `components/auth/signup-check-email.tsx` | หลังสมัครด้วยอีเมล: บอกให้ตรวจอีเมล + ปุ่มส่งซ้ำ (นับถอยหลัง 60 วินาที) | ข้อความต้องไม่บอกว่าอีเมลมีบัญชีแล้วหรือไม่; ยืนยันจริงที่ `/register/verify` ซึ่งต้องกดปุ่มก่อน POST (กันโปรแกรมสแกนลิงก์) |
 | PrivacyFooterLink | `components/layout/privacy-footer-link.tsx` | ลิงก์ "นโยบายความเป็นส่วนตัว" ท้าย `AuthSplitLayout` และ `DashboardShell` | — |
 | AiDisclosureNotice | `components/ai/ai-disclosure-notice.tsx`, `lib/ai-disclosure.ts` | แจ้งก่อนปุ่มที่เรียก `fetchAiSkillAnalysis` (ส่งข้อมูลให้ Anthropic) | ยังไม่มีจุดใช้: ห้ามวางบนส่วนที่ไม่ได้เรียก API จริง (เช่นการ์ดสรุปผลที่ใช้กฎ) |
+| DataTable | `components/ui/data-table.tsx`, `.data-table` ใน `globals.css` | ตารางข้อมูลทุกที่ | `<DataTable>` ห่อ `<thead>/<tbody>` ธรรมดา (หัวเทาอ่อน เส้นบาง hover แถว) คอลัมน์ตัวเลขใส่ class `data-num`, ข้อความยาวใส่ `data-truncate` + `title`; ล้นกล่องเลื่อนแนวนอนเอง; `sticky` ต้องคู่ `scroll={false}`; `flush` เมื่อชิดขอบการ์ด; `SortHeader` ใช้แทน `<th>` |
+| FormActions / DangerZone | `components/ui/form-actions.tsx` | แถวปุ่มท้ายฟอร์ม/แผง/dialog; บล็อกลบท้ายแผนแก้ไข | ปุ่มหลักก่อน (ซ้าย) ปุ่มรอง (ยกเลิก, `variant="outline"`) ถัดไป มือถือเรียงลงเต็มกว้าง; `DangerZone id title description` ห่อปุ่มลบ แยกจากฟอร์ม |
+| StateBlock | `components/ui/empty-state.tsx` | สถานะว่าง/โหลดไม่สำเร็จ | ไอคอนจาง + `title` + คำอธิบายหนึ่งบรรทัด + ปุ่มถ้ามี; `EmptyState` และ `PageLoadError` ใช้ตัวนี้ ไม่เขียน block เอง |
+| CollapsibleSection `soft` | `components/ui/collapsible-section.tsx` | ส่วนอธิบายพับได้ที่ไม่เด่นกว่าผลลัพธ์ (เช่น "วิธีอ่านผล") | `soft` = แถบเทาอ่อน ไม่ใช่การ์ด; ปิดไว้ตั้งต้น เนื้อหายังอยู่ครบ |
 | DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
 
 ## 4) คลาสกลาง (`app/globals.css`)
