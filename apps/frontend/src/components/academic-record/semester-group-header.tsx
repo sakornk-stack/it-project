@@ -1,6 +1,7 @@
 import { ChevronDown, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { gpaColorClassName } from '@/lib/gpa-color';
 import { cn } from '@/lib/utils';
+import { TEXT_TONE_CLASSES } from '@/lib/tone';
 
 // Separate component (not inlined in RecordTimeline's .map()) — kept as
 // its own unit for the per-semester trend/color logic below.
@@ -36,7 +37,7 @@ export function SemesterGroupHeader({
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendLabel = trend === 'up' ? 'สูงขึ้น' : trend === 'down' ? 'ลดลง' : 'เท่าเดิม';
   const trendColorClassName =
-    trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-destructive' : 'text-muted-foreground';
+    trend === 'up' ? TEXT_TONE_CLASSES.success : trend === 'down' ? 'text-destructive' : 'text-muted-foreground';
 
   return (
     <button
@@ -52,7 +53,7 @@ export function SemesterGroupHeader({
         <h3 className="font-semibold text-primary">{label}</h3>
       </span>
       {gpa != null && (
-        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-l border-slate-200 pl-4 text-xs text-muted-foreground">
+        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-l border-border pl-4 text-xs text-muted-foreground">
           เกรดเฉลี่ยเทอมนี้{' '}
           <span className={cn('font-semibold', gpaColorClassName(gpa))}>{gpa.toFixed(2)}</span>
           {showTrend && (

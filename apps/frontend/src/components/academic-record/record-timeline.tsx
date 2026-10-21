@@ -9,6 +9,7 @@ import { fetchClos, fetchMyAssessments } from '@/lib/api/course-assessment';
 import { GRADE_LABELS, GRADE_OPTIONS } from '@/lib/grade-label';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
+import { INFO_TONE_CLASSES, TINT_TONE_CLASSES } from '@/lib/tone';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -277,7 +278,7 @@ export function RecordTimeline({
             }
 
             return (
-              <div key={semester.id} className="relative border-l-2 border-slate-100 pl-6">
+              <div key={semester.id} className="relative border-l-2 border-border pl-6">
                 <span className="absolute -left-[7px] top-0 h-3 w-3 rounded-full border-2 border-primary bg-background" />
 
                 <SemesterGroupHeader
@@ -303,9 +304,9 @@ export function RecordTimeline({
                           key={record.id}
                           ref={isHighlighted ? revealRow : undefined}
                           className={cn(
-                            'flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-100 px-4 py-3 transition-colors duration-500',
+                            'flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 transition-colors duration-500',
                             isExiting && 'animate-out fade-out-0 slide-out-to-top-4 duration-500',
-                            isHighlighted && 'bg-emerald-50',
+                            isHighlighted && TINT_TONE_CLASSES.success,
                           )}
                         >
                           {/* basis-48 + wrap (not truncate): on narrow screens the
@@ -327,7 +328,12 @@ export function RecordTimeline({
                           </div>
 
                           {retake && (
-                            <span className="shrink-0 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium',
+                                INFO_TONE_CLASSES.badge,
+                              )}
+                            >
                               ลงซ้ำ
                             </span>
                           )}
