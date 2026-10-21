@@ -312,6 +312,7 @@ export function UserListTable({
   superAdminId,
   currentUserId,
   control,
+  createLabel,
 }: {
   // Route tree the detail links point into: /admin or /superadmin.
   basePath: string;
@@ -322,6 +323,8 @@ export function UserListTable({
   currentUserId?: string;
   // Filter state, owned by the page so the stat cards can drive it too.
   control: UserFiltersControl;
+  // The wording of the page's create button, repeated in the empty state.
+  createLabel: string;
 }) {
   const router = useRouter();
   const resolveTargetName = useScopeTargetName();
@@ -362,7 +365,7 @@ export function UserListTable({
             <EmptyState
               icon={UsersRound}
               title="ยังไม่มีผู้ใช้งาน"
-              description="กด “เพิ่มผู้ใช้งาน” ที่มุมบนเพื่อสร้างบัญชีแรกในขอบเขตของคุณ"
+              description={`กด “${createLabel}” ที่มุมบนเพื่อสร้างบัญชีแรกในขอบเขตของคุณ`}
             />
           ) : (
             <EmptyState

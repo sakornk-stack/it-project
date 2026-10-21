@@ -51,6 +51,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
   }
 
   const requesterIsSuperAdmin = user.roles.includes('SUPER_ADMIN');
+  const createLabel = requesterIsSuperAdmin ? 'เพิ่มผู้ใช้งาน' : 'สร้างบัญชีเจ้าหน้าที่';
   const summary = usersQuery.data ? summarizeUsers(usersQuery.data) : null;
 
   function handleCreated(result: CreateUserResponse) {
@@ -86,7 +87,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
                 onClick={() => setShowCreateForm(true)}
               >
                 <Plus size={16} aria-hidden="true" />
-                {requesterIsSuperAdmin ? 'เพิ่มผู้ใช้งาน' : 'สร้างบัญชีเจ้าหน้าที่'}
+                {createLabel}
               </Button>
             )
           }
@@ -174,6 +175,7 @@ export function UsersPageContent({ basePath }: Readonly<{ basePath: string }>) {
             superAdminId={requesterIsSuperAdmin ? user.userId : undefined}
             currentUserId={user.userId}
             control={filterControl}
+            createLabel={createLabel}
           />
         )}
       </Reveal>
