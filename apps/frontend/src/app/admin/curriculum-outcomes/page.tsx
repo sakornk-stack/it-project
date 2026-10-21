@@ -76,7 +76,10 @@ function OutcomesContent() {
   const directoryQuery = useCurriculumDirectory();
   const entries = directoryQuery.data?.entries ?? [];
   const requested = searchParams.get('curriculum');
-  const entry = entries.find((e) => e.curriculumId === requested) ?? entries[0] ?? null;
+  // A single curriculum is picked for the admin; with several, nothing is shown until one is chosen.
+  const entry =
+    entries.find((e) => e.curriculumId === requested) ??
+    (entries.length === 1 ? entries[0] : null);
   const curriculumId = entry?.curriculumId ?? null;
 
   const coursesQuery = useQuery({ queryKey: ['courses'], queryFn: fetchCourses });
@@ -195,29 +198,39 @@ function OutcomesContent() {
         />
       )}
 
+      {entries.length > 0 && !loading && !loadError && (
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="w-full max-w-xl space-y-1.5">
+            <label htmlFor="outcomes-curriculum" className="text-sm font-medium">
+              หลักสูตร
+            </label>
+            <Select value={entry?.curriculumId} onValueChange={pickCurriculum}>
+              <SelectTrigger id="outcomes-curriculum" className="h-auto text-left">
+                <SelectValue placeholder="เลือกหลักสูตร" />
+              </SelectTrigger>
+              <SelectContent>
+                {entries.map((e) => (
+                  <SelectItem key={e.curriculumId} value={e.curriculumId} className="min-h-11">
+                    {e.programName} · {e.programCode} ฉบับ {e.version} (พ.ศ. {e.effectiveYear})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {entry && <EffectNote />}
+        </div>
+      )}
+
+      {entries.length > 1 && !entry && !loading && !loadError && (
+        <EmptyState
+          icon={ListChecks}
+          title="ยังไม่ได้เลือกหลักสูตร"
+          description="เลือกหลักสูตรด้านบนเพื่อเริ่มจัดการ CLO/PLO"
+        />
+      )}
+
       {entry && !loading && !loadError && (
         <>
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <div className="w-full max-w-xl space-y-1.5">
-              <label htmlFor="outcomes-curriculum" className="text-sm font-medium">
-                หลักสูตร
-              </label>
-              <Select value={entry.curriculumId} onValueChange={pickCurriculum}>
-                <SelectTrigger id="outcomes-curriculum" className="h-auto text-left">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {entries.map((e) => (
-                    <SelectItem key={e.curriculumId} value={e.curriculumId} className="min-h-11">
-                      {e.programName} · {e.programCode} ฉบับ {e.version} (พ.ศ. {e.effectiveYear})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <EffectNote />
-          </div>
-
           <StatsStrip stats={outcomeStats(rows)} />
 
           <UnderlineTabs
@@ -242,12 +255,12 @@ function OutcomesContent() {
           )}
 
           {tab === 'courses' && (
-            <div className="grid grid-cols-1 gap-6 lg:h-[max(32rem,calc(100dvh-24rem))] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-6 lg:min-h-[20rem] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
               {/* On a phone the course list and the CLO cards take turns. */}
               <section
                 aria-label="รายวิชา"
                 className={cn(
-                  'min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm lg:flex',
+                  'min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-card lg:flex lg:max-h-[max(32rem,calc(100dvh-24rem))]',
                   selected ? 'hidden' : 'flex',
                 )}
               >
@@ -299,7 +312,7 @@ function OutcomesContent() {
               <section
                 aria-label="CLO ของรายวิชา"
                 className={cn(
-                  'min-h-0 min-w-0 overflow-y-auto rounded-xl border bg-muted/30 lg:block',
+                  'min-h-0 min-w-0 overflow-y-auto rounded-xl border bg-muted/30 lg:block lg:max-h-[max(32rem,calc(100dvh-24rem))]',
                   selected ? 'block' : 'hidden',
                 )}
               >
