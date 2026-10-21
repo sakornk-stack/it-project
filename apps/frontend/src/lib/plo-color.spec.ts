@@ -6,7 +6,8 @@ describe('ploProgressBarColorClassName', () => {
     expect(ploProgressBarColorClassName(50, null)).toBe('bg-primary');
     expect(ploProgressBarColorClassName(60, 60)).toBe('bg-emerald-600');
     expect(ploProgressBarColorClassName(45, 60)).toBe('bg-amber-500');
-    expect(ploProgressBarColorClassName(44.9, 60)).toBe('bg-destructive');
+    expect(ploProgressBarColorClassName(44.9, 60)).toBe('bg-amber-500');
+    expect(ploProgressBarColorClassName(0, 60)).toBe('bg-amber-500');
   });
 });
 
@@ -21,21 +22,16 @@ describe('ploStatusTone', () => {
     expect(ploStatusTone(100, 60)).toBe('success');
   });
 
-  it('is warning from threshold minus the margin up to the threshold', () => {
+  it('is warning anywhere below the threshold, never danger', () => {
     expect(ploStatusTone(59.9, 60)).toBe('warning');
-    expect(ploStatusTone(45, 60)).toBe('warning');
-  });
-
-  it('is danger below that', () => {
-    expect(ploStatusTone(44.9, 60)).toBe('danger');
-    expect(ploStatusTone(0, 60)).toBe('danger');
+    expect(ploStatusTone(44.9, 60)).toBe('warning');
+    expect(ploStatusTone(0, 60)).toBe('warning');
   });
 
   it('always agrees with the bar colour', () => {
     const tones = {
       'bg-emerald-600': 'success',
       'bg-amber-500': 'warning',
-      'bg-destructive': 'danger',
     };
     for (const v of [0, 30, 44.9, 45, 59.9, 60, 80, 100]) {
       expect(ploStatusTone(v, 60)).toBe(
