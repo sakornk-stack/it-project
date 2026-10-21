@@ -60,7 +60,7 @@ function BrandMark({ className }: Readonly<{ className?: string }>) {
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
         <GraduationCap size={18} className="text-brand-light" aria-hidden="true" />
       </div>
-      <span className="text-base font-medium text-primary">{BRAND_NAME}</span>
+      <span className="text-base font-semibold text-primary">{BRAND_NAME}</span>
     </div>
   );
 }
@@ -75,28 +75,28 @@ export function AuthSplitLayout({
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <ThemeToggle className="fixed right-4 top-4 z-30" />
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-5xl">
         <BrandMark className="mb-4 flex items-center justify-center gap-2 md:hidden" />
-        <div className="grid grid-cols-1 rounded-lg border bg-card shadow-sm md:min-h-[34rem] md:grid-cols-2">
+        <div className="grid grid-cols-1 rounded-2xl border border-border bg-card shadow-card md:min-h-[34rem] md:grid-cols-[5fr_6fr]">
           <div className="relative hidden md:block">
-            <div className="absolute inset-0 overflow-hidden rounded-l-lg bg-brand-light">
+            <div className="absolute inset-0 overflow-hidden rounded-l-2xl border-r border-border bg-brand-light">
               <GraduationCap
                 size={280}
                 strokeWidth={1}
-                className="absolute -right-12 -top-12 text-brand/10"
+                className="absolute -right-12 -top-12 text-brand/[0.07]"
                 aria-hidden="true"
               />
               <GraduationCap
                 size={160}
                 strokeWidth={1}
-                className="absolute -bottom-8 left-8 text-brand/10"
+                className="absolute -bottom-8 left-8 text-brand/[0.07]"
                 aria-hidden="true"
               />
             </div>
-            <div className="sticky top-[50vh] z-10 -translate-y-1/2 p-10">
+            <div className="sticky top-[50vh] z-10 -translate-y-1/2 p-10 lg:p-12">
               <BrandMark className="mb-8 flex items-center gap-2" />
-              <p className="mb-3 text-2xl font-semibold leading-snug text-primary">{title}</p>
-              <p className="mb-8 max-w-xs text-sm leading-relaxed text-brand">{description}</p>
+              <p className="mb-4 text-[1.625rem] font-semibold leading-snug tracking-tight text-primary">{title}</p>
+              <p className="mb-8 max-w-sm text-sm leading-7 text-primary/75">{description}</p>
               <div className="flex gap-2">
                 <span className="h-1 w-6 rounded-full bg-brand" />
                 <span className="h-1 w-2 rounded-full bg-brand/40" />
@@ -104,7 +104,7 @@ export function AuthSplitLayout({
               </div>
             </div>
           </div>
-          <div className="flex flex-col justify-center rounded-lg p-6 sm:p-10 md:rounded-l-none md:rounded-r-lg">
+          <div className="flex flex-col justify-center rounded-2xl p-6 sm:p-10 md:rounded-l-none md:rounded-r-2xl lg:px-14">
             {children}
           </div>
         </div>

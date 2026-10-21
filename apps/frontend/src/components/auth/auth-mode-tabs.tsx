@@ -14,7 +14,7 @@ export function AuthModeTabs({ active }: { active: 'login' | 'register' }) {
         href="/login"
         className={cn(
           'flex min-h-11 flex-1 items-center justify-center rounded-md text-center text-sm font-medium transition',
-          active === 'login' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground',
+          active === 'login' ? 'bg-background text-foreground shadow-card' : 'text-muted-foreground',
         )}
       >
         เข้าสู่ระบบ
@@ -24,7 +24,7 @@ export function AuthModeTabs({ active }: { active: 'login' | 'register' }) {
         className={cn(
           'flex min-h-11 flex-1 items-center justify-center rounded-md text-center text-sm font-medium transition',
           active === 'register'
-            ? 'bg-background text-foreground shadow-sm'
+            ? 'bg-background text-foreground shadow-card'
             : 'text-muted-foreground',
         )}
       >
