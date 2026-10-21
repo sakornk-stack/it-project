@@ -4,10 +4,8 @@ import { ArrowUpDown, ChevronUp } from 'lucide-react';
 import type { SortControl } from '@/lib/use-table-sort';
 import { cn } from '@/lib/utils';
 
-// Drop-in replacement for a plain <th> in this codebase's table markup —
-// same base classes, so a sortable column sits flush with static ones.
-// Pass className="pr-0" for the last column, matching the existing
-// convention (cn runs twMerge, so it overrides pr-4 cleanly).
+// Drop-in replacement for a plain <th> inside a DataTable, which supplies the cell
+// padding and type. Pass className="data-num" for a figure column.
 export function SortHeader({
   active,
   direction,
@@ -21,12 +19,12 @@ export function SortHeader({
   return (
     <th
       aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={cn('py-2 pr-4 font-medium', className)}
+      className={className}
     >
       <button
         type="button"
         onClick={onToggle}
-        className="group inline-flex items-center gap-1 transition-colors duration-150 hover:text-primary"
+        className="group inline-flex items-center gap-1 rounded-sm font-semibold transition-colors duration-150 hover:text-primary"
       >
         {children}
         {active ? (

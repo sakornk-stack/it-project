@@ -5,6 +5,7 @@ import { yearLevelLabel } from '@/lib/course-timeline-summary';
 import { formatPercent } from '@/lib/format-percent';
 import { formatMedian, summarizeGradeCenter } from '@/lib/grade-center';
 import { formatGpa } from '@/lib/instructor-overview';
+import { DataTable } from '@/components/ui/data-table';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SectionCard } from '@/components/ui/section-card';
@@ -38,44 +39,37 @@ export function YearSection({
   } else {
     body = (
       <>
-        <div className="hidden overflow-x-auto border-t md:block">
-          <table className="w-full min-w-[34rem] text-sm">
+        <div className="hidden border-t md:block">
+          <DataTable flush bordered={false} className="min-w-[34rem]">
             <thead>
-              <tr className="border-b bg-slate-50 text-left text-xs text-muted-foreground">
-                <th scope="col" className="px-6 py-2.5 font-medium">
-                  ชั้นปี
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-right font-medium">
+              <tr>
+                <th scope="col">ชั้นปี</th>
+                <th scope="col" className="data-num">
                   นิสิต (คน)
                 </th>
-                <th scope="col" className="w-56 px-4 py-2.5 text-left font-medium">
+                <th scope="col" className="w-56">
                   ได้ B ขึ้นไป (%)
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                <th scope="col" className="data-num">
                   เกรดเฉลี่ย
                 </th>
-                <th scope="col" className="px-6 py-2.5 text-right font-medium">
+                <th scope="col" className="data-num">
                   เกรดกลาง
                 </th>
               </tr>
             </thead>
             <tbody>
               {years.rows.map((row) => (
-                <tr key={row.yearLevel} className="interactive-row border-b last:border-0">
-                  <th
-                    scope="row"
-                    className="px-6 py-3.5 text-left text-base font-bold text-primary"
-                  >
+                <tr key={row.yearLevel} className="interactive-row">
+                  <th scope="row" className="text-left text-base font-bold text-primary">
                     {yearLevelLabel(row.yearLevel)}
                   </th>
-                  <td className="px-4 py-3.5 text-right tabular-nums">{row.stats.seats}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="data-num">{row.stats.seats}</td>
+                  <td>
                     <AchievedCell row={row} />
                   </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums">
-                    {row.showNumbers ? formatGpa(row.stats.gpa) : '—'}
-                  </td>
-                  <td className="px-6 py-3.5 text-right">
+                  <td className="data-num">{row.showNumbers ? formatGpa(row.stats.gpa) : '—'}</td>
+                  <td className="text-right">
                     <span className="inline-flex flex-wrap items-center justify-end gap-1.5">
                       <span className="text-base font-semibold tabular-nums text-primary">
                         {medianOf(row) ?? '—'}
@@ -86,7 +80,7 @@ export function YearSection({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         </div>
         <ul className="grid gap-3 px-4 pb-4 sm:grid-cols-2 md:hidden">
           {years.rows.map((row) => (

@@ -7,6 +7,7 @@ import { usePagination } from '@/lib/use-pagination';
 import { useToast } from '@/lib/toast-context';
 import { ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GradeBadge } from './grade-badge';
 import { recordModeView } from './record-edit-mode';
@@ -156,35 +157,35 @@ export function StaffRecordList({
 
   return (
     <div>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block">
+        <DataTable>
           <thead>
-            <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-              <th className="px-3 py-3 font-semibold">รหัสวิชา</th>
-              <th className="px-3 py-3 font-semibold">ชื่อวิชา</th>
-              <th className="px-3 py-3 text-right font-semibold">หน่วยกิต</th>
-              <th className="px-3 py-3 font-semibold">ภาคเรียน</th>
-              <th className="px-3 py-3 font-semibold">เกรด</th>
-              {mode.showDelete && <th className="px-3 py-3 font-semibold">การจัดการ</th>}
+            <tr>
+              <th>รหัสวิชา</th>
+              <th>ชื่อวิชา</th>
+              <th className="data-num">หน่วยกิต</th>
+              <th>ภาคเรียน</th>
+              <th>เกรด</th>
+              {mode.showDelete && <th>การจัดการ</th>}
             </tr>
           </thead>
           <tbody>
             {pagination.pageRows.map((record) => (
               <tr key={record.id} className="border-b border-slate-100 align-middle">
-                <td className="px-3 py-3 font-semibold tabular-nums">
+                <td className="font-semibold tabular-nums">
                   {courseMap.get(record.courseId)?.code ?? '—'}
                 </td>
-                <td className="break-words px-3 py-3">
+                <td className="break-words">
                   {courseMap.get(record.courseId)?.name ?? '—'}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums">{record.credits}</td>
-                <td className="px-3 py-3">{semesterMap.get(record.semesterId)?.label ?? '—'}</td>
-                <td className="px-3 py-3">{gradeControl(record)}</td>
-                {mode.showDelete && <td className="px-3 py-3">{deleteControl(record)}</td>}
+                <td className="data-num">{record.credits}</td>
+                <td>{semesterMap.get(record.semesterId)?.label ?? '—'}</td>
+                <td>{gradeControl(record)}</td>
+                {mode.showDelete && <td>{deleteControl(record)}</td>}
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
 
       <ul className="space-y-3 md:hidden">

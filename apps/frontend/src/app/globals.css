@@ -93,6 +93,21 @@
    it (word-break: auto-phrase), and only split inside a word when a single token
    is wider than its box, so codes and English words stay whole. */
 @layer utilities {
+  /* A figure column in a data-table: right-aligned, digits the same width. */
+  .data-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One line with an ellipsis; give the cell a max width and the element a title. */
+  .data-truncate {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .course-name-break {
     word-break: auto-phrase;
     overflow-wrap: break-word;
@@ -203,6 +218,85 @@
     .interactive-card:focus-visible,
     .interactive-card:has(:focus-visible) {
       transform: none;
+    }
+  }
+
+  /* The one table look (components/ui/data-table.tsx). Rules sit in :where() so
+     they carry no specificity: a utility on a single cell (text-right, w-28,
+     bg-…) still wins over them. */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+  }
+
+  .data-table :where(thead th) {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    padding: 0.625rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    text-align: inherit;
+    vertical-align: middle;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .data-table :where(tbody td, tbody th, tfoot th) {
+    padding: 0.75rem;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .data-table-compact :where(tbody td, tbody th) {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Flush inside a card: first and last cells line up with the card's own padding. */
+  .data-table-flush :where(th:first-child, td:first-child) {
+    padding-left: 1.5rem;
+  }
+
+  .data-table-flush :where(th:last-child, td:last-child) {
+    padding-right: 1.5rem;
+  }
+
+  .data-table :where(tfoot td, tfoot th) {
+    background-color: hsl(var(--muted));
+    padding: 0.75rem;
+    font-weight: 600;
+    text-align: left;
+    vertical-align: middle;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .data-table :where(tbody tr:last-child td, tbody tr:last-child th) {
+    border-bottom-width: 0;
+  }
+
+  .data-table :where(thead tr:first-child th:first-child) {
+    border-top-left-radius: calc(var(--radius) - 1px);
+  }
+
+  .data-table :where(thead tr:first-child th:last-child) {
+    border-top-right-radius: calc(var(--radius) - 1px);
+  }
+
+  .data-table-sticky :where(thead th) {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  /* Plain rows tint on hover; clickable rows (.interactive-row) keep their own. */
+  @media (hover: hover) {
+    .data-table :where(tbody tr:not(.interactive-row)):hover {
+      background-color: hsl(var(--muted) / 0.6);
     }
   }
 

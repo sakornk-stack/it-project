@@ -6,6 +6,7 @@ import { cancelStudentInvitation, resendStudentInvitation } from '@/lib/api/staf
 import { useToast } from '@/lib/toast-context';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 
 const INVITATION_GONE_MESSAGE = 'ไม่พบคำเชิญนี้แล้ว — อาจถูกยกเลิกหรือลงทะเบียนไปแล้ว';
@@ -151,31 +152,31 @@ export function StudentInvitationList({
         busy={cancelling}
         onConfirm={handleCancel}
       />
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block">
+        <DataTable>
           <thead>
-            <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-              <th className="px-3 py-3 font-semibold">รหัสนิสิต</th>
-              <th className="px-3 py-3 font-semibold">ชื่อ-นามสกุล</th>
-              <th className="px-3 py-3 font-semibold">อีเมล</th>
-              <th className="px-3 py-3 font-semibold">สาขา</th>
-              <th className="px-3 py-3 font-semibold">หมดอายุ</th>
-              <th className="px-3 py-3 font-semibold">การดำเนินการ</th>
+            <tr>
+              <th>รหัสนิสิต</th>
+              <th>ชื่อ-นามสกุล</th>
+              <th>อีเมล</th>
+              <th>สาขา</th>
+              <th>หมดอายุ</th>
+              <th>การดำเนินการ</th>
             </tr>
           </thead>
           <tbody>
             {invitations.map((inv) => (
               <tr key={inv.id} className="border-b border-slate-100 align-middle hover:bg-slate-50">
-                <td className="px-3 py-3 font-semibold tabular-nums">{inv.studentCode}</td>
-                <td className="break-words px-3 py-3">{inv.fullName}</td>
-                <td className="break-all px-3 py-3 text-muted-foreground">{inv.email}</td>
-                <td className="px-3 py-3">{inv.program.code}</td>
-                <td className="px-3 py-3 tabular-nums">{formatExpiry(inv.expiresAt)}</td>
-                <td className="px-3 py-3">{actions(inv)}</td>
+                <td className="font-semibold tabular-nums">{inv.studentCode}</td>
+                <td className="break-words">{inv.fullName}</td>
+                <td className="break-all text-muted-foreground">{inv.email}</td>
+                <td>{inv.program.code}</td>
+                <td className="tabular-nums">{formatExpiry(inv.expiresAt)}</td>
+                <td>{actions(inv)}</td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
 
       <ul className="space-y-3 md:hidden">

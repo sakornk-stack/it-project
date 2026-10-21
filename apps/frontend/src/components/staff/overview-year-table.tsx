@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
 import { Progress } from '@/components/ui/progress';
 import { readGroupGpa, type YearRow } from './staff-status';
 import { BEHIND_PLAN_FORMULA, describeEmptyYears, yearLevelTitle } from './year-info';
@@ -83,67 +84,64 @@ export function OverviewYearTable({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b-2 border-slate-200 text-xs text-muted-foreground">
-              <th className="py-2 pr-3 font-semibold">ชั้นปี</th>
-              <th className="py-2 pr-3 text-right font-semibold">นิสิต (คน)</th>
-              <th className="py-2 pr-3 text-right font-semibold">มีผลการเรียน (คน)</th>
-              <th className="py-2 pr-3 text-right font-semibold">GPA เฉลี่ย</th>
-              <th className="py-2 pr-3 font-semibold">สัดส่วนเร่งด่วน / เฝ้าระวัง</th>
-              <th className="py-2 text-right font-semibold">ตามหลังแผน (คน)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {populated.map((row) => (
-              <tr
-                key={row.yearLevel}
-                className="interactive-row group/row relative border-b border-slate-100 align-top"
-              >
-                <td className="py-1 pr-3">
-                  <Link
-                    href={`/staff/students?level=${row.yearLevel}`}
-                    className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap font-semibold text-primary outline-none after:absolute after:inset-0 after:content-[''] hover:underline"
-                  >
-                    {yearLevelTitle(row.yearLevel)}
-                    <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
-                  </Link>
-                </td>
-                <td className="py-3 pr-3 text-right tabular-nums">{row.summary.active}</td>
-                <td className="py-3 pr-3 text-right tabular-nums">{row.summary.withRecords}</td>
-                <td className="py-3 pr-3">
-                  <GpaCell row={row} />
-                </td>
-                <td className="py-3 pr-3">
-                  <RiskCell row={row} />
-                </td>
-                <td className="py-3 text-right tabular-nums">{row.behind}</td>
+        <div className="hidden md:block">
+          <DataTable>
+            <thead>
+              <tr>
+                <th>ชั้นปี</th>
+                <th className="data-num">นิสิต (คน)</th>
+                <th className="data-num">มีผลการเรียน (คน)</th>
+                <th className="data-num">GPA เฉลี่ย</th>
+                <th>สัดส่วนเร่งด่วน / เฝ้าระวัง</th>
+                <th className="data-num">ตามหลังแผน (คน)</th>
               </tr>
-            ))}
-            {emptyYears && (
-              <tr className="border-b border-slate-100">
-                <td colSpan={6} className="py-3 text-sm text-muted-foreground">
-                  {emptyYears}
+            </thead>
+            <tbody>
+              {populated.map((row) => (
+                <tr key={row.yearLevel} className="interactive-row group/row relative">
+                  <td className="py-1">
+                    <Link
+                      href={`/staff/students?level=${row.yearLevel}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap font-semibold text-primary outline-none after:absolute after:inset-0 after:content-[''] hover:underline"
+                    >
+                      {yearLevelTitle(row.yearLevel)}
+                      <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+                    </Link>
+                  </td>
+                  <td className="data-num">{row.summary.active}</td>
+                  <td className="data-num">{row.summary.withRecords}</td>
+                  <td>
+                    <GpaCell row={row} />
+                  </td>
+                  <td>
+                    <RiskCell row={row} />
+                  </td>
+                  <td className="data-num">{row.behind}</td>
+                </tr>
+              ))}
+              {emptyYears && (
+                <tr>
+                  <td colSpan={6} className="text-sm text-muted-foreground">
+                    {emptyYears}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>รวมทั้งสิ้น</td>
+                <td className="data-num">{total.active} คน</td>
+                <td className="data-num">{total.withRecords} คน</td>
+                <td>
+                  <GpaCell row={totalRow} />
                 </td>
+                <td>
+                  <RiskCell row={totalRow} />
+                </td>
+                <td className="data-num">{totalBehind} คน</td>
               </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-slate-50 align-top font-semibold">
-              <td className="py-3 pr-3">รวมทั้งสิ้น</td>
-              <td className="py-3 pr-3 text-right tabular-nums">{total.active} คน</td>
-              <td className="py-3 pr-3 text-right tabular-nums">{total.withRecords} คน</td>
-              <td className="py-3 pr-3">
-                <GpaCell row={totalRow} />
-              </td>
-              <td className="py-3 pr-3">
-                <RiskCell row={totalRow} />
-              </td>
-              <td className="py-3 text-right tabular-nums">{totalBehind} คน</td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </DataTable>
         </div>
 
         <ul className="space-y-3 md:hidden">

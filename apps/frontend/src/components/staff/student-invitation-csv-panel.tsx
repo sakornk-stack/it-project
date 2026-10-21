@@ -16,6 +16,7 @@ import { useToast } from '@/lib/toast-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
 
 // Inline, not a modal — same reasoning as ScoreCsvImportPanel: no Dialog
 // primitive in this project, and this mirrors that panel's exact shape
@@ -23,40 +24,38 @@ import { Button } from '@/components/ui/button';
 
 function PreviewTable({ rows }: Readonly<{ rows: ParsedInvitationRow[] }>) {
   return (
-    <div className="max-h-72 overflow-auto rounded-md border border-slate-200">
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-slate-50">
-          <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
-            <th className="px-3 py-2 font-medium">แถว</th>
-            <th className="px-3 py-2 font-medium">รหัสนิสิต</th>
-            <th className="px-3 py-2 font-medium">อีเมล</th>
-            <th className="px-3 py-2 font-medium">ชื่อ-นามสกุล</th>
-            <th className="px-3 py-2 font-medium">สาขา / ฉบับ</th>
-            <th className="px-3 py-2 font-medium">ผล</th>
+    <DataTable compact wrapperClassName="max-h-72 overflow-auto" sticky scroll={false}>
+      <thead>
+        <tr>
+          <th>แถว</th>
+          <th>รหัสนิสิต</th>
+          <th>อีเมล</th>
+          <th>ชื่อ-นามสกุล</th>
+          <th>สาขา / ฉบับ</th>
+          <th>ผล</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.rowNumber}>
+            <td className="text-muted-foreground">{row.rowNumber}</td>
+            <td className="text-primary">{row.studentCode || '—'}</td>
+            <td className="text-muted-foreground">{row.email || '—'}</td>
+            <td className="text-muted-foreground">{row.fullName || '—'}</td>
+            <td className="text-muted-foreground">
+              {row.programCodeText || '—'} / {row.curriculumVersionText || '—'}
+            </td>
+            <td>
+              {row.verdict === 'ready' ? (
+                <Badge tone="success">พร้อมเชิญ</Badge>
+              ) : (
+                <span className="text-xs text-destructive">{row.error}</span>
+              )}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.rowNumber} className="border-b border-slate-50">
-              <td className="px-3 py-2 text-muted-foreground">{row.rowNumber}</td>
-              <td className="px-3 py-2 text-primary">{row.studentCode || '—'}</td>
-              <td className="px-3 py-2 text-muted-foreground">{row.email || '—'}</td>
-              <td className="px-3 py-2 text-muted-foreground">{row.fullName || '—'}</td>
-              <td className="px-3 py-2 text-muted-foreground">
-                {row.programCodeText || '—'} / {row.curriculumVersionText || '—'}
-              </td>
-              <td className="px-3 py-2">
-                {row.verdict === 'ready' ? (
-                  <Badge tone="success">พร้อมเชิญ</Badge>
-                ) : (
-                  <span className="text-xs text-destructive">{row.error}</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </DataTable>
   );
 }
 

@@ -18,6 +18,7 @@ import { ROLE_BADGE_TONE, ROLE_LABEL_TH, primaryRoleFor } from '@/components/aut
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
 import { Pagination } from '@/components/ui/pagination';
@@ -30,10 +31,6 @@ import { UserManageBlocked, useUserStatusToggle } from '@/components/admin/user-
 import { userMenuEntries } from '@/lib/user-row-actions';
 import { BADGE_TONE_CLASSES, BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
 import { cn } from '@/lib/utils';
-
-// Header cells stay in view while the page scrolls past a long list. Above the row
-// buttons (z-10) so a button never paints over the header.
-const TH = 'sticky top-0 z-20 bg-slate-50 px-3 py-3';
 
 // The avatar takes the colour of the person's top role, from the same tones as the
 // role badges, so it follows the theme.
@@ -423,7 +420,7 @@ export function UserListTable({
             </ul>
 
             <div className="hidden xl:block">
-              <table className="w-full table-fixed text-left text-sm">
+              <DataTable scroll={false} sticky className="table-fixed">
                 <colgroup>
                   <col className="w-[30%]" />
                   <col className="w-[15%]" />
@@ -432,16 +429,16 @@ export function UserListTable({
                   <col className="w-28" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b-2 border-slate-200 text-xs text-muted-foreground">
-                    <SortHeader {...sort.sortProps('fullName')} className={TH}>
+                  <tr>
+                    <SortHeader {...sort.sortProps('fullName')}>
                       ชื่อและอีเมล
                     </SortHeader>
-                    <th className={cn(TH, 'font-medium')}>บทบาท</th>
-                    <th className={cn(TH, 'font-medium')}>ขอบเขต</th>
-                    <SortHeader {...sort.sortProps('status')} className={TH}>
+                    <th>บทบาท</th>
+                    <th>ขอบเขต</th>
+                    <SortHeader {...sort.sortProps('status')}>
                       สถานะ
                     </SortHeader>
-                    <th className={TH}>
+                    <th>
                       <span className="sr-only">การดำเนินการ</span>
                     </th>
                   </tr>
@@ -454,36 +451,36 @@ export function UserListTable({
                         key={user.id}
                         onClick={rowClick(router, href)}
                         className={cn(
-                          'interactive-row cursor-pointer border-b border-slate-100 align-middle',
-                          !user.isActive && 'bg-slate-50/60',
+                          'interactive-row cursor-pointer',
+                          !user.isActive && 'bg-muted/40',
                         )}
                       >
-                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                        <td className={cn(!user.isActive && 'opacity-70')}>
                           <UserIdentity
                             user={user}
                             href={href}
                             isSelf={user.id === currentUserId}
                           />
                         </td>
-                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                        <td className={cn(!user.isActive && 'opacity-70')}>
                           <div className="flex flex-wrap gap-1.5">
                             <RoleBadges roles={user.roles} />
                           </div>
                         </td>
-                        <td className={cn('px-3 py-3', !user.isActive && 'opacity-70')}>
+                        <td className={cn(!user.isActive && 'opacity-70')}>
                           <ScopeBadges
                             user={user}
                             resolveTargetName={resolveTargetName}
                             limit={2}
                           />
                         </td>
-                        <td className="px-3 py-3">
+                        <td>
                           <StatusColumn user={user} />
                           <p className="mt-1 text-xs text-muted-foreground">
                             เข้าใช้ล่าสุด {formatLastLogin(user.lastLoginAt)}
                           </p>
                         </td>
-                        <td className="px-3 py-2">
+                        <td>
                           <RowActions
                             href={href}
                             user={user}
@@ -495,7 +492,7 @@ export function UserListTable({
                     );
                   })}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
           </>
         )}

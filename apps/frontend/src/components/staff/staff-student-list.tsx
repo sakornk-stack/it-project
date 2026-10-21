@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChevronRight, SearchX } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from './status-badge';
@@ -66,16 +67,16 @@ export function StaffStudentList({
 
   return (
     <>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block">
+        <DataTable>
         <thead>
-          <tr className="border-b-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-            <th className="px-3 py-3 font-semibold">รหัสนิสิต</th>
-            <th className="px-3 py-3 font-semibold">ชื่อ-นามสกุล</th>
-            <th className="px-3 py-3 font-semibold">ชั้นปี</th>
-            <th className="px-3 py-3 text-right font-semibold">GPA สะสม</th>
-            <th className="px-3 py-3 font-semibold">สถานะทางวิชาการ</th>
-            <th className="px-3 py-3 font-semibold">การดำเนินการ</th>
+          <tr>
+            <th>รหัสนิสิต</th>
+            <th>ชื่อ-นามสกุล</th>
+            <th>ชั้นปี</th>
+            <th className="data-num">GPA สะสม</th>
+            <th>สถานะทางวิชาการ</th>
+            <th>การดำเนินการ</th>
           </tr>
         </thead>
         <tbody>
@@ -87,8 +88,8 @@ export function StaffStudentList({
                 !row.isActive && 'text-muted-foreground',
               )}
             >
-              <td className="px-3 py-3 font-semibold tabular-nums">{row.studentCode}</td>
-              <td className="px-3 py-3">
+              <td className="font-semibold tabular-nums">{row.studentCode}</td>
+              <td>
                 <p>
                   <NameCell row={row} />
                 </p>
@@ -96,18 +97,18 @@ export function StaffStudentList({
                   {programName(row.programId)}
                 </p>
               </td>
-              <td className="px-3 py-3 tabular-nums">{yearText(row)}</td>
-              <td className="px-3 py-3 text-right tabular-nums">{gpaText(row)}</td>
-              <td className="px-3 py-3">
+              <td className="tabular-nums">{yearText(row)}</td>
+              <td className="data-num">{gpaText(row)}</td>
+              <td>
                 <StatusBadge status={row.status} />
               </td>
-              <td className="px-3 py-3">
+              <td>
                 <Action />
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </DataTable>
       </div>
 
       <ul className="space-y-3 md:hidden">

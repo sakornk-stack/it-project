@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pencil, Plus, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
 import { cn } from '@/lib/utils';
 import type { CourseRowData } from './curriculum-view';
 
@@ -185,16 +186,16 @@ export function CourseRows({
 
   return (
     <>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block">
+        <DataTable>
           <thead>
             <tr className="border-y-2 border-slate-200 bg-slate-50 text-xs text-muted-foreground">
-              <th className="px-3 py-3 font-semibold">รหัสวิชา</th>
-              <th className="px-3 py-3 font-semibold">ชื่อรายวิชา (ภาษาไทยและภาษาอังกฤษ)</th>
-              <th className="px-3 py-3 text-right font-semibold">หน่วยกิต</th>
-              <th className="px-3 py-3 font-semibold">วิชาบังคับก่อน</th>
-              <th className="px-3 py-3 font-semibold">อาจารย์ผู้รับผิดชอบวิชา (ระดับหลักสูตร)</th>
-              {actions.onEdit && <th className="px-3 py-3 font-semibold">การดำเนินการ</th>}
+              <th>รหัสวิชา</th>
+              <th>ชื่อรายวิชา (ภาษาไทยและภาษาอังกฤษ)</th>
+              <th className="data-num">หน่วยกิต</th>
+              <th>วิชาบังคับก่อน</th>
+              <th>อาจารย์ผู้รับผิดชอบวิชา (ระดับหลักสูตร)</th>
+              {actions.onEdit && <th>การดำเนินการ</th>}
             </tr>
           </thead>
           <tbody>
@@ -207,29 +208,29 @@ export function CourseRows({
                   highlight(row.course.id),
                 )}
               >
-                <td className="px-3 py-3 font-semibold tabular-nums">{row.course.code}</td>
-                <td className="px-3 py-3">
+                <td className="font-semibold tabular-nums">{row.course.code}</td>
+                <td>
                   <p className="break-words font-semibold">{row.course.name}</p>
                   {row.course.nameEn && (
                     <p className="break-words text-xs text-muted-foreground">{row.course.nameEn}</p>
                   )}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums">{row.course.credits}</td>
-                <td className="px-3 py-3">
+                <td className="data-num">{row.course.credits}</td>
+                <td>
                   <Prerequisites codes={row.prerequisiteCodes} />
                 </td>
-                <td className="px-3 py-3">
+                <td>
                   <Instructors row={row} actions={actions} />
                 </td>
                 {actions.onEdit && (
-                  <td className="px-3 py-3">
+                  <td>
                     <EditButton row={row} actions={actions} />
                   </td>
                 )}
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
 
       <ul className="space-y-3 p-4 md:hidden">

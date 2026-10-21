@@ -10,6 +10,7 @@ import type { GroupStats, Matrix, MatrixCell } from '@/lib/instructor-overview';
 import { cn } from '@/lib/utils';
 import { gpaTone } from '@/components/ui/gpa-scale';
 import { Badge } from '@/components/ui/badge';
+import { DataTable } from '@/components/ui/data-table';
 import { TEXT_LABEL } from './instructor-ui';
 
 // One cell: the middle grade as a badge toned by the group's GPA band (the letter
@@ -71,6 +72,9 @@ function Cell({ cell, end = false }: Readonly<{ cell: MatrixCell | null; end?: b
 
 const href = (id: string) => `/instructor/courses/${id}`;
 
+// The course column stays at the left while the figures scroll under it.
+const COURSE_COL = 'sticky left-0 z-10 w-40 min-w-40 text-left sm:w-60 sm:min-w-60';
+
 // Every course against every year level that has someone, one figure in every
 // cell. One table at every width, meant to sit flush inside a SectionCard: on a
 // narrow screen it scrolls sideways and the course column stays at the left. The
@@ -79,80 +83,67 @@ export function YearLevelMatrix({ matrix }: Readonly<{ matrix: Matrix }>) {
   const { levels, rows, footer } = matrix;
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[44rem] text-sm">
-          <caption className="sr-only">เกรดกลาง แยกตามวิชาและชั้นปี</caption>
-          <thead>
-            <tr className="border-b bg-slate-50 text-left text-[13px] text-muted-foreground">
-              <th
-                scope="col"
-                className="sticky left-0 z-10 w-40 min-w-40 sm:w-60 sm:min-w-60 bg-slate-50 px-4 py-2 font-medium"
-              >
-                วิชา
+      <DataTable bordered={false} flush className="min-w-[44rem]">
+        <caption className="sr-only">เกรดกลาง แยกตามวิชาและชั้นปี</caption>
+        <thead>
+          <tr>
+            <th scope="col" className={COURSE_COL}>
+              วิชา
+            </th>
+            {levels.map((l) => (
+              <th key={l} scope="col">
+                {yearLevelLabel(l)}
               </th>
-              {levels.map((l) => (
-                <th key={l} scope="col" className="px-4 py-2 font-medium">
-                  {yearLevelLabel(l)}
-                </th>
-              ))}
-              <th scope="col" className="px-4 py-2 font-medium">
-                รวมวิชานี้
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.course.courseId} className="interactive-row border-b">
-                <th
-                  scope="row"
-                  className="sticky left-0 z-10 w-40 min-w-40 sm:w-60 sm:min-w-60 bg-card px-4 py-3 text-left align-top font-normal"
-                >
-                  <Link
-                    href={href(row.course.courseId)}
-                    className="inline-flex min-h-11 items-center before:absolute before:inset-0 focus-visible:outline-none focus-visible:before:ring-2 focus-visible:before:ring-ring"
-                  >
-                    <span className="min-w-0">
-                      <span className={cn('block', TEXT_LABEL)}>{row.course.code}</span>
-                      <span
-                        className="course-name-break line-clamp-2 font-semibold text-primary"
-                        title={row.course.name}
-                      >
-                        {row.course.name}
-                      </span>
-                    </span>
-                  </Link>
-                </th>
-                {row.cells.map((c, i) => (
-                  <td key={levels[i]} className="px-4 py-3 align-top">
-                    <Cell cell={c} />
-                  </td>
-                ))}
-                <td className="px-4 py-3 align-top">
-                  <Figure stats={row.total} mode />
-                </td>
-              </tr>
             ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t bg-slate-50/70">
-              <th
-                scope="row"
-                className="sticky left-0 z-10 w-40 min-w-40 sm:w-60 sm:min-w-60 bg-slate-50 px-4 py-3 text-left align-top font-semibold text-primary"
-              >
-                ทุกวิชารวมกัน
+            <th scope="col">รวมวิชานี้</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.course.courseId} className="interactive-row">
+              <th scope="row" className={cn(COURSE_COL, 'bg-card align-top font-normal')}>
+                <Link
+                  href={href(row.course.courseId)}
+                  className="inline-flex min-h-11 items-center before:absolute before:inset-0 focus-visible:outline-none focus-visible:before:ring-2 focus-visible:before:ring-ring"
+                >
+                  <span className="min-w-0">
+                    <span className={cn('block', TEXT_LABEL)}>{row.course.code}</span>
+                    <span
+                      className="course-name-break line-clamp-2 font-semibold text-primary"
+                      title={row.course.name}
+                    >
+                      {row.course.name}
+                    </span>
+                  </span>
+                </Link>
               </th>
-              {footer.cells.map((c, i) => (
-                <td key={levels[i]} className="px-4 py-3 align-top">
+              {row.cells.map((c, i) => (
+                <td key={levels[i]} className="align-top">
                   <Cell cell={c} />
                 </td>
               ))}
-              <td className="px-4 py-3 align-top">
-                <Figure stats={footer.total} mode />
+              <td className="align-top">
+                <Figure stats={row.total} mode />
               </td>
             </tr>
-          </tfoot>
-        </table>
-      </div>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" className={cn(COURSE_COL, 'align-top text-primary')}>
+              ทุกวิชารวมกัน
+            </th>
+            {footer.cells.map((c, i) => (
+              <td key={levels[i]} className="align-top">
+                <Cell cell={c} />
+              </td>
+            ))}
+            <td className="align-top">
+              <Figure stats={footer.total} mode />
+            </td>
+          </tr>
+        </tfoot>
+      </DataTable>
     </>
   );
 }
