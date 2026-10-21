@@ -88,9 +88,9 @@ export interface GpaResult extends GpaSummary {
 export interface SemesterAchievement {
   academicYear: number;
   semesterTerm: SemesterTerm;
-  studentCount: number; // excludes W/I, same base as CloAchievementService
-  gradedCount: number; // A to F only (no W/I/S/U): the base for sample-size notes
-  achievementPercent: number; // % graded B or above
+  studentCount: number; // excludes W/I
+  gradedCount: number; // A to F only (no W/I/S/U): the base for the percent and sample-size notes
+  achievementPercent: number; // % of gradedCount graded B or above
 }
 
 // groupCoursesByYearAndSemester's return shape — Academic Year -> Semester
@@ -639,8 +639,10 @@ export class StudentCourseRecordService {
   // semester instead of collapsed to one course-wide number. Groups RAW
   // records (not retake-deduped) for the same reason calculateGpaBySemester
   // does: a course retaken in a later semester must still count in the
-  // semester it was originally attempted. A semester left with 0 students
-  // after excluding W/I is dropped entirely, not emitted as a fake 0%.
+  // semester it was originally attempted. studentCount excludes W/I; the
+  // percent is over gradedCount (A to F), the same base as the course-wide
+  // number, so S/U never drags it down. A semester with no letter grade at
+  // all is dropped entirely, not emitted as a fake 0%.
   summarizeBySemester(records: LatestCourseAttempt[]): SemesterAchievement[] {
     const bySemesterId = new Map<string, LatestCourseAttempt[]>();
     for (const record of records) {
@@ -651,17 +653,18 @@ export class StudentCourseRecordService {
     }
 
     return Array.from(bySemesterId.values())
-      .filter((group) => group.length > 0)
       .map((group) => {
         const achieved = group.filter((r) => ACHIEVED_GRADES.has(r.grade)).length;
+        const gradedCount = group.filter((r) => isLetterGrade(r.grade)).length;
         return {
           academicYear: group[0].semester.academicYear.year,
           semesterTerm: group[0].semester.term,
           studentCount: group.length,
-          gradedCount: group.filter((r) => isLetterGrade(r.grade)).length,
-          achievementPercent: (achieved / group.length) * 100,
+          gradedCount,
+          achievementPercent: gradedCount > 0 ? (achieved / gradedCount) * 100 : null,
         };
       })
+      .filter((point): point is SemesterAchievement => point.achievementPercent !== null)
       .sort((a, b) => {
         if (a.academicYear !== b.academicYear) return a.academicYear - b.academicYear;
         return SEMESTER_TERM_RANK[a.semesterTerm] - SEMESTER_TERM_RANK[b.semesterTerm];

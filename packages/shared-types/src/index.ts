@@ -1075,8 +1075,8 @@ export interface SemesterAchievement {
   academicYear: number;
   semesterTerm: SemesterTerm;
   studentCount: number; // excludes W/I
-  gradedCount: number; // A to F only (no W/I/S/U): the base for sample-size notes
-  achievementPercent: number; // % graded B or above
+  gradedCount: number; // A to F only (no W/I/S/U): the base for the percent and sample-size notes
+  achievementPercent: number; // % of gradedCount graded B or above
 }
 
 export interface StudentInstructorTimelineEntry {
@@ -1113,7 +1113,7 @@ export interface InstructorCourseSummary {
     submissionCount: number;
     clos: { cloId: string; code: string; averageScore: number | null; scoreCount: number }[];
   };
-  // One point per semester with >=1 non-W/I record, sorted chronologically.
+  // One point per semester with >=1 letter grade (A to F), sorted chronologically.
   semesterTrend: SemesterAchievement[];
 }
 
@@ -1220,7 +1220,7 @@ export interface StaffYearLevelsReport {
 // per-CLO percentages from it.
 export interface CourseCloAchievementReport {
   courseId: string;
-  totalStudents: number;
+  totalStudents: number; // letter grades only (A to F): W/I/S/U are not counted
   achievedStudents: number;
   achievementPercent: number | null; // null = no graded student yet (not 0%)
   // Curriculum.defaultAchievementThreshold — present even when clos is

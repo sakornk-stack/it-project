@@ -52,17 +52,18 @@ type SemesterTotal = {
 };
 
 // Latest semester vs the one before it, across every course the instructor
-// teaches. Each semesterTrend point is (students graded B+ / students) for one
-// course in one term, so rounding percent × count recovers the exact head
-// count and the cross-course figure is a true pooled percentage, not an
-// average of averages. Fewer than two semesters with students → null.
+// teaches. Each semesterTrend point is (students graded B+ / students with a
+// letter grade, gradedCount — S/U are not in it) for one course in one term,
+// so rounding percent × gradedCount recovers the exact head count and the
+// cross-course figure is a true pooled percentage, not an average of averages.
+// Fewer than two semesters with graded students → null.
 export function computeAchievementChange(
   courses: readonly Pick<InstructorCourseSummary, 'semesterTrend'>[],
 ): AchievementChange | null {
   const bySemester = new Map<string, SemesterTotal>();
   for (const course of courses) {
     for (const point of course.semesterTrend) {
-      if (!isPositiveCount(point.studentCount) || !Number.isFinite(point.achievementPercent))
+      if (!isPositiveCount(point.gradedCount) || !Number.isFinite(point.achievementPercent))
         continue;
       if (!(point.semesterTerm in SEMESTER_TERM_RANK)) continue;
       const key = `${point.academicYear}:${point.semesterTerm}`;
@@ -72,8 +73,8 @@ export function computeAchievementChange(
         students: 0,
         achieved: 0,
       };
-      total.students += point.studentCount;
-      total.achieved += Math.round((point.achievementPercent * point.studentCount) / 100);
+      total.students += point.gradedCount;
+      total.achieved += Math.round((point.achievementPercent * point.gradedCount) / 100);
       bySemester.set(key, total);
     }
   }

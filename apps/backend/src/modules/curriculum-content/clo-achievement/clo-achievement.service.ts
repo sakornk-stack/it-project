@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   ACHIEVED_GRADES,
-  GRADE_STATUS,
+  isLetterGrade,
 } from '../../academic-record/student-course-record/grade-point.constant';
 import {
   LatestCourseAttempt,
@@ -72,9 +72,11 @@ export class CloAchievementService {
   // four queries) once per course. One definition of the bar, two fetch
   // strategies (CONVENTIONS.md §6).
   //
-  // totalStudents excludes W/I (never completed the course) — same
-  // GRADE_STATUS distinction as Phase 7's Credit Checker: PASS+FAIL are
-  // final outcomes and count, EXCLUDED does not.
+  // totalStudents counts letter grades only (A to F). W/I never completed
+  // the course; S/U is a pass/fail scale that says nothing about reaching
+  // the B bar, so an S must not read as "not achieved" and drag a course to
+  // 0%. Same base as the per-term trend's gradedCount. A course with no
+  // letter grade at all has no percent (null), never 0.
   summarizeCourseAchievement(
     latestByStudent: Map<string, LatestCourseAttempt>,
   ): {
@@ -87,7 +89,7 @@ export class CloAchievementService {
     let totalStudents = 0;
     let achievedStudents = 0;
     for (const attempt of latestByStudent.values()) {
-      if (GRADE_STATUS[attempt.grade] === 'EXCLUDED') {
+      if (!isLetterGrade(attempt.grade)) {
         continue;
       }
       totalStudents += 1;

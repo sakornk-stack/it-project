@@ -175,6 +175,25 @@ describe('computeAchievementChange', () => {
     });
   });
 
+  it('pools by gradedCount (the percent base), not studentCount, so S/U students do not skew it', () => {
+    // Each point: 10 enrolled, of whom only 4 have a letter grade (the rest S/U).
+    // 2566/2: 50% of 4 = 2; 2567/1: 75% of 4 = 3 -> pooled with c2's 20/20 graded at 50%.
+    const withSu = (year: number, termName: SemesterTerm, percent: number) => ({
+      ...term(year, termName, 10, percent),
+      gradedCount: 4,
+    });
+    const courses = [
+      course({ semesterTrend: [withSu(2566, 'SECOND', 50), withSu(2567, 'FIRST', 75)] }),
+      course({ courseId: 'c2', semesterTrend: [term(2567, 'FIRST', 20, 50)] }),
+    ];
+    // 2566/2: 2/4 = 50%; 2567/1: (3 + 10) / 24 = 54.17%
+    expect(computeAchievementChange(courses)).toEqual({
+      direction: 'up',
+      delta: expect.closeTo(54.1667 - 50, 3),
+      latestStudentCount: 24,
+    });
+  });
+
   it('is null with fewer than two terms, ignoring empty or non-finite points', () => {
     expect(
       computeAchievementChange([course({ semesterTrend: [term(2567, 'FIRST', 10, 80)] })]),

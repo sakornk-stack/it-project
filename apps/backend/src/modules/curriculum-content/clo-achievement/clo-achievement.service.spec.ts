@@ -38,4 +38,24 @@ describe('CloAchievementService.summarizeCourseAchievement', () => {
     expect(result.totalStudents).toBe(2);
     expect(result.achievementPercent).toBe(50);
   });
+
+  it('a course graded only S/U has no data (null), not 0%', () => {
+    const result = service.summarizeCourseAchievement(byStudent('S', 'S', 'U', 'S'));
+    expect(result).toEqual({ totalStudents: 0, achievedStudents: 0, achievementPercent: null });
+  });
+
+  it('S and U are left out of the base when mixed with letter grades', () => {
+    // Letter grades: A, B, C, F -> 2 of 4 reached B. The S/U students change nothing.
+    const result = service.summarizeCourseAchievement(byStudent('A', 'S', 'B', 'U', 'C', 'S', 'F'));
+    expect(result.totalStudents).toBe(4);
+    expect(result.achievedStudents).toBe(2);
+    expect(result.achievementPercent).toBe(50);
+  });
+
+  it('a course with ordinary letter grades gives the same figure as before', () => {
+    const result = service.summarizeCourseAchievement(
+      byStudent('A', 'B_PLUS', 'B', 'C_PLUS', 'C', 'D_PLUS', 'D', 'F'),
+    );
+    expect(result).toEqual({ totalStudents: 8, achievedStudents: 3, achievementPercent: 37.5 });
+  });
 });

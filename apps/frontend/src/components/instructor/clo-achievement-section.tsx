@@ -150,9 +150,10 @@ export function CloAchievementSection({
             onRetry={onRetry}
           />
         )}
-        {detail && (
+        {detail && hasCloPercent(achievementPercent) && (
           <p className="text-xs text-muted-foreground">
-            ได้ B ขึ้นไป {detail.achievedStudents} จาก {detail.totalStudents} คน
+            ได้ B ขึ้นไป {detail.achievedStudents} จาก {detail.totalStudents} คน (นับเฉพาะเกรด A–F
+            ไม่นับ W, I, S, U)
           </p>
         )}
         <p className="text-xs text-muted-foreground">
