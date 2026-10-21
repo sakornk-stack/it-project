@@ -345,6 +345,15 @@ export function DashboardShell({
         <SheetContent
           side="left"
           className="px-3 lg:hidden"
+          // Radix would focus the first non-link control (log out); start on the current
+          // menu item, or the first one, instead.
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            const nav = e.currentTarget as HTMLElement;
+            nav
+              .querySelector<HTMLElement>('nav a[aria-current="page"], nav a')
+              ?.focus();
+          }}
           // No Radix trigger here, so hand focus back to the header ☰ ourselves.
           onCloseAutoFocus={(e) => {
             e.preventDefault();
