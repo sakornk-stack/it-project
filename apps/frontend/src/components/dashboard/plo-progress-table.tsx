@@ -1,6 +1,6 @@
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
 import { formatFiveScale } from '@/lib/five-scale';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { ploProgressBarColorClassName } from '@/lib/plo-color';
 import { Progress } from '@/components/ui/progress';
 
 // Same 0–5 scale as the radar it sits under, so a PLO never reads as
@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 // always agree.
 //
 // With a `threshold` (the same bar the list above judges "ผ่าน / ยังไม่ผ่าน" by) each bar
-// gets a tick at that level, and a bar under it takes the soft warning colour plus the
+// gets a tick at that level, and a bar under it takes the soft warning colour (passing bars the green of the 'ผ่าน' badge) plus the
 // words "ยังไม่ผ่านเกณฑ์", so the state never rests on colour alone.
 export function PloProgressTable({
   radar,
@@ -42,7 +42,11 @@ export function PloProgressTable({
               <Progress
                 value={plo.value ?? 0}
                 label={`${plo.code} ${plo.name}`}
-                barClassName={below ? BAR_TONE_CLASSES.warning : undefined}
+                barClassName={
+                  plo.value !== null && threshold !== null
+                    ? ploProgressBarColorClassName(plo.value, threshold)
+                    : undefined
+                }
               />
               {threshold !== null && (
                 <span

@@ -10,17 +10,16 @@ export function ploProgressBarColorClassName(
   if (value === null) return BAR_TONE_CLASSES.neutral;
   if (threshold === null) return 'bg-primary';
   if (value >= threshold) return 'bg-emerald-600';
-  if (value >= threshold - 15) return 'bg-amber-500';
-  return 'bg-destructive';
+  // Under the bar is always the soft warning tone, never red: not passing yet is a to-do.
+  return BAR_TONE_CLASSES.warning;
 }
 
 // Tone for the status badge. The bar's colour is the single source of the
-// emerald / amber / red rule (and of its 15-point margin); this only translates
+// green / amber rule; this only translates
 // that class into a tone, so the badge and the bar can never disagree.
 const BAR_CLASS_TONE: Record<string, SemanticTone> = {
   'bg-emerald-600': 'success',
-  'bg-amber-500': 'warning',
-  'bg-destructive': 'danger',
+  [BAR_TONE_CLASSES.warning]: 'warning',
 };
 
 export function ploStatusTone(value: number | null, threshold: number | null): SemanticTone {
