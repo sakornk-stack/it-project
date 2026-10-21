@@ -1,22 +1,25 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { ListSkeleton, Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Same order as the loaded dashboard: the three numbers, the by-course
-// overview, the learning goals and the grade bar.
+// Same order as the loaded dashboard: the summary lines, the course rows, then
+// the follow-up table.
 export function InstructorDashboardSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <Skeleton className="h-52 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl lg:h-52" />
-        <Skeleton className="h-32 w-full rounded-xl lg:h-52" />
+    <div className="space-y-6" role="status">
+      <span className="sr-only">กำลังโหลดภาพรวมรายวิชา</span>
+      <Skeleton className="h-28 w-full rounded-xl" />
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-40" />
+        <div className="space-y-2 rounded-xl border p-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
       <div className="space-y-3">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-6 w-56" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
-      <Skeleton className="h-14 w-full rounded-lg" />
-      <Skeleton className="h-14 w-full rounded-lg" />
     </div>
   );
 }

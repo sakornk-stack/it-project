@@ -1,23 +1,30 @@
 'use client';
 
-import { Suspense, useMemo, useRef } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useInstructorCourseTimeline, useInstructorDashboard } from '@/lib/instructor-queries';
-import { courseTermInfo } from '@/lib/course-snapshot';
-import { advancePlay, INITIAL_PLAY } from '@/lib/count-up-policy';
+import { Suspense, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  useInstructorCourseTimeline,
+  useInstructorDashboard,
+  useInstructorYearLevels,
+} from '@/lib/instructor-queries';
+import { splitTimeline, termLabel } from '@/lib/course-timeline-summary';
+import { buildAttentionRows, buildPloLinks, selectFollowUps } from '@/lib/instructor-dashboard';
+import { buildInstructorSummary } from '@/lib/instructor-summary';
 import { useAuth } from '@/lib/auth-context';
+import { cn } from '@/lib/utils';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import Link from 'next/link';
-import { CourseHero } from '@/components/instructor/course-hero';
-import { CourseOverview } from '@/components/instructor/course-overview';
-import { CourseSelector, type CourseChoice } from '@/components/instructor/course-selector';
+import { CourseAttentionList } from '@/components/instructor/course-attention-list';
+import { FollowUpTable } from '@/components/instructor/follow-up-table';
 import { InstructorDashboardSkeleton } from '@/components/instructor/instructor-dashboard-skeleton';
+import { CARD, CARD_PAD } from '@/components/instructor/instructor-ui';
+import { PloLinksSection } from '@/components/instructor/plo-links-section';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { CountUpPolicy } from '@/components/ui/count-up-policy';
+
+const TITLE = 'ภาพรวมรายวิชาที่สอน';
 
 export default function InstructorDashboardPage() {
   // useSearchParams requires a Suspense boundary in the App Router
@@ -28,87 +35,73 @@ export default function InstructorDashboardPage() {
   );
 }
 
-// Shown while the URL's ?course= is being read; the layout's guard has already
-// resolved the user by the time this renders.
+// Shown while the URL is being read; the layout's guard has already resolved
+// the user by the time this renders.
 function InstructorDashboardFallback() {
   const { user } = useAuth();
   if (!user) return null;
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
-      <PageHeader title="ภาพรวมผลการเรียน" />
+      <PageHeader title={TITLE} />
       <InstructorDashboardSkeleton />
     </DashboardShell>
   );
 }
 
+// Every course the instructor teaches on one page, in the order of the questions
+// an instructor asks: which course to look at first, who to follow up, and which
+// PLO each course feeds. One course in depth is the course page's job.
 function InstructorDashboardContent() {
   const { user } = useAuth();
   const isInstructor = !!user?.roles.includes('INSTRUCTOR');
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const dashboardQuery = useInstructorDashboard({ enabled: isInstructor });
-  // Only for the term and curriculum under each course name; the page works
-  // without it.
+  // Only for the latest term in the header; the page works without it.
   const timelineQuery = useInstructorCourseTimeline({ enabled: isInstructor });
+  // Only for the year column of the follow-up table (same cache as the year-levels page).
+  const yearLevelsQuery = useInstructorYearLevels({ enabled: isInstructor });
 
   const courses = useMemo(() => dashboardQuery.data?.courses ?? [], [dashboardQuery.data]);
-  const choices = useMemo<CourseChoice[]>(
-    () =>
-      courses.map((c) => {
-        const info = timelineQuery.data
-          ? courseTermInfo(timelineQuery.data.years, c.courseId)
-          : null;
-        return {
-          courseId: c.courseId,
-          code: c.code,
-          name: c.name,
-          meta: [info?.termLabel, info?.curriculum].filter(Boolean).join(' · '),
-        };
-      }),
-    [courses, timelineQuery.data],
-  );
+  const summary = useMemo(() => buildInstructorSummary(courses), [courses]);
+  const attention = useMemo(() => buildAttentionRows(courses), [courses]);
+  const followUps = useMemo(() => selectFollowUps(courses), [courses]);
+  const ploLinks = useMemo(() => buildPloLinks(courses), [courses]);
+  const latestTerm = useMemo(() => {
+    const { latest } = splitTimeline(timelineQuery.data?.years ?? []);
+    return latest ? termLabel(latest) : null;
+  }, [timelineQuery.data]);
+  const yearLevelOf = useMemo(() => {
+    if (!yearLevelsQuery.data) return null;
+    const map = new Map<string, number>();
+    for (const bucket of yearLevelsQuery.data.buckets)
+      for (const s of bucket.students) map.set(s.studentProfileId, bucket.yearLevel);
+    return (id: string) => map.get(id);
+  }, [yearLevelsQuery.data]);
 
-  // The chosen course lives in ?course=; a missing or unknown id falls back to
-  // the first course, so a reload or a shared link lands on the same view.
+  // The dashboard used to show one course at a time under ?course=; an old link
+  // to it now opens that course's own page.
   const courseParam = searchParams.get('course');
-  const selected = courses.find((c) => c.courseId === courseParam) ?? courses[0] ?? null;
-
-  // The figures count up for the course shown when the page opens; switching
-  // course (or coming back to the first one) shows the values straight away.
-  const play = useRef(INITIAL_PLAY);
-  play.current = advancePlay(play.current, selected?.courseId ?? null);
-
-  function selectCourse(courseId: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('course', courseId);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }
+  const legacyCourse = courseParam && courses.some((c) => c.courseId === courseParam);
+  useEffect(() => {
+    if (legacyCourse) router.replace(`/instructor/courses/${courseParam}`);
+  }, [legacyCourse, courseParam, router]);
 
   // The layout's guard renders nothing below it until the user is known.
   if (!user) return null;
 
+  const description = [
+    latestTerm ? `ภาคเรียนล่าสุด ${latestTerm}` : null,
+    courses.length > 0 ? `สอน ${courses.length} วิชา` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
-        <div className="space-y-2">
-          <nav
-            aria-label="เส้นทางหน้า"
-            className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
-          >
-            <Link
-              href="/instructor/my-courses"
-              className="inline-flex min-h-11 items-center hover:text-primary"
-            >
-              รายวิชาที่สอน
-            </Link>
-          </nav>
-          <PageHeader
-            title="ภาพรวมผลการเรียน"
-            description="ผลการเรียนของรายวิชาที่คุณสอน ดูทีละวิชา"
-          />
-        </div>
+        <PageHeader title={TITLE} description={description || 'ทุกวิชาที่คุณสอนในหน้าเดียว'} />
       </Reveal>
 
       {dashboardQuery.isLoading && <InstructorDashboardSkeleton />}
@@ -117,13 +110,6 @@ function InstructorDashboardContent() {
         <ApiErrorAlert
           message="ไม่สามารถโหลดข้อมูลผลการเรียนของรายวิชาได้ กรุณาลองใหม่อีกครั้ง"
           onRetry={() => void dashboardQuery.refetch()}
-        />
-      )}
-
-      {timelineQuery.isError && (
-        <ApiErrorAlert
-          message="ไม่สามารถโหลดข้อมูลเทอมและหลักสูตรของรายวิชาได้ ส่วนอื่นของหน้านี้ยังแสดงได้ตามปกติ"
-          onRetry={() => void timelineQuery.refetch()}
         />
       )}
 
@@ -139,26 +125,53 @@ function InstructorDashboardContent() {
         </Card>
       )}
 
-      {selected && (
-        <Reveal index={1}>
-          <div className="space-y-6">
-            <CourseHero
-              course={selected}
-              heading="h2"
-              detailHref={`/instructor/courses/${selected.courseId}`}
-              switcher={
-                <CourseSelector
-                  courses={choices}
-                  activeCourseId={selected.courseId}
-                  onSelect={selectCourse}
+      {courses.length > 0 && !legacyCourse && (
+        <>
+          {summary && (
+            <Reveal index={1}>
+              <section aria-label="สรุปภาพรวม" className={cn(CARD, CARD_PAD, 'sm:p-6')}>
+                <ul className="space-y-2.5">
+                  {summary.map((line) => (
+                    <li key={line} className="flex gap-3 text-base leading-relaxed text-primary">
+                      <span
+                        aria-hidden="true"
+                        className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                      />
+                      <span className="min-w-0 break-words">{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </Reveal>
+          )}
+
+          <Reveal index={2}>
+            <CourseAttentionList rows={attention} />
+          </Reveal>
+
+          <Reveal index={3}>
+            <div className="space-y-3">
+              {yearLevelsQuery.isError && (
+                <ApiErrorAlert
+                  message="โหลดชั้นปีของนิสิตไม่สำเร็จ ส่วนอื่นของหน้านี้ยังแสดงได้ตามปกติ"
+                  onRetry={() => void yearLevelsQuery.refetch()}
                 />
-              }
-            />
-            <CountUpPolicy animate={play.current.animate}>
-              <CourseOverview key={selected.courseId} course={selected} />
-            </CountUpPolicy>
-          </div>
-        </Reveal>
+              )}
+              <FollowUpTable
+                rows={followUps.rows}
+                total={followUps.total}
+                people={followUps.people}
+                yearLevelOf={yearLevelOf}
+              />
+            </div>
+          </Reveal>
+
+          {ploLinks.length > 0 && (
+            <Reveal index={4}>
+              <PloLinksSection links={ploLinks} />
+            </Reveal>
+          )}
+        </>
       )}
     </DashboardShell>
   );
