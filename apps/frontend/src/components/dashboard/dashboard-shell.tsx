@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -9,6 +9,7 @@ import {
   GraduationCap,
   LogOut,
   Menu,
+  PanelLeftOpen,
   Presentation,
   ShieldCheck,
   User,
@@ -108,6 +109,7 @@ export function DashboardShell({
   // only hidden below sm. A student code is short and always shown.
   const identityIsEmail = !!shownIdentity?.includes('@');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   // Only the fixed (>= lg) sidebar collapses; the drawer is always full width.
   // The shell only renders after the client-side auth gate, never on the server, so reading the
   // saved choice in the initializer paints the right width on the first frame (no flash).
@@ -141,26 +143,41 @@ export function DashboardShell({
 
   // Icon-only mode keeps each label as screen-reader text and shows it as a tooltip.
   const renderSidebar = (iconOnly: boolean, showToggle = false) => {
-    const rowLayout = iconOnly ? 'justify-center px-0' : 'gap-3 px-3';
-    const labelClass = iconOnly ? 'sr-only' : undefined;
+    // Every row is a fixed 48px icon cell plus a label, and the rail is 48px of content, so the
+    // icons sit at the same x in both states and only the labels fade and get clipped.
+    const labelClass = cn(
+      'min-w-0 flex-1 overflow-hidden whitespace-nowrap pr-3 ease-in-out transition-opacity motion-reduce:transition-none',
+      iconOnly ? 'opacity-0 duration-100' : 'opacity-100 delay-100 duration-150',
+    );
+    const iconCell = 'flex h-11 w-12 shrink-0 items-center justify-center';
+    const rowBase =
+      'relative flex min-h-11 items-center overflow-hidden rounded-lg text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand';
     const tip = (label: string) => (iconOnly ? { 'aria-label': label } : undefined);
+    const railMotion = 'ease-in-out motion-reduce:transition-none';
 
     return (
     <>
       <div
         className={cn(
-          'mb-8 flex items-center',
-          iconOnly ? 'flex-col gap-3' : 'justify-between gap-2.5',
+          'relative mb-8 transition-[height] duration-[220ms]',
+          railMotion,
+          showToggle && iconOnly ? 'h-[6.25rem]' : 'h-11',
         )}
       >
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
+        <div className={cn(iconCell, 'absolute left-0 top-0')}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
             <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
           </div>
-          <div className={cn(iconOnly && 'sr-only')}>
-            <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
-            <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
-          </div>
+        </div>
+        <div
+          className={cn(
+            'absolute left-[3.25rem] top-0 flex h-11 flex-col justify-center whitespace-nowrap transition-opacity',
+            railMotion,
+            iconOnly ? 'opacity-0 duration-100' : 'opacity-100 delay-100 duration-150',
+          )}
+        >
+          <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
+          <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
         </div>
         {showToggle && (
           <RailTip label="ขยายเมนู" enabled={iconOnly}>
@@ -171,9 +188,30 @@ export function DashboardShell({
               aria-controls="app-sidebar"
               aria-label={iconOnly ? 'ขยายเมนู' : 'ย่อเมนู'}
               title={iconOnly ? undefined : 'ย่อเมนู'}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className={cn(
+                'absolute left-0 top-0 flex h-11 w-12 items-center justify-center rounded-lg text-muted-foreground transition-[transform,background-color,color] duration-[220ms] hover:bg-accent hover:text-foreground active:bg-accent active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                railMotion,
+                iconOnly ? 'translate-y-14' : 'translate-x-[11.4rem]',
+              )}
             >
-              <Menu size={20} aria-hidden="true" />
+              <Menu
+                size={20}
+                aria-hidden="true"
+                className={cn(
+                  'absolute transition-[opacity,transform] duration-200',
+                  railMotion,
+                  iconOnly ? 'rotate-90 opacity-0' : 'opacity-100',
+                )}
+              />
+              <PanelLeftOpen
+                size={20}
+                aria-hidden="true"
+                className={cn(
+                  'absolute transition-[opacity,transform] duration-200',
+                  railMotion,
+                  iconOnly ? 'opacity-100' : '-rotate-90 opacity-0',
+                )}
+              />
             </button>
           </RailTip>
         )}
@@ -191,14 +229,16 @@ export function DashboardShell({
               aria-current={active ? 'page' : undefined}
               {...tip(label)}
               className={cn(
-                'relative flex min-h-11 items-center rounded-lg py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-                rowLayout,
+                rowBase,
+                'font-medium transition-colors',
                 active
                   ? 'bg-brand-light text-brand before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-brand'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
             >
-              <Icon size={18} aria-hidden="true" className="shrink-0" />
+              <span className={iconCell}>
+                <Icon size={18} aria-hidden="true" />
+              </span>
               <span className={labelClass}>{label}</span>
             </Link>
             </RailTip>
@@ -208,7 +248,13 @@ export function DashboardShell({
 
       {otherRoles.length > 0 && (
         <div className="mb-3 flex flex-col gap-1 border-t border-border pt-4">
-          <p className={cn('px-3 pb-1 text-xs font-medium text-muted-foreground', labelClass)}>
+          <p
+            className={cn(
+              'overflow-hidden whitespace-nowrap px-3 text-xs font-medium text-muted-foreground transition-[max-height,opacity,padding] duration-[220ms]',
+              railMotion,
+              iconOnly ? 'max-h-0 pb-0 opacity-0' : 'max-h-6 pb-1 opacity-100',
+            )}
+          >
             สลับบทบาท
           </p>
           {otherRoles.map((otherRole) => {
@@ -220,11 +266,13 @@ export function DashboardShell({
               href={homeRouteForRole(otherRole)}
               {...tip(switchLabel)}
               className={cn(
-                'flex min-h-11 items-center rounded-lg py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-                rowLayout,
+                rowBase,
+                'text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
               )}
             >
-              <RoleIcon size={18} className="shrink-0" aria-hidden="true" />
+              <span className={iconCell}>
+                <RoleIcon size={18} aria-hidden="true" />
+              </span>
               <span className={labelClass}>{ROLE_LABEL_TH[otherRole]}</span>
             </Link>
             </RailTip>
@@ -240,14 +288,16 @@ export function DashboardShell({
           aria-current={pathname === '/profile' ? 'page' : undefined}
           {...tip('โปรไฟล์และความปลอดภัย')}
           className={cn(
-            'flex min-h-11 items-center rounded-lg py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-            rowLayout,
+            rowBase,
+            'transition-colors',
             pathname === '/profile'
               ? 'bg-brand-light font-medium text-brand'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
-          <User size={18} className="shrink-0" aria-hidden="true" />
+          <span className={iconCell}>
+            <User size={18} aria-hidden="true" />
+          </span>
           <span className={labelClass}>โปรไฟล์และความปลอดภัย</span>
         </Link>
         </RailTip>
@@ -257,11 +307,13 @@ export function DashboardShell({
           onClick={() => logout()}
           {...tip('ออกจากระบบ')}
           className={cn(
-            'flex min-h-11 items-center rounded-lg py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-            rowLayout,
+            rowBase,
+            'text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
           )}
         >
-          <LogOut size={18} className="shrink-0" aria-hidden="true" />
+          <span className={iconCell}>
+            <LogOut size={18} aria-hidden="true" />
+          </span>
           <span className={labelClass}>ออกจากระบบ</span>
         </button>
         </RailTip>
@@ -282,15 +334,23 @@ export function DashboardShell({
         id="app-sidebar"
         aria-label="เมนูด้านข้าง"
         className={cn(
-          'hidden w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/40 p-6 transition-[width,padding] duration-200 motion-reduce:transition-none lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start',
-          collapsed && 'lg:w-[4.5rem] lg:px-3',
+          'hidden w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/40 px-3 py-6 transition-[width] duration-[220ms] ease-in-out motion-reduce:transition-none lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start',
+          collapsed && 'lg:w-[4.5rem]',
         )}
       >
         <TooltipProvider delayDuration={150}>{renderSidebar(collapsed, true)}</TooltipProvider>
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent side="left" className="lg:hidden">
+        <SheetContent
+          side="left"
+          className="px-3 lg:hidden"
+          // No Radix trigger here, so hand focus back to the header ☰ ourselves.
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            menuButtonRef.current?.focus();
+          }}
+        >
           {renderSidebar(false)}
         </SheetContent>
       </Sheet>
@@ -301,6 +361,7 @@ export function DashboardShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8 lg:justify-end">
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setDrawerOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
