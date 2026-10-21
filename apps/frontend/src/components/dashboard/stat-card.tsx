@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowDown, ArrowRight, Check, type LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BADGE_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
+import { BADGE_TONE_CLASSES, TEXT_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
 
 // What the figure means: tints the icon tile and the number. 'primary' is the
 // brand look; the SemanticTone values follow the shared tone palette.
@@ -15,19 +15,12 @@ const TONE_ICON_TILE: Record<StatCardTone, string> = {
   danger: BADGE_TONE_CLASSES.danger,
   neutral: BADGE_TONE_CLASSES.neutral,
 };
-// The `large` tile: the same hues as above with a soft diagonal fade.
-const TONE_ICON_GRADIENT: Record<StatCardTone, string> = {
-  primary: 'bg-gradient-to-br from-brand-light to-sky-100 text-brand',
-  success: 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700',
-  warning: 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700',
-  danger: 'bg-gradient-to-br from-red-50 to-red-100 text-red-700',
-  neutral: 'bg-gradient-to-br from-slate-50 to-slate-200 text-slate-600',
-};
+// Figures take the tone's text colour; primary and neutral stay in the heading colour.
 const TONE_VALUE: Record<StatCardTone, string> = {
   primary: 'text-primary',
-  success: 'text-emerald-700',
-  warning: 'text-amber-700',
-  danger: 'text-red-700',
+  success: TEXT_TONE_CLASSES.success,
+  warning: TEXT_TONE_CLASSES.warning,
+  danger: TEXT_TONE_CLASSES.danger,
   neutral: 'text-primary',
 };
 
@@ -130,8 +123,8 @@ export function StatCard({
         className={cn(
           'rounded-full px-2 py-0.5 text-xs font-medium',
           badge.tone === 'positive'
-            ? 'bg-emerald-50 text-emerald-600'
-            : 'bg-slate-100 text-slate-600',
+            ? BADGE_TONE_CLASSES.success
+            : BADGE_TONE_CLASSES.neutral,
         )}
       >
         {badge.text}
@@ -168,11 +161,7 @@ export function StatCard({
           className={cn(
             'flex items-center justify-center',
             large ? 'h-12 w-12 rounded-xl' : 'h-9 w-9 rounded-lg',
-            large
-              ? TONE_ICON_GRADIENT[tone ?? 'primary']
-              : tone
-                ? TONE_ICON_TILE[tone]
-                : 'bg-brand-light text-brand',
+            TONE_ICON_TILE[tone ?? 'primary'],
           )}
         >
           <Icon
@@ -219,7 +208,7 @@ export function StatCard({
             <p
               className={cn(
                 compact || dense ? 'text-2xl' : 'text-3xl',
-                'font-semibold',
+                'font-semibold tabular-nums',
                 tone && !large ? TONE_VALUE[tone] : 'text-primary',
               )}
             >

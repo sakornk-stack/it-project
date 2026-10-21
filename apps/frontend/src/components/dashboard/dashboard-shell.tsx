@@ -66,17 +66,17 @@ export function DashboardShell({
 
   const sidebarContent = (
     <>
-      <div className="mb-8 flex items-center gap-2">
+      <div className="mb-8 flex items-center gap-2.5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
           <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
         </div>
         <div>
-          <p className="text-sm font-medium leading-tight text-primary">EduAnalyze</p>
-          <p className="text-xs leading-tight text-muted-foreground">Academic Insights</p>
+          <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
+          <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
         </div>
       </div>
 
-      <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-1">
+      <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const { label, icon: Icon, href } = item;
           const active = isNavItemActive(item, pathname);
@@ -87,11 +87,13 @@ export function DashboardShell({
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-                active ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50',
+                'relative flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                active
+                  ? 'bg-brand-light text-brand before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-brand'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
             >
-              <Icon size={16} aria-hidden="true" />
+              <Icon size={18} aria-hidden="true" className="shrink-0" />
               {label}
             </Link>
           );
@@ -99,22 +101,22 @@ export function DashboardShell({
       </nav>
 
       {otherRoles.length > 0 && (
-        <div className="mb-3 flex flex-col gap-1 border-t border-slate-100 pt-4">
+        <div className="mb-3 flex flex-col gap-1 border-t border-border pt-4">
           <p className="px-3 pb-1 text-xs font-medium text-muted-foreground">สลับบทบาท</p>
           {otherRoles.map((otherRole) => (
             <Link
               key={otherRole}
               href={homeRouteForRole(otherRole)}
-              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <Repeat size={16} aria-hidden="true" />
+              <Repeat size={18} className="shrink-0" aria-hidden="true" />
               {ROLE_LABEL_TH[otherRole]}
             </Link>
           ))}
         </div>
       )}
 
-      <div className="flex flex-col gap-1 border-t border-slate-100 pt-4">
+      <div className="flex flex-col gap-1 border-t border-border pt-4">
         <Link
           href="/profile"
           aria-current={pathname === '/profile' ? 'page' : undefined}
@@ -122,18 +124,18 @@ export function DashboardShell({
             'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
             pathname === '/profile'
               ? 'bg-brand-light font-medium text-brand'
-              : 'text-slate-600 hover:bg-slate-50',
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
-          <User size={16} aria-hidden="true" />
+          <User size={18} className="shrink-0" aria-hidden="true" />
           โปรไฟล์และความปลอดภัย
         </Link>
         <button
           type="button"
           onClick={() => logout()}
-          className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <LogOut size={16} aria-hidden="true" />
+          <LogOut size={18} className="shrink-0" aria-hidden="true" />
           ออกจากระบบ
         </button>
       </div>
@@ -148,7 +150,7 @@ export function DashboardShell({
       >
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 flex-col border-r border-slate-100 p-6 md:flex">
+      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 flex-col border-r border-border bg-card/40 p-6 md:flex">
         {sidebarContent}
       </aside>
 
@@ -162,11 +164,11 @@ export function DashboardShell({
           min-content width, so a wide table's overflow-x-auto wrapper never got
           narrower than the table and the whole page scrolled sideways. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-100 px-4 py-4 md:justify-end md:px-8">
+        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:justify-end md:px-8">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="เปิดเมนู"
           >
             <Menu size={20} aria-hidden="true" />

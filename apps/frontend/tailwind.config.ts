@@ -79,6 +79,10 @@ const config: Config = {
           foreground: 'hsl(var(--popover-foreground))',
         },
       },
+      // One very thin shadow for every resting card; hover lifts use .interactive-card.
+      boxShadow: {
+        card: '0 1px 2px 0 hsl(var(--foreground) / 0.05)',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

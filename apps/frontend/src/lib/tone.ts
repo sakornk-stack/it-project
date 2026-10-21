@@ -19,6 +19,14 @@ export const BADGE_TONE_CLASSES: Record<SemanticTone, string> = {
   neutral: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
+// The fourth status hue (informational). Kept out of SemanticTone so existing exhaustive
+// Record<SemanticTone, …> maps stay valid; use it where a note is neither good nor bad.
+export const INFO_TONE_CLASSES = {
+  badge: 'bg-sky-50 text-sky-700 border-sky-200',
+  tint: 'bg-sky-50',
+  text: 'text-sky-700',
+} as const;
+
 // A soft background alone, for tinting a table cell or a row by meaning.
 export const TINT_TONE_CLASSES: Record<SemanticTone, string> = {
   success: 'bg-emerald-50',

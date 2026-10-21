@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Check, Eye, EyeOff, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BAR_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
+import { BAR_TONE_CLASSES, TEXT_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
 import {
   evaluatePasswordStrength,
   type PasswordRequirements,
@@ -50,16 +50,16 @@ function PasswordStrengthMeter({ password }: Readonly<{ password: string }>) {
         <span
           className={cn(
             'font-medium',
-            level === 'weak' && 'text-red-600',
-            level === 'medium' && 'text-amber-600',
-            level === 'strong' && 'text-emerald-600',
+            level === 'weak' && TEXT_TONE_CLASSES.danger,
+            level === 'medium' && TEXT_TONE_CLASSES.warning,
+            level === 'strong' && TEXT_TONE_CLASSES.success,
           )}
         >
           {STRENGTH_LABEL_TH[level]}
         </span>
       </div>
 
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={cn(
             'h-full rounded-full transition-all duration-300 ease-out',
@@ -78,14 +78,14 @@ function PasswordStrengthMeter({ password }: Readonly<{ password: string }>) {
                 className={cn(
                   'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors duration-200',
                   met
-                    ? 'border-emerald-500 bg-emerald-500 text-white'
-                    : 'border-slate-300 bg-transparent text-transparent',
+                    ? 'border-emerald-600 bg-emerald-600 text-white'
+                    : 'border-input bg-transparent text-transparent',
                 )}
                 aria-hidden="true"
               >
                 <Check size={10} strokeWidth={3} />
               </span>
-              <span className={cn(met ? 'text-slate-600' : 'text-muted-foreground')}>
+              <span className={cn(met ? 'text-foreground/80' : 'text-muted-foreground')}>
                 {item.label}
                 <span className="sr-only">{met ? ' (ผ่านแล้ว)' : ' (ยังไม่ผ่าน)'}</span>
               </span>
@@ -117,7 +117,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
         <div className="relative">
           <Lock
             size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <Input
