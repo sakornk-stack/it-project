@@ -347,7 +347,7 @@ scp apps/backend/prisma/private-data/{career-course-2569,career-course-2564,care
 
 ```bash
 # บน VPS: backup ก่อน แล้วรัน dry-run ทีละไฟล์ (ตัวอย่างขั้น 1; ขั้น 2 และ 3 เปลี่ยนชื่อสคริปต์/ไฟล์)
-cd ~/eduanalyze && bash scripts/db-backup.sh before-career-groups
+cd ~/eduanalyze && bash deploy/backup-db.sh before-career-groups   # บน VPS มีแค่ deploy/*.sh (scripts/db-backup.sh เป็นของเครื่อง dev)
 SRC="$HOME/seed-files"; P=/app/apps/backend/prisma
 docker compose run --rm --no-deps -T -e ALLOW_PROD_SEED=yes \
   -v "$SRC/import-career-courses.ts:$P/import-career-courses.ts:ro" \

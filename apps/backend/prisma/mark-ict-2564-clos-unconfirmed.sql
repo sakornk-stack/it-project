@@ -5,7 +5,8 @@
 -- Scope: active CLOs of active courses of the ICT program's version "2564" curriculum
 -- only. Other curricula are never touched. Run it once, BEFORE ADMIN adds CLOs by
 -- hand in 2564 (a second run would flag those too). Needs migration
--- 20261021100000_add_clo_is_confirmed applied. Back up first: bash scripts/db-backup.sh <label>
+-- 20261021100000_add_clo_is_confirmed applied. Back up first: on the dev machine
+-- `bash scripts/db-backup.sh <label>`, on the VPS `bash deploy/backup-db.sh <label>`.
 --
 -- Usage (inside the postgres container; never print the connection string):
 --   docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
