@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  ClipboardList,
+  Crown,
   GraduationCap,
   LogOut,
-  Repeat,
   Menu,
+  Presentation,
+  ShieldCheck,
   User,
+  type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
@@ -19,6 +23,7 @@ import { PrivacyFooterLink } from '@/components/layout/privacy-footer-link';
 import { ROLE_BADGE_TONE, ROLE_LABEL_TH } from '@/components/auth/require-role';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
@@ -27,6 +32,31 @@ import { isNavItemActive, navItemsForRole } from './nav-config';
 // Remembered per browser; read after mount so the server render and first client
 // render agree (expanded), then the saved choice applies and the width eases over.
 const SIDEBAR_COLLAPSED_KEY = 'eduanalyze.sidebar-collapsed';
+
+// Icon for each role's "switch role" link — in the icon rail a shared icon would make
+// several other roles indistinguishable.
+const ROLE_SWITCH_ICON: Record<Role, LucideIcon> = {
+  STUDENT: GraduationCap,
+  INSTRUCTOR: Presentation,
+  STAFF: ClipboardList,
+  ADMIN: ShieldCheck,
+  SUPER_ADMIN: Crown,
+};
+
+// Tooltip for the icon rail; Radix opens it on hover and on keyboard focus.
+function RailTip({
+  label,
+  enabled,
+  children,
+}: Readonly<{ label: string; enabled: boolean; children: React.ReactElement }>) {
+  if (!enabled) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 function readSidebarCollapsed(): boolean {
   try {
@@ -78,10 +108,21 @@ export function DashboardShell({
   const identityIsEmail = !!shownIdentity?.includes('@');
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Only the fixed (>= lg) sidebar collapses; the drawer is always full width.
-  const [collapsed, setCollapsed] = useState(false);
+  // The shell only renders after the client-side auth gate, never on the server, so reading the
+  // saved choice in the initializer paints the right width on the first frame (no flash).
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window === 'undefined' ? false : readSidebarCollapsed(),
+  );
 
+  // Crossing up to the desktop breakpoint must not leave the drawer (and its overlay and
+  // scroll lock) open behind the fixed sidebar.
   useEffect(() => {
-    setCollapsed(readSidebarCollapsed());
+    const query = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = (e: MediaQueryListEvent) => {
+      if (e.matches) setDrawerOpen(false);
+    };
+    query.addEventListener('change', closeOnDesktop);
+    return () => query.removeEventListener('change', closeOnDesktop);
   }, []);
 
   const toggleCollapsed = () => {
@@ -97,12 +138,11 @@ export function DashboardShell({
     setDrawerOpen(false);
   }, [pathname]);
 
-  // Icon-only mode keeps each label as screen-reader text and a tooltip.
+  // Icon-only mode keeps each label as screen-reader text and shows it as a tooltip.
   const renderSidebar = (iconOnly: boolean) => {
     const rowLayout = iconOnly ? 'justify-center px-0' : 'gap-3 px-3';
     const labelClass = iconOnly ? 'sr-only' : undefined;
-    const tip = (label: string) =>
-      iconOnly ? { title: label, 'aria-label': label } : undefined;
+    const tip = (label: string) => (iconOnly ? { 'aria-label': label } : undefined);
 
     return (
     <>
@@ -122,8 +162,8 @@ export function DashboardShell({
           const active = isNavItemActive(item, pathname);
 
           return (
+            <RailTip key={label} label={label} enabled={iconOnly}>
             <Link
-              key={label}
               href={href}
               aria-current={active ? 'page' : undefined}
               {...tip(label)}
@@ -138,6 +178,7 @@ export function DashboardShell({
               <Icon size={18} aria-hidden="true" className="shrink-0" />
               <span className={labelClass}>{label}</span>
             </Link>
+            </RailTip>
           );
         })}
       </nav>
@@ -147,24 +188,30 @@ export function DashboardShell({
           <p className={cn('px-3 pb-1 text-xs font-medium text-muted-foreground', labelClass)}>
             สลับบทบาท
           </p>
-          {otherRoles.map((otherRole) => (
+          {otherRoles.map((otherRole) => {
+            const RoleIcon = ROLE_SWITCH_ICON[otherRole];
+            const switchLabel = `สลับบทบาท: ${ROLE_LABEL_TH[otherRole]}`;
+            return (
+            <RailTip key={otherRole} label={switchLabel} enabled={iconOnly}>
             <Link
-              key={otherRole}
               href={homeRouteForRole(otherRole)}
-              {...tip(`สลับบทบาท: ${ROLE_LABEL_TH[otherRole]}`)}
+              {...tip(switchLabel)}
               className={cn(
                 'flex min-h-11 items-center rounded-lg py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                 rowLayout,
               )}
             >
-              <Repeat size={18} className="shrink-0" aria-hidden="true" />
+              <RoleIcon size={18} className="shrink-0" aria-hidden="true" />
               <span className={labelClass}>{ROLE_LABEL_TH[otherRole]}</span>
             </Link>
-          ))}
+            </RailTip>
+            );
+          })}
         </div>
       )}
 
       <div className="flex flex-col gap-1 border-t border-border pt-4">
+        <RailTip label="โปรไฟล์และความปลอดภัย" enabled={iconOnly}>
         <Link
           href="/profile"
           aria-current={pathname === '/profile' ? 'page' : undefined}
@@ -180,6 +227,8 @@ export function DashboardShell({
           <User size={18} className="shrink-0" aria-hidden="true" />
           <span className={labelClass}>โปรไฟล์และความปลอดภัย</span>
         </Link>
+        </RailTip>
+        <RailTip label="ออกจากระบบ" enabled={iconOnly}>
         <button
           type="button"
           onClick={() => logout()}
@@ -192,6 +241,7 @@ export function DashboardShell({
           <LogOut size={18} className="shrink-0" aria-hidden="true" />
           <span className={labelClass}>ออกจากระบบ</span>
         </button>
+        </RailTip>
       </div>
     </>
     );
@@ -213,7 +263,7 @@ export function DashboardShell({
           collapsed && 'lg:w-[4.5rem] lg:px-3',
         )}
       >
-        {renderSidebar(collapsed)}
+        <TooltipProvider delayDuration={150}>{renderSidebar(collapsed)}</TooltipProvider>
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -241,8 +291,8 @@ export function DashboardShell({
             aria-expanded={!collapsed}
             aria-controls="app-sidebar"
             className="hidden h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            aria-label={collapsed ? 'ขยายเมนูด้านข้าง' : 'พับเมนูด้านข้าง'}
-            title={collapsed ? 'ขยายเมนูด้านข้าง' : 'พับเมนูด้านข้าง'}
+            aria-label={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
+            title={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
           >
             <Menu size={20} aria-hidden="true" />
           </button>
