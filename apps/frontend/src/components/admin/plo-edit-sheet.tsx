@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { FormActions, DangerZone } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { StaffSheet } from '@/components/staff/staff-sheet';
@@ -167,7 +168,7 @@ export function PloEditSheet({
             )}
           />
 
-          <div className="flex flex-wrap gap-2 pt-2">
+          <FormActions>
             <Button type="submit" className="px-5" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting
                 ? 'กำลังบันทึก...'
@@ -178,19 +179,12 @@ export function PloEditSheet({
             <Button type="button" variant="outline" className="px-5" onClick={onClose}>
               ยกเลิก
             </Button>
-          </div>
+          </FormActions>
         </form>
       </Form>
 
       {editing && (
-        <section
-          aria-labelledby="plo-delete-heading"
-          className="mt-6 space-y-3 rounded-md border border-destructive/40 p-4"
-        >
-          <h3 id="plo-delete-heading" className="text-sm font-semibold text-destructive">
-            ลบ PLO
-          </h3>
-          <p className="text-sm text-muted-foreground">{PLO_DELETE_WARNING}</p>
+        <DangerZone id="plo-delete-heading" title="ลบ PLO" description={PLO_DELETE_WARNING}>
           {deleteError && <ApiErrorAlert message={deleteError} />}
           <Button
             type="button"
@@ -201,7 +195,7 @@ export function PloEditSheet({
           >
             {deleting ? 'กำลังลบ...' : 'ลบ PLO'}
           </Button>
-        </section>
+        </DangerZone>
       )}
       {confirmDialog}
     </StaffSheet>

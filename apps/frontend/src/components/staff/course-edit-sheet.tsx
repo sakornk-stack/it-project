@@ -26,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { FormActions, DangerZone } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -320,7 +321,7 @@ export function CourseEditSheet({
             )}
           />
 
-          <div className="flex flex-wrap gap-2 pt-2">
+          <FormActions>
             <Button type="submit" className="px-5" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting
                 ? 'กำลังบันทึก...'
@@ -331,7 +332,7 @@ export function CourseEditSheet({
             <Button type="button" variant="outline" className="px-5" onClick={onClose}>
               ยกเลิก
             </Button>
-          </div>
+          </FormActions>
         </form>
       </Form>
 
@@ -345,14 +346,11 @@ export function CourseEditSheet({
       )}
 
       {editing && (
-        <section
-          aria-labelledby="course-delete-heading"
-          className="mt-6 space-y-3 rounded-md border border-destructive/40 p-4"
+        <DangerZone
+          id="course-delete-heading"
+          title="ลบรายวิชา"
+          description={COURSE_DELETE_WARNING}
         >
-          <h3 id="course-delete-heading" className="text-sm font-semibold text-destructive">
-            ลบรายวิชา
-          </h3>
-          <p className="text-sm text-muted-foreground">{COURSE_DELETE_WARNING}</p>
           {deleteError && <ApiErrorAlert message={deleteError} />}
           <Button
             type="button"
@@ -363,7 +361,7 @@ export function CourseEditSheet({
           >
             {deleting ? 'กำลังลบ...' : 'ลบรายวิชา'}
           </Button>
-        </section>
+        </DangerZone>
       )}
       {confirmDialog}
     </StaffSheet>

@@ -9,6 +9,7 @@ import { OWN_SENTENCE_ONLY, STAFF_WRITE_ERRORS } from '@/lib/api-error-presets';
 import { useToast } from '@/lib/toast-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { StaffCombobox } from './staff-combobox';
 import { StaffSheet } from './staff-sheet';
 
@@ -97,7 +98,7 @@ export function AssignInstructorSheet({
           </p>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <FormActions className="pt-0">
         <Button
           type="button"
           className="px-5"
@@ -110,7 +111,7 @@ export function AssignInstructorSheet({
         <Button type="button" variant="outline" className="px-5" onClick={onClose}>
           ยกเลิก
         </Button>
-      </div>
+      </FormActions>
     </StaffSheet>
   );
 }

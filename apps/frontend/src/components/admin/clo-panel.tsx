@@ -25,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { FormActions, DangerZone } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -310,7 +311,7 @@ export function CloPanel({
             )}
           </fieldset>
 
-          <div className="flex flex-wrap gap-2 pt-1">
+          <FormActions>
             <Button type="submit" className="px-5" disabled={busy}>
               {form.formState.isSubmitting
                 ? 'กำลังบันทึก...'
@@ -321,19 +322,12 @@ export function CloPanel({
             <Button type="button" variant="outline" className="px-5" onClick={onClose}>
               ยกเลิก
             </Button>
-          </div>
+          </FormActions>
         </form>
       </Form>
 
       {editing && (
-        <section
-          aria-labelledby="clo-delete-heading"
-          className="mt-6 space-y-3 rounded-md border border-destructive/40 p-4"
-        >
-          <h3 id="clo-delete-heading" className="text-sm font-semibold text-destructive">
-            ลบ CLO
-          </h3>
-          <p className="text-sm text-muted-foreground">{CLO_DELETE_WARNING}</p>
+        <DangerZone id="clo-delete-heading" title="ลบ CLO" description={CLO_DELETE_WARNING}>
           {deleteError && <ApiErrorAlert message={deleteError} />}
           <Button
             type="button"
@@ -344,7 +338,7 @@ export function CloPanel({
           >
             {deleting ? 'กำลังลบ...' : 'ลบ CLO'}
           </Button>
-        </section>
+        </DangerZone>
       )}
       {confirmDialog}
     </StaffSheet>

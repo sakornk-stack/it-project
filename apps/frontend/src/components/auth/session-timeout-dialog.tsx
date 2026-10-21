@@ -74,7 +74,7 @@ export function SessionTimeoutDialog({
             event.preventDefault();
             (canExtend ? extendRef : logoutRef).current?.focus();
           }}
-          className="fixed left-1/2 top-1/2 z-[100] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-card p-6 text-center text-card-foreground shadow-lg outline-none"
+          className="fixed left-1/2 top-1/2 z-[100] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 text-center text-card-foreground shadow-xl outline-none"
         >
           <div className="flex flex-col items-center gap-4">
             {reducedMotion ? (
@@ -108,7 +108,12 @@ export function SessionTimeoutDialog({
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center [&>button]:w-full sm:[&>button]:w-auto">
+            {canExtend && (
+              <Button ref={extendRef} type="button" onClick={onExtend} disabled={extending}>
+                {extending ? 'กำลังต่อเวลา…' : 'ต่อเวลา'}
+              </Button>
+            )}
             <Button
               ref={logoutRef}
               type="button"
@@ -118,11 +123,6 @@ export function SessionTimeoutDialog({
             >
               ออกจากระบบ
             </Button>
-            {canExtend && (
-              <Button ref={extendRef} type="button" onClick={onExtend} disabled={extending}>
-                {extending ? 'กำลังต่อเวลา…' : 'ต่อเวลา'}
-              </Button>
-            )}
           </div>
 
           {/* Polite, sparse countdown for screen readers; the numbers above are aria-hidden. */}
