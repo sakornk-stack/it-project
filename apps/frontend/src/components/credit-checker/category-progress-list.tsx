@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import type { CategoryProgress } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { BAR_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,7 +23,7 @@ export function CategoryProgressSummary({
   const remaining = total - done;
   if (remaining === 0) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-emerald-700">
+      <span className={cn('inline-flex items-center gap-1.5', TEXT_TONE_CLASSES.success)}>
         <Check size={14} aria-hidden="true" />
         ครบทุกหมวดแล้ว ({done} จาก {total})
       </span>
@@ -67,7 +67,7 @@ export function CategoryProgressList({ categories }: Readonly<{ categories: Cate
                         {over > 0 && ` · เกิน ${over}`}
                       </span>
                       {category.isComplete ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                        <span className={cn('inline-flex items-center gap-1 text-xs', TEXT_TONE_CLASSES.success)}>
                           <Check size={12} aria-hidden="true" />
                           ครบแล้ว
                         </span>

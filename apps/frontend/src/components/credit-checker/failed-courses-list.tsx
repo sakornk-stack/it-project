@@ -16,7 +16,7 @@ export function FailedCoursesList({ courses }: Readonly<{ courses: CourseSummary
         {courses.map((course) => (
           <div
             key={course.courseId}
-            className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
+            className="flex items-center justify-between rounded-lg border border-border p-3"
           >
             <div className="min-w-0">
               <p className="course-name-break text-sm font-medium text-primary">

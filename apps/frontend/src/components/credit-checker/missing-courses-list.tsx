@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { AlertTriangle, BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
 import type { CourseSummary } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
+import { TEXT_TONE_CLASSES } from '@/lib/tone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -34,13 +35,13 @@ function CourseTile({
           .filter((c): c is CourseSummary => !!c)
       : [];
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-slate-100 p-3">
+    <li className="flex items-start gap-3 rounded-lg border border-border p-3">
       <Icon
         size={18}
         aria-hidden="true"
         className={cn(
           'mt-0.5 shrink-0',
-          course.isPrerequisiteSatisfied && !isFailed ? 'text-brand' : 'text-amber-500',
+          course.isPrerequisiteSatisfied && !isFailed ? 'text-brand' : TEXT_TONE_CLASSES.warning,
         )}
       />
       <div className="min-w-0">
