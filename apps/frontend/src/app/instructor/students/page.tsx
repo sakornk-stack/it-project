@@ -192,7 +192,8 @@ function InstructorStudentsContent() {
                 <CardContent className="pt-6">
                   <EmptyState
                     illustration="no-results"
-                    description="ไม่พบนิสิตที่ตรงกับตัวกรองที่เลือก"
+                    title="ไม่พบนิสิต"
+                    description="ไม่มีนิสิตที่ตรงกับตัวกรองที่เลือก ลองเปลี่ยนหรือล้างตัวกรอง"
                     action={
                       <Button type="button" variant="outline" onClick={clearFilters}>
                         ล้างตัวกรอง

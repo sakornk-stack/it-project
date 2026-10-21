@@ -81,6 +81,7 @@ export default function StaffYearLevelsPage() {
           <CardContent className="pt-6">
             <EmptyState
               illustration="no-students"
+              title="ยังไม่มีนิสิต"
               description="ยังไม่มีนิสิตในขอบเขตที่คุณดูแล"
             />
           </CardContent>

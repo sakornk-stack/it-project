@@ -58,7 +58,8 @@ export function StaffStudentList({
         <CardContent className="pt-6">
           <EmptyState
             icon={SearchX}
-            description="ไม่พบนิสิตที่ตรงกับเงื่อนไขที่เลือก ลองเปลี่ยนหรือล้างตัวกรองและคำค้นหาด้านบน"
+            title="ไม่พบนิสิต"
+            description="ไม่มีนิสิตที่ตรงกับเงื่อนไขที่เลือก ลองเปลี่ยนหรือล้างตัวกรองและคำค้นหาด้านบน"
           />
         </CardContent>
       </Card>

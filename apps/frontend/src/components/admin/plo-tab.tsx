@@ -32,7 +32,11 @@ export function PloTab({
         </Button>
       </div>
       {plos.length === 0 ? (
-        <EmptyState icon={ListChecks} description="หลักสูตรนี้ยังไม่มี PLO" />
+        <EmptyState
+          icon={ListChecks}
+          title="ยังไม่มี PLO"
+          description="เพิ่ม PLO ของหลักสูตรนี้ได้ที่ปุ่มด้านบน"
+        />
       ) : (
         <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-card">
           {plos.map((plo) => (

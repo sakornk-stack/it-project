@@ -72,7 +72,8 @@ function InstructorMyCoursesContent() {
             <CardContent className="pt-6">
               <EmptyState
                 illustration="no-data"
-                description="ยังไม่มีวิชาที่ได้รับมอบหมายให้คุณสอน เมื่อมีนิสิตเรียน วิชาจะขึ้นที่นี่"
+                title="ยังไม่มีวิชาที่ได้รับมอบหมายให้สอน"
+                description="เมื่อมีนิสิตเรียน วิชาจะขึ้นที่นี่"
               />
             </CardContent>
           </Card>

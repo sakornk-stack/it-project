@@ -148,7 +148,8 @@ function InstructorYearLevelsContent() {
               <CardContent className="pt-6">
                 <EmptyState
                   illustration="no-students"
-                  description="ยังไม่มีนิสิตที่เกี่ยวข้องกับวิชาที่คุณสอน ชั้นปีจะขึ้นที่นี่เมื่อมีนิสิตลงเรียน"
+                  title="ยังไม่มีนิสิตที่เกี่ยวข้องกับวิชาที่คุณสอน"
+                  description="ชั้นปีจะขึ้นที่นี่เมื่อมีนิสิตลงเรียน"
                   action={
                     <Button asChild variant="outline">
                       <Link href="/instructor/my-courses">ดูรายวิชาที่สอน</Link>

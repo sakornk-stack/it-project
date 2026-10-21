@@ -188,7 +188,11 @@ function OutcomesContent() {
       )}
       {loading && <Skeleton className="h-40 w-full" />}
       {directoryQuery.isSuccess && entries.length === 0 && (
-        <EmptyState icon={ListChecks} description="ยังไม่มีหลักสูตรในขอบเขตที่คุณดูแล" />
+        <EmptyState
+          icon={ListChecks}
+          title="ยังไม่มีหลักสูตร"
+          description="ยังไม่มีหลักสูตรในขอบเขตที่คุณดูแล"
+        />
       )}
 
       {entry && !loading && !loadError && (

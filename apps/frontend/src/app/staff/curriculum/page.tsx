@@ -335,7 +335,8 @@ function StaffCurriculumContent() {
           <CardContent className="pt-6">
             <EmptyState
               icon={GraduationCap}
-              description="บัญชีนี้ยังไม่มีสาขาในความดูแล จึงไม่มีหลักสูตรให้แสดง ติดต่อผู้ดูแลระบบ (ADMIN) เพื่อกำหนดขอบเขตของคุณ"
+              title="ยังไม่มีสาขาในความดูแล"
+              description="จึงไม่มีหลักสูตรให้แสดง ติดต่อผู้ดูแลระบบ (ADMIN) เพื่อกำหนดขอบเขตของคุณ"
             />
           </CardContent>
         </Card>
@@ -552,7 +553,8 @@ function StaffCurriculumContent() {
                   <CardContent className="pt-6">
                     <EmptyState
                       icon={BookOpen}
-                      description="หลักสูตรนี้ยังไม่มีหมวดวิชา รายวิชาต้องอยู่ในหมวด จึงต้องเพิ่มหมวดวิชาก่อน แล้วค่อยเพิ่มรายวิชา"
+                      title="หลักสูตรนี้ยังไม่มีหมวดวิชา"
+                      description="รายวิชาต้องอยู่ในหมวด จึงต้องเพิ่มหมวดวิชาก่อน แล้วค่อยเพิ่มรายวิชา"
                     />
                   </CardContent>
                 </Card>

@@ -8,7 +8,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-md bg-slate-100',
+        'relative overflow-hidden rounded-md bg-muted',
         'before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer',
         'before:bg-gradient-to-r before:from-transparent before:via-background/70 before:to-transparent',
         className,
@@ -29,7 +29,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
         ))}
       </div>
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className="flex gap-4 border-b border-slate-50 pb-3">
+        <div key={r} className="flex gap-4 border-b border-border pb-3">
           {Array.from({ length: cols }).map((_, c) => (
             <Skeleton key={c} className="h-4 flex-1" />
           ))}

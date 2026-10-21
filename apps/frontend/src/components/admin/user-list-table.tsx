@@ -361,12 +361,14 @@ export function UserListTable({
           users.length === 0 ? (
             <EmptyState
               icon={UsersRound}
-              description="ยังไม่มีผู้ใช้งานในขอบเขตของคุณ กด “เพิ่มผู้ใช้งาน” ที่มุมบนเพื่อสร้างบัญชีแรก"
+              title="ยังไม่มีผู้ใช้งาน"
+              description="กด “เพิ่มผู้ใช้งาน” ที่มุมบนเพื่อสร้างบัญชีแรกในขอบเขตของคุณ"
             />
           ) : (
             <EmptyState
               icon={SearchX}
-              description="ไม่พบผู้ใช้งานที่ตรงกับตัวกรอง ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง"
+              title="ไม่พบผู้ใช้งาน"
+              description="ไม่มีบัญชีที่ตรงกับตัวกรอง ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง"
               action={
                 <Button type="button" variant="outline" onClick={clear}>
                   ล้างตัวกรอง

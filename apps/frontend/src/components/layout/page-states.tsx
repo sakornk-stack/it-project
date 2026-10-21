@@ -5,9 +5,9 @@ import type { CurrentUserResponse } from '@eduanalyze-ai/shared-types';
 import { primaryRoleFor } from '@/lib/role-priority';
 import { resolveHomeRoute } from '@/lib/dashboard-routes';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AccessDenied } from '@/components/ui/access-denied';
+import { StateBlock } from '@/components/ui/empty-state';
 
 // The one "no access" page: the viewer's own shell (menu, header) around AccessDenied, so a
 // wrong-role visitor keeps their navigation and a way out. Used by every role's layout guard.
@@ -34,16 +34,20 @@ export function PageLoadError({
   onRetry?: () => void;
 }) {
   return (
-    <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
-        <span>{message}</span>
-        {onRetry && (
-          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            ลองใหม่
-          </Button>
-        )}
-      </AlertDescription>
-    </Alert>
+    <div role="alert" className="rounded-xl border border-border bg-card shadow-card">
+      <StateBlock
+        icon={AlertCircle}
+        tone="danger"
+        title="โหลดข้อมูลไม่สำเร็จ"
+        description={message}
+        action={
+          onRetry && (
+            <Button type="button" variant="outline" onClick={onRetry}>
+              ลองใหม่
+            </Button>
+          )
+        }
+      />
+    </div>
   );
 }
