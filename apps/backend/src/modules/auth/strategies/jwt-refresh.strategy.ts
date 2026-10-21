@@ -10,6 +10,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { UserService } from '../../users/user/user.service';
 import { JwtPayload } from '../jwt-payload.interface';
 import { RequestUser } from '../request-user.interface';
+import { issuedBeforeTokenValidAfter } from './token-valid-after';
 
 // Sibling to JwtStrategy — same "always resolve live" re-fetch, but reads
 // the refresh token from the httpOnly cookie (never a header, never
@@ -60,10 +61,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException('Account is deactivated');
     }
     // Password changed/reset after this token was issued (iat is in seconds).
-    if (
-      user.tokenValidAfter &&
-      (payload.iat ?? 0) < Math.floor(user.tokenValidAfter.getTime() / 1000)
-    ) {
+    if (issuedBeforeTokenValidAfter(payload.iat, user.tokenValidAfter)) {
       throw new UnauthorizedException('Session has ended');
     }
     return {

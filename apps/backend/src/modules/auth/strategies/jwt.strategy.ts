@@ -8,6 +8,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserService } from '../../users/user/user.service';
 import { JwtPayload } from '../jwt-payload.interface';
 import { RequestUser } from '../request-user.interface';
+import { issuedBeforeTokenValidAfter } from './token-valid-after';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -29,7 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // request, and a revoked or granted role applies on the next request,
   // instead of staying as it was until the access token expires (up to 15
   // minutes later). The token is only proof of who the caller is.
-  async validate(payload: JwtPayload): Promise<RequestUser> {
+  async validate(payload: JwtPayload & { iat?: number }): Promise<RequestUser> {
     let user;
     try {
       user = await this.userService.findAuthContext(payload.sub);
@@ -44,6 +45,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user.isActive) {
       throw new UnauthorizedException('Account is deactivated');
+    }
+    // Password changed/reset after this token was issued: the client's 401
+    // handler falls back to /auth/refresh, which only a post-change refresh
+    // cookie can pass.
+    if (issuedBeforeTokenValidAfter(payload.iat, user.tokenValidAfter)) {
+      throw new UnauthorizedException('Session has ended');
     }
     return {
       userId: payload.sub,

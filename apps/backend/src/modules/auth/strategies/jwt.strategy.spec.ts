@@ -83,6 +83,31 @@ describe.each([
     await expect(make(userService).validate(PAYLOAD)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  describe('after a password change (tokenValidAfter)', () => {
+    const changedAt = new Date('2026-10-21T10:00:00.000Z');
+    const changedAtSec = changedAt.getTime() / 1000;
+    const account = { isActive: true, mustChangePassword: false, roles: ['STAFF'] };
+
+    it('rejects a token issued before the change', async () => {
+      const { userService } = service({ ...account, tokenValidAfter: changedAt });
+      await expect(
+        make(userService).validate({ ...PAYLOAD, iat: changedAtSec - 1 }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('accepts a token issued in the same second or later', async () => {
+      const { userService } = service({ ...account, tokenValidAfter: changedAt });
+      const strategy = make(userService);
+      await expect(strategy.validate({ ...PAYLOAD, iat: changedAtSec })).resolves.toBeDefined();
+      await expect(strategy.validate({ ...PAYLOAD, iat: changedAtSec + 60 })).resolves.toBeDefined();
+    });
+
+    it('accepts any token when the password was never changed', async () => {
+      const { userService } = service({ ...account, tokenValidAfter: null });
+      await expect(make(userService).validate({ ...PAYLOAD, iat: 1 })).resolves.toBeDefined();
+    });
+  });
+
   it('asks the database once per request, through the one auth-context call', async () => {
     const { userService, findAuthContext, other } = service({
       isActive: true,
