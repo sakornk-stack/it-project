@@ -346,7 +346,9 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
           description={
             <>
               <span className="block">สำหรับนิสิตเท่านั้น</span>
-              <span className="block">บุคลากรและอาจารย์ให้ติดต่อผู้ดูแลระบบของหน่วยงาน</span>
+              <span className="block">
+                บุคลากรและอาจารย์ให้ติดต่อผู้ดูแลระบบของ<span className="whitespace-nowrap">หน่วยงาน</span>
+              </span>
             </>
           }
         />
