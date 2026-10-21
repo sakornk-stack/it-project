@@ -2,15 +2,15 @@
 
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
 import { formatFiveScaleAgainstThreshold, percentToFiveScale } from '@/lib/five-scale';
-import { ploProgressBarColorClassName, ploStatusTone } from '@/lib/plo-color';
 import { PloRadarChart } from '@/components/aptitude-analysis/plo-radar-chart';
 import { RadarLegend } from '@/components/dashboard/plo-overview';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { PloProgressTable } from '@/components/dashboard/plo-progress-table';
 
 // The curriculum's PLO averages against its pass bar: a dashed ring on the radar and, per
-// PLO, a bar plus a "ผ่าน / ยังไม่ผ่าน" word, so the verdict never rests on colour. With no
-// bar known (threshold null) the chart still draws and the pass words are left out.
+// PLO, the same bar the student dashboard uses (PloProgressTable: pass-mark tick at the
+// curriculum's own bar, "ผ่าน / ยังไม่ผ่าน" word, aria-label), so the verdict never rests on
+// colour. With no bar known (threshold null) the chart still draws and the pass words and
+// ticks are left out.
 export function CurriculumRadarCard({
   radar,
   threshold,
@@ -51,33 +51,12 @@ export function CurriculumRadarCard({
               จาก 5)
             </p>
           )}
-          <ul className="space-y-3">
-            {radar.map((plo) => (
-              <li key={plo.ploId} className="space-y-1.5">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
-                  <span className="min-w-0 break-words">
-                    <span className="font-medium text-primary">{plo.code}</span>{' '}
-                    <span className="text-muted-foreground">{plo.name}</span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-2">
-                    <span className="font-medium tabular-nums text-primary">
-                      {formatScore(plo.value, 'ไม่มีข้อมูล')}
-                    </span>
-                    {threshold !== null && plo.value !== null && (
-                      <Badge tone={ploStatusTone(plo.value, threshold)}>
-                        {plo.value >= threshold ? 'ผ่าน' : 'ยังไม่ผ่าน'}
-                      </Badge>
-                    )}
-                  </span>
-                </div>
-                <Progress
-                  value={plo.value ?? 0}
-                  label={`${plo.code} ${plo.name}`}
-                  barClassName={ploProgressBarColorClassName(plo.value, threshold)}
-                />
-              </li>
-            ))}
-          </ul>
+          <PloProgressTable
+            radar={radar}
+            formatValue={formatScore}
+            threshold={threshold}
+            showStatusBadge
+          />
         </div>
       }
     />
