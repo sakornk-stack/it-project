@@ -1,11 +1,12 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BORDER_TONE_CLASSES, TINT_TONE_CLASSES } from '@/lib/tone';
 
 // The box every /admin/** page shows for an error the API returned. A warning
 // look (not the destructive red) so it reads in both themes, and role="alert"
 // so a screen reader announces it when it appears.
-export const WARNING_ALERT_CLASS = 'border-amber-300 bg-amber-50 text-amber-900';
+export const WARNING_ALERT_CLASS = `${BORDER_TONE_CLASSES.warning} ${TINT_TONE_CLASSES.warning} text-amber-900`;
 
 export function ApiErrorAlert({
   message,

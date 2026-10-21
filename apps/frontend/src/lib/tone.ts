@@ -50,6 +50,19 @@ export const BAR_TONE_CLASSES: Record<SemanticTone, string> = {
   neutral: 'bg-slate-300',
 };
 
+// Border colour alone, for outlining a box by meaning (e.g. a step that is done).
+export const BORDER_TONE_CLASSES: Record<SemanticTone, string> = {
+  success: 'border-emerald-300',
+  warning: 'border-amber-300',
+  danger: 'border-red-300',
+  neutral: 'border-border',
+};
+
+// A filled step/check marker: the colour with a white mark on it.
+export const SOLID_TONE_CLASSES: Record<'success', string> = {
+  success: 'border-emerald-600 bg-emerald-600 text-white',
+};
+
 // A thin left edge on a row or card that marks its meaning (warning/danger rows).
 export const ACCENT_TONE_CLASSES: Record<SemanticTone, string> = {
   success: 'border-l-emerald-500',

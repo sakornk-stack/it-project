@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { Progress } from '@/components/ui/progress';
+import { BAR_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 import { readGroupGpa, type YearRow } from './staff-status';
 import { BEHIND_PLAN_FORMULA, describeEmptyYears, yearLevelTitle } from './year-info';
 
@@ -44,16 +45,16 @@ function RiskCell({ row }: { row: Pick<YearRow, 'summary'> }) {
         role="img"
         aria-label={`เร่งด่วน ${CRITICAL} คน เฝ้าระวัง ${WATCH} คน จากนิสิต ${active} คน`}
       >
-        <Progress value={share(CRITICAL + WATCH)} barClassName="bg-amber-500" className={BAR} />
+        <Progress value={share(CRITICAL + WATCH)} barClassName={BAR_TONE_CLASSES.warning} className={BAR} />
         <Progress
           value={share(CRITICAL)}
-          barClassName="bg-red-500"
+          barClassName={BAR_TONE_CLASSES.danger}
           className={`${BAR} bg-transparent`}
         />
       </div>
       <p className="text-xs tabular-nums text-muted-foreground">
-        เร่งด่วน <span className="font-semibold text-red-700">{CRITICAL}</span> · เฝ้าระวัง{' '}
-        <span className="font-semibold text-amber-700">{WATCH}</span>
+        เร่งด่วน <span className={`font-semibold ${TEXT_TONE_CLASSES.danger}`}>{CRITICAL}</span> · เฝ้าระวัง{' '}
+        <span className={`font-semibold ${TEXT_TONE_CLASSES.warning}`}>{WATCH}</span>
       </p>
     </div>
   );
@@ -159,7 +160,7 @@ export function OverviewYearTable({
               behind: totalBehind,
             },
           ].map(({ row, title, href, behind }) => (
-            <li key={title} className="rounded-lg border border-slate-200 p-3">
+            <li key={title} className="rounded-lg border border-border p-3">
               {href ? (
                 <Link
                   href={href}

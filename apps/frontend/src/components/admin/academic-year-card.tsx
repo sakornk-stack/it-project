@@ -20,7 +20,7 @@ import {
 import { semesterSchema, type SemesterFormValues } from '@/lib/validation/semester.schema';
 import { SEMESTER_TERM_LABELS } from '@/lib/grade-label';
 import { cn } from '@/lib/utils';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { BAR_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/toast-context';
@@ -216,7 +216,7 @@ export function AcademicYearCard({
   return (
     <div
       id={`academic-year-card-${academicYear.id}`}
-      className="rounded-xl border border-slate-200 bg-card shadow-[0_1px_2px_hsl(var(--foreground)/0.04)]"
+      className="rounded-xl border border-border bg-card shadow-card"
     >
       {/* The whole row folds the card; the controls inside stop the click so they do not. */}
       <div
@@ -242,7 +242,7 @@ export function AcademicYearCard({
             size={18}
             aria-hidden="true"
             className={cn(
-              'shrink-0 text-slate-500 transition-transform duration-300 ease-out motion-reduce:transition-none',
+              'shrink-0 text-muted-foreground transition-transform duration-300 ease-out motion-reduce:transition-none',
               open && 'rotate-90',
             )}
           />
@@ -351,7 +351,7 @@ export function AcademicYearCard({
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="space-y-4 border-t border-slate-100 px-4 pb-4 pt-4 sm:px-5">
+          <div className="space-y-4 border-t border-border px-4 pb-4 pt-4 sm:px-5">
             {serverError && (
               <ApiErrorAlert message={serverError} onDismiss={() => setServerError(null)} />
             )}
@@ -386,7 +386,7 @@ export function AcademicYearCard({
                             transitionDelay: open ? `${150 + semesterIndex * 70}ms` : '0ms',
                           }}
                           className={cn(
-                            'absolute left-[1.1rem] top-[1.875rem] h-full w-px origin-top bg-slate-300 transition-transform duration-300 ease-out motion-reduce:transition-none',
+                            'absolute left-[1.1rem] top-[1.875rem] h-full w-px origin-top bg-border transition-transform duration-300 ease-out motion-reduce:transition-none',
                             open ? 'scale-y-100' : 'scale-y-0',
                           )}
                         />
@@ -465,7 +465,7 @@ export function AcademicYearCard({
                               {TERM_KIND[semester.term]}
                             </p>
                           </div>
-                          <span className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-medium text-emerald-700">
+                          <span className={cn('inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-medium', TEXT_TONE_CLASSES.success)}>
                             <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
                               <span
                                 className={cn(
@@ -523,7 +523,7 @@ export function AcademicYearCard({
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmitSemester)}
-                  className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4"
+                  className="flex flex-wrap items-end gap-3 border-t border-border pt-4"
                 >
                   <FormField
                     control={form.control}
@@ -584,7 +584,7 @@ export function AcademicYearCard({
 // `rows` > 0) the timeline of dots and semester rows.
 export function AcademicYearCardSkeleton({ rows = 0 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-card shadow-[0_1px_2px_hsl(var(--foreground)/0.04)]">
+    <div className="rounded-xl border border-border bg-card shadow-card">
       <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
         <Skeleton className="h-[18px] w-[18px] shrink-0 rounded-sm" />
         <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
@@ -596,7 +596,7 @@ export function AcademicYearCardSkeleton({ rows = 0 }: Readonly<{ rows?: number 
         <Skeleton className="h-9 w-9 shrink-0 rounded-md" />
       </div>
       {rows > 0 && (
-        <div className="border-t border-slate-100 px-4 pb-4 pt-4 sm:px-5">
+        <div className="border-t border-border px-4 pb-4 pt-4 sm:px-5">
           {Array.from({ length: rows }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 py-2">
               <Skeleton className="h-9 w-9 shrink-0 rounded-full" />

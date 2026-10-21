@@ -16,6 +16,12 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { cn } from '@/lib/utils';
+import {
+  BADGE_TONE_CLASSES,
+  BORDER_TONE_CLASSES,
+  SOLID_TONE_CLASSES,
+  TEXT_TONE_CLASSES,
+} from '@/lib/tone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -162,9 +168,9 @@ function TwoFactorStepper({ mode }: Readonly<{ mode: Mode }>) {
       {steps.map((s, i) => {
         const done = mode === 'recoveryCodes' ? s.n < 3 : s.n < 2;
         const current = mode === 'recoveryCodes' ? s.n === 3 : s.n === 2;
-        let circleTone = 'border-slate-300 text-slate-500';
-        if (done) circleTone = 'border-emerald-500 bg-emerald-500 text-white';
-        else if (current) circleTone = 'border-brand bg-brand text-white dark:text-brand-foreground';
+        let circleTone = 'border-input text-muted-foreground';
+        if (done) circleTone = SOLID_TONE_CLASSES.success;
+        else if (current) circleTone = 'border-brand bg-brand text-brand-foreground';
         return (
           <li key={s.n} className="flex flex-1 items-center gap-2 last:flex-none">
             <span
@@ -183,7 +189,7 @@ function TwoFactorStepper({ mode }: Readonly<{ mode: Mode }>) {
             >
               {s.label}
             </span>
-            {i < steps.length - 1 && <span className="mx-1 h-px flex-1 bg-slate-200" aria-hidden="true" />}
+            {i < steps.length - 1 && <span className="mx-1 h-px flex-1 bg-border" aria-hidden="true" />}
           </li>
         );
       })}
@@ -250,36 +256,36 @@ function TwoFactorSetupFlow({
           เปิดแอปยืนยันตัวตน แล้วสแกน QR ด้านล่าง (หรือกรอกรหัสด้วยตัวเองถ้าสแกนไม่ได้)
         </p>
         <div className="flex flex-col items-center gap-2">
-          <div className="rounded-2xl border border-slate-200 bg-card p-4 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
             <div className="relative inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element -- data URL, not a static asset */}
               <img
                 src={setupQuery.data.qrCodeDataUrl}
                 alt="QR code สำหรับตั้งค่า 2FA"
                 className={`h-40 w-40 rounded-lg border transition-colors duration-300 ${
-                  verified ? 'border-emerald-400' : 'border-slate-200'
+                  verified ? BORDER_TONE_CLASSES.success : BORDER_TONE_CLASSES.neutral
                 }`}
               />
               {verified && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-card/80 animate-in fade-in zoom-in duration-300">
-                  <ShieldCheck className="h-12 w-12 text-emerald-600" />
+                  <ShieldCheck className={cn('h-12 w-12', TEXT_TONE_CLASSES.success)} />
                 </div>
               )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground">สแกนด้วยแอปยืนยันตัวตน</p>
         </div>
-        <div className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2">
           <p className="min-w-0 flex-1 break-all font-mono text-xs text-muted-foreground">
             {setupQuery.data.secret}
           </p>
           <button
             type="button"
             onClick={() => handleCopySecret(setupQuery.data.secret)}
-            className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-500 transition-colors duration-150 hover:text-brand motion-safe:active:scale-90"
+            className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground transition-colors duration-150 hover:text-brand motion-safe:active:scale-90"
             aria-label={secretCopied ? 'คัดลอกรหัสลับแล้ว' : 'คัดลอกรหัสลับ'}
           >
-            {secretCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+            {secretCopied ? <Check size={14} className={TEXT_TONE_CLASSES.success} /> : <Copy size={14} />}
           </button>
         </div>
       </div>
@@ -361,10 +367,10 @@ function TwoFactorRecoveryCodesReveal({
             )}
           </Button>
         </div>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className={cn('rounded-lg border p-4', BADGE_TONE_CLASSES.warning)}>
           <div className="mb-3 flex items-start gap-2">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-            <p className="text-sm font-semibold text-amber-900">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <p className="text-sm font-semibold">
               เก็บรหัสสำรองเหล่านี้ไว้ในที่ปลอดภัย — ระบบจะแสดงเพียงครั้งเดียว
             </p>
           </div>
@@ -372,7 +378,7 @@ function TwoFactorRecoveryCodesReveal({
             {recoveryCodes.map((code) => (
               <span
                 key={code}
-                className="rounded-md border border-amber-200 bg-card px-3 py-2 text-center font-mono text-sm text-slate-700 shadow-sm"
+                className="rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-sm text-foreground shadow-card"
               >
                 {code}
               </span>

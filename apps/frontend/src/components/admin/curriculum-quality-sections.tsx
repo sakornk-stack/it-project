@@ -34,12 +34,7 @@ const LEGEND_ORDER: RiskLevel[] = ['CRITICAL', 'WATCH', 'NORMAL'];
 // Each item is a dot (its colour repeats the tone) plus the status name and its
 // rule in text, so the meaning never rests on colour. Rules come from the same
 // STATUS_RULES the Staff pages print.
-const DOT_CLASSES: Record<'danger' | 'warning' | 'success' | 'neutral', string> = {
-  danger: 'bg-red-500',
-  warning: 'bg-amber-500',
-  success: 'bg-emerald-500',
-  neutral: 'bg-slate-400',
-};
+const DOT_CLASSES = BAR_TONE_CLASSES;
 
 function LegendItem({
   dot,
@@ -121,7 +116,7 @@ export function LowestSection({
                   {plos.map((plo, index) => (
                     <li
                       key={plo.ploId}
-                      className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-slate-50 px-3 py-3"
+                      className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-muted/50 px-3 py-3"
                     >
                       <span className="min-w-0 break-words text-sm">
                         {index + 1}. <span className="font-semibold text-primary">{plo.code}</span>{' '}
@@ -150,7 +145,7 @@ export function LowestSection({
                   {shown.map((clo) => (
                     <li
                       key={clo.cloId}
-                      className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-slate-50 px-3 py-3"
+                      className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-muted/50 px-3 py-3"
                     >
                       <span className="min-w-0 break-words text-sm">
                         <span className="font-semibold text-primary">{clo.code}</span> ·{' '}
@@ -181,7 +176,7 @@ function CohortRow({ cohort }: Readonly<{ cohort: CohortPloAchievementReport }>)
   const little = hasLittleData(cohort.gpaSampleSize);
   const status = gpaStatus(cohort.averageGpa);
   return (
-    <li className="space-y-2 rounded-lg bg-slate-50 p-4">
+    <li className="space-y-2 rounded-lg bg-muted/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold text-primary">รุ่นปี {cohort.admissionYear}</p>
         <Badge tone="neutral" className="tabular-nums">
@@ -203,7 +198,7 @@ function CohortRow({ cohort }: Readonly<{ cohort: CohortPloAchievementReport }>)
       <Progress
         value={gpaBarPercent(cohort.averageGpa)}
         label={`GPA เฉลี่ยรุ่นปี ${cohort.admissionYear}`}
-        barClassName={status ? BAR_TONE_CLASSES[status.tone] : 'bg-slate-300'}
+        barClassName={status ? BAR_TONE_CLASSES[status.tone] : BAR_TONE_CLASSES.neutral}
       />
       <div className="flex flex-wrap items-center gap-2">
         {status && <Badge tone={status.tone}>{status.label}</Badge>}
