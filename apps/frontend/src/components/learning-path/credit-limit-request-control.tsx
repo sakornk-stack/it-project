@@ -128,7 +128,7 @@ function CreditLimitRequestForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 sm:w-80"
+        className="w-full space-y-3 rounded-lg border border-border bg-muted/50 p-3 sm:w-80"
       >
         {serverError && (
           <Alert variant="destructive">

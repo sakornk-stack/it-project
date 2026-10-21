@@ -7,7 +7,7 @@ import { saveMyLearningPathPlan } from '@/lib/api/learning-path';
 import { isPlanDirty, planCoversGraduation, resolveInitialPlan } from '@/lib/learning-path-plan';
 import { useToast } from '@/lib/toast-context';
 import { Button } from '@/components/ui/button';
-import { BADGE_TONE_CLASSES } from '@/lib/tone';
+import { BADGE_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CourseDragCard } from './course-drag-card';
 
@@ -185,7 +185,11 @@ export function DragDropPlanner({
             <span
               className={cn(
                 'text-sm font-medium tabular-nums',
-                isOverLimit ? 'text-destructive' : isUnderMin ? 'text-amber-700' : 'text-emerald-700',
+                isOverLimit
+                  ? TEXT_TONE_CLASSES.danger
+                  : isUnderMin
+                    ? TEXT_TONE_CLASSES.warning
+                    : TEXT_TONE_CLASSES.success,
               )}
             >
               {totalCredits} / {maxCreditsPerSemester} หน่วยกิต
@@ -203,7 +207,12 @@ export function DragDropPlanner({
           )}
         >
           {isOverLimit && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-destructive">
+            <p
+              className={cn(
+                'rounded-md border px-3 py-2 text-xs font-medium',
+                BADGE_TONE_CLASSES.danger,
+              )}
+            >
               เกินหน่วยกิตสูงสุดต่อเทอม ({maxCreditsPerSemester} หน่วยกิต)
             </p>
           )}

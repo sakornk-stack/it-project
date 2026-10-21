@@ -64,7 +64,7 @@ export function CourseDragCard({
         e.dataTransfer.effectAllowed = 'move';
         setTiltedDragImage(e);
       }}
-      className="flex cursor-grab flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-slate-100 bg-card p-3 active:cursor-grabbing"
+      className="flex cursor-grab flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-3 active:cursor-grabbing"
     >
       {/* basis-48 + wrap: when the column is too narrow for name, badge and
           button on one line, the actions drop below instead of squeezing
@@ -79,7 +79,7 @@ export function CourseDragCard({
         <span
           className={cn(
             'rounded-full px-2 py-0.5 text-xs font-medium',
-            course.isRequired ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-600',
+            course.isRequired ? 'bg-brand-light text-brand' : 'bg-muted text-muted-foreground',
           )}
         >
           {course.isRequired ? 'วิชาบังคับ' : 'วิชาเลือก'}

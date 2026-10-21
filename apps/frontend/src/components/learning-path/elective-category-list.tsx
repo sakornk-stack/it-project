@@ -36,7 +36,7 @@ export function ElectiveCategoryList({
                   {category.availableElectivesInCategory.map((course) => (
                     <div
                       key={course.courseId}
-                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-slate-100 p-3"
+                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-border p-3"
                     >
                       <p className="min-w-0 text-sm font-medium text-primary">
                         {course.code}: {course.name}
