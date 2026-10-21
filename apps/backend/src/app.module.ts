@@ -15,6 +15,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AiAnalysisModule } from './modules/ai-analysis/ai-analysis.module';
 import { CareerFitModule } from './modules/career-fit/career-fit.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { THROTTLER_OPTIONS } from './common/throttle/throttle.config';
 
 @Module({
   imports: [
@@ -22,12 +23,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
       isGlobal: true,
       load: [configuration],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRoot(THROTTLER_OPTIONS),
     PrismaModule,
     HealthModule,
     OrganizationModule,

@@ -17,6 +17,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SkipPasswordChangeCheck } from '../../common/decorators/skip-password-change-check.decorator';
+import { PASSWORD_CONFIRM_THROTTLE } from '../../common/throttle/throttle.config';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
 import { OptionalJwtRefreshGuard } from '../../common/guards/jwt-refresh-optional.guard';
@@ -204,10 +205,12 @@ export class AuthController {
   @Patch('change-password')
   @UseGuards(JwtAuthGuard)
   @SkipPasswordChangeCheck()
+  @Throttle(PASSWORD_CONFIRM_THROTTLE)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Change the current user’s password' })
   @ApiResponse({ status: 200, description: 'Password changed — all other sessions are signed out' })
   @ApiResponse({ status: 401, description: 'Current password incorrect, or no password set on this account' })
+  @ApiResponse({ status: 429, description: 'More than 5 attempts in 15 minutes from this address' })
   async changePassword(
     @Body() dto: ChangePasswordDto,
     @CurrentUser() user: RequestUser,
@@ -288,10 +291,12 @@ export class AuthController {
   @Post('2fa/disable')
   @UseGuards(JwtAuthGuard)
   @SkipPasswordChangeCheck()
+  @Throttle(PASSWORD_CONFIRM_THROTTLE)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Turn 2FA off — requires the current password to confirm' })
   @ApiResponse({ status: 201, description: '2FA disabled' })
   @ApiResponse({ status: 401, description: 'Current password is incorrect' })
+  @ApiResponse({ status: 429, description: 'More than 5 attempts in 15 minutes from this address' })
   async twoFactorDisable(@Body() dto: TwoFactorDisableDto, @CurrentUser() user: RequestUser) {
     await this.twoFactorService.disable(user.userId, dto.password);
     return { message: '2FA disabled' };
