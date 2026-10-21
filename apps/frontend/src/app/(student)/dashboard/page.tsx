@@ -26,7 +26,6 @@ import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
 import { PageLoadError } from '@/components/layout/page-states';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { TiltCard } from '@/components/ui/tilt-card';
 import { GraduationCelebration } from '@/components/dashboard/graduation-celebration';
 import { GpaSparkline } from '@/components/dashboard/gpa-sparkline';
 import { GpaChangeBadge } from '@/components/dashboard/gpa-change-badge';
@@ -166,23 +165,21 @@ function DashboardCards({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
         <Reveal index={1}>
-          <TiltCard>
-            <StatCard
-              icon={Star}
-              label="เกรดเฉลี่ยสะสม"
-              value={dashboard.gpa !== null ? animatedGpa.toFixed(2) : '—'}
-              suffix="/ 4.0"
-              href="/academic-record"
-              footer={
-                dashboard.gpaTrend.length >= 2 && (
-                  <div className="space-y-2">
-                    {gpaChange && <GpaChangeBadge change={gpaChange} />}
-                    <GpaSparkline points={dashboard.gpaTrend} />
-                  </div>
-                )
-              }
-            />
-          </TiltCard>
+          <StatCard
+            icon={Star}
+            label="เกรดเฉลี่ยสะสม"
+            value={dashboard.gpa !== null ? animatedGpa.toFixed(2) : '—'}
+            suffix="/ 4.0"
+            href="/academic-record"
+            footer={
+              dashboard.gpaTrend.length >= 2 && (
+                <div className="space-y-2">
+                  {gpaChange && <GpaChangeBadge change={gpaChange} />}
+                  <GpaSparkline points={dashboard.gpaTrend} />
+                </div>
+              )
+            }
+          />
         </Reveal>
         <Reveal index={2}>
           <StatCard
@@ -230,23 +227,21 @@ function DashboardCards({
           />
         </Reveal>
         <Reveal index={3} className="md:col-span-2 lg:col-span-1">
-          <TiltCard>
-            <StatCard
-              icon={Award}
-              label={GRADUATION_READINESS_LABEL}
-              href="/learning-path"
-              visual={
-                <div className="flex w-full items-center gap-4">
-                  <div className="flex shrink-0 flex-col items-center gap-1">
-                    <ProgressRing value={animatedProgress} label={CREDIT_PROGRESS_LABEL} />
-                    <span className="text-xs text-muted-foreground">{CREDIT_PROGRESS_LABEL}</span>
-                  </div>
-                  <ReadinessChecklist readiness={dashboard.graduationReadiness} />
+          <StatCard
+            icon={Award}
+            label={GRADUATION_READINESS_LABEL}
+            href="/learning-path"
+            visual={
+              <div className="flex w-full items-center gap-4">
+                <div className="flex shrink-0 flex-col items-center gap-1">
+                  <ProgressRing value={animatedProgress} label={CREDIT_PROGRESS_LABEL} />
+                  <span className="text-xs text-muted-foreground">{CREDIT_PROGRESS_LABEL}</span>
                 </div>
-              }
-              footer={<p className="text-xs text-muted-foreground">{GRADUATION_READINESS_NOTE}</p>}
-            />
-          </TiltCard>
+                <ReadinessChecklist readiness={dashboard.graduationReadiness} />
+              </div>
+            }
+            footer={<p className="text-xs text-muted-foreground">{GRADUATION_READINESS_NOTE}</p>}
+          />
         </Reveal>
       </div>
 

@@ -187,7 +187,7 @@ export function StatCard({
         dimmed && 'opacity-75',
         interactive &&
           !(asLink && showArrow) &&
-          'transition-[transform,box-shadow] duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-md',
+          'transition-[transform,box-shadow] duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-[0_4px_12px_hsl(var(--foreground)/0.08)] motion-reduce:md:hover:translate-y-0',
       )}
     >
       {accentClassName && (
