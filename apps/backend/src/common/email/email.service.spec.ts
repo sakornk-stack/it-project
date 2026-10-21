@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { EmailService } from './email.service';
+import { EmailService, escapeHtml } from './email.service';
 
 describe('EmailService send-failure log', () => {
   it('logs a shortened address, never the full one', async () => {
@@ -48,5 +48,41 @@ describe('EmailService.sendSignupVerificationEmail', () => {
     expect(logged).not.toContain('secret-token-xyz');
     expect(logged).not.toContain('/register/verify');
     errorSpy.mockRestore();
+  });
+});
+
+describe('EmailService HTML escaping', () => {
+  function serviceWith(sendMail: jest.Mock) {
+    const config = { get: jest.fn(() => undefined) };
+    const service = new EmailService(config as never);
+    (service as unknown as { transporter: unknown }).transporter = { sendMail };
+    return service;
+  }
+
+  it('escapeHtml turns markup characters into entities', () => {
+    expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
+      '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;',
+    );
+    expect(escapeHtml('สมชาย ใจดี')).toBe('สมชาย ใจดี');
+  });
+
+  it('an invitation name carrying a link or a script arrives as text', async () => {
+    const sendMail = jest.fn().mockResolvedValue(undefined);
+    const name = 'Somchai <a href="https://evil.example">click</a><script>alert(1)</script>';
+    await serviceWith(sendMail).sendStudentInvitationEmail('s@ku.th', 'tok', name);
+    const { html } = sendMail.mock.calls[0][0] as { html: string };
+    expect(html).not.toContain('<a href="https://evil.example">');
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;a href=&quot;https://evil.example&quot;&gt;');
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    // The real invitation link is still a working anchor.
+    expect(html).toContain('<a href="http://localhost:3000/register?invitationToken=tok">');
+  });
+
+  it('the password email link is still a working anchor', async () => {
+    const sendMail = jest.fn().mockResolvedValue(undefined);
+    await serviceWith(sendMail).sendPasswordSetupEmail('s@ku.th', 'tok', 'reset');
+    const { html } = sendMail.mock.calls[0][0] as { html: string };
+    expect(html).toContain('<a href="http://localhost:3000/reset-password?token=tok">');
   });
 });

@@ -25,6 +25,21 @@ export function maskEmail(address: string): string {
   return domain ? `${local.slice(0, 1)}***@${domain}` : '***';
 }
 
+// Every value interpolated into an email body goes through this, even ones we
+// generate ourselves: a name typed by STAFF (or read from their CSV) must
+// arrive as text, never as markup or a link in a mail sent from our address.
+const HTML_ENTITIES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+export function escapeHtml(value: string): string {
+  return value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -99,7 +114,7 @@ export class EmailService {
         : 'มีคำขอรีเซ็ตรหัสผ่านสำหรับบัญชี EduAnalyzeAI ของคุณ';
     const html = `
       <p>${intro}</p>
-      <p><a href="${resetUrl}">${mode === 'new-account' ? 'ตั้งรหัสผ่าน' : 'รีเซ็ตรหัสผ่าน'}</a></p>
+      <p><a href="${escapeHtml(resetUrl)}">${mode === 'new-account' ? 'ตั้งรหัสผ่าน' : 'รีเซ็ตรหัสผ่าน'}</a></p>
       <p>ลิงก์นี้ใช้ได้ครั้งเดียวและหมดอายุใน 1 ชั่วโมง หากคุณไม่ได้ร้องขอ กรุณาเพิกเฉยต่ออีเมลนี้</p>
     `;
     await this.sendMail({ to, subject, html });
@@ -118,9 +133,9 @@ export class EmailService {
     const registerUrl = `${this.frontendUrl}/register?invitationToken=${token}`;
     const subject = 'คำเชิญเข้าใช้งาน EduAnalyzeAI';
     const html = `
-      <p>สวัสดีคุณ ${fullName}</p>
+      <p>สวัสดีคุณ ${escapeHtml(fullName)}</p>
       <p>เจ้าหน้าที่เชิญคุณเข้าใช้งานระบบ EduAnalyzeAI กรุณากดลิงก์ด้านล่างเพื่อสมัครสมาชิกด้วยอีเมลนี้</p>
-      <p><a href="${registerUrl}">สมัครสมาชิก</a></p>
+      <p><a href="${escapeHtml(registerUrl)}">สมัครสมาชิก</a></p>
       <p>ลิงก์นี้ใช้ได้ครั้งเดียวและหมดอายุใน 7 วัน หากคุณไม่ได้คาดหวังอีเมลนี้ กรุณาเพิกเฉย</p>
     `;
     await this.sendMail({ to, subject, html });
@@ -137,7 +152,7 @@ export class EmailService {
     const subject = 'ยืนยันอีเมลเพื่อสมัครใช้งาน EduAnalyzeAI';
     const html = `
       <p>มีการสมัครใช้งานระบบ EduAnalyzeAI ด้วยอีเมลนี้ กรุณากดลิงก์ด้านล่างเพื่อยืนยันอีเมลและเปิดใช้บัญชี</p>
-      <p><a href="${verifyUrl}">ยืนยันอีเมล</a></p>
+      <p><a href="${escapeHtml(verifyUrl)}">ยืนยันอีเมล</a></p>
       <p>ลิงก์นี้ใช้ได้ครั้งเดียวและหมดอายุใน ${ttlMinutes} นาที หากคุณไม่ได้สมัคร กรุณาเพิกเฉยต่ออีเมลนี้ ระบบจะไม่สร้างบัญชีให้</p>
     `;
     await this.sendMail({ to, subject, html });
