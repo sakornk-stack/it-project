@@ -5,7 +5,8 @@ import { ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-// One figure, what it counts, and one line saying what it is counted over.
+// One figure, what it counts, and one line saying what it is counted over. Icon tile and
+// label share a row, like StatCard.
 // The figure row has a fixed height and the note sits at the bottom, so cards
 // side by side line up whether or not they carry a ring or a footer.
 export function MetricCard({
@@ -34,11 +35,11 @@ export function MetricCard({
 }>) {
   return (
     <Card className={cn('relative flex h-full flex-col gap-2 p-5', href && 'interactive-card')}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 break-words text-sm font-medium text-muted-foreground">{label}</p>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light">
-          <Icon aria-hidden="true" size={18} className="text-brand" />
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand">
+          <Icon aria-hidden="true" size={18} />
         </span>
+        <p className="min-w-0 break-words text-sm font-medium text-muted-foreground">{label}</p>
       </div>
       <div className="flex min-h-16 items-center justify-between gap-3">
         <p className="break-words text-3xl font-bold tabular-nums text-primary">
