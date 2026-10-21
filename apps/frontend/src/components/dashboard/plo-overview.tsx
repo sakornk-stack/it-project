@@ -169,7 +169,7 @@ export function PloOverview({
             <CardTitle>รายละเอียดคะแนนราย PLO</CardTitle>
           </CardHeader>
           <CardContent>
-            <PloProgressTable radar={radar} formatValue={formatScore} />
+            <PloProgressTable radar={radar} formatValue={formatScore} threshold={threshold} />
           </CardContent>
         </Card>
       )}
