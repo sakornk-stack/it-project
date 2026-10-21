@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 import type { StudentPloRadarPoint } from '@eduanalyze-ai/shared-types';
 import {
   INSTRUCTOR_ASSESSED_COURSE_CODES,
@@ -8,6 +8,8 @@ import {
   PRELIMINARY_CLO_NOTE,
   ploCoverage,
 } from '@/lib/plo-notes';
+import { INFO_TONE_CLASSES } from '@/lib/tone';
+import { cn } from '@/lib/utils';
 
 // Plain-language "where does this number come from" under a student's PLO chart.
 export function PloMethodNote({
@@ -32,36 +34,57 @@ export function PloMethodNote({
   }
 
   return (
-    <div className="space-y-2 rounded-md bg-slate-50 p-3 text-xs leading-5 text-muted-foreground">
-      <p className="flex items-center gap-1.5 font-medium text-primary">
-        <Info size={14} aria-hidden="true" className="shrink-0" />
-        ตัวเลขนี้มาจากไหน
-      </p>
-      <ul className="list-disc space-y-1 pl-5">
-        {PLO_METHOD_LINES.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-        {showThreshold && <li>{PLO_THRESHOLD_LINE}</li>}
-        {[...instructorCourses].map(([code, name]) => (
-          <li key={code}>
-            วิชา {code} {name}: {INSTRUCTOR_ASSESSED_NOTE}
-          </li>
-        ))}
-      </ul>
-      {showCoverage && radar.length > 0 && (
-        <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 border-t border-slate-200 pt-2 sm:grid-cols-2">
-          {radar.map((plo) => {
-            const { used, total } = ploCoverage(plo);
-            return (
-              <li key={plo.ploId}>
-                <span className="font-medium text-primary">{plo.code}</span> คำนวณจาก {used} จาก{' '}
-                {total} วิชา
-              </li>
-            );
-          })}
-        </ul>
+    <div className="space-y-3">
+      {preliminary && (
+        <p
+          className={cn(
+            'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
+            INFO_TONE_CLASSES.badge,
+          )}
+        >
+          <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+          <span>{PRELIMINARY_CLO_NOTE}</span>
+        </p>
       )}
-      {preliminary && <p className="font-medium text-amber-700">{PRELIMINARY_CLO_NOTE}</p>}
+      <details className="group rounded-lg bg-muted/50 text-xs leading-5 text-muted-foreground">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-3 py-2 font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-1.5">
+            <Info size={14} aria-hidden="true" className="shrink-0" />
+            ตัวเลขนี้มาจากไหน
+          </span>
+          <ChevronDown
+            size={14}
+            aria-hidden="true"
+            className="shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none"
+          />
+        </summary>
+        <div className="space-y-2 px-3 pb-3">
+          <ul className="list-disc space-y-1 pl-5">
+            {PLO_METHOD_LINES.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+            {showThreshold && <li>{PLO_THRESHOLD_LINE}</li>}
+            {[...instructorCourses].map(([code, name]) => (
+              <li key={code}>
+                วิชา {code} {name}: {INSTRUCTOR_ASSESSED_NOTE}
+              </li>
+            ))}
+          </ul>
+          {showCoverage && radar.length > 0 && (
+            <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 border-t border-border pt-2 sm:grid-cols-2">
+              {radar.map((plo) => {
+                const { used, total } = ploCoverage(plo);
+                return (
+                  <li key={plo.ploId}>
+                    <span className="font-medium text-primary">{plo.code}</span> คำนวณจาก {used} จาก{' '}
+                    {total} วิชา
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </details>
     </div>
   );
 }

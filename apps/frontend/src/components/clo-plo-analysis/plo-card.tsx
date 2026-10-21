@@ -123,11 +123,11 @@ export function PloCard({
         )}
 
         {isExpanded && hasBreakdown && (
-          <div id={breakdownId} className="space-y-2 border-t border-slate-100 pt-3">
+          <div id={breakdownId} className="space-y-2 border-t border-border pt-3">
             {plo.cloBreakdown.map((clo) => (
               <div
                 key={clo.cloId}
-                className="flex items-start justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+                className="flex items-start justify-between gap-3 rounded-md bg-muted/50 px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-muted-foreground">

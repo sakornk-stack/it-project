@@ -1,3 +1,4 @@
+import { Network } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NO_PLO_CURRICULUM_DESCRIPTION, NO_PLO_CURRICULUM_TITLE } from '@/lib/plo-notes';
@@ -8,13 +9,9 @@ export function NoPloNotice() {
     <Card>
       <CardContent>
         <EmptyState
-          illustration="no-outcomes"
-          description={
-            <>
-              <span className="block font-medium text-primary">{NO_PLO_CURRICULUM_TITLE}</span>
-              <span className="block text-sm">{NO_PLO_CURRICULUM_DESCRIPTION}</span>
-            </>
-          }
+          icon={Network}
+          title={NO_PLO_CURRICULUM_TITLE}
+          description={NO_PLO_CURRICULUM_DESCRIPTION}
         />
       </CardContent>
     </Card>

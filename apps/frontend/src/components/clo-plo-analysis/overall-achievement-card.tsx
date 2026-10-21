@@ -67,7 +67,7 @@ export function OverallAchievementCard({
                   cy={70}
                   r={RADIUS}
                   strokeWidth={8}
-                  className="fill-none stroke-slate-100"
+                  className="fill-none stroke-muted"
                 />
                 {percent !== null && (
                   <circle
@@ -106,7 +106,7 @@ export function OverallAchievementCard({
               <div
                 role="img"
                 aria-label={`สัดส่วน PLO ตามระดับคะแนน: ${summary}`}
-                className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100"
+                className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
               >
                 {SCORE_BANDS.map(
                   (band) =>
@@ -137,7 +137,7 @@ export function OverallAchievementCard({
               ))}
             </ul>
             {noDataCount > 0 && (
-              <p className="border-t border-slate-100 pt-3 text-xs text-muted-foreground">
+              <p className="border-t border-border pt-3 text-xs text-muted-foreground">
                 ไม่มีข้อมูล {noDataCount} PLO
               </p>
             )}
@@ -145,7 +145,7 @@ export function OverallAchievementCard({
         </CardContent>
       </Card>
 
-      <CollapsibleSection title="วิธีอ่านผล" framed={false}>
+      <CollapsibleSection title="วิธีอ่านผล" soft>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>
             การสรุปตามคะแนนจัดกลุ่มตามเกณฑ์ทั่วไป (
