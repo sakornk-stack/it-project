@@ -2,6 +2,7 @@ import { ClipboardList, Info, Lightbulb, TrendingDown, TrendingUp } from 'lucide
 import type { LucideIcon } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NO_DATA_SUMMARY, type PloInterpretation } from '@/lib/interpret-plo-radar';
+import { TEXT_TONE_CLASSES } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -31,10 +32,10 @@ function IconList({
               size={15}
               className={cn(
                 'mt-0.5 shrink-0',
-                tone === 'strength' && 'text-emerald-600',
-                tone === 'weakness' && 'text-amber-600',
+                tone === 'strength' && TEXT_TONE_CLASSES.success,
+                tone === 'weakness' && TEXT_TONE_CLASSES.warning,
                 tone === 'neutral' && 'text-primary',
-                tone === 'muted' && 'text-slate-400',
+                tone === 'muted' && 'text-muted-foreground',
               )}
             />
             <span>{item}</span>
@@ -62,7 +63,7 @@ export function PloInterpretationCard({ report }: { report: PloInterpretation })
       </CardHeader>
       <CardContent className="space-y-4">
         {hasNoData ? (
-          <EmptyState illustration="no-outcomes" description={report.summary} />
+          <EmptyState icon={Info} title="ยังไม่มีข้อมูลให้สรุป" description={report.summary} />
         ) : (
           <>
             <p className="text-sm text-muted-foreground">{report.summary}</p>

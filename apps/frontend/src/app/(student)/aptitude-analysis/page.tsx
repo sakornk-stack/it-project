@@ -14,6 +14,7 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { PloRadarChart } from '@/components/aptitude-analysis/plo-radar-chart';
 import { PloInterpretationCard } from '@/components/aptitude-analysis/plo-interpretation-card';
 import { AptitudeAnalysisSkeleton } from '@/components/aptitude-analysis/aptitude-analysis-skeleton';
+import { PloRadarLegend } from '@/components/aptitude-analysis/plo-radar-legend';
 import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
 import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
@@ -112,12 +113,15 @@ export default function AptitudeAnalysisPage() {
               radar={ploQuery.data.radar}
               threshold={curriculumQuery.data.defaultAchievementThreshold}
               footer={
-                <PloMethodNote
+                <div className="space-y-4">
+                  <PloRadarLegend threshold={curriculumQuery.data.defaultAchievementThreshold} />
+                  <PloMethodNote
                   radar={ploQuery.data.radar}
                   showThreshold
                   showCoverage
                   preliminary={isPreliminaryCloCurriculum(curriculumQuery.data)}
-                />
+                  />
+                </div>
               }
             />
           </div>

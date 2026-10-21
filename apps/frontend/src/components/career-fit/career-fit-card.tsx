@@ -148,7 +148,7 @@ export function CareerGroupLabel({ name }: Readonly<{ name: string }>) {
 function RecommendedCareer({ career, rank }: Readonly<{ career: CareerFitEntry; rank: number }>) {
   const level = career.level!;
   return (
-    <li className="flex h-full min-w-0 flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm">
+    <li className="flex h-full min-w-0 flex-col gap-3 rounded-xl border bg-card p-4 shadow-card">
       <div className="flex items-start gap-3">
         <RankBadge rank={rank} primary={rank === 1} />
         <div className="min-w-0 space-y-1">

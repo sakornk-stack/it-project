@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Network } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { RadarPoint } from '@eduanalyze-ai/shared-types';
 import { formatFiveScaleAgainstThreshold } from '@/lib/five-scale';
@@ -79,7 +80,11 @@ export function PloRadarChart({
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState illustration="no-outcomes" description="ยังไม่มีข้อมูล PLO สำหรับหลักสูตรนี้" />
+          <EmptyState
+            icon={Network}
+            title="ยังไม่มีข้อมูล PLO"
+            description="หลักสูตรนี้ยังไม่มี PLO ให้แสดงในกราฟ"
+          />
         </CardContent>
       </Card>
     );
