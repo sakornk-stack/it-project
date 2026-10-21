@@ -73,7 +73,7 @@ export function AuthSplitLayout({
   children,
 }: Readonly<{ title: ReactNode; description: ReactNode; children: ReactNode }>) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 pt-16 md:pt-4">
       <ThemeToggle className="fixed right-4 top-4 z-30" />
       <div className="w-full max-w-5xl">
         <BrandMark className="mb-4 flex items-center justify-center gap-2 md:hidden" />

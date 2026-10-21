@@ -25,7 +25,7 @@ export function PageHeader({
     >
       <div className="min-w-0 space-y-1.5">
         <h1 className={cn(PAGE_TITLE_CLASS, titleClassName)}>{title}</h1>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        {description && <p className="course-name-break text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="shrink-0">{actions}</div>}
     </div>
