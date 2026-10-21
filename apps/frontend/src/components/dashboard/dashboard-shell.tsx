@@ -150,7 +150,7 @@ export function DashboardShell({
       >
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 flex-col border-r border-border bg-card/40 p-6 md:flex">
+      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/40 p-6 md:sticky md:top-0 md:flex md:h-dvh md:self-start">
         {sidebarContent}
       </aside>
 
