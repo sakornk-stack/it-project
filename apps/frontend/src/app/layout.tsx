@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { IBM_Plex_Sans_Thai } from 'next/font/google';
 import '../styles/theme-palette.css';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
@@ -9,6 +10,14 @@ import { THEME_INIT_SCRIPT } from '@/lib/theme-script';
 import { ToastProvider } from '@/lib/toast-context';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SessionTimeoutGuard } from '@/components/auth/session-timeout-guard';
+
+// Thai + Latin in one family; exposed as --font-sans and picked up by tailwind's font-sans.
+const plexSansThai = IBM_Plex_Sans_Thai({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   title: BRAND_NAME,
@@ -23,7 +32,7 @@ export default function RootLayout({
   return (
     // suppressHydrationWarning: the inline script below adds the `dark` class
     // to <html> before React hydrates.
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th" className={plexSansThai.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
