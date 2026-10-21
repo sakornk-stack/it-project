@@ -1,6 +1,7 @@
 import type { InstructorCourseSummary, SemesterTerm } from '@eduanalyze-ai/shared-types';
 import { countLowGradePeople } from './follow-ups';
-import { LOW_GRADE_LABEL, NO_LOW_GRADE } from './low-grade';
+import { INSUFFICIENT_BELOW } from './instructor-overview';
+import { NO_LOW_GRADE, isLowGrade } from './low-grade';
 import { hasCloPercent } from './clo-percent';
 
 // Pure, rule-based reading of the instructor dashboard response. It only reads
@@ -95,6 +96,9 @@ export function computeAchievementChange(
   return { direction: delta > 0 ? 'up' : 'down', delta, latestStudentCount };
 }
 
+// "นิสิต 9 คน" + this reads as one sentence; LOW_GRADE_LABEL is the noun form.
+const LOW_GRADE_VERB = 'ได้ D+ ลงไป';
+
 // Fewer people than this in the latest term and a swing of tens of points is
 // noise, so the line says the data is thin rather than celebrating or alarming.
 const THIN_DATA_BELOW = 5;
@@ -115,62 +119,96 @@ export function formatAchievementChange(
   return `${term} ▼ แย่ลง ${signed ? '−' : ''}${points} จุดจากเทอมก่อน`;
 }
 
-// Worst achievement first, courses without students last — the same order the
-// summary's "เริ่มที่" course and the comparison chart use, so they agree.
-export function sortCoursesByAttention<
-  T extends Pick<InstructorCourseSummary, 'studentCount' | 'achievementPercent'>,
->(courses: readonly T[]): T[] {
-  const rank = (c: T) =>
-    isPositiveCount(c.studentCount) && hasCloPercent(c.achievementPercent)
-      ? c.achievementPercent
-      : Number.POSITIVE_INFINITY;
-  return [...courses].sort((a, b) => rank(a) - rank(b));
+// Enough people with a letter grade to judge the course against its bar; under
+// INSUFFICIENT_BELOW the course page gives no verdict, and neither does this.
+type Judged = Pick<
+  InstructorCourseSummary,
+  'studentCount' | 'achievementPercent' | 'achievementThreshold'
+>;
+
+export function hasVerdict<T extends Judged>(c: T): c is T & { achievementPercent: number } {
+  return (
+    isPositiveCount(c.studentCount) &&
+    c.studentCount >= INSUFFICIENT_BELOW &&
+    hasCloPercent(c.achievementPercent) &&
+    Number.isFinite(c.achievementThreshold)
+  );
 }
 
-// One line for the dashboard header, most urgent first. Every part is dropped
-// when its data is missing or not a real number, so the line never shows
-// undefined/NaN. null = no courses at all (the page shows its own notice).
-export function buildInstructorSummary(courses: readonly InstructorCourseSummary[]): string | null {
+// Points from the course's own bar: negative = short of it. Courses can sit in
+// curricula with different bars, so this, not the raw percentage, says which is
+// furthest behind.
+const gapOf = (c: { achievementPercent: number; achievementThreshold: number }) =>
+  c.achievementPercent - c.achievementThreshold;
+
+// Furthest below its bar first, then courses too small to judge, then courses
+// without a grade — the same order the summary's "เริ่มที่" course uses, so the
+// two agree. Within the last two groups the input order is kept.
+export function sortCoursesByAttention<
+  T extends Judged,
+>(courses: readonly T[]): T[] {
+  const rank = (c: T) => {
+    if (hasVerdict(c)) return gapOf(c);
+    if (isPositiveCount(c.studentCount) && hasCloPercent(c.achievementPercent))
+      return Number.MAX_VALUE;
+    return Number.POSITIVE_INFINITY;
+  };
+  // Infinity − Infinity is NaN: `|| 0` keeps two ungraded courses as they were.
+  return [...courses].sort((a, b) => rank(a) - rank(b) || 0);
+}
+
+// Up to three plain sentences for the top of the dashboard: which courses are
+// short of their bar, who has a low grade, and the pooled share with its change
+// since the term before. Every part is dropped when its data is missing or not a
+// real number, so no line shows undefined/NaN. null = no courses at all (the page
+// shows its own notice).
+export function buildInstructorSummary(
+  courses: readonly InstructorCourseSummary[],
+): string[] | null {
   if (courses.length === 0) return null;
-  if (!courses.some((c) => isPositiveCount(c.studentCount))) return NO_STUDENTS_SUMMARY;
+  if (!courses.some((c) => isPositiveCount(c.studentCount))) return [NO_STUDENTS_SUMMARY];
 
-  const lowGradePeople = countLowGradePeople(courses);
-  const followUpPart =
-    lowGradePeople > 0 ? `${LOW_GRADE_LABEL} ${lowGradePeople} คน` : NO_LOW_GRADE;
+  const lines: string[] = [];
 
-  const graded = courses.filter(
-    (c): c is InstructorCourseSummary & { achievementPercent: number } =>
-      isPositiveCount(c.studentCount) &&
-      hasCloPercent(c.achievementPercent) &&
-      Number.isFinite(c.achievementThreshold),
+  const judged = courses.filter(hasVerdict);
+  const below = sortCoursesByAttention(
+    judged.filter((c) => c.achievementPercent < c.achievementThreshold),
   );
-  // Worst first, the same order the comparison chart uses.
-  const below = graded
-    .filter((c) => c.achievementPercent < c.achievementThreshold)
-    .sort((a, b) => a.achievementPercent - b.achievementPercent);
-  let coursePart: string | null = null;
   if (below.length > 0) {
     const first = below[0];
-    coursePart =
-      `${below.length} จาก ${graded.length} วิชายังไม่ถึงเป้า ` +
-      `เริ่มที่ ${first.code} ${first.name} ${Math.round(first.achievementPercent)}% ` +
-      `(เป้า ${first.achievementThreshold}%)`;
-  } else if (graded.length > 0) {
-    coursePart =
-      graded.length < courses.length ? 'ทุกวิชาที่มีนิสิตผ่านเป้า' : 'ทุกวิชาผ่านเป้า';
+    lines.push(
+      `${below.length} จาก ${judged.length} วิชายังไม่ถึงเกณฑ์ ` +
+        `เริ่มที่ ${first.code} ${first.name} ${Math.round(first.achievementPercent)}% ` +
+        `(เกณฑ์ ${first.achievementThreshold}%)`,
+    );
+  } else if (judged.length > 0) {
+    lines.push(
+      judged.length < courses.length
+        ? `ทุกวิชาที่มีนิสิตพอจะสรุปได้ถึงเกณฑ์ (${judged.length} จาก ${courses.length} วิชา)`
+        : 'ทุกวิชาถึงเกณฑ์',
+    );
+  } else if (courses.some((c) => hasCloPercent(c.achievementPercent))) {
+    lines.push(`ยังสรุปเทียบเกณฑ์ไม่ได้ เพราะทุกวิชามีนิสิตที่ได้เกรดไม่ถึง ${INSUFFICIENT_BELOW} คน`);
+  }
+
+  const lowGradePeople = countLowGradePeople(courses);
+  if (lowGradePeople > 0) {
+    const lowGradeCourses = courses.filter((c) =>
+      c.atRiskStudents.some((s) => isLowGrade(s.grade)),
+    ).length;
+    lines.push(`นิสิต ${lowGradePeople} คน${LOW_GRADE_VERB} ใน ${lowGradeCourses} วิชา`);
+  } else {
+    lines.push(NO_LOW_GRADE);
   }
 
   const overall = overallAchievementPercent(courses);
-  let achievementPart: string | null = null;
   if (overall !== null) {
     const change = computeAchievementChange(courses);
-    achievementPart = `ได้ B ขึ้นไปเฉลี่ย ${Math.round(overall)}%`;
-    if (change) achievementPart += ` (${formatAchievementChange(change, { signed: false })})`;
+    let line = `รวมทุกวิชาได้ B ขึ้นไป ${Math.round(overall)}%`;
+    // The flat form opens with a dash of its own; after " · " it would read as two.
+    if (change) line += ` · ${formatAchievementChange(change, { signed: false }).replace(/^– /, '')}`;
+    lines.push(line);
   }
 
-  const parts =
-    lowGradePeople > 0
-      ? [followUpPart, coursePart, achievementPart]
-      : [coursePart, achievementPart, followUpPart];
-  return parts.filter((part): part is string => part !== null).join(' · ');
+  return lines;
 }

@@ -2,10 +2,12 @@ import type {
   Grade,
   InstructorCourseSummary,
   InstructorCourseTimelineYear,
+  SemesterAchievement,
 } from '@eduanalyze-ai/shared-types';
 import { formatPercent } from './format-percent';
 import { formatSemesterLabel } from './grade-label';
 import {
+  INSUFFICIENT_BELOW,
   LOW_SAMPLE_BELOW,
   breakdownByYearLevel,
   buildCourseOverviews,
@@ -19,8 +21,9 @@ import { SEMESTER_TERM_RANK } from './instructor-summary';
 // has no count of enrolled students (every source lists graded records only),
 // so how much to trust a number is judged by how many people have a grade.
 
-// Fewer graded people than this and no verdict is given at all.
-export const INSUFFICIENT_BELOW = 5;
+// Fewer graded people than this and no verdict is given at all (defined beside
+// LOW_SAMPLE_BELOW so the dashboard summary can share it without an import cycle).
+export { INSUFFICIENT_BELOW };
 // A trend over fewer terms than this is two dots and a line: not a trend.
 export const MIN_TERMS_FOR_TREND = 3;
 
@@ -144,6 +147,45 @@ export interface CourseSnapshot {
   trend: { termCount: number; enough: boolean; terms: TrendTerm[]; change: TrendChange | null };
 }
 
+// One point per term, oldest first, with the change against the term before it
+// when both have enough people. Shared with the dashboard's per-course change.
+export function buildTrendTerms(points: readonly SemesterAchievement[]): TrendTerm[] {
+  const terms: TrendTerm[] = points.map((p, i) => {
+    const termLevel = dataLevelOf(p.gradedCount);
+    return {
+      key: `${p.academicYear}-${p.semesterTerm}`,
+      label: formatSemesterLabel(p.semesterTerm, p.academicYear),
+      students: p.studentCount,
+      graded: p.gradedCount,
+      percent: p.achievementPercent,
+      level: termLevel,
+      showNumbers: termLevel !== 'insufficient',
+      isLatest: i === points.length - 1,
+      delta: null,
+    };
+  });
+  terms.forEach((term, i) => {
+    const previous = terms[i - 1];
+    if (previous && term.showNumbers && previous.showNumbers) {
+      term.delta = Math.round(term.percent) - Math.round(previous.percent);
+    }
+  });
+  return terms;
+}
+
+// The latest term against the one before it; null unless both have enough people.
+export function trendChangeOf(terms: readonly TrendTerm[]): TrendChange | null {
+  const last = terms[terms.length - 1];
+  const before = terms[terms.length - 2];
+  return last && before && last.showNumbers && before.showNumbers
+    ? {
+        points: Math.round(last.percent) - Math.round(before.percent),
+        fromLabel: before.label,
+        toLabel: last.label,
+      }
+    : null;
+}
+
 export function buildCourseSnapshot({
   course,
   seatRows,
@@ -189,37 +231,8 @@ export function buildCourseSnapshot({
     percent: scored > 0 ? (stats.counts[grade] / scored) * 100 : 0,
   }));
 
-  const trendPoints = course.semesterTrend;
-  const terms: TrendTerm[] = trendPoints.map((p, i) => {
-    const termLevel = dataLevelOf(p.gradedCount);
-    return {
-      key: `${p.academicYear}-${p.semesterTerm}`,
-      label: formatSemesterLabel(p.semesterTerm, p.academicYear),
-      students: p.studentCount,
-      graded: p.gradedCount,
-      percent: p.achievementPercent,
-      level: termLevel,
-      showNumbers: termLevel !== 'insufficient',
-      isLatest: i === trendPoints.length - 1,
-      delta: null,
-    };
-  });
-  terms.forEach((term, i) => {
-    const previous = terms[i - 1];
-    if (previous && term.showNumbers && previous.showNumbers) {
-      term.delta = Math.round(term.percent) - Math.round(previous.percent);
-    }
-  });
-  const last = terms[terms.length - 1];
-  const before = terms[terms.length - 2];
-  const change: TrendChange | null =
-    last && before && last.showNumbers && before.showNumbers
-      ? {
-          points: Math.round(last.percent) - Math.round(before.percent),
-          fromLabel: before.label,
-          toLabel: last.label,
-        }
-      : null;
+  const terms = buildTrendTerms(course.semesterTrend);
+  const change = trendChangeOf(terms);
 
   return {
     courseId: course.courseId,

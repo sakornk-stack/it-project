@@ -36,6 +36,8 @@ export const NOT_COUNTED_GRADES: ReadonlySet<Grade> = new Set<Grade>(['W', 'I'])
 
 export const ALL_GRADES = Object.keys(GRADE_POINTS) as Grade[];
 
+// Fewer graded people than this and no verdict is given at all.
+export const INSUFFICIENT_BELOW = 5;
 // Fewer people than this and a percentage swings on a single student.
 export const LOW_SAMPLE_BELOW = 10;
 // "Close to the goal": under it by no more than this many percentage points.

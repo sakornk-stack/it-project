@@ -250,7 +250,9 @@ describe('null achievementPercent (no graded student)', () => {
       achievementPercent: null,
     });
     expect(overallAchievementPercent([course(), nullCourse])).toBe(80);
-    expect(buildInstructorSummary([course(), nullCourse])).not.toMatch(/ยังไม่ถึงเป้า|NaN/);
+    expect(buildInstructorSummary([course(), nullCourse])!.join(' ')).not.toMatch(
+      /ยังไม่ถึงเกณฑ์|NaN/,
+    );
   });
 
   it('sorts a null course after measured ones', () => {
@@ -264,37 +266,87 @@ describe('null achievementPercent (no graded student)', () => {
 
 describe('buildInstructorSummary', () => {
   it('normal: every course passes and nobody needs following up', () => {
-    expect(buildInstructorSummary(allPassing)).toBe(
-      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 74% (เทอมล่าสุด 50 คน: ▲ ดีขึ้น 10 จุดจากเทอมก่อน) · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
-    );
+    expect(buildInstructorSummary(allPassing)).toEqual([
+      'ทุกวิชาถึงเกณฑ์',
+      'ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
+      'รวมทุกวิชาได้ B ขึ้นไป 74% · เทอมล่าสุด 50 คน: ▲ ดีขึ้น 10 จุดจากเทอมก่อน',
+    ]);
   });
 
-  it('at risk: follow-ups first, then the worst course, then the average', () => {
-    expect(buildInstructorSummary(withRisk)).toBe(
-      'มีเกรด D+ ลงไป 2 คน · 1 จาก 2 วิชายังไม่ถึงเป้า เริ่มที่ CS201 โครงสร้างข้อมูล 48% (เป้า 60%) · ได้ B ขึ้นไปเฉลี่ย 62% (เทอมล่าสุด 50 คน: ▼ แย่ลง 12 จุดจากเทอมก่อน)',
+  it('at risk: the course furthest below its bar, the people with a low grade, then the pooled share', () => {
+    expect(buildInstructorSummary(withRisk)).toEqual([
+      '1 จาก 2 วิชายังไม่ถึงเกณฑ์ เริ่มที่ CS201 โครงสร้างข้อมูล 48% (เกณฑ์ 60%)',
+      'นิสิต 2 คนได้ D+ ลงไป ใน 2 วิชา',
+      'รวมทุกวิชาได้ B ขึ้นไป 62% · เทอมล่าสุด 50 คน: ▼ แย่ลง 12 จุดจากเทอมก่อน',
+    ]);
+  });
+
+  it('starts with the course furthest from its own bar, not the lowest percentage', () => {
+    const lines = buildInstructorSummary([
+      course({
+        courseId: 'a',
+        code: 'A1',
+        name: 'ก',
+        achievementPercent: 50,
+        achievementThreshold: 55,
+      }),
+      course({
+        courseId: 'b',
+        code: 'B1',
+        name: 'ข',
+        achievementPercent: 65,
+        achievementThreshold: 80,
+      }),
+    ]);
+    expect(lines?.[0]).toBe('2 จาก 2 วิชายังไม่ถึงเกณฑ์ เริ่มที่ B1 ข 65% (เกณฑ์ 80%)');
+  });
+
+  it('writes an unchanged term without a stray dash after the separator', () => {
+    const flat = [
+      course({ semesterTrend: [term(2566, 'SECOND', 20, 80), term(2567, 'FIRST', 20, 80)] }),
+    ];
+    expect(buildInstructorSummary(flat)?.[2]).toBe(
+      'รวมทุกวิชาได้ B ขึ้นไป 80% · เทอมล่าสุด 20 คน: เท่ากับเทอมก่อน',
     );
   });
 
   it('no data: courses without students get the existing no-students line', () => {
-    expect(buildInstructorSummary([course({ studentCount: 0, achievementPercent: 0 })])).toBe(
+    expect(buildInstructorSummary([course({ studentCount: 0, achievementPercent: 0 })])).toEqual([
       NO_STUDENTS_SUMMARY,
-    );
+    ]);
   });
 
   it('no courses at all returns null', () => {
     expect(buildInstructorSummary([])).toBeNull();
   });
 
-  it('leaves out the arrow when there is only one term', () => {
-    expect(buildInstructorSummary([course()])).toBe(
-      'ทุกวิชาผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
-    );
+  it('leaves out the change when there is only one term', () => {
+    expect(buildInstructorSummary([course()])).toEqual([
+      'ทุกวิชาถึงเกณฑ์',
+      'ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
+      'รวมทุกวิชาได้ B ขึ้นไป 80%',
+    ]);
   });
 
-  it('says "with students" when some courses are still empty', () => {
-    expect(buildInstructorSummary([course(), course({ courseId: 'c2', studentCount: 0 })])).toBe(
-      'ทุกวิชาที่มีนิสิตผ่านเป้า · ได้ B ขึ้นไปเฉลี่ย 80% · ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
-    );
+  it('counts only the courses it can judge when some are empty or too small', () => {
+    const expected = 'ทุกวิชาที่มีนิสิตพอจะสรุปได้ถึงเกณฑ์ (1 จาก 2 วิชา)';
+    expect(
+      buildInstructorSummary([course(), course({ courseId: 'c2', studentCount: 0 })])?.[0],
+    ).toBe(expected);
+    expect(
+      buildInstructorSummary([
+        course(),
+        course({ courseId: 'c2', studentCount: 3, achievementPercent: 10 }),
+      ])?.[0],
+    ).toBe(expected);
+  });
+
+  it('gives no verdict when every course has fewer than 5 graded people', () => {
+    expect(buildInstructorSummary([course({ studentCount: 3, achievementPercent: 30 })])).toEqual([
+      'ยังสรุปเทียบเกณฑ์ไม่ได้ เพราะทุกวิชามีนิสิตที่ได้เกรดไม่ถึง 5 คน',
+      'ยังไม่มีนิสิตที่มีเกรด D+ ลงไป',
+      'รวมทุกวิชาได้ B ขึ้นไป 30%',
+    ]);
   });
 
   it('never prints NaN or undefined when numbers are broken', () => {
@@ -305,9 +357,9 @@ describe('buildInstructorSummary', () => {
         semesterTrend: [term(2566, 'SECOND', 10, Number.NaN), term(2567, 'FIRST', 10, Number.NaN)],
       }),
     ];
-    const line = buildInstructorSummary(broken);
-    expect(line).toBe('ยังไม่มีนิสิตที่มีเกรด D+ ลงไป');
-    expect(line).not.toMatch(/NaN|undefined|Infinity/);
+    const lines = buildInstructorSummary(broken);
+    expect(lines).toEqual(['ยังไม่มีนิสิตที่มีเกรด D+ ลงไป']);
+    expect(lines!.join(' ')).not.toMatch(/NaN|undefined|Infinity/);
   });
 });
 
@@ -326,5 +378,20 @@ describe('sortCoursesByAttention', () => {
       'broken',
     ]);
     expect(input.map((c) => c.courseId)).toEqual(['empty', 'high', 'broken', 'low']);
+  });
+
+  it('ranks by distance from each course bar, with too-small courses after the judged ones', () => {
+    const input = [
+      course({ courseId: 'few', studentCount: 3, achievementPercent: 0 }),
+      course({ courseId: 'near', achievementPercent: 50, achievementThreshold: 55 }),
+      course({ courseId: 'far', achievementPercent: 65, achievementThreshold: 80 }),
+      course({ courseId: 'none', achievementPercent: null }),
+    ];
+    expect(sortCoursesByAttention(input).map((c) => c.courseId)).toEqual([
+      'far',
+      'near',
+      'few',
+      'none',
+    ]);
   });
 });
