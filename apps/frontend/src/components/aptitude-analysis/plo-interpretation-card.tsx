@@ -71,6 +71,11 @@ export function PloInterpretationCard({ report }: { report: PloInterpretation })
             <IconList title="จุดที่ควรพัฒนา" items={report.weaknesses} icon={TrendingDown} tone="weakness" />
             <IconList title="คำแนะนำ" items={report.recommendations} icon={Lightbulb} tone="neutral" />
             <IconList title="ยังไม่มีข้อมูล" items={report.noData} icon={Info} tone="muted" />
+            {report.limitNote && (
+              <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+                {report.limitNote}
+              </p>
+            )}
           </>
         )}
       </CardContent>

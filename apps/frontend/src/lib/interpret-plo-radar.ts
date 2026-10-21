@@ -12,7 +12,13 @@ export interface PloInterpretation {
   recommendations: string[];
   // PLOs with no graded course yet: listed on their own, never as areas to improve.
   noData: string[];
+  // Set when the lists above are cut to their top 4, so some PLOs appear in neither list.
+  limitNote: string | null;
 }
+
+const LIST_LIMIT = 4;
+export const LIST_LIMIT_NOTE =
+  'แสดงเฉพาะจุดแข็งสูงสุด 4 ข้อ และ PLO ที่ต่ำกว่าเกณฑ์ต่ำสุด 4 ข้อ PLO ที่เหลือดูครบได้ที่หน้าการวิเคราะห์ CLO/PLO';
 
 // Same fallback text AiAnalysisService uses for hasNoGradedData, kept
 // verbatim so the "no data yet" experience is identical to the real
@@ -75,7 +81,14 @@ export function interpretPloRadar(radar: RadarPoint[], threshold: number): PloIn
   const graded = radar.filter((p): p is RadarPoint & { value: number } => p.value !== null);
 
   if (graded.length === 0) {
-    return { summary: NO_DATA_SUMMARY, strengths: [], weaknesses: [], recommendations: [], noData: [] };
+    return {
+      summary: NO_DATA_SUMMARY,
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+      noData: [],
+      limitNote: null,
+    };
   }
 
   // Band selection and strong/weak filtering compare against the raw
@@ -88,9 +101,10 @@ export function interpretPloRadar(radar: RadarPoint[], threshold: number): PloIn
     count: graded.length.toString(),
   });
 
-  const strong = graded.filter((p) => p.value >= threshold).sort((a, b) => b.value - a.value).slice(0, 4);
+  const strongAll = graded.filter((p) => p.value >= threshold).sort((a, b) => b.value - a.value);
+  const strong = strongAll.slice(0, LIST_LIMIT);
   const weakGraded = graded.filter((p) => p.value < threshold).sort((a, b) => a.value - b.value);
-  const weak = weakGraded.slice(0, 4);
+  const weak = weakGraded.slice(0, LIST_LIMIT);
   const noData = radar.filter((p) => p.value === null).map((p) => fill(NO_DATA_NOTE, { name: p.name }));
 
   const strengths = strong.map((p, i) =>
@@ -114,5 +128,7 @@ export function interpretPloRadar(radar: RadarPoint[], threshold: number): PloIn
     weaknesses,
     recommendations: recommendations.length > 0 ? recommendations : [RECOMMENDATION_FALLBACK],
     noData,
+    limitNote:
+      strongAll.length > LIST_LIMIT || weakGraded.length > LIST_LIMIT ? LIST_LIMIT_NOTE : null,
   };
 }
