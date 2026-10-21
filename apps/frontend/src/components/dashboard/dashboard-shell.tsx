@@ -195,7 +195,7 @@ export function DashboardShell({
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-7xl flex-1 space-y-8 p-4 pb-24 focus:outline-none md:p-8 md:pb-24"
+          className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 p-4 pb-2 focus:outline-none md:p-8 md:pb-2"
         >
           <RevealOnViewProvider>
             {skeleton ? (
@@ -206,7 +206,7 @@ export function DashboardShell({
               children
             )}
           </RevealOnViewProvider>
-          <PrivacyFooterLink className="pt-6" />
+          <PrivacyFooterLink className="mt-auto" />
         </main>
       </div>
     </div>
