@@ -21,8 +21,8 @@ export function PageSection({
   return (
     <section aria-labelledby={headingId} className={cn('space-y-4', className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h2 id={headingId} className={cn('text-lg font-semibold text-primary', titleClassName)}>
+        <div className="min-w-0 space-y-0.5">
+          <h2 id={headingId} className={cn('text-lg font-semibold tracking-tight text-primary', titleClassName)}>
             {title}
           </h2>
           {description && <p className="text-sm text-muted-foreground">{description}</p>}

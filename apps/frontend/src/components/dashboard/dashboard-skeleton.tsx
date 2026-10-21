@@ -6,7 +6,7 @@ import { Skeleton, StatCardsSkeleton } from '@/components/ui/skeleton';
 // and PLO sections, so nothing jumps when data arrives.
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="space-y-2">
         <Skeleton className="h-8 w-64" />
         {/* The summary line only wraps onto a second line on phone widths (no sidebar). */}

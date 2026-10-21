@@ -22,7 +22,7 @@ export function ElectiveProgressPanel({
       <CardContent>
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
-            <li key={category.categoryId} className="rounded-lg border border-slate-100 p-3">
+            <li key={category.categoryId} className="rounded-lg border border-border p-3">
               <p className="text-sm font-medium text-primary">{category.name}</p>
               <p className="text-xs text-muted-foreground">
                 สะสมแล้ว {category.creditsEarned} / {category.minCredits} หน่วยกิต · ขาดอีก{' '}

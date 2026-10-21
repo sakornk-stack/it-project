@@ -21,7 +21,7 @@ function Highlight({
 }: Readonly<{ label: string; plo: RadarPoint | undefined; formatScore: FormatScore }>) {
   if (!plo || plo.value === null) return null;
   return (
-    <div className="rounded-lg border border-slate-100 p-3">
+    <div className="rounded-lg border border-border p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 flex items-start justify-between gap-3 text-sm">
         <span className="min-w-0 break-words font-medium text-primary">
@@ -128,7 +128,7 @@ export function PloOverview({
                 />
               </div>
             )}
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-border">
               {radar.map((plo) => (
                 <li key={plo.ploId} className="flex items-start justify-between gap-3 py-2 text-sm">
                   <span className="min-w-0 break-words">

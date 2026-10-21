@@ -6,6 +6,7 @@ import { Award, FileCheck2, GraduationCap, Star } from 'lucide-react';
 import type { StudentDashboardResponse } from '@eduanalyze-ai/shared-types';
 import { fetchOwnStudentProfile, fetchStudentDashboard } from '@/lib/api/dashboard';
 import { fetchCurriculum } from '@/lib/api/plo-achievement';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import {
   CREDITS_EARNED_NOTE,
@@ -43,7 +44,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BAR_TONE_CLASSES } from '@/lib/tone';
+import { BAR_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -153,17 +154,17 @@ function DashboardCards({
       <Reveal index={0}>
         <PageHeader
           title={`สวัสดี, ${fullName}`}
-          description={summary ?? 'แผนการเรียนวิชาการและตัวชี้วัดความพร้อมของคุณ'}
+          description={summary ?? 'แผนการเรียนวิชาการและตัวชี้วัดความพร้อมของนิสิต'}
         />
         {isReady && (
           <Badge tone="success" className="mt-3 gap-1.5 px-3 py-1 text-sm">
             <GraduationCap size={16} aria-hidden="true" />
-            ยินดีด้วย! คุณพร้อมสำเร็จการศึกษา
+            ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา
           </Badge>
         )}
       </Reveal>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
         <Reveal index={1}>
           <TiltCard>
             <StatCard
@@ -212,11 +213,12 @@ function DashboardCards({
                 <p className="text-xs text-muted-foreground">{CREDITS_EARNED_NOTE}</p>
                 {dashboard.onTrackStatus && (
                   <p
-                    className={
+                    className={cn(
+                      'text-xs font-medium',
                       dashboard.onTrackStatus === 'behind'
-                        ? 'text-xs font-medium text-amber-600'
-                        : 'text-xs font-medium text-emerald-600'
-                    }
+                        ? TEXT_TONE_CLASSES.warning
+                        : TEXT_TONE_CLASSES.success,
+                    )}
                   >
                     {dashboard.onTrackStatus === 'behind'
                       ? `ตามหลังแผน — ปีการศึกษานี้ควรมีอย่างน้อย ${dashboard.expectedCredits} หน่วยกิต`
@@ -261,7 +263,7 @@ function DashboardCards({
       <RevealOnScroll>
         <PageSection
           title="ผลลัพธ์การเรียนรู้ (PLO)"
-          description="ความสำเร็จตามผลลัพธ์การเรียนรู้ระดับหลักสูตร จากผลการเรียนของคุณ"
+          description="ความสำเร็จตามผลลัพธ์การเรียนรู้ระดับหลักสูตร จากผลการเรียนของนิสิต"
           actions={
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">

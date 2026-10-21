@@ -35,7 +35,7 @@ export function ReadinessChecklist({ readiness }: Readonly<{ readiness: Graduati
             <Icon
               size={16}
               aria-hidden="true"
-              className={cn('mt-0.5 shrink-0', item.met ? 'text-emerald-600' : 'text-slate-400')}
+              className={cn('mt-0.5 shrink-0', item.met ? 'text-emerald-600' : 'text-muted-foreground')}
             />
             <span className="text-muted-foreground">
               {item.label}{' '}
