@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { AuthProvider, ConsentKind, Prisma, Role, User } from '@prisma/client';
-import { hashPassword } from '../../common/util/password.util';
+import { burnPasswordCompare, hashPassword } from '../../common/util/password.util';
 import { isAllowedSignupEmail, normalizeEmail } from '../../common/auth/signup-domain';
 import { assertCurrentPrivacyPolicyVersion } from '../../common/privacy/privacy-policy.constant';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -417,24 +417,30 @@ export class AuthService {
   async login(dto: LoginDto) {
     // Same generic message for "no such email" and "wrong password" —
     // a distinct 404-style message here would let a client enumerate
-    // which emails are registered.
+    // which emails are registered. Every early exit also spends one bcrypt
+    // compare (burnPasswordCompare), so the timing doesn't tell them apart
+    // from a wrong password either.
     let user: User;
     try {
       user = await this.userService.findByEmail(dto.email);
     } catch (error) {
       if (error instanceof NotFoundException) {
+        await burnPasswordCompare(dto.password);
         throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
       }
       throw error;
     }
 
     if (!user.passwordHash) {
+      await burnPasswordCompare(dto.password);
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
-    // Locked: same generic 401 as a wrong password and no bcrypt compare, so
-    // neither the response nor the timing reveals the lock (or the account).
+    // Locked: same generic 401 as a wrong password. The real hash is not
+    // checked (a locked account must not answer password guesses), only the
+    // dummy one, so the timing does not reveal the lock either.
     if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      await burnPasswordCompare(dto.password);
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 

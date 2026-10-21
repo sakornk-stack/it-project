@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
@@ -56,7 +56,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     new JwtService({}),
     config as unknown as ConfigService,
   );
-  return { service, update, user };
+  return { service, update, user, userService };
 }
 
 const login = (service: AuthService, password: string) =>
@@ -108,6 +108,44 @@ describe('login lockout / backoff', () => {
     const { service, update } = setup();
     await login(service, GOOD);
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe('login timing does not reveal whether the account exists', () => {
+  // Every failure path must spend exactly one bcrypt compare: a path that
+  // skips it answers measurably faster and gives the case away.
+  let compare: jest.SpyInstance;
+  beforeEach(() => {
+    compare = jest.spyOn(bcrypt, 'compare');
+  });
+  afterEach(() => compare.mockRestore());
+
+  it('unknown email: one compare, against a hash that is not any user\'s', async () => {
+    const { service, userService, user } = setup();
+    userService.findByEmail.mockRejectedValue(new NotFoundException());
+    await expect(login(service, GOOD)).rejects.toThrow('Invalid email or password');
+    expect(compare).toHaveBeenCalledTimes(1);
+    expect(compare.mock.calls[0][1]).not.toBe(user.passwordHash);
+  });
+
+  it('Google-only account (no password): one compare, same message', async () => {
+    const { service } = setup({ passwordHash: null });
+    await expect(login(service, GOOD)).rejects.toThrow('Invalid email or password');
+    expect(compare).toHaveBeenCalledTimes(1);
+  });
+
+  it('locked account: one compare, never against its real hash', async () => {
+    const { service, user } = setup({ lockedUntil: new Date(Date.now() + 60_000) });
+    await expect(login(service, GOOD)).rejects.toThrow('Invalid email or password');
+    expect(compare).toHaveBeenCalledTimes(1);
+    expect(compare.mock.calls[0][1]).not.toBe(user.passwordHash);
+  });
+
+  it('wrong password: one compare, against the real hash', async () => {
+    const { service, user } = setup();
+    await expect(login(service, 'wrong')).rejects.toThrow('Invalid email or password');
+    expect(compare).toHaveBeenCalledTimes(1);
+    expect(compare.mock.calls[0][1]).toBe(user.passwordHash);
   });
 });
 

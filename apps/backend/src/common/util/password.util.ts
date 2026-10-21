@@ -1,10 +1,23 @@
-import { randomInt } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 
 export const PASSWORD_SALT_ROUNDS = 10;
 
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, PASSWORD_SALT_ROUNDS);
+}
+
+// Hash of a random value nobody knows, made once per process with the same
+// cost as real hashes, so comparing against it takes as long as a real check.
+let dummyHash: Promise<string> | undefined;
+
+// Spends one bcrypt compare's worth of time and always fails. Login calls it
+// on every path that has no real hash to check (unknown email, Google-only
+// account, locked account), so the response time does not tell which case it
+// was, or whether the email has an account at all.
+export async function burnPasswordCompare(plain: string): Promise<void> {
+  dummyHash ??= hashPassword(randomBytes(32).toString('hex'));
+  await bcrypt.compare(plain, await dummyHash);
 }
 
 const TEMP_PASSWORD_CHARS =
