@@ -34,7 +34,7 @@ const TABS: { key: InstructorTab; label: string }[] = [
 
 // Backward-compat for bookmarked/shared links from before the restructure:
 // ?tab=grades / trend / course fall back onto Overview, and so does any value
-// that is not a tab (the retired score-entry tab, ?tab=evidence, included); ?tab=gradebook and
+// that is not a tab; ?tab=gradebook and
 // ?tab=roster (the editable table) land on Students in view mode, with the
 // ?student= deep link kept so the same person is opened.
 const LEGACY_TAB_ALIASES: Record<string, InstructorTab> = {
