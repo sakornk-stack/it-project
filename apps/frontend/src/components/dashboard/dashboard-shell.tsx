@@ -49,9 +49,10 @@ function RailTip({
   enabled,
   children,
 }: Readonly<{ label: string; enabled: boolean; children: React.ReactElement }>) {
-  if (!enabled) return children;
+  // Always the same element tree, so toggling the rail keeps keyboard focus on the button;
+  // `open={false}` just holds the tooltip shut while the labels are visible.
   return (
-    <Tooltip>
+    <Tooltip open={enabled ? undefined : false}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
@@ -139,21 +140,43 @@ export function DashboardShell({
   }, [pathname]);
 
   // Icon-only mode keeps each label as screen-reader text and shows it as a tooltip.
-  const renderSidebar = (iconOnly: boolean) => {
+  const renderSidebar = (iconOnly: boolean, showToggle = false) => {
     const rowLayout = iconOnly ? 'justify-center px-0' : 'gap-3 px-3';
     const labelClass = iconOnly ? 'sr-only' : undefined;
     const tip = (label: string) => (iconOnly ? { 'aria-label': label } : undefined);
 
     return (
     <>
-      <div className={cn('mb-8 flex items-center gap-2.5', iconOnly && 'justify-center')}>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
-          <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
+      <div
+        className={cn(
+          'mb-8 flex items-center',
+          iconOnly ? 'flex-col gap-3' : 'justify-between gap-2.5',
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
+            <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
+          </div>
+          <div className={cn(iconOnly && 'sr-only')}>
+            <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
+            <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
+          </div>
         </div>
-        <div className={cn(iconOnly && 'sr-only')}>
-          <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
-          <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
-        </div>
+        {showToggle && (
+          <RailTip label="ขยายเมนู" enabled={iconOnly}>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-expanded={!iconOnly}
+              aria-controls="app-sidebar"
+              aria-label={iconOnly ? 'ขยายเมนู' : 'ย่อเมนู'}
+              title={iconOnly ? undefined : 'ย่อเมนู'}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <Menu size={20} aria-hidden="true" />
+            </button>
+          </RailTip>
+        )}
       </div>
 
       <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-1.5">
@@ -263,7 +286,7 @@ export function DashboardShell({
           collapsed && 'lg:w-[4.5rem] lg:px-3',
         )}
       >
-        <TooltipProvider delayDuration={150}>{renderSidebar(collapsed)}</TooltipProvider>
+        <TooltipProvider delayDuration={150}>{renderSidebar(collapsed, true)}</TooltipProvider>
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -276,23 +299,12 @@ export function DashboardShell({
           min-content width, so a wide table's overflow-x-auto wrapper never got
           narrower than the table and the whole page scrolled sideways. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8">
+        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8 lg:justify-end">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="เปิดเมนู"
-          >
-            <Menu size={20} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            aria-expanded={!collapsed}
-            aria-controls="app-sidebar"
-            className="hidden h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            aria-label={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
-            title={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
           >
             <Menu size={20} aria-hidden="true" />
           </button>
