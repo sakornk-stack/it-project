@@ -24,6 +24,26 @@ import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
 
+// Remembered per browser; read after mount so the server render and first client
+// render agree (expanded), then the saved choice applies and the width eases over.
+const SIDEBAR_COLLAPSED_KEY = 'eduanalyze.sidebar-collapsed';
+
+function readSidebarCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeSidebarCollapsed(collapsed: boolean) {
+  try {
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  } catch {
+    // Storage blocked: the choice just lasts for this visit.
+  }
+}
+
 export function DashboardShell({
   studentCode,
   identityLabel,
@@ -57,6 +77,19 @@ export function DashboardShell({
   // only hidden below sm. A student code is short and always shown.
   const identityIsEmail = !!shownIdentity?.includes('@');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Only the fixed (>= lg) sidebar collapses; the drawer is always full width.
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(readSidebarCollapsed());
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      writeSidebarCollapsed(!prev);
+      return !prev;
+    });
+  };
 
   // A nav link inside the drawer should dismiss it, not leave it open over
   // the newly-navigated page.
@@ -64,13 +97,20 @@ export function DashboardShell({
     setDrawerOpen(false);
   }, [pathname]);
 
-  const sidebarContent = (
+  // Icon-only mode keeps each label as screen-reader text and a tooltip.
+  const renderSidebar = (iconOnly: boolean) => {
+    const rowLayout = iconOnly ? 'justify-center px-0' : 'gap-3 px-3';
+    const labelClass = iconOnly ? 'sr-only' : undefined;
+    const tip = (label: string) =>
+      iconOnly ? { title: label, 'aria-label': label } : undefined;
+
+    return (
     <>
-      <div className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
+      <div className={cn('mb-8 flex items-center gap-2.5', iconOnly && 'justify-center')}>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
           <GraduationCap size={18} aria-hidden="true" className="text-brand-light" />
         </div>
-        <div>
+        <div className={cn(iconOnly && 'sr-only')}>
           <p className="text-sm font-semibold leading-snug text-primary">EduAnalyze</p>
           <p className="text-xs leading-snug text-muted-foreground">Academic Insights</p>
         </div>
@@ -86,15 +126,17 @@ export function DashboardShell({
               key={label}
               href={href}
               aria-current={active ? 'page' : undefined}
+              {...tip(label)}
               className={cn(
-                'relative flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                'relative flex min-h-11 items-center rounded-lg py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                rowLayout,
                 active
                   ? 'bg-brand-light text-brand before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-brand'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
             >
               <Icon size={18} aria-hidden="true" className="shrink-0" />
-              {label}
+              <span className={labelClass}>{label}</span>
             </Link>
           );
         })}
@@ -102,15 +144,21 @@ export function DashboardShell({
 
       {otherRoles.length > 0 && (
         <div className="mb-3 flex flex-col gap-1 border-t border-border pt-4">
-          <p className="px-3 pb-1 text-xs font-medium text-muted-foreground">สลับบทบาท</p>
+          <p className={cn('px-3 pb-1 text-xs font-medium text-muted-foreground', labelClass)}>
+            สลับบทบาท
+          </p>
           {otherRoles.map((otherRole) => (
             <Link
               key={otherRole}
               href={homeRouteForRole(otherRole)}
-              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              {...tip(`สลับบทบาท: ${ROLE_LABEL_TH[otherRole]}`)}
+              className={cn(
+                'flex min-h-11 items-center rounded-lg py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                rowLayout,
+              )}
             >
               <Repeat size={18} className="shrink-0" aria-hidden="true" />
-              {ROLE_LABEL_TH[otherRole]}
+              <span className={labelClass}>{ROLE_LABEL_TH[otherRole]}</span>
             </Link>
           ))}
         </div>
@@ -120,27 +168,34 @@ export function DashboardShell({
         <Link
           href="/profile"
           aria-current={pathname === '/profile' ? 'page' : undefined}
+          {...tip('โปรไฟล์และความปลอดภัย')}
           className={cn(
-            'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+            'flex min-h-11 items-center rounded-lg py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+            rowLayout,
             pathname === '/profile'
               ? 'bg-brand-light font-medium text-brand'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
           <User size={18} className="shrink-0" aria-hidden="true" />
-          โปรไฟล์และความปลอดภัย
+          <span className={labelClass}>โปรไฟล์และความปลอดภัย</span>
         </Link>
         <button
           type="button"
           onClick={() => logout()}
-          className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          {...tip('ออกจากระบบ')}
+          className={cn(
+            'flex min-h-11 items-center rounded-lg py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+            rowLayout,
+          )}
         >
           <LogOut size={18} className="shrink-0" aria-hidden="true" />
-          ออกจากระบบ
+          <span className={labelClass}>ออกจากระบบ</span>
         </button>
       </div>
     </>
-  );
+    );
+  };
 
   return (
     <div className="flex min-h-dvh bg-background">
@@ -150,13 +205,20 @@ export function DashboardShell({
       >
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside aria-label="เมนูด้านข้าง" className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/40 p-6 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start">
-        {sidebarContent}
+      <aside
+        id="app-sidebar"
+        aria-label="เมนูด้านข้าง"
+        className={cn(
+          'hidden w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/40 p-6 transition-[width,padding] duration-200 motion-reduce:transition-none lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start',
+          collapsed && 'lg:w-[4.5rem] lg:px-3',
+        )}
+      >
+        {renderSidebar(collapsed)}
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent side="left" className="lg:hidden">
-          {sidebarContent}
+          {renderSidebar(false)}
         </SheetContent>
       </Sheet>
 
@@ -164,12 +226,23 @@ export function DashboardShell({
           min-content width, so a wide table's overflow-x-auto wrapper never got
           narrower than the table and the whole page scrolled sideways. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8 lg:justify-end">
+        <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="เปิดเมนู"
+          >
+            <Menu size={20} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-expanded={!collapsed}
+            aria-controls="app-sidebar"
+            className="hidden h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground lg:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            aria-label={collapsed ? 'ขยายเมนูด้านข้าง' : 'พับเมนูด้านข้าง'}
+            title={collapsed ? 'ขยายเมนูด้านข้าง' : 'พับเมนูด้านข้าง'}
           >
             <Menu size={20} aria-hidden="true" />
           </button>
