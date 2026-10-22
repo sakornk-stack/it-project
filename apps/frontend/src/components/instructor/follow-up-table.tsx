@@ -67,13 +67,23 @@ export function FollowUpTable({
     const level = yearLevelOf?.(row.studentProfileId);
     return level === undefined ? '—' : `ปี ${level}`;
   };
-  const hidden = total - rows.length;
 
   return (
     <PageSection
       title={people > 0 ? `นิสิตที่ควรติดตาม (${people} คน)` : 'นิสิตที่ควรติดตาม'}
       titleClassName={TEXT_SECTION}
       description={`${LOW_GRADE_RULE} เรียงจากเกรดต่ำสุด`}
+      actions={
+        rows.length > 0 && (
+          <Link
+            href="/instructor/students?grade=low"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          >
+            ดูทั้งหมด {total} รายการในหน้านิสิต
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        )
+      }
     >
       {rows.length === 0 ? (
         <p className={cn(CARD, CARD_PAD, 'text-sm text-muted-foreground')}>
@@ -157,14 +167,6 @@ export function FollowUpTable({
               </li>
             ))}
           </ul>
-
-          <Link
-            href="/instructor/students?grade=low"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-          >
-            {hidden > 0 ? `ดูอีก ${hidden} รายการในหน้านิสิต` : 'ดูทั้งหมดในหน้านิสิต'}
-            <ArrowRight size={16} aria-hidden="true" />
-          </Link>
         </div>
       )}
     </PageSection>

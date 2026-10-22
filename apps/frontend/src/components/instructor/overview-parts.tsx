@@ -17,8 +17,10 @@ const STATUS_ICON: Record<OverviewStatus, LucideIcon> = {
 export function StatusBadge({
   status,
   className,
-}: Readonly<{ status: OverviewStatus; className?: string }>) {
-  const { label, tone } = STATUS_META[status];
+  label: labelOverride,
+}: Readonly<{ status: OverviewStatus; className?: string; label?: string }>) {
+  const { label: defaultLabel, tone } = STATUS_META[status];
+  const label = labelOverride ?? defaultLabel;
   const Icon = STATUS_ICON[status];
   return (
     <Badge tone={tone} className={cn('gap-1 px-2.5 py-1 text-sm', className)}>

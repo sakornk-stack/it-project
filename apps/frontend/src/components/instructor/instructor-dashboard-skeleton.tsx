@@ -1,13 +1,22 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Same order as the loaded dashboard: the summary lines, the course rows, then
-// the follow-up table.
+// Same order as the loaded dashboard: the headline, the four figures, the two charts, the
+// course rows, then the follow-up table.
 export function InstructorDashboardSkeleton() {
   return (
     <div className="space-y-6" role="status">
       <span className="sr-only">กำลังโหลดภาพรวมรายวิชา</span>
-      <Skeleton className="h-28 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full rounded-2xl" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </div>
       <div className="space-y-3">
         <Skeleton className="h-6 w-40" />
         <div className="space-y-2 rounded-xl border p-2">

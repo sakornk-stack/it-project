@@ -33,25 +33,40 @@ function rowLabel(row: AttentionRow): string {
 }
 
 function AttentionItem({ row }: Readonly<{ row: AttentionRow }>) {
-  const { course, percent, threshold, status, graded, lowGrade, change } = row;
+  const { course, percent, threshold, status, graded, lowGrade, change, shortBy, termLabel } = row;
   return (
     <li>
       <Link
         href={`/instructor/courses/${course.courseId}`}
         aria-label={rowLabel(row)}
-        className="interactive-row group flex flex-col gap-2.5 rounded-lg px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:px-4"
+        className={cn(
+          CARD,
+          'interactive-row group flex flex-col gap-3 px-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:px-5',
+        )}
       >
         <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <Badge tone="neutral" className="shrink-0 font-mono">
             {course.code}
           </Badge>
-          <span className="course-name-break min-w-0 flex-1 basis-40 font-semibold text-primary">
-            {course.name}
+          <span className="min-w-0 flex-1 basis-40">
+            <span className="course-name-break block font-semibold text-primary">
+              {course.name}
+            </span>
+            <span className="block text-[13px] text-muted-foreground">
+              นิสิต {graded} คน{termLabel ? ` · ${termLabel}` : ''}
+            </span>
           </span>
           <span className="flex flex-wrap items-center gap-2">
-            {status === 'few' ? <LowSampleTag counted={graded} /> : <StatusBadge status={status} />}
+            {status === 'few' ? (
+              <LowSampleTag counted={graded} />
+            ) : (
+              <StatusBadge
+                status={status}
+                label={shortBy === null ? undefined : `ต่ำกว่าเกณฑ์ ${shortBy} จุด`}
+              />
+            )}
             {lowGrade > 0 && (
-              <Badge tone="warning" className="whitespace-nowrap">
+              <Badge tone={status === 'met' ? 'neutral' : 'warning'} className="whitespace-nowrap">
                 D+ ลงไป {lowGrade} คน
               </Badge>
             )}
@@ -106,7 +121,7 @@ export function CourseAttentionList({ rows }: Readonly<{ rows: AttentionRow[] }>
       titleClassName={TEXT_SECTION}
       description="เรียงจากวิชาที่ห่างเกณฑ์มากที่สุด แท่งคือสัดส่วนนิสิตที่ได้ B ขึ้นไป ขีดตั้งคือเกณฑ์ของวิชา"
     >
-      <ul className={cn(CARD, 'divide-y divide-slate-100 p-1.5 sm:p-2')}>
+      <ul className="space-y-3">
         {rows.map((row) => (
           <AttentionItem key={row.course.courseId} row={row} />
         ))}
