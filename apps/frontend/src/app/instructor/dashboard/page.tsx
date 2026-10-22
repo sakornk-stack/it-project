@@ -8,17 +8,26 @@ import {
   useInstructorYearLevels,
 } from '@/lib/instructor-queries';
 import { splitTimeline, termLabel } from '@/lib/course-timeline-summary';
-import { buildAttentionRows, buildPloLinks, selectFollowUps } from '@/lib/instructor-dashboard';
-import { buildInstructorSummary } from '@/lib/instructor-summary';
+import { buildAttentionRows, selectFollowUps } from '@/lib/instructor-dashboard';
+import {
+  buildHeadline,
+  buildPooledTrend,
+  buildPortfolio,
+  countCoursesAtBar,
+  pooledChange,
+} from '@/lib/instructor-portfolio';
+import { countLowGradePeople } from '@/lib/follow-ups';
 import { useAuth } from '@/lib/auth-context';
-import { cn } from '@/lib/utils';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { CourseAttentionList } from '@/components/instructor/course-attention-list';
 import { FollowUpTable } from '@/components/instructor/follow-up-table';
 import { InstructorDashboardSkeleton } from '@/components/instructor/instructor-dashboard-skeleton';
-import { CARD, CARD_PAD } from '@/components/instructor/instructor-ui';
-import { buildPloStack } from '@/lib/plo-clo-chart';
-import { PloLinksSection } from '@/components/instructor/plo-links-section';
+import { CoursePloHeatmap } from '@/components/instructor/course-plo-heatmap';
+import { GradeDistributionChart } from '@/components/instructor/grade-distribution-chart';
+import { HeadlineBanner } from '@/components/instructor/headline-banner';
+import { PortfolioStats } from '@/components/instructor/portfolio-stats';
+import { PortfolioTrendChart } from '@/components/instructor/portfolio-trend-chart';
+import { buildCoursePloMatrix } from '@/lib/plo-clo-chart';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
@@ -65,11 +74,15 @@ function InstructorDashboardContent() {
   const yearLevelsQuery = useInstructorYearLevels({ enabled: isInstructor });
 
   const courses = useMemo(() => dashboardQuery.data?.courses ?? [], [dashboardQuery.data]);
-  const summary = useMemo(() => buildInstructorSummary(courses), [courses]);
+  const headline = useMemo(() => buildHeadline(courses), [courses]);
+  const portfolio = useMemo(() => buildPortfolio(courses), [courses]);
+  const pooledTerms = useMemo(() => buildPooledTrend(courses), [courses]);
+  const change = useMemo(() => pooledChange(pooledTerms), [pooledTerms]);
+  const atBar = useMemo(() => countCoursesAtBar(courses), [courses]);
+  const lowGradePeople = useMemo(() => countLowGradePeople(courses), [courses]);
   const attention = useMemo(() => buildAttentionRows(courses), [courses]);
   const followUps = useMemo(() => selectFollowUps(courses), [courses]);
-  const ploLinks = useMemo(() => buildPloLinks(courses), [courses]);
-  const ploStack = useMemo(() => buildPloStack(courses), [courses]);
+  const ploMatrix = useMemo(() => buildCoursePloMatrix(courses), [courses]);
   const latestTerm = useMemo(() => {
     const { latest } = splitTimeline(timelineQuery.data?.years ?? []);
     return latest ? termLabel(latest) : null;
@@ -96,6 +109,7 @@ function InstructorDashboardContent() {
   const description = [
     latestTerm ? `ภาคเรียนล่าสุด ${latestTerm}` : null,
     courses.length > 0 ? `สอน ${courses.length} วิชา` : null,
+    portfolio.graded > 0 ? `นิสิตที่มีเกรด ${portfolio.graded} คน (นับรายวิชาละครั้ง)` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -129,29 +143,34 @@ function InstructorDashboardContent() {
 
       {courses.length > 0 && !legacyCourse && (
         <>
-          {summary && (
+          {headline && (
             <Reveal index={1}>
-              <section aria-label="สรุปภาพรวม" className={cn(CARD, CARD_PAD, 'sm:p-6')}>
-                <ul className="space-y-2.5">
-                  {summary.map((line) => (
-                    <li key={line} className="flex gap-3 text-base leading-relaxed text-primary">
-                      <span
-                        aria-hidden="true"
-                        className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
-                      />
-                      <span className="min-w-0 break-words">{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <HeadlineBanner headline={headline} />
             </Reveal>
           )}
 
           <Reveal index={2}>
-            <CourseAttentionList rows={attention} />
+            <PortfolioStats
+              portfolio={portfolio}
+              lowGradePeople={lowGradePeople}
+              lowGradeRows={followUps.total}
+              change={change}
+              atBar={atBar}
+            />
           </Reveal>
 
           <Reveal index={3}>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <GradeDistributionChart portfolio={portfolio} />
+              <PortfolioTrendChart terms={pooledTerms} portfolio={portfolio} />
+            </div>
+          </Reveal>
+
+          <Reveal index={4}>
+            <CourseAttentionList rows={attention} />
+          </Reveal>
+
+          <Reveal index={5}>
             <div className="space-y-3">
               {yearLevelsQuery.isError && (
                 <ApiErrorAlert
@@ -168,11 +187,9 @@ function InstructorDashboardContent() {
             </div>
           </Reveal>
 
-          {ploLinks.length > 0 && (
-            <Reveal index={4}>
-              <PloLinksSection links={ploLinks} stack={ploStack} />
-            </Reveal>
-          )}
+          <Reveal index={6}>
+            <CoursePloHeatmap matrix={ploMatrix} />
+          </Reveal>
         </>
       )}
     </DashboardShell>
