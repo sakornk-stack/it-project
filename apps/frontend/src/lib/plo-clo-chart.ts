@@ -90,89 +90,74 @@ export function describeTopPlos(matrix: CloPloMatrix): string | null {
   return `วิชานี้ช่วย ${names} มากที่สุด (น้ำหนักรวม ${total})`;
 }
 
-// ---- all of an instructor's courses: one bar per PLO ----
+// ---- all of an instructor's courses: course x PLO ----
 
-export const COURSE_COLOR_COUNT = 6;
-
-export interface PloStackSegment {
-  courseId: string;
-  courseCode: string;
-  courseName: string;
-  weight: number;
-  colorIndex: number;
-}
-
-export interface PloStackRow {
+export interface CoursePloColumn {
   ploId: string;
   code: string;
   name: string;
-  total: number;
-  segments: PloStackSegment[];
 }
 
-export interface PloStackLegendItem {
+export interface CoursePloCell {
+  // Sum of the weights of the course's CLOs mapped to the PLO.
+  total: number;
+  // 1 to 5, for the colour: totals up to 5 map to themselves, a bigger total is
+  // spread over the five steps relative to the largest one.
+  level: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface CoursePloRow {
   courseId: string;
   code: string;
   name: string;
-  colorIndex: number;
+  // One cell per column; null = no CLO of the course is mapped to that PLO.
+  cells: (CoursePloCell | null)[];
 }
 
-export interface PloStack {
-  rows: PloStackRow[];
-  legend: PloStackLegendItem[];
-  maxTotal: number;
-  // No course has any CLO mapped to any PLO.
+export interface CoursePloMatrix {
+  plos: CoursePloColumn[];
+  rows: CoursePloRow[];
+  // No CLO of any course is mapped to a PLO: show the "not set" message.
   isEmpty: boolean;
 }
 
-// A PLO a course lists with no CLO mapped keeps its row with an empty bar, so
-// "no course feeds this PLO" shows instead of the PLO going missing. Colours are
-// handed out in course-code order and wrap after COURSE_COLOR_COUNT; the number
-// inside each segment and the legend keep wrapped colours readable.
-export function buildPloStack(courses: readonly InstructorCourseSummary[]): PloStack {
-  const ordered = [...courses].sort((a, b) => naturalCode(a.code, b.code));
-  const legend: PloStackLegendItem[] = [];
-  const colorOf = new Map<string, number>();
-  const rowsById = new Map<string, PloStackRow>();
-  for (const course of ordered) {
+// Columns are the PLOs some course of the instructor has a CLO mapped to, PLO1 to
+// PLOn; rows are the courses by code. Only the mapping and its weights: a course
+// has one share at B or above, so a per-PLO result would repeat it.
+export function buildCoursePloMatrix(courses: readonly InstructorCourseSummary[]): CoursePloMatrix {
+  const columns = new Map<string, CoursePloColumn>();
+  const totals = new Map<string, Map<string, number>>();
+  for (const course of courses) {
     for (const plo of course.plos) {
-      const row = rowsById.get(plo.ploId) ?? {
-        ploId: plo.ploId,
-        code: plo.code,
-        name: plo.name,
-        total: 0,
-        segments: [],
-      };
-      rowsById.set(plo.ploId, row);
       const weight = plo.cloBreakdown.reduce((s, b) => s + b.weight, 0);
-      if (plo.cloBreakdown.length === 0 || weight <= 0) continue;
-      if (!colorOf.has(course.courseId)) {
-        const colorIndex = legend.length % COURSE_COLOR_COUNT;
-        colorOf.set(course.courseId, colorIndex);
-        legend.push({
-          courseId: course.courseId,
-          code: course.code,
-          name: course.name,
-          colorIndex,
-        });
-      }
-      row.segments.push({
-        courseId: course.courseId,
-        courseCode: course.code,
-        courseName: course.name,
-        weight,
-        colorIndex: colorOf.get(course.courseId) ?? 0,
-      });
-      row.total += weight;
+      if (plo.cloBreakdown.length === 0 || !(weight > 0)) continue;
+      columns.set(plo.ploId, { ploId: plo.ploId, code: plo.code, name: plo.name });
+      const row = totals.get(course.courseId) ?? new Map<string, number>();
+      row.set(plo.ploId, (row.get(plo.ploId) ?? 0) + weight);
+      totals.set(course.courseId, row);
     }
   }
-  const rows = [...rowsById.values()].sort(
+  const plos = [...columns.values()].sort(
     (a, b) => comparePloCode(a.code, b.code) || naturalCode(a.name, b.name),
   );
-  return {
-    rows,
-    legend,
-    maxTotal: Math.max(0, ...rows.map((r) => r.total)),
-    isEmpty: legend.length === 0,
-  };
+  let max = 0;
+  for (const row of totals.values()) for (const t of row.values()) max = Math.max(max, t);
+  const scale = Math.max(5, max);
+  const rows = [...courses]
+    .sort((a, b) => naturalCode(a.code, b.code))
+    .map((course) => ({
+      courseId: course.courseId,
+      code: course.code,
+      name: course.name,
+      cells: plos.map((p): CoursePloCell | null => {
+        const total = totals.get(course.courseId)?.get(p.ploId);
+        if (total === undefined) return null;
+        const level = Math.min(
+          5,
+          Math.max(1, Math.ceil((total / scale) * 5)),
+        ) as CoursePloCell['level'];
+        return { total, level };
+      }),
+    }));
+  return { plos, rows, isEmpty: plos.length === 0 };
 }

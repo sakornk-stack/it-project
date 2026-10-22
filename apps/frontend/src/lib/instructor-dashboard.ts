@@ -9,7 +9,6 @@ import { hasCloPercent } from './clo-percent';
 import { GRADE_POINTS, statusOf, type OverviewStatus } from './instructor-overview';
 import { hasVerdict, sortCoursesByAttention } from './instructor-summary';
 import { isLowGrade } from './low-grade';
-import { comparePloCode } from './plo-order';
 
 // The instructor dashboard: every course on one page. Pure; it only regroups
 // GET /dashboard/instructor (the courses the caller teaches), so it stays inside
@@ -32,6 +31,10 @@ export interface AttentionRow {
   lowGrade: number;
   // Latest term against the one before, when both have enough people.
   change: TrendChange | null;
+  // Whole points short of the bar (1 or more); null when at the bar, or no verdict.
+  shortBy: number | null;
+  // The course's latest term with a grade, e.g. "ภาคต้น / 2569".
+  termLabel: string | null;
 }
 
 export function buildAttentionRows(courses: readonly InstructorCourseSummary[]): AttentionRow[] {
@@ -43,14 +46,21 @@ export function buildAttentionRows(courses: readonly InstructorCourseSummary[]):
     let status: AttentionStatus;
     if (hasVerdict(course)) status = statusOf(course.achievementPercent, threshold);
     else status = percent !== null && course.studentCount > 0 ? 'few' : 'none';
+    const terms = buildTrendTerms(course.semesterTrend);
+    const short =
+      percent !== null && threshold !== null && (status === 'below' || status === 'near')
+        ? Math.round(threshold - percent)
+        : 0;
     return {
       course,
       percent,
       threshold,
       status,
+      shortBy: short >= 1 ? short : null,
+      termLabel: terms[terms.length - 1]?.label ?? null,
       graded: Math.max(0, course.studentCount),
       lowGrade: course.atRiskStudents.filter((s) => isLowGrade(s.grade)).length,
-      change: trendChangeOf(buildTrendTerms(course.semesterTrend)),
+      change: trendChangeOf(terms),
     };
   });
 }
@@ -110,57 +120,4 @@ export function selectFollowUps(
     total: all.length,
     people: new Set(all.map((r) => r.studentProfileId)).size,
   };
-}
-
-// ---- which PLO each course feeds, and how strongly ----
-
-export interface PloLinkCourse {
-  courseId: string;
-  code: string;
-  name: string;
-  // The course's CLOs mapped to this PLO, each with its weight (1 to 5).
-  clos: { code: string; weight: number }[];
-}
-
-export interface PloLink {
-  ploId: string;
-  code: string;
-  name: string;
-  courses: PloLinkCourse[];
-}
-
-const naturalCode = (a: string, b: string) =>
-  a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' });
-
-// Every PLO a CLO of the instructor's courses is mapped to, PLO1 to PLOn. Only
-// the mapping and its weights: a per-course PLO percentage is the course's own
-// share repeated (one share per course on the backend), so it is not shown here.
-export function buildPloLinks(courses: readonly InstructorCourseSummary[]): PloLink[] {
-  const byPlo = new Map<string, PloLink>();
-  for (const course of courses) {
-    for (const plo of course.plos) {
-      if (plo.cloBreakdown.length === 0) continue;
-      const link = byPlo.get(plo.ploId) ?? {
-        ploId: plo.ploId,
-        code: plo.code,
-        name: plo.name,
-        courses: [],
-      };
-      link.courses.push({
-        courseId: course.courseId,
-        code: course.code,
-        name: course.name,
-        clos: [...plo.cloBreakdown]
-          .sort((a, b) => naturalCode(a.code, b.code))
-          .map(({ code, weight }) => ({ code, weight })),
-      });
-      byPlo.set(plo.ploId, link);
-    }
-  }
-  return [...byPlo.values()]
-    .map((link) => ({
-      ...link,
-      courses: [...link.courses].sort((a, b) => naturalCode(a.code, b.code)),
-    }))
-    .sort((a, b) => comparePloCode(a.code, b.code) || naturalCode(a.name, b.name));
 }

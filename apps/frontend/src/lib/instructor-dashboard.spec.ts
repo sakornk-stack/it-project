@@ -1,10 +1,5 @@
-import type {
-  AtRiskStudent,
-  CoursePloEntry,
-  Grade,
-  InstructorCourseSummary,
-} from '@eduanalyze-ai/shared-types';
-import { buildAttentionRows, buildPloLinks, selectFollowUps } from './instructor-dashboard';
+import type { AtRiskStudent, Grade, InstructorCourseSummary } from '@eduanalyze-ai/shared-types';
+import { buildAttentionRows, selectFollowUps } from './instructor-dashboard';
 
 // Made-up courses and people only.
 function course(overrides: Partial<InstructorCourseSummary> = {}): InstructorCourseSummary {
@@ -37,16 +32,6 @@ function person(id: string, grade: Grade): AtRiskStudent {
   };
 }
 
-function plo(code: string, clos: [string, number][], ploId = code): CoursePloEntry {
-  return {
-    ploId,
-    code,
-    name: `ผลลัพธ์ ${code}`,
-    achievementPercent: 80,
-    cloBreakdown: clos.map(([c, weight]) => ({ cloId: c, code: c, weight })),
-  };
-}
-
 describe('buildAttentionRows', () => {
   it('orders by distance from the bar and reads a status for each course', () => {
     const rows = buildAttentionRows([
@@ -64,6 +49,32 @@ describe('buildAttentionRows', () => {
       ['none', 'none'],
     ]);
     expect(rows[4].percent).toBeNull();
+  });
+
+  it('says how many whole points a course is short of its bar, and its latest term', () => {
+    const rows = buildAttentionRows([
+      course({
+        courseId: 'near',
+        achievementPercent: 62,
+        achievementThreshold: 70,
+        semesterTrend: [
+          {
+            academicYear: 2569,
+            semesterTerm: 'FIRST',
+            studentCount: 20,
+            gradedCount: 20,
+            achievementPercent: 62,
+          },
+        ],
+      }),
+      course({ courseId: 'ok', achievementPercent: 80 }),
+      course({ courseId: 'few', studentCount: 3, achievementPercent: 20 }),
+    ]);
+    expect(rows.map((r) => [r.course.courseId, r.shortBy, r.termLabel])).toEqual([
+      ['near', 8, 'ภาคต้น / 2569'],
+      ['ok', null, null],
+      ['few', null, null],
+    ]);
   });
 
   it('counts D+ and below only, and gives the change only when both terms have 5 or more people', () => {
@@ -159,52 +170,5 @@ describe('selectFollowUps', () => {
       total: 0,
       people: 0,
     });
-  });
-});
-
-describe('buildPloLinks', () => {
-  it('groups courses under each PLO in PLO1 to PLOn order, with CLOs and weights', () => {
-    const links = buildPloLinks([
-      course({
-        courseId: 'b',
-        code: 'B1',
-        plos: [plo('PLO10', [['CLO2', 2]]), plo('PLO2', [['CLO1', 3]])],
-      }),
-      course({
-        courseId: 'a',
-        code: 'A1',
-        plos: [
-          plo('PLO2', [
-            ['CLO10', 1],
-            ['CLO2', 5],
-          ]),
-        ],
-      }),
-    ]);
-    expect(links.map((l) => l.code)).toEqual(['PLO2', 'PLO10']);
-    expect(links[0].courses).toEqual([
-      {
-        courseId: 'a',
-        code: 'A1',
-        name: 'วิชาสมมติ ก',
-        clos: [
-          { code: 'CLO2', weight: 5 },
-          { code: 'CLO10', weight: 1 },
-        ],
-      },
-      { courseId: 'b', code: 'B1', name: 'วิชาสมมติ ก', clos: [{ code: 'CLO1', weight: 3 }] },
-    ]);
-  });
-
-  it('keeps two PLOs that share a code but belong to different curricula apart', () => {
-    const links = buildPloLinks([
-      course({ courseId: 'a', plos: [plo('PLO1', [['CLO1', 1]], 'p-x')] }),
-      course({ courseId: 'b', plos: [plo('PLO1', [['CLO1', 1]], 'p-y')] }),
-    ]);
-    expect(links.map((l) => l.ploId)).toEqual(['p-x', 'p-y']);
-  });
-
-  it('is empty when no CLO is mapped', () => {
-    expect(buildPloLinks([course(), course({ plos: [plo('PLO1', [])] })])).toEqual([]);
   });
 });
