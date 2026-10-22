@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Network } from 'lucide-react';
 import type { PloLink } from '@/lib/instructor-dashboard';
+import type { PloStack } from '@/lib/plo-clo-chart';
+import { PloStackChart } from './plo-stack-chart';
 import { Badge } from '@/components/ui/badge';
 import { SectionCard } from '@/components/ui/section-card';
 
@@ -8,13 +10,14 @@ import { SectionCard } from '@/components/ui/section-card';
 // which CLO and how strongly. No achievement bar: a course has one share at B or
 // above, so every PLO of that course would repeat it (the per-course figure
 // lives on the course page's CLO และ PLO tab).
-export function PloLinksSection({ links }: Readonly<{ links: PloLink[] }>) {
+export function PloLinksSection({ links, stack }: Readonly<{ links: PloLink[]; stack: PloStack }>) {
   return (
     <SectionCard
       icon={Network}
       title="วิชาของคุณกับ PLO ของหลักสูตร"
       description="PLO ที่ CLO ของวิชาคุณเชื่อมไว้ ตัวเลขในวงเล็บคือน้ำหนัก 1–5 (มาก = มีผลต่อ PLO ข้อนั้นมาก)"
     >
+      <PloStackChart stack={stack} />
       <ul className="-my-3 divide-y divide-slate-100">
         {links.map((link) => (
           <li

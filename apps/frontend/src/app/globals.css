@@ -31,6 +31,21 @@
     --input: 214 32% 91%;
     --ring: 210 75% 37%;
     --radius: 0.625rem;
+    /* Course colours for charts that split a bar by course: six hues that stay
+       apart in both themes and say nothing about pass or fail (no red or green).
+       Each --chart-N-fg is the label colour that reads on --chart-N. */
+    --chart-1: 210 75% 40%;
+    --chart-1-fg: 0 0% 100%;
+    --chart-2: 262 52% 52%;
+    --chart-2-fg: 0 0% 100%;
+    --chart-3: 38 92% 50%;
+    --chart-3-fg: 222 47% 11%;
+    --chart-4: 190 85% 36%;
+    --chart-4-fg: 0 0% 100%;
+    --chart-5: 320 55% 48%;
+    --chart-5-fg: 0 0% 100%;
+    --chart-6: 215 14% 46%;
+    --chart-6-fg: 0 0% 100%;
     color-scheme: light;
   }
 
@@ -64,6 +79,18 @@
     --border: 215 25% 22%;
     --input: 215 25% 22%;
     --ring: 210 85% 62%;
+    --chart-1: 210 85% 62%;
+    --chart-1-fg: 215 60% 8%;
+    --chart-2: 262 80% 74%;
+    --chart-2-fg: 215 60% 8%;
+    --chart-3: 40 92% 58%;
+    --chart-3-fg: 215 60% 8%;
+    --chart-4: 188 70% 52%;
+    --chart-4-fg: 215 60% 8%;
+    --chart-5: 320 70% 72%;
+    --chart-5-fg: 215 60% 8%;
+    --chart-6: 215 18% 66%;
+    --chart-6-fg: 215 60% 8%;
     color-scheme: dark;
   }
 

@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { GradeEstimateBadge } from '@/components/ui/grade-estimate-badge';
 import { LowSampleTag } from './overview-parts';
+import { CloPloHeatmap } from './clo-plo-heatmap';
 import { CollapsibleCard, SectionCard } from '@/components/ui/section-card';
 
 // A small titled block inside a card; the card's own title is the only h2.
@@ -186,6 +187,8 @@ export function CloAchievementSection({
           ))}
         </ul>
       </SectionCard>
+
+      <CloPloHeatmap clos={clos} plos={plos} />
 
       {(plos.length > 0 || scoredAssessmentClos.length > 0) && (
         <CollapsibleCard

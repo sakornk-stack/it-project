@@ -17,6 +17,7 @@ import { CourseAttentionList } from '@/components/instructor/course-attention-li
 import { FollowUpTable } from '@/components/instructor/follow-up-table';
 import { InstructorDashboardSkeleton } from '@/components/instructor/instructor-dashboard-skeleton';
 import { CARD, CARD_PAD } from '@/components/instructor/instructor-ui';
+import { buildPloStack } from '@/lib/plo-clo-chart';
 import { PloLinksSection } from '@/components/instructor/plo-links-section';
 import { PageHeader } from '@/components/layout/page-header';
 import { Reveal } from '@/components/layout/reveal';
@@ -68,6 +69,7 @@ function InstructorDashboardContent() {
   const attention = useMemo(() => buildAttentionRows(courses), [courses]);
   const followUps = useMemo(() => selectFollowUps(courses), [courses]);
   const ploLinks = useMemo(() => buildPloLinks(courses), [courses]);
+  const ploStack = useMemo(() => buildPloStack(courses), [courses]);
   const latestTerm = useMemo(() => {
     const { latest } = splitTimeline(timelineQuery.data?.years ?? []);
     return latest ? termLabel(latest) : null;
@@ -168,7 +170,7 @@ function InstructorDashboardContent() {
 
           {ploLinks.length > 0 && (
             <Reveal index={4}>
-              <PloLinksSection links={ploLinks} />
+              <PloLinksSection links={ploLinks} stack={ploStack} />
             </Reveal>
           )}
         </>
