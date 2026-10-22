@@ -207,7 +207,20 @@ function TwoFactorSetupFlow({
   const [serverError, setServerError] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
   const [secretCopied, setSecretCopied] = useState(false);
-  const setupQuery = useQuery({ queryKey: ['two-factor-setup'], queryFn: setupTwoFactor });
+  // POST /auth/2fa/setup replaces the pending secret on every call, so this
+  // must run exactly once per opened flow. React Query's defaults (refetch on
+  // window focus once stale after 60s, retry) would silently swap the QR after
+  // the user already scanned it — every code from the app is then rejected.
+  // gcTime 0 drops it on close so reopening fetches a secret the server holds.
+  const setupQuery = useQuery({
+    queryKey: ['two-factor-setup'],
+    queryFn: setupTwoFactor,
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
   const form = useForm<TwoFactorEnableFormValues>({
     resolver: zodResolver(twoFactorEnableSchema),
     defaultValues: { code: '' },
