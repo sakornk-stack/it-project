@@ -107,6 +107,7 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       findOne: ['ADMIN', 'STAFF'],
       update: ['STAFF'],
       updateActiveStatus: ['STAFF'],
+      updateAdvisor: ['STAFF'],
       findAuditLogs: ['STAFF'],
     },
   ],
@@ -143,6 +144,7 @@ const STUDENT_ACCOUNT_SCOPED: [string, { prototype: object }, string][] = [
   ['StudentInvitationController', StudentInvitationController, 'remove'],
   ['StudentProfilesController', StudentProfilesController, 'update'],
   ['StudentProfilesController', StudentProfilesController, 'updateActiveStatus'],
+  ['StudentProfilesController', StudentProfilesController, 'updateAdvisor'],
   ['StudentProfilesController', StudentProfilesController, 'findAuditLogs'],
 ];
 

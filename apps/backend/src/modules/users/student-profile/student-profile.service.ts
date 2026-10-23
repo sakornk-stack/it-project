@@ -16,6 +16,7 @@ import { AuditLogService } from '../../../common/audit/audit-log.service';
 import type { AuditSnapshot } from '../../../common/audit/audit-log.util';
 import { RequestUser } from '../../auth/request-user.interface';
 import { UpdateStudentActiveStatusDto } from './dto/update-student-active-status.dto';
+import { UpdateStudentAdvisorDto } from './dto/update-student-advisor.dto';
 import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
 
 const REASON_MIN_LENGTH = 5;
@@ -133,12 +134,74 @@ export class StudentProfileService {
   async findInScopeById(id: string) {
     const profile = await this.prisma.studentProfile.findUnique({
       where: { id },
-      include: { user: { select: { fullName: true, email: true, isActive: true } } },
+      include: {
+        user: { select: { fullName: true, email: true, isActive: true } },
+        advisor: { select: { id: true, fullName: true } },
+      },
     });
     if (!profile) {
       throw new NotFoundException(`Student profile ${id} not found`);
     }
     return profile;
+  }
+
+  // STAFF setting, changing or clearing a student's academic advisor
+  // (ScopeGuard has checked the program). The advisor must be an active
+  // INSTRUCTOR account; like a course assignment, the instructor's own scope
+  // is not checked (instructors are not modelled by UserScope). Audited with
+  // ids only; the history screen names them.
+  async updateAdvisor(id: string, dto: UpdateStudentAdvisorDto, requester: RequestUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const profile = await tx.studentProfile.findUnique({ where: { id } });
+      if (!profile) {
+        throw new NotFoundException(`Student profile ${id} not found`);
+      }
+      if (!profile.isActive) {
+        throw new ConflictException(
+          'บัญชีนิสิตนี้ถูกระงับอยู่ ต้องเปิดบัญชีก่อนจึงเปลี่ยนอาจารย์ที่ปรึกษาได้',
+        );
+      }
+      if (profile.advisorUserId === dto.advisorUserId) {
+        throw new BadRequestException('ไม่มีข้อมูลที่เปลี่ยนแปลง');
+      }
+      if (dto.advisorUserId !== null) {
+        await this.assertAssignableAdvisor(dto.advisorUserId, profile.userId, tx);
+      }
+
+      const updated = await tx.studentProfile.update({
+        where: { id },
+        data: { advisorUserId: dto.advisorUserId },
+        include: { advisor: { select: { id: true, fullName: true } } },
+      });
+      await this.auditLogService.record(tx, {
+        action: 'STUDENT_ADVISOR_UPDATE',
+        actor: requester,
+        targetType: 'StudentProfile',
+        targetId: id,
+        studentProfileId: id,
+        programId: profile.programId,
+        before: { advisorUserId: profile.advisorUserId },
+        after: { advisorUserId: dto.advisorUserId },
+      });
+      return { id, advisor: updated.advisor };
+    });
+  }
+
+  private async assertAssignableAdvisor(
+    advisorUserId: string,
+    studentUserId: string,
+    tx: PrismaClientOrTx,
+  ) {
+    if (advisorUserId === studentUserId) {
+      throw new BadRequestException('นิสิตเป็นอาจารย์ที่ปรึกษาของตัวเองไม่ได้');
+    }
+    const advisor = await tx.user.findFirst({
+      where: { id: advisorUserId, isActive: true, userRoles: { some: { role: Role.INSTRUCTOR } } },
+      select: { id: true },
+    });
+    if (!advisor) {
+      throw new BadRequestException('ผู้ที่เลือกไม่ใช่อาจารย์ที่ใช้งานอยู่ในระบบ');
+    }
   }
 
   // STAFF suspending or reactivating a student (ScopeGuard has checked the

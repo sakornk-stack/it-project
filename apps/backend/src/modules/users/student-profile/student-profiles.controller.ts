@@ -8,6 +8,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ScopeGuard } from '../../../common/guards/scope.guard';
 import { RequestUser } from '../../auth/request-user.interface';
 import { UpdateStudentActiveStatusDto } from './dto/update-student-active-status.dto';
+import { UpdateStudentAdvisorDto } from './dto/update-student-advisor.dto';
 import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
 import { StudentProfileService } from './student-profile.service';
 
@@ -105,6 +106,31 @@ export class StudentProfilesController {
     @CurrentUser() user: RequestUser,
   ) {
     return this.studentProfileService.updateActiveStatus(id, dto, user);
+  }
+
+  @Patch(':id/advisor')
+  @UseGuards(JwtAuthGuard, RolesGuard, ScopeGuard)
+  @Roles('STAFF')
+  @ScopeTarget('studentProfile', { from: 'param', key: 'id' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Set, change or clear (null) a student’s academic advisor — an active INSTRUCTOR account; audited',
+  })
+  @ApiResponse({ status: 200, description: 'Advisor updated ({ id, advisor })' })
+  @ApiResponse({
+    status: 400,
+    description: 'Nothing changed, or the user is not an active INSTRUCTOR',
+  })
+  @ApiResponse({ status: 403, description: 'No scope covering this student' })
+  @ApiResponse({ status: 404, description: 'Student profile not found' })
+  @ApiResponse({ status: 409, description: 'Student suspended' })
+  updateAdvisor(
+    @Param('id') id: string,
+    @Body() dto: UpdateStudentAdvisorDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.studentProfileService.updateAdvisor(id, dto, user);
   }
 
   @Get(':id/audit-logs')

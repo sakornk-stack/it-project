@@ -1333,8 +1333,25 @@ export interface StudentProfileSummary {
 
 // GET /student-profiles/:id — a suspended student is returned too;
 // user.isActive is whether the account can sign in.
+// A student's academic advisor (an INSTRUCTOR account), by name only.
+export interface StudentAdvisor {
+  id: string;
+  fullName: string;
+}
+
 export interface StudentProfileDetail extends StudentProfileSummary {
   user: { fullName: string; email: string; isActive: boolean };
+  advisor: StudentAdvisor | null;
+}
+
+// PATCH /student-profiles/:id/advisor (STAFF, in scope). null clears it.
+export interface UpdateStudentAdvisorRequest {
+  advisorUserId: string | null;
+}
+
+export interface UpdateStudentAdvisorResponse {
+  id: string;
+  advisor: StudentAdvisor | null;
 }
 
 // PATCH /student-profiles/:id (STAFF, in scope). There is deliberately no
