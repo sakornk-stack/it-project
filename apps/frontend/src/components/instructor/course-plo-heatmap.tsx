@@ -29,7 +29,7 @@ export function CoursePloHeatmap({ matrix }: Readonly<{ matrix: CoursePloMatrix 
     <SectionCard
       icon={Network}
       title="วิชาของคุณกับ PLO ของหลักสูตร"
-      description="ตัวเลขคือน้ำหนัก 1–5 ที่ CLO ของวิชาเชื่อมกับ PLO (มาก = มีผลต่อ PLO ข้อนั้นมาก) แสดงว่าวิชาช่วย PLO ไหน ไม่ใช่ผลการเรียนของนิสิต"
+      description="ตัวเลขคือน้ำหนักรวมของ CLO ในวิชาที่เชื่อมกับ PLO ข้อนั้น (แต่ละ CLO มีน้ำหนัก 1–5 มาก = มีผลต่อ PLO ข้อนั้นมาก) แสดงว่าวิชาช่วย PLO ไหน ไม่ใช่ผลการเรียนของนิสิต"
     >
       {matrix.isEmpty ? (
         <>
@@ -115,15 +115,11 @@ export function CoursePloHeatmap({ matrix }: Readonly<{ matrix: CoursePloMatrix 
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-700">
             <span>น้อย</span>
-            <ul className="flex items-center gap-1" aria-label="คำอธิบายสี">
+            {/* Shade steps only, no numbers: a cell shows a weight total (can exceed 5),
+                so numbered swatches 1–5 would read as cell values. */}
+            <ul className="flex items-center gap-1" aria-label="คำอธิบายสี: สีอ่อนถึงเข้ม ตามน้ำหนักรวม">
               {LEVELS.map((l) => (
-                <li
-                  key={l}
-                  className="flex h-6 w-7 items-center justify-center rounded text-xs font-semibold tabular-nums"
-                  style={levelStyle(l)}
-                >
-                  {l}
-                </li>
+                <li key={l} aria-hidden="true" className="h-6 w-7 rounded" style={levelStyle(l)} />
               ))}
             </ul>
             <span>มาก</span>

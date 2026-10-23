@@ -214,7 +214,9 @@ export function TermSummaryStrip({
         label={`${noun}ทุกเทอม`}
         value={<AnimatedNumber value={allSeats} />}
         suffix={unit}
-        caption={overlap}
+        // Every term of *these* courses only — a course taught in an earlier term but not
+        // this one is counted under "เทอมก่อนหน้า", so say so rather than imply "all ever".
+        caption={perCourse ? `เฉพาะวิชาเทอมนี้ · ${overlap}` : 'รวมทุกเทอมของวิชานี้'}
       />
       <StatCard
         dense
