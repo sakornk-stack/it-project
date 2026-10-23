@@ -15,6 +15,7 @@ const REFERENCE_PARTS = [
   ['courseInstructors', (n: number) => `ยังเป็นผู้สอน ${n} วิชา`],
   ['enteredRecords', (n: number) => `เคยบันทึกผลการเรียน ${n} รายการ`],
   ['studentInvitations', (n: number) => `เป็นผู้เชิญนิสิต ${n} รายการ`],
+  ['advisees', (n: number) => `เป็นอาจารย์ที่ปรึกษานิสิต ${n} คน`],
 ] as const;
 
 // Why the list already knows the delete will be refused (same wording the API
@@ -28,6 +29,7 @@ export function referencesBlockedReason(user: AdminUserSummary): string | null {
   if (parts.length === 0) return null;
   const todo = [
     refs.courseInstructors > 0 ? 'ให้เจ้าหน้าที่ถอนการมอบหมายผู้สอนก่อน' : null,
+    refs.advisees > 0 ? 'ให้เจ้าหน้าที่เปลี่ยนอาจารย์ที่ปรึกษาของนิสิตก่อน' : null,
     refs.studentInvitations > 0 ? 'รอให้คำเชิญของบัญชีนี้หมดอายุก่อน' : null,
     refs.enteredRecords > 0
       ? 'ประวัติการบันทึกผลการเรียนลบไม่ได้ จึงเก็บบัญชีนี้ไว้ในสถานะระงับ'

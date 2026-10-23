@@ -16,7 +16,7 @@ interface Setup {
     isActive: boolean;
     studentProfile?: boolean;
   } | null;
-  refs?: { instructors?: number; records?: number; invitations?: number };
+  refs?: { instructors?: number; records?: number; invitations?: number; advisees?: number };
   otherSuperAdmins?: number;
   failAt?: string;
   p2003?: boolean;
@@ -66,6 +66,11 @@ function setup(opts: Setup = {}) {
                 },
               ]
             : [],
+        ),
+      },
+      studentProfile: {
+        groupBy: jest.fn(async () =>
+          refs.advisees ? [{ advisorUserId: 'target', _count: { _all: refs.advisees } }] : [],
         ),
       },
       user: {
@@ -179,13 +184,15 @@ describe('UserManagementService.hardDelete', () => {
 
   it('409 with Thai counts for each kind of reference, and deletes nothing', async () => {
     const { service, committed } = setup({
-      refs: { instructors: 2, records: 5, invitations: 3 },
+      refs: { instructors: 2, records: 5, invitations: 3, advisees: 4 },
     });
     const call = service.hardDelete('target', sa);
     await expect(call).rejects.toThrow(ConflictException);
     await expect(call).rejects.toThrow(/ผู้สอน 2 วิชา/);
     await expect(call).rejects.toThrow(/บันทึกผลการเรียน 5 รายการ/);
     await expect(call).rejects.toThrow(/ผู้เชิญนิสิต 3 รายการ/);
+    await expect(call).rejects.toThrow(/อาจารย์ที่ปรึกษานิสิต 4 คน/);
+    await expect(call).rejects.toThrow(/เปลี่ยนอาจารย์ที่ปรึกษา/);
     expect(committed).toEqual([]);
   });
 
@@ -221,12 +228,16 @@ describe('user references helpers', () => {
         ]),
       },
       studentInvitation: { groupBy: jest.fn(async () => []) },
+      studentProfile: {
+        groupBy: jest.fn(async () => [{ advisorUserId: null, _count: { _all: 7 } }]),
+      },
     };
     const refs = (await countUserReferences(client as never, ['a', 'b'])).get('a')!;
     expect(refs).toEqual({
       courseInstructors: 2,
       enteredRecords: 5,
       studentInvitations: 0,
+      advisees: 0,
     });
     const message = userReferencesBlockMessage(refs);
     expect(message).toContain('ยังเป็นผู้สอน 2 วิชา');

@@ -218,7 +218,7 @@ export function accessLimitations(input: {
   }
   const refs = target.references;
   const referenceCount = refs
-    ? refs.courseInstructors + refs.enteredRecords + refs.studentInvitations
+    ? refs.courseInstructors + refs.enteredRecords + refs.studentInvitations + refs.advisees
     : 0;
   const deletable = canPermanentlyDelete({
     basePath: input.basePath,

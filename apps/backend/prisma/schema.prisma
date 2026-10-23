@@ -157,6 +157,7 @@ model User {
   courseInstructor       CourseInstructor[]
   enteredCourseRecords   StudentCourseRecord[]
   sentStudentInvitations StudentInvitation[]
+  advisees               StudentProfile[]      @relation("StudentAdvisor")
 
   @@map("users")
 }
@@ -197,11 +198,15 @@ model StudentProfile {
   programId     String
   curriculumId  String
   admissionYear Int
+  // The student's academic advisor: an INSTRUCTOR-role account, set by STAFF
+  // within scope (audited as STUDENT_ADVISOR_UPDATE). Null = none yet.
+  advisorUserId String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  advisor    User?      @relation("StudentAdvisor", fields: [advisorUserId], references: [id], onDelete: Restrict)
   program    Program    @relation(fields: [programId], references: [id], onDelete: Restrict)
   curriculum Curriculum @relation(fields: [programId, curriculumId], references: [programId, id], onDelete: Restrict)
 
@@ -210,6 +215,7 @@ model StudentProfile {
   creditLimitRequest StudentCreditLimitRequest?
   plannedCourses     StudentPlannedCourse[]
 
+  @@index([advisorUserId])
   @@map("student_profiles")
 }
 
@@ -448,6 +454,7 @@ enum AuditAction {
   STUDENT_REACTIVATE
   STUDENT_PROFILE_UPDATE
   STUDENT_INVITATION_CANCEL
+  STUDENT_ADVISOR_UPDATE
   // Curriculum catalogue, written by STAFF (CONVENTIONS §11).
   COURSE_CREATE
   COURSE_UPDATE

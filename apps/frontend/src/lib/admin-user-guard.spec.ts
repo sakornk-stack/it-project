@@ -244,17 +244,17 @@ describe('accessLimitations', () => {
   });
 
   it('reports linked data on a suspended account a Super Admin may delete', () => {
-    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0 };
+    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0, advisees: 0 };
     expect(keys({ ...superAdmin, ...suspended({ references }) })).toEqual(['has-references']);
   });
 
   it('reports nothing for a suspended account without linked data', () => {
-    const references = { courseInstructors: 0, enteredRecords: 0, studentInvitations: 0 };
+    const references = { courseInstructors: 0, enteredRecords: 0, studentInvitations: 0, advisees: 0 };
     expect(keys({ ...superAdmin, ...suspended({ references }) })).toEqual([]);
   });
 
   it('does not mention linked data to an Admin, who cannot delete', () => {
-    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0 };
+    const references = { courseInstructors: 1, enteredRecords: 0, studentInvitations: 0, advisees: 0 };
     expect(keys(suspended({ references }))).toEqual([]);
   });
 });

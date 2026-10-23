@@ -1254,6 +1254,7 @@ export interface UserReferences {
   courseInstructors: number;
   enteredRecords: number;
   studentInvitations: number;
+  advisees: number;
 }
 
 export interface AdminUserSummary {
