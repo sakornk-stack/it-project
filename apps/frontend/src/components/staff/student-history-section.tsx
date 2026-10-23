@@ -45,7 +45,7 @@ export function StudentHistorySection({
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
           บันทึกการแก้ไขผลการเรียนโดยเจ้าหน้าที่และอาจารย์ การระงับ/เปิดบัญชี และการแก้ไขข้อมูลนิสิต
-          ไม่รวมรายการที่นิสิตบันทึกเอง
+          ไม่รวมรายการที่นิสิตเพิ่มหรือแก้เอง (แต่การลบรายวิชาโดยนิสิตจะถูกบันทึกไว้)
         </p>
         {loading && <ListSkeleton />}
         {failed && (

@@ -1,4 +1,5 @@
-import type { AuditAction, AuditLogEntry, AuditSnapshot, Role } from '@eduanalyze-ai/shared-types';
+import type { AuditAction, AuditLogEntry, AuditSnapshot, Grade, Role } from '@eduanalyze-ai/shared-types';
+import { GRADE_LABELS } from '@/lib/grade-label';
 
 // Resolves the ids an audit snapshot keeps into what the page can name; each
 // returns undefined for an id it no longer knows (e.g. a deactivated course).
@@ -46,8 +47,11 @@ function named(lookup: (id: string) => string | undefined, id: string | undefine
 function gradeDetail(entry: AuditLogEntry, labels: AuditLabelLookups): string {
   const row = entry.after ?? entry.before;
   const where = `${named(labels.course, text(row, 'courseId'))} · ${named(labels.semester, text(row, 'semesterId'))}`;
-  const before = text(entry.before, 'grade');
-  const after = text(entry.after, 'grade');
+  // Snapshots store the enum value (B_PLUS); show it the way every other page does (B+).
+  const label = (grade: string | undefined) =>
+    grade === undefined ? undefined : (GRADE_LABELS[grade as Grade] ?? grade);
+  const before = label(text(entry.before, 'grade'));
+  const after = label(text(entry.after, 'grade'));
   if (entry.action === 'GRADE_CREATE') return `${where} · เกรด ${after ?? UNKNOWN}`;
   if (entry.action === 'GRADE_DELETE') return `${where} · เกรดเดิม ${before ?? UNKNOWN}`;
   return `${where} · ${before ?? UNKNOWN} → ${after ?? UNKNOWN}`;

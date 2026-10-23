@@ -40,6 +40,17 @@ describe('describeAuditEntry', () => {
     });
   });
 
+  it('shows plus grades as B+ / C+ / D+, not the enum value', () => {
+    const before = { grade: 'B_PLUS', courseId: 'c1', semesterId: 's1' };
+    const after = { grade: 'C_PLUS', courseId: 'c1', semesterId: 's1' };
+    expect(describeAuditEntry(entry({ before, after }), labels).detail).toBe(
+      'IT101 การเขียนโปรแกรม · ภาคต้น / 2568 · B+ → C+',
+    );
+    expect(describeAuditEntry(entry({ action: 'GRADE_DELETE', before: { ...before, grade: 'D_PLUS' } }), labels).detail).toBe(
+      'IT101 การเขียนโปรแกรม · ภาคต้น / 2568 · เกรดเดิม D+',
+    );
+  });
+
   it('shows an added and a removed grade', () => {
     const row = { grade: 'F', courseId: 'c1', semesterId: 's1' };
     expect(describeAuditEntry(entry({ action: 'GRADE_CREATE', after: row }), labels).detail).toBe(
