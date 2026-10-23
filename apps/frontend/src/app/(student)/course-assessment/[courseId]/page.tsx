@@ -63,7 +63,10 @@ export default function CourseAssessmentPage() {
   });
 
   const course = coursesQuery.data?.find((c) => c.id === courseId);
-  const clos = (closQuery.data ?? []).filter((c) => c.courseId === courseId);
+  // The API returns CLOs unordered; list them CLO1, CLO2, … CLO10.
+  const clos = (closQuery.data ?? [])
+    .filter((c) => c.courseId === courseId)
+    .sort((a, b) => a.code.localeCompare(b.code, 'th', { numeric: true }));
   const existing = assessmentQuery.data;
 
   const form = useForm<CourseAssessmentFormValues>({
