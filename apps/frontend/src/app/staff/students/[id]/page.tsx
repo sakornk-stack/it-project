@@ -14,6 +14,7 @@ import {
 } from '@/lib/api/academic-record';
 import {
   fetchCourseRecordsInScope,
+  fetchInstructorsInScope,
   fetchStaffOverview,
   fetchStaffStudentRisk,
   fetchStudentAuditLogs,
@@ -42,9 +43,10 @@ import { staffStatus } from '@/components/staff/staff-status';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { isStudentSuspended } from '@/components/staff/student-account';
 import { StudentAccountStatusControl } from '@/components/staff/student-account-status-control';
+import { StudentAdvisorSheet } from '@/components/staff/student-advisor-sheet';
 import { StudentHistorySection } from '@/components/staff/student-history-section';
 import { StudentProfileEditForm } from '@/components/staff/student-profile-edit-form';
-import type { AuditLabelLookups } from '@/components/staff/describe-audit-entry';
+import { NO_ADVISOR_LABEL, type AuditLabelLookups } from '@/components/staff/describe-audit-entry';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,6 +77,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   // Viewing is the default; nothing on the page can write until editing is turned on.
   const [editing, setEditing] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [advisorOpen, setAdvisorOpen] = useState(false);
   const mode = recordModeView(editing);
 
   const profileQuery = useQuery({
@@ -119,6 +122,11 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   const auditQuery = useQuery({
     queryKey: ['staff-student-audit', studentProfileId],
     queryFn: () => fetchStudentAuditLogs(studentProfileId),
+  });
+  // Who can be picked as advisor, and the names the history shows for advisor ids.
+  const instructorsQuery = useQuery({
+    queryKey: ['instructors-in-scope'],
+    queryFn: fetchInstructorsInScope,
   });
   // The requester's own programs and their curricula: what the edit form offers.
   const overviewQuery = useQuery({
@@ -201,6 +209,9 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
     semester: (id) => semesterMap.get(id)?.label,
     program: (id) => programsQuery.data?.find((p) => p.id === id)?.code,
     curriculum: (id) => curriculaQuery.data?.find((c) => c.id === id)?.version,
+    advisor: (id) =>
+      instructorsQuery.data?.find((i) => i.id === id)?.fullName ??
+      (profile?.advisor?.id === id ? profile.advisor.fullName : undefined),
     role: (role) => ROLE_LABEL_TH[role],
   };
 
@@ -350,6 +361,29 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                     <dt className="text-xs text-muted-foreground">อีเมล</dt>
                     <dd className="break-all text-primary">{profile.user.email}</dd>
                   </div>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">อาจารย์ที่ปรึกษา</dt>
+                    <dd className="flex flex-wrap items-center gap-x-2 text-primary">
+                      <span
+                        className={cn('break-words', !profile.advisor && 'text-muted-foreground')}
+                      >
+                        {profile.advisor?.fullName ?? NO_ADVISOR_LABEL}
+                      </span>
+                      {!suspended && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-11 px-0 text-brand underline"
+                          aria-label={
+                            profile.advisor ? 'เปลี่ยนอาจารย์ที่ปรึกษา' : 'กำหนดอาจารย์ที่ปรึกษา'
+                          }
+                          onClick={() => setAdvisorOpen(true)}
+                        >
+                          {profile.advisor ? 'เปลี่ยน' : 'กำหนด'}
+                        </Button>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
               </CardContent>
             </Card>
@@ -392,6 +426,16 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               </Card>
             )}
           </Reveal>
+
+          <StudentAdvisorSheet
+            open={advisorOpen && !suspended}
+            studentProfileId={studentProfileId}
+            studentName={`${profile.studentCode} ${profile.user.fullName}`}
+            current={profile.advisor}
+            instructors={instructorsQuery.data ?? []}
+            onClose={() => setAdvisorOpen(false)}
+            onChanged={refetchAccount}
+          />
 
           {editingProfile && !suspended && (
             <StudentProfileEditForm

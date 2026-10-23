@@ -24,6 +24,8 @@ import type {
   UpdateCurriculumRequirementRequest,
   UpdatePrerequisiteRequest,
   UpdateStudentActiveStatusRequest,
+  UpdateStudentAdvisorRequest,
+  UpdateStudentAdvisorResponse,
   UpdateStudentProfileRequest,
 } from '@eduanalyze-ai/shared-types';
 import { apiClient } from '../api-client';
@@ -50,6 +52,14 @@ export async function updateStudentActiveStatus(
 ) {
   const { data } = await apiClient.patch<{ id: string; isActive: boolean }>(
     `/student-profiles/${id}/active-status`,
+    dto,
+  );
+  return data;
+}
+
+export async function updateStudentAdvisor(id: string, dto: UpdateStudentAdvisorRequest) {
+  const { data } = await apiClient.patch<UpdateStudentAdvisorResponse>(
+    `/student-profiles/${id}/advisor`,
     dto,
   );
   return data;

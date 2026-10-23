@@ -1376,7 +1376,8 @@ export type AuditAction =
   | 'STUDENT_SUSPEND'
   | 'STUDENT_REACTIVATE'
   | 'STUDENT_PROFILE_UPDATE'
-  | 'STUDENT_INVITATION_CANCEL';
+  | 'STUDENT_INVITATION_CANCEL'
+  | 'STUDENT_ADVISOR_UPDATE';
 
 export type AuditSnapshot = Record<string, string | number | boolean | null>;
 

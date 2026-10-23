@@ -9,6 +9,7 @@ export interface AuditLabelLookups {
   semester: (id: string) => string | undefined;
   program: (id: string) => string | undefined;
   curriculum: (id: string) => string | undefined;
+  advisor: (id: string) => string | undefined;
   role: (role: Role) => string;
 }
 
@@ -26,9 +27,11 @@ const TITLES: Record<AuditAction, string> = {
   STUDENT_REACTIVATE: 'เปิดบัญชีอีกครั้ง',
   STUDENT_PROFILE_UPDATE: 'แก้ไขข้อมูลนิสิต',
   STUDENT_INVITATION_CANCEL: 'ยกเลิกคำเชิญ',
+  STUDENT_ADVISOR_UPDATE: 'เปลี่ยนอาจารย์ที่ปรึกษา',
 };
 
 const UNKNOWN = 'ไม่พบข้อมูล';
+export const NO_ADVISOR_LABEL = 'ยังไม่ได้กำหนด';
 export const DELETED_ACTOR_LABEL = 'บัญชีที่ถูกลบแล้ว';
 
 export function isGradeAction(action: AuditAction): boolean {
@@ -74,6 +77,16 @@ function profileDetail(entry: AuditLogEntry, labels: AuditLabelLookups): string 
   return parts.join(' · ');
 }
 
+// null on either side is "no advisor"; an id the page cannot name (e.g. a
+// suspended instructor, who is no longer in the list) reads as unknown.
+function advisorDetail(entry: AuditLogEntry, labels: AuditLabelLookups): string {
+  const show = (snapshot: AuditSnapshot | null) => {
+    const id = text(snapshot, 'advisorUserId');
+    return id === undefined ? NO_ADVISOR_LABEL : named(labels.advisor, id);
+  };
+  return `${show(entry.before)} → ${show(entry.after)}`;
+}
+
 // One history row in plain Thai. The reason is shown by the caller as is.
 export function describeAuditEntry(
   entry: AuditLogEntry,
@@ -83,5 +96,6 @@ export function describeAuditEntry(
   let detail: string | null = null;
   if (isGradeAction(entry.action)) detail = gradeDetail(entry, labels);
   else if (entry.action === 'STUDENT_PROFILE_UPDATE') detail = profileDetail(entry, labels);
+  else if (entry.action === 'STUDENT_ADVISOR_UPDATE') detail = advisorDetail(entry, labels);
   return { title: TITLES[entry.action], detail, actor };
 }

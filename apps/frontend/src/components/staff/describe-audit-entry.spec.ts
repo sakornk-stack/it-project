@@ -6,6 +6,7 @@ const labels: AuditLabelLookups = {
   semester: (id) => ({ s1: 'ภาคต้น / 2568' })[id],
   program: (id) => ({ p1: 'IT', p2: 'CS' })[id],
   curriculum: (id) => ({ k1: '2564', k2: '2569' })[id],
+  advisor: (id) => ({ i1: 'อ.หนึ่ง', i2: 'อ.สอง' })[id],
   role: (role) => ({ STAFF: 'เจ้าหน้าที่', INSTRUCTOR: 'อาจารย์' })[role as string] ?? role,
 };
 
@@ -101,6 +102,25 @@ describe('describeAuditEntry', () => {
       title: 'ระงับบัญชี',
       detail: null,
     });
+  });
+
+  it('names the advisor before and after, and says when there was none', () => {
+    const view = (before: string | null, after: string | null) =>
+      describeAuditEntry(
+        entry({
+          action: 'STUDENT_ADVISOR_UPDATE',
+          before: { advisorUserId: before },
+          after: { advisorUserId: after },
+        }),
+        labels,
+      );
+    expect(view(null, 'i1')).toMatchObject({
+      title: 'เปลี่ยนอาจารย์ที่ปรึกษา',
+      detail: 'ยังไม่ได้กำหนด → อ.หนึ่ง',
+    });
+    expect(view('i1', 'i2').detail).toBe('อ.หนึ่ง → อ.สอง');
+    expect(view('i2', null).detail).toBe('อ.สอง → ยังไม่ได้กำหนด');
+    expect(view('gone', 'i1').detail).toBe('ไม่พบข้อมูล → อ.หนึ่ง');
   });
 
   it('labels an actor whose account was deleted since', () => {
