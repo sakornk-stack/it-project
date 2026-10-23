@@ -155,3 +155,24 @@ describe('PloAchievementService: PLOs come out in code order, whatever order the
     expect(report.plos.every((p) => p.achievementPercent === 80)).toBe(true);
   });
 });
+
+describe('PloAchievementService.buildCohortComparison', () => {
+  type Build = (
+    curriculumId: string,
+    students: unknown[],
+    plos: unknown[],
+    cohortGpas: Map<number, number[]>,
+    cohortPloSums: Map<number, Map<string, { sum: number; count: number }>>,
+  ) => { admissionYear: number; studentCount: number; averageGpa: number | null; gpaSampleSize: number }[];
+
+  it('keeps a cohort whose students have no grades yet, with a null GPA', () => {
+    const service = build({});
+    const buildCohorts: Build = (service as unknown as { buildCohortComparison: Build }).buildCohortComparison.bind(service);
+    const students = [{ admissionYear: 2566 }, { admissionYear: 2566 }, { admissionYear: 2568 }];
+    const cohorts = buildCohorts('cur', students, [], new Map([[2566, [3, 3.5]]]), new Map());
+
+    expect(cohorts.map((c) => c.admissionYear)).toEqual([2566, 2568]);
+    expect(cohorts[0]).toMatchObject({ studentCount: 2, averageGpa: 3.25, gpaSampleSize: 2 });
+    expect(cohorts[1]).toMatchObject({ studentCount: 1, averageGpa: null, gpaSampleSize: 0 });
+  });
+});

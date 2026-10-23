@@ -484,7 +484,9 @@ export class PloAchievementService {
     cohortGpas: Map<number, number[]>,
     cohortPloSums: Map<number, Map<string, { sum: number; count: number }>>,
   ): CohortPloAchievementReport[] {
-    return Array.from(cohortGpas.keys())
+    // Every admission year with a student, not just those with a GPA — a
+    // cohort nobody has recorded grades for yet still shows (averageGpa: null).
+    return Array.from(new Set(students.map((s) => s.admissionYear)))
       .sort((a, b) => a - b)
       .map((year) => {
         const yearGpas = cohortGpas.get(year) ?? [];
