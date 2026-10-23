@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RequestUser } from '../../auth/request-user.interface';
 import { StudentProfileService } from '../../users/student-profile/student-profile.service';
@@ -78,6 +78,35 @@ describe('CourseAssessmentService pending count', () => {
     expect(prisma.courseAssessment.count).toHaveBeenCalledWith({
       where: { studentProfileId: 'profile-1', courseId: { in: ['c1', 'c2'] } },
     });
+  });
+});
+
+describe('CourseAssessmentService.create', () => {
+  it('rejects a course whose only record was deleted (active records only)', async () => {
+    const prisma = {
+      studentCourseRecord: { findFirst: jest.fn().mockResolvedValue(null) },
+      courseAssessment: { create: jest.fn() },
+    };
+    const service = new CourseAssessmentService(
+      prisma as unknown as PrismaService,
+      {
+        findByUserId: jest.fn().mockResolvedValue({ id: 'profile-1' }),
+      } as unknown as StudentProfileService,
+      {
+        findActiveByIdOrThrow: jest.fn().mockResolvedValue({ id: 'c1' }),
+      } as unknown as CourseService,
+    );
+
+    await expect(
+      service.create(
+        { courseId: 'c1', cloScores: [{ cloId: 'clo-1', score: 3 }] },
+        user,
+      ),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.studentCourseRecord.findFirst).toHaveBeenCalledWith({
+      where: { studentProfileId: 'profile-1', courseId: 'c1', isActive: true },
+    });
+    expect(prisma.courseAssessment.create).not.toHaveBeenCalled();
   });
 });
 

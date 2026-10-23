@@ -31,9 +31,14 @@ export class CourseAssessmentService {
 
     // "หลังเรียน Course แล้ว" — reuses StudentCourseRecord's existence as
     // the "has taken this course" signal; no separate enrollment concept
-    // exists anywhere else in this schema.
+    // exists anywhere else in this schema. Active records only: a deleted
+    // record no longer counts as taken (same rule as assessableCourseIds).
     const hasTaken = await this.prisma.studentCourseRecord.findFirst({
-      where: { studentProfileId: studentProfile.id, courseId: dto.courseId },
+      where: {
+        studentProfileId: studentProfile.id,
+        courseId: dto.courseId,
+        isActive: true,
+      },
     });
     if (!hasTaken) {
       throw new BadRequestException(
