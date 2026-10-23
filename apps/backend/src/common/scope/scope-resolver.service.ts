@@ -275,6 +275,25 @@ export class ScopeResolverService {
       }));
   }
 
+  // A UserScope row fills only the column for its own level (a PROGRAM row
+  // has facultyId/departmentId null), so it must be resolved to its full
+  // ancestry before isCovered — otherwise a FACULTY- or DEPARTMENT-level
+  // ADMIN never covers a user whose scope is a program or department under it.
+  async resolveScopeRowAncestry(scope: {
+    level: ScopeLevel;
+    facultyId: string | null;
+    departmentId: string | null;
+    programId: string | null;
+  }): Promise<ScopeAncestry> {
+    const id =
+      scope.level === 'FACULTY'
+        ? scope.facultyId
+        : scope.level === 'DEPARTMENT'
+          ? scope.departmentId
+          : scope.programId;
+    return this.resolveAncestryForLevel(scope.level, id as string);
+  }
+
   // Hierarchical containment check — FACULTY scope covers every child
   // Department/Program, DEPARTMENT scope covers every child Program.
   // Shared by ScopeGuard and by Module 12's user-creation/scope-granting

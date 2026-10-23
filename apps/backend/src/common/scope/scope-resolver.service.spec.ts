@@ -66,3 +66,30 @@ describe('ScopeResolverService.isCovered', () => {
     expect(service.isCovered(program2, [programScope('P1'), departmentScope('D1')])).toBe(true);
   });
 });
+
+describe('ScopeResolverService.resolveScopeRowAncestry', () => {
+  // A stored UserScope row only fills its own level's column.
+  const prisma = {
+    program: {
+      findUnique: jest.fn().mockResolvedValue({ departmentId: 'D1', department: { facultyId: 'F1' } }),
+    },
+    department: { findUnique: jest.fn().mockResolvedValue({ facultyId: 'F1' }) },
+  };
+  const resolver = new ScopeResolverService(prisma as unknown as PrismaService);
+  const programRow = { level: 'PROGRAM' as const, facultyId: null, departmentId: null, programId: 'P1' };
+  const departmentRow = { level: 'DEPARTMENT' as const, facultyId: null, departmentId: 'D1', programId: null };
+
+  it('fills a PROGRAM row with its department and faculty', async () => {
+    await expect(resolver.resolveScopeRowAncestry(programRow)).resolves.toEqual(program1);
+  });
+
+  it('fills a DEPARTMENT row with its faculty', async () => {
+    await expect(resolver.resolveScopeRowAncestry(departmentRow)).resolves.toEqual(department1);
+  });
+
+  it('lets a FACULTY-level ADMIN cover a PROGRAM-level user (raw row alone would not)', async () => {
+    const adminScopes = [facultyScope('F1')];
+    expect(resolver.isCovered(programRow, adminScopes)).toBe(false);
+    expect(resolver.isCovered(await resolver.resolveScopeRowAncestry(programRow), adminScopes)).toBe(true);
+  });
+});

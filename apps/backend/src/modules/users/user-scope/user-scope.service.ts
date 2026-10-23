@@ -200,15 +200,13 @@ export class UserScopeService {
     const effectiveScopes = await this.scopeResolverService.getEffectiveScopes(
       requester.userId,
     );
-    return targetScopes.some((targetScope) =>
-      this.scopeResolverService.isCovered(
-        {
-          facultyId: targetScope.facultyId,
-          departmentId: targetScope.departmentId,
-          programId: targetScope.programId,
-        },
-        effectiveScopes,
+    const ancestries = await Promise.all(
+      targetScopes.map((targetScope) =>
+        this.scopeResolverService.resolveScopeRowAncestry(targetScope),
       ),
+    );
+    return ancestries.some((ancestry) =>
+      this.scopeResolverService.isCovered(ancestry, effectiveScopes),
     );
   }
 }

@@ -288,15 +288,11 @@ export class UserManagementService {
       const effectiveScopes = await this.scopeResolverService.getEffectiveScopes(
         requester.userId,
       );
-      const allCovered = target.scopes.every((scope) =>
-        this.scopeResolverService.isCovered(
-          {
-            facultyId: scope.facultyId,
-            departmentId: scope.departmentId,
-            programId: scope.programId,
-          },
-          effectiveScopes,
-        ),
+      const ancestries = await Promise.all(
+        target.scopes.map((scope) => this.scopeResolverService.resolveScopeRowAncestry(scope)),
+      );
+      const allCovered = ancestries.every((ancestry) =>
+        this.scopeResolverService.isCovered(ancestry, effectiveScopes),
       );
       if (!allCovered) {
         throw new ForbiddenException(

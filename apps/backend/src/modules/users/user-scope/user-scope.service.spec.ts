@@ -35,6 +35,13 @@ function setup(targetRoles: Role[], ownScopeCoversAll = true) {
     resolveAncestryForLevel: jest
       .fn()
       .mockResolvedValue({ facultyId: null, departmentId: null, programId: 'p1' }),
+    resolveScopeRowAncestry: jest.fn(
+      async (s: { facultyId: string | null; departmentId: string | null; programId: string | null }) => ({
+        facultyId: s.facultyId,
+        departmentId: s.departmentId,
+        programId: s.programId,
+      }),
+    ),
   };
   const userService = { findById: jest.fn().mockResolvedValue({ id: 'target' }) };
   const service = new UserScopeService(

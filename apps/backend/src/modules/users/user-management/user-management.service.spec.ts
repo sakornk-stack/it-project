@@ -44,6 +44,11 @@ function setup(opts: {
     buildUserScopeOrFilter: jest.fn().mockResolvedValue([]),
     getEffectiveScopes: jest.fn().mockResolvedValue([]),
     isCovered: jest.fn((a: { programId: string | null }) => covered.includes(a.programId ?? '')),
+    resolveScopeRowAncestry: jest.fn(async (s: ReturnType<typeof scope>) => ({
+      facultyId: s.facultyId,
+      departmentId: s.departmentId,
+      programId: s.programId,
+    })),
   };
   const service = new UserManagementService(
     {} as never,
