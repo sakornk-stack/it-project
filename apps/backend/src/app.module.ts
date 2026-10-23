@@ -14,6 +14,7 @@ import { AcademicRecordModule } from './modules/academic-record/academic-record.
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AiAnalysisModule } from './modules/ai-analysis/ai-analysis.module';
 import { CareerFitModule } from './modules/career-fit/career-fit.module';
+import { AdvisorModule } from './modules/advisor/advisor.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { THROTTLER_OPTIONS } from './common/throttle/throttle.config';
 
@@ -35,6 +36,7 @@ import { THROTTLER_OPTIONS } from './common/throttle/throttle.config';
     DashboardModule,
     AiAnalysisModule,
     CareerFitModule,
+    AdvisorModule,
     // Further feature modules are registered here one phase at a time.
   ],
   controllers: [],

@@ -102,7 +102,15 @@ export class PloAchievementService {
       studentProfileId,
       user,
     );
+    return this.calculateForProfile(profile);
+  }
 
+  // The report itself, for a profile whose access the caller has already
+  // checked (calculateForStudent above; AdvisorService for an advisee), so
+  // every reader gets the same numbers (CONVENTIONS §6).
+  async calculateForProfile(
+    profile: Pick<StudentProfile, 'id' | 'curriculumId'>,
+  ): Promise<StudentPloAchievementReport> {
     const curriculum = await this.curriculumService.findActiveByIdOrThrow(
       profile.curriculumId,
     );

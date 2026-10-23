@@ -111,7 +111,14 @@ export class CreditCheckerService {
       studentProfileId,
       user,
     );
+    return this.checkCreditsForProfile(profile);
+  }
 
+  // The report for a profile whose access the caller has already checked
+  // (checkCredits above; AdvisorService for an advisee).
+  async checkCreditsForProfile(
+    profile: Pick<StudentProfile, 'id' | 'curriculumId'>,
+  ): Promise<CreditCheckReport> {
     const curriculum = await this.loadCurriculumTree(profile.curriculumId);
 
     const latestByCourse =

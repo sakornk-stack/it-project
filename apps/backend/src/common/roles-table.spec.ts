@@ -20,6 +20,7 @@ import { CourseInstructorController } from '../modules/curriculum-content/course
 import { CourseController } from '../modules/curriculum-content/course/course.controller';
 import { CurriculumRequirementController } from '../modules/curriculum-content/curriculum-requirement/curriculum-requirement.controller';
 import { CareerFitController } from '../modules/career-fit/career-fit.controller';
+import { AdvisorController } from '../modules/advisor/advisor.controller';
 import { PloController } from '../modules/curriculum-content/plo/plo.controller';
 import { PrerequisiteController } from '../modules/curriculum-content/prerequisite/prerequisite.controller';
 import { StudentCourseRecordController } from '../modules/academic-record/student-course-record/student-course-record.controller';
@@ -124,6 +125,12 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
     },
   ],
   ['CareerFitController', CareerFitController, { getMyCareerFit: ['STUDENT'] }],
+  // An advisor reads only their own advisees (query filter in AdvisorService).
+  [
+    'AdvisorController',
+    AdvisorController,
+    { listAdvisees: ['INSTRUCTOR'], getAdvisee: ['INSTRUCTOR'] },
+  ],
   // Permanent delete of an account: SUPER_ADMIN only, never ADMIN. The instructor list is for
   // STAFF's assignment sheet (ADMIN kept by policy); SUPER_ADMIN does not get it.
   [
@@ -188,6 +195,7 @@ const ACADEMIC_CONTROLLERS: [string, { prototype: object }][] = [
   ['CloPloMappingController', CloPloMappingController],
   ['CurriculumController', CurriculumController],
   ['CareerFitController', CareerFitController],
+  ['AdvisorController', AdvisorController],
 ];
 
 describe('SUPER_ADMIN has no access to academic data', () => {

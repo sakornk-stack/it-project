@@ -1495,3 +1495,39 @@ export interface CreateCourseRequest {
 }
 
 export type UpdateCourseRequest = Partial<Omit<CreateCourseRequest, 'curriculumId'>>;
+
+// ---- Academic advisor (INSTRUCTOR reading their own advisees; read-only) ----
+// GET /advisor/students — one row per advisee, by student code.
+export interface AdviseeSummary {
+  id: string;
+  studentCode: string;
+  fullName: string;
+  programCode: string;
+  programName: string;
+  curriculumVersion: string;
+  admissionYear: number;
+  isActive: boolean;
+  gpa: number | null;
+  creditsAccumulated: number;
+  totalCreditsRequired: number;
+  graduationReady: boolean;
+}
+
+export interface AdviseeCourseRecord {
+  id: string;
+  grade: Grade;
+  credits: number;
+  course: { id: string; code: string; name: string };
+  semesterId: string;
+  semesterTerm: SemesterTerm;
+  academicYear: number;
+}
+
+// GET /advisor/students/:id — the same reports the student's own pages use.
+export interface AdviseeDetail {
+  student: AdviseeSummary;
+  gpa: GpaResult;
+  records: AdviseeCourseRecord[];
+  creditCheck: CreditCheckReport;
+  ploAchievement: StudentPloAchievementResponse;
+}

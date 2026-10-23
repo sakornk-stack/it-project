@@ -382,7 +382,12 @@ export class StudentCourseRecordService {
     user: RequestUser,
   ): Promise<GpaResult> {
     await this.assertGpaAccess(studentProfileId, user);
+    return this.calculateGpaForProfile(studentProfileId);
+  }
 
+  // GPA for a profile whose access the caller has already checked
+  // (calculateGpa above; AdvisorService for an advisee).
+  async calculateGpaForProfile(studentProfileId: string): Promise<GpaResult> {
     const latestByCourse = await this.getLatestAttemptsPerCourse(studentProfileId);
     const cumulative = this.calculateGpaFromAttempts(latestByCourse);
     const bySemester = await this.calculateGpaBySemester(studentProfileId);
