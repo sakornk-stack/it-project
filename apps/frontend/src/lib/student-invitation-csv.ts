@@ -184,11 +184,23 @@ export function parseStudentInvitationCsv(
   return rows;
 }
 
+// The 409s StudentInvitationService.create() throws, in the words staff read.
+// Anything else falls through unchanged.
+const CONFLICT_MESSAGES: ReadonlyArray<[RegExp, string]> = [
+  [/^Student code ".*" is already in use$/, 'รหัสนิสิตนี้มีบัญชีในระบบแล้ว'],
+  [/^Student code ".*" already has a pending invitation$/, 'รหัสนิสิตนี้มีคำเชิญค้างอยู่แล้ว (อีเมลอื่น)'],
+  [/^An account already exists for /, 'อีเมลนี้มีบัญชีในระบบแล้ว'],
+];
+
+export function translateInvitationError(message: string): string {
+  return CONFLICT_MESSAGES.find(([pattern]) => pattern.test(message))?.[1] ?? message;
+}
+
 function extractServerMessage(error: unknown): string {
   if (isAxiosError(error)) {
     const message = error.response?.data?.message;
-    if (Array.isArray(message)) return message.join(', ');
-    if (typeof message === 'string') return message;
+    if (Array.isArray(message)) return message.map(translateInvitationError).join(', ');
+    if (typeof message === 'string') return translateInvitationError(message);
   }
   return 'ส่งคำเชิญไม่สำเร็จ';
 }
