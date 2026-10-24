@@ -382,7 +382,7 @@ export function UserListTable({
         ) : (
           <>
             {/* Narrow screens: one card per person, so the page never scrolls sideways. */}
-            <ul className="grid gap-3 md:grid-cols-2 xl:hidden">
+            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
               {pagination.pageRows.map((user) => {
                 const href = hrefOf(user);
                 return (
@@ -406,8 +406,8 @@ export function UserListTable({
                       <RoleBadges roles={user.roles} />
                     </div>
                     <ScopeBadges user={user} resolveTargetName={resolveTargetName} />
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="min-w-0 text-xs text-muted-foreground">
                         สร้างเมื่อ {formatThaiDate(user.createdAt)} · เข้าใช้ล่าสุด{' '}
                         {formatLastLogin(user.lastLoginAt)}
                       </p>
