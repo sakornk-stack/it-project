@@ -159,13 +159,20 @@ Implementation ปัจจุบัน (2026-09-19): ครอบคลุม r
 student timeline, rule-based course summary ฯลฯ) — ดูรายการเต็ม + commit hash ที่ root
 `TODO.md` หัวข้อ "INSTRUCTOR Dashboard — gradebook/course management" แทนการเขียนซ้ำที่นี่
 
+อาจารย์ที่ปรึกษา (2026-10-24): ไม่ใช่ Role แยก เป็น INSTRUCTOR ที่ถูกผูกกับนิสิตผ่าน
+`student_profiles.advisorUserId` (นิสิต 1 คนมีอาจารย์ที่ปรึกษา 1 คน) STAFF ใน Scope เป็นผู้กำหนด
+(`PATCH /student-profiles/:id/advisor`, บันทึก audit `STUDENT_ADVISOR_UPDATE`) อาจารย์ดูนิสิตในที่ปรึกษา
+ได้อย่างเดียวที่ `/instructor/advisees` (`GET /advisor/students`, `/advisor/students/:id`): GPA รายเทอม
+รายวิชา ตรวจหน่วยกิตจบ และ PLO คำนวณจาก service เดียวกับหน้าของนิสิต นิสิตที่ไม่ได้อยู่ในที่ปรึกษาตอบ 404
+ไม่เห็นอีเมลนิสิต อาจารย์ที่ยังมีนิสิตในที่ปรึกษาลบบัญชีถาวรไม่ได้
+
 ==================================================
 10. STAFF
 ==================================================
 
 STAFF ดูแลข้อมูลการศึกษาและข้อมูลพื้นฐานตาม Scope ที่ได้รับมอบหมาย เช่น Student data,
 Course master data, Academic Year, Semester, Course Offering, Instructor Assignment,
-ข้อมูลพื้นฐานที่ได้รับอนุญาต
+การกำหนดอาจารย์ที่ปรึกษาของนิสิต, ข้อมูลพื้นฐานที่ได้รับอนุญาต
 
 STAFF ไม่ควรมีสิทธิ์แก้ CLO/PLO เพียงเพราะเป็น STAFF
 
