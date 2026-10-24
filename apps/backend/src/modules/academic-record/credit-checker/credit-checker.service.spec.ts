@@ -143,3 +143,61 @@ describe('CreditCheckerService.computeCreditCheck — W after an earlier outcome
     expect(report.creditsStudied).toBe(0);
   });
 });
+
+describe('CreditCheckerService.computeCreditCheck — free electives take the overflow', () => {
+  function treeWith(categories: { id: string; name: string; min: number; courses: ReturnType<typeof course>[] }[]) {
+    return {
+      id: 'cur',
+      totalCredits: 20,
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        requirement: { minCredits: c.min, minCourses: null },
+        courses: c.courses,
+      })),
+    } as unknown as CreditCheckCurriculumTree;
+  }
+  const curriculum = treeWith([
+    { id: 'ge', name: 'กลุ่มสาระภาษากับการสื่อสาร', min: 3, courses: [course('g1', 3), course('g2', 3), course('g3', 3)] },
+    { id: 'major', name: 'วิชาเฉพาะเลือก', min: 3, courses: [course('m1', 3), course('m2', 2)] },
+    { id: 'free', name: 'วิชาเลือกเสรี', min: 6, courses: [] },
+  ]);
+  const progressOf = (ids: string[]) =>
+    Object.fromEntries(
+      service
+        .computeCreditCheck(profile, curriculum, attempts(...ids))
+        .categoryProgress.map((c) => [c.categoryId, c]),
+    );
+
+  it('counts credits beyond each category minimum as free electives', () => {
+    const p = progressOf(['g1', 'g2', 'g3', 'm1', 'm2']);
+    // GE 9 of 3 (+6), major 5 of 3 (+2): free gets 8 of 6.
+    expect(p.free).toMatchObject({ creditsEarned: 8, creditsFromOtherCategories: 8, isComplete: true });
+    // The other categories keep what they earned.
+    expect(p.ge).toMatchObject({ creditsEarned: 9, isComplete: true });
+    expect(p.major).toMatchObject({ creditsEarned: 5, isComplete: true });
+  });
+
+  it('leaves the free-elective category short when there is not enough overflow', () => {
+    const p = progressOf(['g1', 'g2', 'm1']);
+    expect(p.free).toMatchObject({ creditsEarned: 3, creditsFromOtherCategories: 3, isComplete: false });
+  });
+
+  it('adds nothing when no category goes over its minimum', () => {
+    const p = progressOf(['g1', 'm1']);
+    expect(p.free.creditsEarned).toBe(0);
+    expect(p.free.creditsFromOtherCategories).toBeUndefined();
+  });
+
+  it('never changes the curriculum total, so nothing is counted twice', () => {
+    const report = service.computeCreditCheck(profile, curriculum, attempts('g1', 'g2', 'g3', 'm1', 'm2'));
+    expect(report.creditsPassed).toBe(14);
+    expect(report.graduationReadiness.allCategoriesMet).toBe(true);
+    expect(report.graduationReadiness.creditsMet).toBe(false);
+  });
+
+  it('leaves a curriculum without a free-elective category as it was', () => {
+    const report = service.computeCreditCheck(profile, tree(8, [course('c1', 4), course('c2', 4)]), attempts('c1', 'c2'));
+    expect(report.categoryProgress[0].creditsFromOtherCategories).toBeUndefined();
+  });
+});

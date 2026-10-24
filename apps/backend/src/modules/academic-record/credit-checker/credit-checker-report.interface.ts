@@ -24,6 +24,10 @@ export interface CategoryProgress {
   creditsEarned: number;
   coursesPassedCount: number;
   isComplete: boolean;
+  // Free-elective category only: credits passed in other categories beyond their own
+  // minimum, already included in creditsEarned (KU counts any extra course as a free
+  // elective). Absent when nothing overflows.
+  creditsFromOtherCategories?: number;
 }
 
 export interface GraduationReadiness {

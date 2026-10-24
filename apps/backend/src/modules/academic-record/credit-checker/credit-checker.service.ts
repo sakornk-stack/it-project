@@ -79,6 +79,42 @@ function isCategoryComplete(
   );
 }
 
+// The free-elective category goes by its name (every curriculum here calls it
+// "วิชาเลือกเสรี"); courses are never listed in it exhaustively, since any course counts.
+const FREE_ELECTIVE_NAME = /เลือกเสรี/;
+
+export function isFreeElectiveCategory(name: string): boolean {
+  return FREE_ELECTIVE_NAME.test(name);
+}
+
+// KU rule: credits passed in a category beyond its own minimum count toward the free
+// electives. Only the free-elective entry changes; every other category keeps what it
+// earned, and creditsPassed (the curriculum total) is untouched, so nothing is counted
+// twice toward the total. With several free-elective categories only the first takes it.
+export function applyFreeElectiveOverflow(progress: CategoryProgress[]): CategoryProgress[] {
+  const free = progress.find((c) => isFreeElectiveCategory(c.name));
+  if (!free) return progress;
+  const overflow = progress
+    .filter((c) => c !== free)
+    .reduce((sum, c) => sum + Math.max(0, c.creditsEarned - c.minCredits), 0);
+  if (overflow === 0) return progress;
+  return progress.map((c) => {
+    if (c !== free) return c;
+    const creditsEarned = c.creditsEarned + overflow;
+    return {
+      ...c,
+      creditsEarned,
+      creditsFromOtherCategories: overflow,
+      isComplete: isCategoryComplete(
+        creditsEarned,
+        c.coursesPassedCount,
+        c.minCredits,
+        c.minCourses,
+      ),
+    };
+  });
+}
+
 function computeGraduationReadiness(
   creditsPassed: number,
   totalCreditsRequired: number,
@@ -248,10 +284,11 @@ export class CreditCheckerService {
       });
     }
 
+    const progress = applyFreeElectiveOverflow(categoryProgress);
     const graduationReadiness = computeGraduationReadiness(
       creditsPassed,
       curriculum.totalCredits,
-      categoryProgress,
+      progress,
       missingRequiredCourses.length,
     );
 
@@ -271,7 +308,7 @@ export class CreditCheckerService {
       failedCourses,
       notYetStudiedCourses,
       missingRequiredCourses,
-      categoryProgress,
+      categoryProgress: progress,
       graduationReadiness,
     };
   }

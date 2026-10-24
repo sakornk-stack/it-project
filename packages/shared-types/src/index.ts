@@ -825,6 +825,9 @@ export interface CategoryProgress {
   creditsEarned: number;
   coursesPassedCount: number;
   isComplete: boolean;
+  // Free-elective category only: credits passed elsewhere beyond each category's minimum,
+  // already included in creditsEarned. Absent when nothing overflows.
+  creditsFromOtherCategories?: number;
 }
 
 export interface CreditCheckReport {

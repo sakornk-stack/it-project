@@ -78,6 +78,12 @@ export function CategoryProgressList({ categories }: Readonly<{ categories: Cate
                       )}
                     </div>
                   </div>
+                  {category.creditsFromOtherCategories !== undefined && (
+                    <p className="text-xs text-muted-foreground">
+                      รวม {category.creditsFromOtherCategories} หน่วยกิตที่เรียนเกินเกณฑ์ของหมวดอื่น
+                      (นับเป็นวิชาเลือกเสรี)
+                    </p>
+                  )}
                   <Progress
                     label={category.name}
                     className={cn('mt-auto', category.isComplete && 'h-1')}
