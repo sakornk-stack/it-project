@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { LayoutGrid } from 'lucide-react';
 import {
   useInstructorCourseTimeline,
   useInstructorDashboard,
@@ -28,13 +29,18 @@ import { HeadlineBanner } from '@/components/instructor/headline-banner';
 import { PortfolioStats } from '@/components/instructor/portfolio-stats';
 import { PortfolioTrendChart } from '@/components/instructor/portfolio-trend-chart';
 import { buildCoursePloMatrix } from '@/lib/plo-clo-chart';
-import { PageHeader } from '@/components/layout/page-header';
+import { WelcomeBanner } from '@/components/dashboard/welcome-banner';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 
-const TITLE = 'ภาพรวมรายวิชาที่สอน';
+const TITLE_CHIP = (
+  <>
+    <LayoutGrid size={13} aria-hidden="true" />
+    ภาพรวมรายวิชาที่สอน
+  </>
+);
 
 export default function InstructorDashboardPage() {
   // useSearchParams requires a Suspense boundary in the App Router
@@ -52,7 +58,11 @@ function InstructorDashboardFallback() {
   if (!user) return null;
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
-      <PageHeader title={TITLE} />
+      <WelcomeBanner
+        chips={[TITLE_CHIP]}
+        title={`สวัสดี, ${user.fullName}`}
+        summary="ทุกวิชาที่คุณสอนในหน้าเดียว"
+      />
       <InstructorDashboardSkeleton />
     </DashboardShell>
   );
@@ -117,7 +127,11 @@ function InstructorDashboardContent() {
   return (
     <DashboardShell role="INSTRUCTOR" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
-        <PageHeader title={TITLE} description={description || 'ทุกวิชาที่คุณสอนในหน้าเดียว'} />
+        <WelcomeBanner
+          chips={[TITLE_CHIP]}
+          title={`สวัสดี, ${user.fullName}`}
+          summary={description || 'ทุกวิชาที่คุณสอนในหน้าเดียว'}
+        />
       </Reveal>
 
       {dashboardQuery.isLoading && <InstructorDashboardSkeleton />}

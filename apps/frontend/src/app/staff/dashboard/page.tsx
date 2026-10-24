@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { ClipboardCheck, Star, Users } from 'lucide-react';
+import { ClipboardCheck, LayoutGrid, Star, Users } from 'lucide-react';
 import { fetchCourses } from '@/lib/api/academic-record';
 import {
   fetchCourseInstructors,
@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { countShare } from '@/lib/progress-ring-geometry';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { PageHeader } from '@/components/layout/page-header';
+import { WelcomeBanner } from '@/components/dashboard/welcome-banner';
 import { PageLoadError } from '@/components/layout/page-states';
 import { Reveal } from '@/components/layout/reveal';
 import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
@@ -173,16 +173,22 @@ export default function StaffDashboardPage() {
   return (
     <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
-        <PageHeader
-          title="ภาพรวมการศึกษาและผลการเรียน"
-          description="สรุปผลการเรียนและนิสิตที่ต้องติดตามในขอบเขตที่คุณดูแล"
+        <WelcomeBanner
+          chips={[
+            <>
+              <LayoutGrid size={13} aria-hidden="true" />
+              ภาพรวมการศึกษาและผลการเรียน
+            </>,
+          ]}
+          title={`สวัสดี, ${user.fullName}`}
+          summary="สรุปผลการเรียนและนิสิตที่ต้องติดตามในขอบเขตที่คุณดูแล"
           actions={
-            <label className="block space-y-1.5 sm:w-80">
-              <span className="text-xs font-medium text-muted-foreground">
+            <label className="block w-full space-y-1.5 sm:w-80">
+              <span className="text-xs font-medium text-white/85">
                 หลักสูตรและสาขาวิชาที่ดูแล
               </span>
               <Select value={scope} onValueChange={setScope} disabled={curricula.length === 0}>
-                <SelectTrigger aria-label="เลือกหลักสูตรที่ต้องการดู">
+                <SelectTrigger aria-label="เลือกหลักสูตรที่ต้องการดู" className="bg-card text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

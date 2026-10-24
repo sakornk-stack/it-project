@@ -51,7 +51,7 @@
 | FormActions / DangerZone | `components/ui/form-actions.tsx` | แถวปุ่มท้ายฟอร์ม/แผง/dialog; บล็อกลบท้ายแผนแก้ไข | ปุ่มหลักก่อน (ซ้าย) ปุ่มรอง (ยกเลิก, `variant="outline"`) ถัดไป มือถือเรียงลงเต็มกว้าง; `DangerZone id title description` ห่อปุ่มลบ แยกจากฟอร์ม |
 | StateBlock | `components/ui/empty-state.tsx` | สถานะว่าง/โหลดไม่สำเร็จ | ไอคอนจาง + `title` + คำอธิบายหนึ่งบรรทัด + ปุ่มถ้ามี; `EmptyState` และ `PageLoadError` ใช้ตัวนี้ ไม่เขียน block เอง |
 | CollapsibleSection `soft` | `components/ui/collapsible-section.tsx` | ส่วนอธิบายพับได้ที่ไม่เด่นกว่าผลลัพธ์ (เช่น "วิธีอ่านผล") | `soft` = แถบเทาอ่อน ไม่ใช่การ์ด; ปิดไว้ตั้งต้น เนื้อหายังอยู่ครบ |
-| DashboardShell | `components/dashboard/dashboard-shell.tsx` | กรอบหน้าทุกบทบาท | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
+| DashboardShell | `components/dashboard/dashboard-shell.tsx` → `top-nav-shell.tsx` | กรอบหน้าทุกบทบาท (แถบบน + แท็บ) | เมนูกำหนดใน `components/dashboard/nav-config.ts` |
 
 ## 4) คลาสกลาง (`app/globals.css`)
 - `.interactive-card`: การ์ดกดได้ ยก 2px + ขอบ brand + เงา ตอน hover/focus-visible (hover เฉพาะอุปกรณ์ที่มี hover) ใส่บนองค์ประกอบที่มีขอบจริง (เช่น `<Link class="… border bg-card">`)
@@ -116,10 +116,10 @@
 - Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `bash scripts/db-backup.sh <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
 - ห้าม commit/push หรือถ่ายภาพหน้าจอ ถ้าผู้ใช้ไม่สั่ง
 
-## 13) ธีมแถบบน (นิสิต, ADMIN, SUPER_ADMIN)
-- บทบาทใน `TOP_NAV_ROLES` (`components/dashboard/dashboard-shell.tsx`) ใช้ `top-nav-shell.tsx`: แถบบนเขียวไล่สี + แท็บเมนู (เลื่อนแนวนอนบนมือถือ ไม่มี drawer) STAFF และอาจารย์ยังใช้เมนูซ้าย
-- ระหว่างอยู่หน้าของบทบาทเหล่านี้ `<html>` มี class `theme-ku` (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
-- หน้าแรกของแต่ละบทบาทเริ่มด้วย `WelcomeBanner` (`components/dashboard/welcome-banner.tsx`) เป็น h1 ของหน้า ปุ่มบนแบนเนอร์ใช้ `BANNER_PRIMARY_BUTTON` / `BANNER_SECONDARY_BUTTON`
+## 13) ธีมแถบบน (ทุกบทบาท)
+- `DashboardShell` ใช้ `top-nav-shell.tsx` กับทุกบทบาท: แถบบนเขียวไล่สี + แท็บเมนูตาม `nav-config.ts` (เลื่อนแนวนอนบนมือถือ ไม่มี drawer และไม่มีเมนูซ้ายแล้ว)
+- ระหว่างอยู่หน้าที่ล็อกอินแล้ว `<html>` มี class `theme-ku` (หน้า login/register ใช้ธีมเดิม) (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
+- หน้าแรกของทุกบทบาทเริ่มด้วย `WelcomeBanner` (`components/dashboard/welcome-banner.tsx`) เป็น h1 ของหน้า ปุ่มบนแบนเนอร์ใช้ `BANNER_PRIMARY_BUTTON` / `BANNER_SECONDARY_BUTTON`
 - แถบบนและแบนเนอร์ใช้สีเขียวคงที่ (ตัวอักษรขาว) เหมือนกันทั้งโหมดสว่าง/มืด ไม่ใช้ token; เนื้อหาในหน้าใช้ token ตามปกติ (`text-primary`, `bg-brand-light text-brand`) สีจะเป็นเขียวเอง ห้าม hardcode เขียวในเนื้อหา
 
 ## 12) Instructor pages

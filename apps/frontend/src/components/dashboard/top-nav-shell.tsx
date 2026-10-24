@@ -16,10 +16,9 @@ import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
 
-// The frame of the roles on the new look (see TOP_NAV_ROLES in dashboard-shell):
-// a green top bar and a tab row instead of the side menu, plus the KU theme
-// (green, Anuphan, rounder cards) switched on for the whole document while one
-// of their pages is open. The tab row scrolls sideways on a phone, so there is
+// The frame of every signed-in page (DashboardShell renders it): a green top bar
+// and a tab row, plus the KU theme (green, Anuphan, rounder cards) switched on
+// for the whole document while a page is open. The tab row scrolls sideways on a phone, so there is
 // no drawer to open.
 
 const THEME_CLASS = 'theme-ku';
@@ -31,8 +30,8 @@ const AUDIENCE_LABEL: Partial<Record<Role, string>> = {
 };
 
 // Layout effect: the class lands before the first paint, so the page never
-// flashes the default colours. Removed on leaving (a multi-role user switching
-// to a side-menu role gets the default theme back).
+// flashes the default colours. Removed on leaving, so the sign-in pages keep
+// the default theme.
 function useKuTheme() {
   useLayoutEffect(() => {
     const root = document.documentElement;
