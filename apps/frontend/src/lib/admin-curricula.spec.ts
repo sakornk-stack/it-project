@@ -53,8 +53,16 @@ describe('filterCurricula', () => {
     ]);
   });
   it('searches name and code, case-insensitively', () => {
-    expect(filterCurricula(ENTRIES, 'ALL', 'it').map((e) => e.curriculumId)).toEqual(['b', 'd']);
+    expect(filterCurricula(ENTRIES, 'ALL', 'it').map((e) => e.curriculumId)).toEqual(['d', 'b']);
     expect(filterCurricula(ENTRIES, 'ALL', 'วิทยาการ').map((e) => e.curriculumId)).toEqual(['c']);
+  });
+  it('lists curricula with students first, then structure-only, then empty, keeping API order within each', () => {
+    expect(filterCurricula(ENTRIES, 'ALL', '').map((e) => e.curriculumId)).toEqual([
+      'a',
+      'd',
+      'b',
+      'c',
+    ]);
   });
   it('combines tab and search', () => {
     expect(filterCurricula(ENTRIES, 'EMPTY', 'it')).toEqual([]);

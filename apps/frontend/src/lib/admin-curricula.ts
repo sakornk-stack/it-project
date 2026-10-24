@@ -56,13 +56,22 @@ export function placeOf(
     : null;
 }
 
+// Curricula with students first, then ones with only a structure, then empty
+// ones; the API order (by code) holds within each group. Otherwise a scope with
+// many empty curricula shows only empty cards in the overview's first six.
+const DATA_STATE_RANK: Record<CurriculumDataState, number> = {
+  HAS_STUDENTS: 0,
+  STRUCTURE_ONLY: 1,
+  EMPTY: 2,
+};
+
 export function filterCurricula(
   entries: readonly AdminScopeCurriculumEntry[],
   tab: CurriculumTab,
   search: string,
 ): AdminScopeCurriculumEntry[] {
   const term = search.trim().toLowerCase();
-  return entries.filter(
+  const matches = entries.filter(
     (entry) =>
       (tab === 'ALL' || entry.dataState === tab) &&
       (term === '' ||
@@ -70,6 +79,8 @@ export function filterCurricula(
         entry.programCode.toLowerCase().includes(term) ||
         entry.version.toLowerCase().includes(term)),
   );
+  // sort is stable, so the API order is kept inside each group.
+  return matches.sort((a, b) => DATA_STATE_RANK[a.dataState] - DATA_STATE_RANK[b.dataState]);
 }
 
 export function findCurriculum(
