@@ -116,11 +116,11 @@
 - Docker/ฐานข้อมูล: ห้าม `down -v`/`volume rm`/`system prune`; `bash scripts/db-backup.sh <label>` ก่อนทดสอบที่แตะ Docker (`apps/CLAUDE.md`)
 - ห้าม commit/push หรือถ่ายภาพหน้าจอ ถ้าผู้ใช้ไม่สั่ง
 
-## 13) Student pages (ธีมนิสิต)
-- นิสิตใช้กรอบของตัวเอง `components/dashboard/student-shell.tsx` (แถบบนเขียวไล่สี + แท็บเมนู เลื่อนแนวนอนบนมือถือ ไม่มี drawer) `DashboardShell` ส่งไปให้เองเมื่อ role เป็น STUDENT บทบาทอื่นยังใช้เมนูซ้าย
-- ระหว่างอยู่หน้านิสิต `<html>` มี class `theme-student` (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
-- แถบบนและแบนเนอร์ต้อนรับ (`student-welcome-banner.tsx`) ใช้สีเขียวคงที่ (ตัวอักษรขาว) เหมือนกันทั้งโหมดสว่าง/มืด ไม่ใช้ token
-- หน้าใหม่ของนิสิตใช้ token ตามปกติ (`text-primary`, `bg-brand-light text-brand`) สีจะเป็นเขียวเอง ห้าม hardcode เขียวในเนื้อหา
+## 13) ธีมแถบบน (นิสิต, ADMIN, SUPER_ADMIN)
+- บทบาทใน `TOP_NAV_ROLES` (`components/dashboard/dashboard-shell.tsx`) ใช้ `top-nav-shell.tsx`: แถบบนเขียวไล่สี + แท็บเมนู (เลื่อนแนวนอนบนมือถือ ไม่มี drawer) STAFF และอาจารย์ยังใช้เมนูซ้าย
+- ระหว่างอยู่หน้าของบทบาทเหล่านี้ `<html>` มี class `theme-ku` (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
+- หน้าแรกของแต่ละบทบาทเริ่มด้วย `WelcomeBanner` (`components/dashboard/welcome-banner.tsx`) เป็น h1 ของหน้า ปุ่มบนแบนเนอร์ใช้ `BANNER_PRIMARY_BUTTON` / `BANNER_SECONDARY_BUTTON`
+- แถบบนและแบนเนอร์ใช้สีเขียวคงที่ (ตัวอักษรขาว) เหมือนกันทั้งโหมดสว่าง/มืด ไม่ใช้ token; เนื้อหาในหน้าใช้ token ตามปกติ (`text-primary`, `bg-brand-light text-brand`) สีจะเป็นเขียวเอง ห้าม hardcode เขียวในเนื้อหา
 
 ## 12) Instructor pages
 ใช้กับ `/instructor/dashboard`, `my-courses`, `courses/[courseId]`, `students`, `year-levels` (ค่ากลางอยู่ใน `components/instructor/instructor-ui.ts`)

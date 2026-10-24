@@ -94,12 +94,13 @@
     color-scheme: dark;
   }
 
-  /* Student pages only: StudentShell adds .theme-student to <html> while a
-     STUDENT page is open (on <html>, so dialogs, popovers and toasts that
-     portal out of the shell follow too). Kasetsart green instead of navy, a
-     faintly green page and the student typeface; every pair keeps WCAG AA like
-     the defaults above. Other roles never get the class. */
-  html.theme-student {
+  /* The roles on the top-bar look (TOP_NAV_ROLES in dashboard-shell.tsx):
+     TopNavShell adds .theme-ku to <html> while one of their pages is open (on
+     <html>, so dialogs, popovers and toasts that portal out of the shell follow
+     too). Kasetsart green instead of navy, a faintly green page and the Anuphan
+     typeface; every pair keeps WCAG AA like the defaults above. Side-menu roles
+     never get the class. */
+  html.theme-ku {
     --font-sans: var(--font-student);
     --background: 150 25% 98%;
     --primary: 174 90% 17%;
@@ -116,7 +117,7 @@
     --chart-1: 172 85% 30%;
   }
 
-  html.theme-student.dark {
+  html.theme-ku.dark {
     --background: 180 30% 6%;
     --card: 178 28% 9%;
     --popover: 178 28% 10%;
@@ -134,8 +135,8 @@
     --chart-1: 168 60% 50%;
   }
 
-  /* Rounder cards on the student pages (Card is rounded-xl). */
-  html.theme-student .rounded-xl {
+  /* Rounder cards on the top-bar pages (Card is rounded-xl). */
+  html.theme-ku .rounded-xl {
     border-radius: 1rem;
   }
 

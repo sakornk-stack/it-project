@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarClock, Plus } from 'lucide-react';
+import { CalendarClock, LayoutGrid, Plus } from 'lucide-react';
 import { fetchDepartments, fetchFaculties, fetchPrograms } from '@/lib/api/organization';
 import { fetchUsers } from '@/lib/api/user-management';
 import { BRAND_NAME } from '@/lib/brand';
@@ -15,7 +15,11 @@ import { OverviewCardsSkeleton } from '@/components/admin/system-overview/overvi
 import { QuickLinks } from '@/components/admin/system-overview/quick-links';
 import { RoleShareBar } from '@/components/admin/system-overview/role-share-bar';
 import { RoleStatCards } from '@/components/admin/system-overview/role-stat-cards';
-import { PageHeader } from '@/components/layout/page-header';
+import {
+  BANNER_PRIMARY_BUTTON,
+  BANNER_SECONDARY_BUTTON,
+  WelcomeBanner,
+} from '@/components/dashboard/welcome-banner';
 import { PageLoadError } from '@/components/layout/page-states';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
@@ -49,29 +53,33 @@ function SystemOverviewContent() {
   return (
     <DashboardShell role="SUPER_ADMIN" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
-        <div className="space-y-1">
-          <p className="break-words text-sm font-medium text-brand">สวัสดี คุณ {user.fullName}</p>
-          <PageHeader
-            title="ภาพรวมระบบ"
-            description={`โครงสร้างหน่วยงานและบัญชีบุคลากรของ ${BRAND_NAME}`}
-            actions={
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button asChild className="min-h-11 gap-1.5">
-                  <Link href="/superadmin/users?create=1">
-                    <Plus size={16} aria-hidden="true" />
-                    เพิ่มผู้ใช้งาน
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="min-h-11 gap-1.5">
-                  <Link href="/superadmin/academic-years">
-                    <CalendarClock size={16} aria-hidden="true" />
-                    ปีการศึกษา
-                  </Link>
-                </Button>
-              </div>
-            }
-          />
-        </div>
+        <WelcomeBanner
+          chips={[
+            <>
+              <LayoutGrid size={13} aria-hidden="true" />
+              ภาพรวมระบบ
+            </>,
+            <>ผู้ดูแลระบบสูงสุด</>,
+          ]}
+          title={`สวัสดี, ${user.fullName}`}
+          summary={`โครงสร้างหน่วยงานและบัญชีบุคลากรของ ${BRAND_NAME}`}
+          actions={
+            <>
+              <Button asChild className={BANNER_PRIMARY_BUTTON}>
+                <Link href="/superadmin/users?create=1">
+                  <Plus size={16} aria-hidden="true" />
+                  เพิ่มผู้ใช้งาน
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className={BANNER_SECONDARY_BUTTON}>
+                <Link href="/superadmin/academic-years">
+                  <CalendarClock size={16} aria-hidden="true" />
+                  ปีการศึกษา
+                </Link>
+              </Button>
+            </>
+          }
+        />
       </Reveal>
 
       <PageSection

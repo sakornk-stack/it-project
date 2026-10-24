@@ -29,7 +29,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
-import { StudentShell } from './student-shell';
+import { TopNavShell } from './top-nav-shell';
 
 // Remembered per browser; read after mount so the server render and first client
 // render agree (expanded), then the saved choice applies and the width eases over.
@@ -92,11 +92,14 @@ type DashboardShellProps = {
   children: React.ReactNode;
 };
 
-// Students get their own frame (top bar and tabs, green theme); every other role
-// keeps the side menu below.
+// Roles on the new look: a top bar and tabs with the KU green theme. The rest
+// keep the side menu below.
+const TOP_NAV_ROLES: readonly Role[] = ['STUDENT', 'ADMIN', 'SUPER_ADMIN'];
+
 export function DashboardShell(props: DashboardShellProps) {
-  return (props.role ?? 'STUDENT') === 'STUDENT' ? (
-    <StudentShell {...props} />
+  const role = props.role ?? 'STUDENT';
+  return TOP_NAV_ROLES.includes(role) ? (
+    <TopNavShell {...props} role={role} />
   ) : (
     <SidebarShell {...props} />
   );

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GraduationCap, LogOut } from 'lucide-react';
+import type { Role } from '@eduanalyze-ai/shared-types';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { homeRouteForRole } from '@/lib/dashboard-routes';
@@ -15,17 +16,24 @@ import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
 
-// The student app's frame: a green top bar and a tab row instead of the side
-// menu the staff roles use, plus the student theme (green, Anuphan, rounder
-// cards) switched on for the whole document while a student page is open.
-// The tab row scrolls sideways on a phone, so there is no drawer to open.
+// The frame of the roles on the new look (see TOP_NAV_ROLES in dashboard-shell):
+// a green top bar and a tab row instead of the side menu, plus the KU theme
+// (green, Anuphan, rounder cards) switched on for the whole document while one
+// of their pages is open. The tab row scrolls sideways on a phone, so there is
+// no drawer to open.
 
-const THEME_CLASS = 'theme-student';
+const THEME_CLASS = 'theme-ku';
+
+// Who the app is for, under the logo; the other roles read their role under
+// their own name instead, so it is not said twice.
+const AUDIENCE_LABEL: Partial<Record<Role, string>> = {
+  STUDENT: 'สำหรับนิสิต',
+};
 
 // Layout effect: the class lands before the first paint, so the page never
-// flashes the staff colours. Removed on leaving (a multi-role user switching
-// to a staff page gets the default theme back).
-function useStudentTheme() {
+// flashes the default colours. Removed on leaving (a multi-role user switching
+// to a side-menu role gets the default theme back).
+function useKuTheme() {
   useLayoutEffect(() => {
     const root = document.documentElement;
     root.classList.add(THEME_CLASS);
@@ -33,7 +41,8 @@ function useStudentTheme() {
   }, []);
 }
 
-export function StudentShell({
+export function TopNavShell({
+  role,
   studentCode,
   identityLabel,
   fullName,
@@ -41,6 +50,7 @@ export function StudentShell({
   ready = true,
   children,
 }: Readonly<{
+  role: Role;
   studentCode?: string;
   identityLabel?: string;
   fullName: string;
@@ -48,12 +58,15 @@ export function StudentShell({
   ready?: boolean;
   children: React.ReactNode;
 }>) {
-  useStudentTheme();
+  useKuTheme();
   const { logout, user } = useAuth();
   const pathname = usePathname();
-  const navItems = navItemsForRole('STUDENT');
-  const otherRoles = ROLE_PRIORITY.filter((r) => r !== 'STUDENT' && user?.roles.includes(r));
-  const shownIdentity = identityLabel ?? studentCode;
+  const navItems = navItemsForRole(role);
+  const otherRoles = ROLE_PRIORITY.filter((r) => r !== role && user?.roles.includes(r));
+  // A student code fits under the name; an email is long, so staff roles show
+  // their role there instead (the email stays on the profile page).
+  const subLabel =
+    studentCode ?? (identityLabel?.includes('@') ? ROLE_LABEL_TH[role] : identityLabel);
   const activeTabRef = useRef<HTMLAnchorElement>(null);
 
   // On a phone the tab row is wider than the screen: keep the current tab in view.
@@ -76,7 +89,7 @@ export function StudentShell({
         <div className="bg-gradient-to-r from-[#053f39] via-[#06554c] to-[#0a7464] text-white">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 md:px-8">
             <Link
-              href="/dashboard"
+              href={homeRouteForRole(role)}
               className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
@@ -84,18 +97,20 @@ export function StudentShell({
               </span>
               <span className="min-w-0 leading-tight">
                 <span className="block text-base font-semibold">EduAnalyze</span>
-                <span className="block truncate text-xs text-white/75">สำหรับนิสิต</span>
+                <span className="block truncate text-xs text-white/75">
+                  {AUDIENCE_LABEL[role] ?? 'Academic Insights'}
+                </span>
               </span>
             </Link>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              {otherRoles.map((role) => (
+              {otherRoles.map((other) => (
                 <Link
-                  key={role}
-                  href={homeRouteForRole(role)}
+                  key={other}
+                  href={homeRouteForRole(other)}
                   className="hidden min-h-11 items-center rounded-lg px-3 text-xs text-white/85 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:flex"
                 >
-                  สลับเป็น{ROLE_LABEL_TH[role]}
+                  สลับเป็น{ROLE_LABEL_TH[other]}
                 </Link>
               ))}
               <ThemeToggle className="text-white/85 hover:bg-white/10 hover:text-white focus-visible:ring-white" />
@@ -109,9 +124,7 @@ export function StudentShell({
                 </span>
                 <span className="hidden text-left leading-tight md:block">
                   <span className="block font-medium">{fullName}</span>
-                  {shownIdentity && (
-                    <span className="block text-xs text-white/75">{shownIdentity}</span>
-                  )}
+                  {subLabel && <span className="block text-xs text-white/75">{subLabel}</span>}
                 </span>
               </Link>
               <button

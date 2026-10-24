@@ -19,8 +19,8 @@ const plexSansThai = IBM_Plex_Sans_Thai({
   variable: '--font-sans',
 });
 
-// The student app's own typeface: html.theme-student (globals.css) points
-// --font-sans at it, so only the student pages change.
+// The typeface of the top-bar roles: html.theme-ku (globals.css) points
+// --font-sans at it, so only their pages change.
 const anuphan = Anuphan({
   subsets: ['thai', 'latin'],
   weight: ['400', '500', '600', '700'],

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { GraduationCap, ShieldCheck, UserCog } from 'lucide-react';
+import { GraduationCap, LayoutGrid, ShieldCheck, UserCog } from 'lucide-react';
 import { fetchAdminScopeOverview } from '@/lib/api/admin';
 import { fetchUser } from '@/lib/api/user-management';
 import { SCOPE_LEVEL_LABELS } from '@/lib/scope-labels';
@@ -14,7 +14,7 @@ import { ScopeBreadcrumb } from '@/components/admin/scope-breadcrumb';
 import { AdminCurriculumCards, CurriculumTabs } from '@/components/admin/admin-curriculum-cards';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { PageHeader } from '@/components/layout/page-header';
+import { WelcomeBanner } from '@/components/dashboard/welcome-banner';
 import { PageLoadError } from '@/components/layout/page-states';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
@@ -56,23 +56,20 @@ function AdminOverviewContent() {
   return (
     <DashboardShell role="ADMIN" identityLabel={user.email} fullName={user.fullName}>
       <Reveal index={0}>
-        <PageHeader
-          title="ภาพรวมขอบเขต"
-          description="หน่วยงาน ผู้ใช้งาน และหลักสูตรในขอบเขตที่คุณดูแล"
-          actions={
-            ownScopes.length > 0 && (
-              <div className="rounded-lg border bg-card px-4 py-2 text-sm">
-                <p className="text-xs text-muted-foreground">ขอบเขตที่รับผิดชอบ</p>
-                <ul className="space-y-0.5">
-                  {ownScopes.map((scope) => (
-                    <li key={scope.id} className="break-words font-semibold text-primary">
-                      {SCOPE_LEVEL_LABELS[scope.level]}: {resolveTargetName(scope)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          }
+        <WelcomeBanner
+          chips={[
+            <>
+              <LayoutGrid size={13} aria-hidden="true" />
+              ภาพรวมขอบเขต
+            </>,
+            ...ownScopes.map((scope) => (
+              <span key={scope.id} className="break-words">
+                ขอบเขต {SCOPE_LEVEL_LABELS[scope.level]}: {resolveTargetName(scope)}
+              </span>
+            )),
+          ]}
+          title={`สวัสดี, ${user.fullName}`}
+          summary="หน่วยงาน ผู้ใช้งาน และหลักสูตรในขอบเขตที่คุณดูแล"
         />
       </Reveal>
 
