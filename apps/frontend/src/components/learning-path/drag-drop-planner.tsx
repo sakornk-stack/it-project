@@ -9,6 +9,7 @@ import { useToast } from '@/lib/toast-context';
 import { Button } from '@/components/ui/button';
 import { BADGE_TONE_CLASSES, TEXT_TONE_CLASSES } from '@/lib/tone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { CourseDragCard } from './course-drag-card';
 
 type DropTarget = 'plan' | 'other';
@@ -96,6 +97,12 @@ export function DragDropPlanner({
 
   const planCourses = planIds.map((id) => courseById.get(id)).filter((c): c is AvailableCourse => !!c);
   const otherCourses = availableCourses.filter((c) => !planIds.includes(c.courseId));
+  // A curriculum with the whole GE list has 200+ open courses: search, and scroll inside the box.
+  const [otherQuery, setOtherQuery] = useState('');
+  const otherNeedle = otherQuery.trim().toLowerCase();
+  const shownOtherCourses = otherNeedle
+    ? otherCourses.filter((c) => `${c.code} ${c.name}`.toLowerCase().includes(otherNeedle))
+    : otherCourses;
 
   const totalCredits = planCourses.reduce((sum, c) => sum + c.credits, 0);
   const isOverLimit = totalCredits > maxCreditsPerSemester;
@@ -251,8 +258,25 @@ export function DragDropPlanner({
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-3">
           <CardTitle>วิชาที่ลงได้อื่นๆ ({otherCourses.length})</CardTitle>
+          {otherCourses.length > 0 && (
+            <>
+              <Input
+                type="search"
+                value={otherQuery}
+                onChange={(e) => setOtherQuery(e.target.value)}
+                placeholder="ค้นหารหัสหรือชื่อวิชา..."
+                aria-label="ค้นหาวิชาที่ลงได้"
+                className="h-11 text-base md:text-sm"
+              />
+              {otherNeedle && (
+                <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
+                  พบ {shownOtherCourses.length} จาก {otherCourses.length} วิชา
+                </p>
+              )}
+            </>
+          )}
         </CardHeader>
         <CardContent
           onDragOver={(e) => e.preventDefault()}
@@ -267,14 +291,19 @@ export function DragDropPlanner({
           {otherCourses.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">ไม่มีวิชาอื่นที่ลงได้ในขณะนี้</p>
           )}
-          {otherCourses.map((course) => (
-            <CourseDragCard
-              key={course.courseId}
-              course={course}
-              moveLabel="ย้ายเข้าแผน"
-              onMove={() => moveToPlan(course.courseId)}
-            />
-          ))}
+          {otherNeedle && shownOtherCourses.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">ไม่พบวิชาที่ค้นหา</p>
+          )}
+          <div className="max-h-[36rem] space-y-2 overflow-y-auto pr-1">
+            {shownOtherCourses.map((course) => (
+              <CourseDragCard
+                key={course.courseId}
+                course={course}
+                moveLabel="ย้ายเข้าแผน"
+                onMove={() => moveToPlan(course.courseId)}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
       </div>
