@@ -6,7 +6,9 @@ import { cn } from '@/lib/utils';
 // <thead>/<th>/<td> inside; give figure columns the class `data-num` (right-aligned, tabular
 // digits) and long text the class `data-truncate` plus a title.
 //
-// A table wider than its box scrolls sideways inside the box. `scroll={false}` is for a
+// A table wider than its box scrolls sideways inside the box. The box is `relative` so
+// absolutely positioned text inside a cell (an sr-only label) stays in it instead of
+// widening the page on a phone. `scroll={false}` is for a
 // table whose header must stay stuck to the page (`sticky`): a scroll box would take that over.
 export function DataTable({
   className,
@@ -32,7 +34,7 @@ export function DataTable({
     <div
       className={cn(
         'max-w-full',
-        scroll && 'overflow-x-auto',
+        scroll && 'relative overflow-x-auto',
         bordered && 'rounded-lg border border-border',
         wrapperClassName,
       )}

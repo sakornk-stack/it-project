@@ -29,7 +29,9 @@ import { FailedCoursesList } from '@/components/credit-checker/failed-courses-li
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
 import { PloCard } from '@/components/clo-plo-analysis/plo-card';
 import { GradeChip } from '@/components/instructor/grade-chip';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton, StatCardsSkeleton, TableSkeleton } from '@/components/ui/skeleton';
@@ -233,9 +235,7 @@ function AdviseeContent({ detail }: Readonly<{ detail: AdviseeDetail }>) {
                     </span>
                   </CardHeader>
                   <CardContent>
-                    {/* relative: GradeChip's sr-only text is absolute and would otherwise
-                        escape the scroll box and widen the page on a phone. */}
-                    <DataTable wrapperClassName="relative">
+                    <DataTable>
                       <thead>
                         <tr>
                           <th>รหัสวิชา</th>
@@ -278,25 +278,24 @@ function AdviseeContent({ detail }: Readonly<{ detail: AdviseeDetail }>) {
             >
               <CategoryProgressList categories={creditCheck.categoryProgress} />
               {creditCheck.missingRequiredCourses.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      วิชาบังคับที่ยังไม่ผ่าน ({creditCheck.missingRequiredCourses.length} วิชา)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-                      {creditCheck.missingRequiredCourses.map((course) => (
-                        <li key={course.courseId} className="course-name-break min-w-0">
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {course.code}
-                          </span>{' '}
-                          <span className="text-primary">{course.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                // Folded: a first-year student has most of the curriculum still to take.
+                <CollapsibleSection
+                  title="วิชาบังคับที่ยังไม่ผ่าน"
+                  meta={
+                    <Badge tone="neutral">{creditCheck.missingRequiredCourses.length} วิชา</Badge>
+                  }
+                >
+                  <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+                    {creditCheck.missingRequiredCourses.map((course) => (
+                      <li key={course.courseId} className="course-name-break min-w-0">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {course.code}
+                        </span>{' '}
+                        <span className="text-primary">{course.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleSection>
               )}
             </div>
             <FailedCoursesList courses={creditCheck.failedCourses} />

@@ -48,6 +48,7 @@ import { StudentHistorySection } from '@/components/staff/student-history-sectio
 import { StudentProfileEditForm } from '@/components/staff/student-profile-edit-form';
 import { NO_ADVISOR_LABEL, type AuditLabelLookups } from '@/components/staff/describe-audit-entry';
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NO_DATA_LABEL } from '@/components/staff/student-reading';
@@ -369,6 +370,9 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                       >
                         {profile.advisor?.fullName ?? NO_ADVISOR_LABEL}
                       </span>
+                      {profile.advisor && !profile.advisor.isActive && (
+                        <Badge tone="danger">บัญชีอาจารย์ถูกระงับ ควรเปลี่ยน</Badge>
+                      )}
                       {!suspended && (
                         <Button
                           type="button"

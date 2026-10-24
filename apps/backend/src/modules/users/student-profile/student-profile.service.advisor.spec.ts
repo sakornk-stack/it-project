@@ -27,7 +27,9 @@ function setup(
       update: jest.fn(async ({ data }: { data: { advisorUserId: string | null } }) => ({
         ...profile,
         ...data,
-        advisor: data.advisorUserId ? { id: data.advisorUserId, fullName: 'อ.ที่ปรึกษา' } : null,
+        advisor: data.advisorUserId
+          ? { id: data.advisorUserId, fullName: 'อ.ที่ปรึกษา', isActive: true }
+          : null,
       })),
     },
     user: {
@@ -56,7 +58,16 @@ describe('StudentProfileService.updateAdvisor', () => {
     const { service, tx, audit } = setup();
     const result = await service.updateAdvisor('sp1', { advisorUserId: ADVISOR_ID }, staff);
 
-    expect(result).toEqual({ id: 'sp1', advisor: { id: ADVISOR_ID, fullName: 'อ.ที่ปรึกษา' } });
+    expect(result).toEqual({
+      id: 'sp1',
+      advisor: { id: ADVISOR_ID, fullName: 'อ.ที่ปรึกษา', isActive: true },
+    });
+    // The page needs the account status to flag a suspended advisor.
+    expect(tx.studentProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: { advisor: { select: { id: true, fullName: true, isActive: true } } },
+      }),
+    );
     expect(tx.user.findFirst).toHaveBeenCalledWith({
       where: { id: ADVISOR_ID, isActive: true, userRoles: { some: { role: 'INSTRUCTOR' } } },
       select: { id: true },

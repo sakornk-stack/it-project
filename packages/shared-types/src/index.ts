@@ -1333,10 +1333,12 @@ export interface StudentProfileSummary {
 
 // GET /student-profiles/:id — a suspended student is returned too;
 // user.isActive is whether the account can sign in.
-// A student's academic advisor (an INSTRUCTOR account), by name only.
+// A student's academic advisor (an INSTRUCTOR account), by name only. isActive false =
+// the account has been suspended since, so STAFF should pick someone else.
 export interface StudentAdvisor {
   id: string;
   fullName: string;
+  isActive: boolean;
 }
 
 export interface StudentProfileDetail extends StudentProfileSummary {

@@ -136,7 +136,7 @@ export class StudentProfileService {
       where: { id },
       include: {
         user: { select: { fullName: true, email: true, isActive: true } },
-        advisor: { select: { id: true, fullName: true } },
+        advisor: { select: { id: true, fullName: true, isActive: true } },
       },
     });
     if (!profile) {
@@ -171,7 +171,7 @@ export class StudentProfileService {
       const updated = await tx.studentProfile.update({
         where: { id },
         data: { advisorUserId: dto.advisorUserId },
-        include: { advisor: { select: { id: true, fullName: true } } },
+        include: { advisor: { select: { id: true, fullName: true, isActive: true } } },
       });
       await this.auditLogService.record(tx, {
         action: 'STUDENT_ADVISOR_UPDATE',
