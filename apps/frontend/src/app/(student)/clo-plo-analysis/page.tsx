@@ -19,7 +19,7 @@ import { PageLoadError } from '@/components/layout/page-states';
 import { OverallAchievementCard } from '@/components/clo-plo-analysis/overall-achievement-card';
 import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
-import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
+import { isTqfCurriculum } from '@/lib/plo-notes';
 import { comparePloCode } from '@/lib/plo-order';
 import { PloCard } from '@/components/clo-plo-analysis/plo-card';
 import { SCORE_BANDS, scoreBandKey } from '@/lib/plo-score-bands';
@@ -214,7 +214,7 @@ export default function CloPloAnalysisPage() {
               <PloMethodNote
                 radar={achievementQuery.data.radar}
                 showThreshold={false}
-                preliminary={curriculumQuery.data ? isPreliminaryCloCurriculum(curriculumQuery.data) : false}
+                tqf={curriculumQuery.data ? isTqfCurriculum(curriculumQuery.data) : false}
               />
             </Reveal>
 

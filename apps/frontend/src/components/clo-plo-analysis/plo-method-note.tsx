@@ -5,7 +5,7 @@ import {
   INSTRUCTOR_ASSESSED_NOTE,
   PLO_METHOD_LINES,
   PLO_THRESHOLD_LINE,
-  PRELIMINARY_CLO_NOTE,
+  TQF_CURRICULUM_NOTE,
   ploCoverage,
 } from '@/lib/plo-notes';
 import { INFO_TONE_CLASSES } from '@/lib/tone';
@@ -16,13 +16,13 @@ export function PloMethodNote({
   radar,
   showThreshold = false,
   showCoverage = false,
-  preliminary = false,
+  tqf = false,
 }: Readonly<{
   radar: StudentPloRadarPoint[];
   showThreshold?: boolean;
   showCoverage?: boolean;
-  // 2564 curriculum: CLOs were copied from 2569 and are not confirmed with the faculty yet.
-  preliminary?: boolean;
+  // 2564 curriculum: outcomes are the five TQF domains, not OBE PLOs.
+  tqf?: boolean;
 }>) {
   const instructorCourses = new Map<string, string>();
   for (const plo of radar) {
@@ -35,7 +35,7 @@ export function PloMethodNote({
 
   return (
     <div className="space-y-3">
-      {preliminary && (
+      {tqf && (
         <p
           className={cn(
             'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
@@ -43,7 +43,7 @@ export function PloMethodNote({
           )}
         >
           <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
-          <span>{PRELIMINARY_CLO_NOTE}</span>
+          <span>{TQF_CURRICULUM_NOTE}</span>
         </p>
       )}
       <details className="group rounded-lg bg-muted/50 text-xs leading-5 text-muted-foreground">

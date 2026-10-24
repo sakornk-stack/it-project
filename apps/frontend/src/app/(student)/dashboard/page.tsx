@@ -36,7 +36,7 @@ import { CareerFitSummary } from '@/components/dashboard/career-fit-summary';
 import { PloOverview } from '@/components/dashboard/plo-overview';
 import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
-import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
+import { isTqfCurriculum } from '@/lib/plo-notes';
 import { ReadinessChecklist } from '@/components/dashboard/readiness-checklist';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -101,8 +101,8 @@ export default function DashboardPage() {
           fullName={user.fullName}
           dashboard={dashboard}
           threshold={threshold}
-          preliminaryClo={
-            curriculumQuery.data ? isPreliminaryCloCurriculum(curriculumQuery.data) : false
+          tqfCurriculum={
+            curriculumQuery.data ? isTqfCurriculum(curriculumQuery.data) : false
           }
         />
       )}
@@ -114,12 +114,12 @@ function DashboardCards({
   fullName,
   dashboard,
   threshold,
-  preliminaryClo,
+  tqfCurriculum,
 }: Readonly<{
   fullName: string;
   dashboard: StudentDashboardResponse;
   threshold: number | null;
-  preliminaryClo: boolean;
+  tqfCurriculum: boolean;
 }>) {
   const animatedGpa = useCountUp(dashboard.gpa ?? 0, {
     duration: COUNT_UP_MS,
@@ -279,7 +279,7 @@ function DashboardCards({
               <PloMethodNote
                 radar={[]}
                 showThreshold={threshold !== null}
-                preliminary={preliminaryClo}
+                tqf={tqfCurriculum}
               />
             </div>
           )}

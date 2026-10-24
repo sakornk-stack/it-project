@@ -1,5 +1,5 @@
 import type { StudentPloCloBreakdownEntry } from '@eduanalyze-ai/shared-types';
-import { isPreliminaryCloCurriculum, ploCoverage } from './plo-notes';
+import { isTqfCurriculum, ploCoverage } from './plo-notes';
 
 function clo(courseId: string, score: number | null): StudentPloCloBreakdownEntry {
   return { cloId: `${courseId}-${score}`, courseId, score } as StudentPloCloBreakdownEntry;
@@ -18,9 +18,9 @@ describe('ploCoverage', () => {
   });
 });
 
-describe('isPreliminaryCloCurriculum', () => {
+describe('isTqfCurriculum', () => {
   it('flags only the 2564 curriculum', () => {
-    expect(isPreliminaryCloCurriculum({ version: '2564', effectiveYear: 2564 })).toBe(true);
-    expect(isPreliminaryCloCurriculum({ version: '2569', effectiveYear: 2569 })).toBe(false);
+    expect(isTqfCurriculum({ version: '2564', effectiveYear: 2564 })).toBe(true);
+    expect(isTqfCurriculum({ version: '2569', effectiveYear: 2569 })).toBe(false);
   });
 });

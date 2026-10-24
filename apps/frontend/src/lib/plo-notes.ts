@@ -17,8 +17,8 @@ export const NO_PLO_CURRICULUM_TITLE = 'หลักสูตรของนิ�
 export const NO_PLO_CURRICULUM_DESCRIPTION =
   'จึงยังไม่มีกราฟและการวิเคราะห์ในหน้านี้ ส่วนอื่น เช่น แผนการเรียนและเครดิต ยังใช้งานได้ตามปกติ';
 
-export const PRELIMINARY_CLO_NOTE =
-  'ข้อมูล CLO/PLO ของหลักสูตรนี้เป็นข้อมูลเบื้องต้น อยู่ระหว่างตรวจสอบกับคณะ';
+export const TQF_CURRICULUM_NOTE =
+  'หลักสูตรนี้ใช้กรอบ TQF: ผลลัพธ์ระดับหลักสูตรคือผลการเรียนรู้ 5 ด้าน และน้ำหนักของแต่ละวิชามาจากแผนที่กระจายความรับผิดชอบ (● หลัก / ○ รอง) ใน มคอ.2 หลักสูตรปรับปรุง พ.ศ. 2564 เกือบทุกวิชารับผิดชอบหลายด้าน คะแนนแต่ละด้านจึงมักใกล้เคียงกัน';
 
 // Courses the curriculum has an instructor assess (project, special problems, co-op).
 export const INSTRUCTOR_ASSESSED_COURSE_CODES: ReadonlySet<string> = new Set([
@@ -29,8 +29,9 @@ export const INSTRUCTOR_ASSESSED_COURSE_CODES: ReadonlySet<string> = new Set([
 export const INSTRUCTOR_ASSESSED_NOTE =
   'ผลของวิชานี้ประเมินโดยอาจารย์ตามที่หลักสูตรระบุ';
 
-// Only the 2564 curriculum has CLOs copied from 2569; there is no isConfirmed column yet.
-export function isPreliminaryCloCurriculum(curriculum: {
+// The 2564 curriculum is TQF: its "PLOs" are the five TQF domains from the มคอ.2 Curriculum
+// Mapping, not OBE PLOs.
+export function isTqfCurriculum(curriculum: {
   version: string;
   effectiveYear: number;
 }): boolean {

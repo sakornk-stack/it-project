@@ -17,7 +17,7 @@ import { AptitudeAnalysisSkeleton } from '@/components/aptitude-analysis/aptitud
 import { PloRadarLegend } from '@/components/aptitude-analysis/plo-radar-legend';
 import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
-import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
+import { isTqfCurriculum } from '@/lib/plo-notes';
 import { CareerFitCard } from '@/components/career-fit/career-fit-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -119,7 +119,7 @@ export default function AptitudeAnalysisPage() {
                   radar={ploQuery.data.radar}
                   showThreshold
                   showCoverage
-                  preliminary={isPreliminaryCloCurriculum(curriculumQuery.data)}
+                  tqf={isTqfCurriculum(curriculumQuery.data)}
                   />
                 </div>
               }
