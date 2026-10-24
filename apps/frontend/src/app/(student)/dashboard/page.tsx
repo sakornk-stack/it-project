@@ -19,7 +19,7 @@ import { computeGpaChange } from '@/lib/gpa-change';
 import { COUNT_UP_MS } from '@/lib/animated-number';
 import { useCountUp } from '@/lib/use-count-up';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { PageHeader } from '@/components/layout/page-header';
+import { StudentWelcomeBanner } from '@/components/dashboard/student-welcome-banner';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { RevealOnScroll } from '@/components/layout/reveal-on-scroll';
@@ -151,16 +151,12 @@ function DashboardCards({
         isReady={dashboard.graduationReadiness.isReady}
       />
       <Reveal index={0}>
-        <PageHeader
-          title={`สวัสดี, ${fullName}`}
-          description={summary ?? 'แผนการเรียนวิชาการและตัวชี้วัดความพร้อมของนิสิต'}
+        <StudentWelcomeBanner
+          fullName={fullName}
+          summary={summary ?? 'แผนการเรียนวิชาการและตัวชี้วัดความพร้อมของนิสิต'}
+          yearLevel={dashboard.yearLevel}
+          isReady={isReady}
         />
-        {isReady && (
-          <Badge tone="success" className="mt-3 gap-1.5 px-3 py-1 text-sm">
-            <GraduationCap size={16} aria-hidden="true" />
-            ยินดีด้วย! นิสิตพร้อมสำเร็จการศึกษา
-          </Badge>
-        )}
       </Reveal>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">

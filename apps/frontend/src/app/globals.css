@@ -94,6 +94,51 @@
     color-scheme: dark;
   }
 
+  /* Student pages only: StudentShell adds .theme-student to <html> while a
+     STUDENT page is open (on <html>, so dialogs, popovers and toasts that
+     portal out of the shell follow too). Kasetsart green instead of navy, a
+     faintly green page and the student typeface; every pair keeps WCAG AA like
+     the defaults above. Other roles never get the class. */
+  html.theme-student {
+    --font-sans: var(--font-student);
+    --background: 150 25% 98%;
+    --primary: 174 90% 17%;
+    --primary-foreground: 0 0% 100%;
+    --brand: 172 85% 27%;
+    --brand-foreground: 0 0% 100%;
+    --brand-light: 168 55% 93%;
+    --secondary: 160 20% 95%;
+    --muted: 160 20% 95%;
+    --accent: 160 30% 94%;
+    --border: 160 20% 88%;
+    --input: 160 20% 88%;
+    --ring: 172 85% 27%;
+    --chart-1: 172 85% 30%;
+  }
+
+  html.theme-student.dark {
+    --background: 180 30% 6%;
+    --card: 178 28% 9%;
+    --popover: 178 28% 10%;
+    --primary: 165 55% 82%;
+    --primary-foreground: 178 60% 10%;
+    --brand: 168 60% 50%;
+    --brand-foreground: 178 60% 8%;
+    --brand-light: 172 45% 15%;
+    --secondary: 175 25% 14%;
+    --muted: 175 25% 14%;
+    --accent: 175 25% 16%;
+    --border: 175 20% 20%;
+    --input: 175 20% 20%;
+    --ring: 168 60% 50%;
+    --chart-1: 168 60% 50%;
+  }
+
+  /* Rounder cards on the student pages (Card is rounded-xl). */
+  html.theme-student .rounded-xl {
+    border-radius: 1rem;
+  }
+
   * {
     @apply border-border;
   }

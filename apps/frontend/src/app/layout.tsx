@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans_Thai } from 'next/font/google';
+import { Anuphan, IBM_Plex_Sans_Thai } from 'next/font/google';
 import '../styles/theme-palette.css';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
@@ -19,6 +19,15 @@ const plexSansThai = IBM_Plex_Sans_Thai({
   variable: '--font-sans',
 });
 
+// The student app's own typeface: html.theme-student (globals.css) points
+// --font-sans at it, so only the student pages change.
+const anuphan = Anuphan({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-student',
+});
+
 export const metadata: Metadata = {
   title: BRAND_NAME,
   description: 'Academic progress tracking and learning outcome analytics system',
@@ -32,7 +41,11 @@ export default function RootLayout({
   return (
     // suppressHydrationWarning: the inline script below adds the `dark` class
     // to <html> before React hydrates.
-    <html lang="th" className={plexSansThai.variable} suppressHydrationWarning>
+    <html
+      lang="th"
+      className={`${plexSansThai.variable} ${anuphan.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>

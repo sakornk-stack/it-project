@@ -29,6 +29,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { RevealOnViewProvider } from '@/components/layout/reveal';
 import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
+import { StudentShell } from './student-shell';
 
 // Remembered per browser; read after mount so the server render and first client
 // render agree (expanded), then the saved choice applies and the width eases over.
@@ -76,15 +77,7 @@ function writeSidebarCollapsed(collapsed: boolean) {
   }
 }
 
-export function DashboardShell({
-  studentCode,
-  identityLabel,
-  fullName,
-  role = 'STUDENT',
-  skeleton,
-  ready = true,
-  children,
-}: {
+type DashboardShellProps = {
   studentCode?: string;
   // Generic identity label shown next to fullName in the header — use this
   // for roles that have no student-code equivalent (e.g. instructor email).
@@ -97,7 +90,27 @@ export function DashboardShell({
   skeleton?: React.ReactNode;
   ready?: boolean;
   children: React.ReactNode;
-}) {
+};
+
+// Students get their own frame (top bar and tabs, green theme); every other role
+// keeps the side menu below.
+export function DashboardShell(props: DashboardShellProps) {
+  return (props.role ?? 'STUDENT') === 'STUDENT' ? (
+    <StudentShell {...props} />
+  ) : (
+    <SidebarShell {...props} />
+  );
+}
+
+function SidebarShell({
+  studentCode,
+  identityLabel,
+  fullName,
+  role = 'STUDENT',
+  skeleton,
+  ready = true,
+  children,
+}: DashboardShellProps) {
   const { logout, user } = useAuth();
   // Each page renders the shell as one role, so a multi-role account needs a
   // way over to its other roles' menus.
