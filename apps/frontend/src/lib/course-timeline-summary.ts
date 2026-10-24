@@ -101,3 +101,15 @@ export function buildTimelineSummary(
   if (level !== null) parts.push(`ส่วนใหญ่${yearLevelLabel(level)}`);
   return parts.join(' · ');
 }
+
+// Courses staff assigned to the instructor that no student has a record in yet: the
+// timeline is built from records, so these would otherwise not show on "My Courses".
+export function coursesWithoutRecords<T extends { courseId: string }>(
+  assigned: readonly T[],
+  years: readonly InstructorCourseTimelineYear[],
+): T[] {
+  const seen = new Set<string>();
+  for (const year of years)
+    for (const semester of year.semesters) for (const c of semester.courses) seen.add(c.courseId);
+  return assigned.filter((c) => !seen.has(c.courseId));
+}

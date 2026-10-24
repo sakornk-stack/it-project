@@ -149,13 +149,22 @@ function StaffCurriculumContent() {
         program.curricula.map((curriculum) => ({
           id: curriculum.curriculumId,
           label: `${program.programCode} ${program.programName} · ฉบับ ${curriculum.version} (พ.ศ. ${curriculum.effectiveYear})`,
+          studentCount: curriculum.studentCount,
+          totalCourses: curriculum.totalCourses,
         })),
       ),
     [overviewQuery.data],
   );
 
-  // Nothing to choose between, or nothing chosen yet: start on the first one.
-  const firstCurriculumId = curricula[0]?.id;
+  // Nothing chosen yet: start on the curriculum staff most likely work on — the one
+  // with students, then the one with courses — not an empty one that sorts first.
+  const firstCurriculumId = useMemo(
+    () =>
+      [...curricula].sort(
+        (a, b) => b.studentCount - a.studentCount || b.totalCourses - a.totalCourses,
+      )[0]?.id,
+    [curricula],
+  );
   useEffect(() => {
     if (!curriculumId && firstCurriculumId) setParams({ curriculumId: firstCurriculumId });
   }, [curriculumId, firstCurriculumId, setParams]);
@@ -404,6 +413,8 @@ function StaffCurriculumContent() {
                       </span>{' '}
                       วิชา
                     </span>
+                  ) : view.totalCourses === 0 ? (
+                    <span>ยังไม่มีรายวิชาให้มอบหมายอาจารย์</span>
                   ) : (
                     <span>ทุกวิชามีอาจารย์ผู้รับผิดชอบแล้ว</span>
                   )}

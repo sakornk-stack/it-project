@@ -6,6 +6,7 @@ import type {
 import {
   buildTimelineSummary,
   countCourses,
+  coursesWithoutRecords,
   predominantYearLevel,
   splitTimeline,
 } from './course-timeline-summary';
@@ -81,5 +82,16 @@ describe('buildTimelineSummary', () => {
     expect(buildTimelineSummary([])).toBeNull();
     const odd = buildTimelineSummary([year(2568, sem('FIRST', course('A', Number.NaN, 9)))]);
     expect(odd).not.toMatch(/NaN|undefined|Infinity/);
+  });
+});
+
+describe('coursesWithoutRecords', () => {
+  it('keeps only assigned courses no term of the timeline lists', () => {
+    const assigned = [{ courseId: 'A' }, { courseId: 'Z' }, { courseId: 'E' }, { courseId: 'Y' }];
+    expect(coursesWithoutRecords(assigned, years)).toEqual([{ courseId: 'Z' }, { courseId: 'Y' }]);
+  });
+
+  it('returns every assigned course when the timeline is empty', () => {
+    expect(coursesWithoutRecords([{ courseId: 'A' }], [])).toEqual([{ courseId: 'A' }]);
   });
 });

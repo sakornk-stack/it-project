@@ -88,8 +88,8 @@ describe('isNavItemActive', () => {
     expect(active('INSTRUCTOR', '/instructor/advisees/abc')).toEqual(['นิสิตในที่ปรึกษา']);
   });
 
-  it('keeps the instructor overview lit inside a course page, as before', () => {
-    expect(active('INSTRUCTOR', '/instructor/courses/abc')).toEqual(['แดชบอร์ด']);
+  it('lights the course list inside a course page', () => {
+    expect(active('INSTRUCTOR', '/instructor/courses/abc')).toEqual(['รายวิชาที่สอน']);
   });
 
   it('keeps Staff นิสิต lit on every student tab and on a student page', () => {

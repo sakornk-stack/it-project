@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
 import { History } from 'lucide-react';
-import { useInstructorCourseTimeline } from '@/lib/instructor-queries';
+import { useInstructorCourseTimeline, useInstructorDashboard } from '@/lib/instructor-queries';
 import {
   buildTimelineSummary,
   countCourses,
+  coursesWithoutRecords,
   splitTimeline,
   termLabel,
 } from '@/lib/course-timeline-summary';
@@ -19,13 +21,14 @@ import {
 } from '@/components/instructor/instructor-course-timeline';
 import { PageHeader } from '@/components/layout/page-header';
 import { CollapsibleCard } from '@/components/ui/section-card';
-import { TEXT_SECTION } from '@/components/instructor/instructor-ui';
+import { CARD, TEXT_SECTION } from '@/components/instructor/instructor-ui';
 import { PageSection } from '@/components/layout/page-section';
 import { Reveal } from '@/components/layout/reveal';
 import { ApiErrorAlert } from '@/components/ui/api-error-alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
 
 export default function InstructorMyCoursesPage() {
   return <InstructorMyCoursesContent />;
@@ -39,11 +42,18 @@ function InstructorMyCoursesContent() {
   // data, not the CLO/PLO/Course-Assessment payload /instructor/dashboard
   // carries, so it doesn't share instructor-dashboard's cache entry.
   const timelineQuery = useInstructorCourseTimeline({ enabled: isInstructor });
+  // The timeline is built from student records, so a course staff just assigned
+  // shows up only through the dashboard's course list until someone takes it.
+  const dashboardQuery = useInstructorDashboard({ enabled: isInstructor });
 
   const years = useMemo(() => timelineQuery.data?.years ?? [], [timelineQuery.data]);
   const { latest, previousYears } = useMemo(() => splitTimeline(years), [years]);
   const summary = buildTimelineSummary(years);
   const previousCount = countCourses(previousYears);
+  const notYetTaken = useMemo(
+    () => coursesWithoutRecords(dashboardQuery.data?.courses ?? [], years),
+    [dashboardQuery.data, years],
+  );
 
   // The layout's guard renders nothing below it until the user is known.
   if (!user) return null;
@@ -66,14 +76,14 @@ function InstructorMyCoursesContent() {
         />
       )}
 
-      {timelineQuery.data && !latest && (
+      {timelineQuery.data && dashboardQuery.data && !latest && notYetTaken.length === 0 && (
         <Reveal index={1}>
           <Card>
             <CardContent className="pt-6">
               <EmptyState
                 illustration="no-data"
                 title="ยังไม่มีวิชาที่ได้รับมอบหมายให้สอน"
-                description="เมื่อมีนิสิตเรียน วิชาจะขึ้นที่นี่"
+                description="เมื่อเจ้าหน้าที่กำหนดให้คุณสอนวิชาใด วิชานั้นจะขึ้นที่นี่"
               />
             </CardContent>
           </Card>
@@ -141,6 +151,37 @@ function InstructorMyCoursesContent() {
               ))}
             </div>
           </CollapsibleCard>
+        </Reveal>
+      )}
+      {notYetTaken.length > 0 && (
+        <Reveal index={3}>
+          <PageSection
+            titleClassName={TEXT_SECTION}
+            title="ได้รับมอบหมายแล้ว ยังไม่มีนิสิตเรียน"
+            description="วิชาที่เจ้าหน้าที่กำหนดให้คุณสอน แต่ยังไม่มีนิสิตคนใดมีผลการเรียนในวิชานี้"
+          >
+            <ul className="space-y-2">
+              {notYetTaken.map((course) => (
+                <li key={course.courseId}>
+                  <Link
+                    href={`/instructor/courses/${course.courseId}`}
+                    className={cn(
+                      CARD,
+                      'interactive-row flex flex-wrap items-center gap-3 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:px-5',
+                    )}
+                  >
+                    <Badge tone="neutral" className="shrink-0 font-mono">
+                      {course.code}
+                    </Badge>
+                    <span className="course-name-break min-w-0 flex-1 font-semibold text-primary">
+                      {course.name}
+                    </span>
+                    <span className="text-[13px] text-muted-foreground">นิสิต 0 คน</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </PageSection>
         </Reveal>
       )}
     </DashboardShell>

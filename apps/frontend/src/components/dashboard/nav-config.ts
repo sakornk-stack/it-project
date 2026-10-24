@@ -109,11 +109,11 @@ export function navItemsForRole(role: Role): NavItem[] {
 }
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
-  // Per-course pages have no nav entry of their own — keep the
-  // instructor overview highlighted while inside one.
+  // Per-course pages have no nav entry of their own — they belong to the
+  // instructor's course list, so that tab stays highlighted inside one.
   return (
     pathname === item.href ||
-    (item.href === '/instructor/dashboard' && pathname.startsWith('/instructor/courses/')) ||
+    (item.href === '/instructor/my-courses' && pathname.startsWith('/instructor/courses/')) ||
     (item.matchPrefixes ?? []).some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
     )
