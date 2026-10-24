@@ -19,7 +19,8 @@ describe('ploCoverage', () => {
 });
 
 describe('isTqfCurriculum', () => {
-  it('flags only the 2564 curriculum', () => {
+  it('flags the TQF curricula (2559, 2564) but not the OBE 2569 one', () => {
+    expect(isTqfCurriculum({ version: '2559', effectiveYear: 2559 })).toBe(true);
     expect(isTqfCurriculum({ version: '2564', effectiveYear: 2564 })).toBe(true);
     expect(isTqfCurriculum({ version: '2569', effectiveYear: 2569 })).toBe(false);
   });

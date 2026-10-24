@@ -21,7 +21,7 @@ export function PloMethodNote({
   radar: StudentPloRadarPoint[];
   showThreshold?: boolean;
   showCoverage?: boolean;
-  // 2564 curriculum: outcomes are the five TQF domains, not OBE PLOs.
+  // TQF curricula (2559, 2564): outcomes are the five TQF domains, not OBE PLOs.
   tqf?: boolean;
 }>) {
   const instructorCourses = new Map<string, string>();

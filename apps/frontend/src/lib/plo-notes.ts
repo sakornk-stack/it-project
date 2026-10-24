@@ -18,7 +18,7 @@ export const NO_PLO_CURRICULUM_DESCRIPTION =
   'จึงยังไม่มีกราฟและการวิเคราะห์ในหน้านี้ ส่วนอื่น เช่น แผนการเรียนและเครดิต ยังใช้งานได้ตามปกติ';
 
 export const TQF_CURRICULUM_NOTE =
-  'หลักสูตรนี้ใช้กรอบ TQF: ผลลัพธ์ระดับหลักสูตรคือผลการเรียนรู้ 5 ด้าน และน้ำหนักของแต่ละวิชามาจากแผนที่กระจายความรับผิดชอบ (● หลัก / ○ รอง) ใน มคอ.2 หลักสูตรปรับปรุง พ.ศ. 2564 เกือบทุกวิชารับผิดชอบหลายด้าน คะแนนแต่ละด้านจึงมักใกล้เคียงกัน';
+  'หลักสูตรนี้ใช้กรอบ TQF: ผลลัพธ์ระดับหลักสูตรคือผลการเรียนรู้ 5 ด้าน และน้ำหนักของแต่ละวิชามาจากแผนที่กระจายความรับผิดชอบ (● หลัก / ○ รอง) ใน มคอ.2 ของหลักสูตร เกือบทุกวิชารับผิดชอบหลายด้าน คะแนนแต่ละด้านจึงมักใกล้เคียงกัน';
 
 // Courses the curriculum has an instructor assess (project, special problems, co-op).
 export const INSTRUCTOR_ASSESSED_COURSE_CODES: ReadonlySet<string> = new Set([
@@ -29,13 +29,15 @@ export const INSTRUCTOR_ASSESSED_COURSE_CODES: ReadonlySet<string> = new Set([
 export const INSTRUCTOR_ASSESSED_NOTE =
   'ผลของวิชานี้ประเมินโดยอาจารย์ตามที่หลักสูตรระบุ';
 
-// The 2564 curriculum is TQF: its "PLOs" are the five TQF domains from the มคอ.2 Curriculum
-// Mapping, not OBE PLOs.
+// The 2559 and 2564 curricula are TQF: their "PLOs" are the five TQF domains from the มคอ.2
+// Curriculum Mapping, not OBE PLOs. There is no framework column yet, so this goes by year.
+const TQF_CURRICULUM_YEARS: ReadonlySet<number> = new Set([2559, 2564]);
+
 export function isTqfCurriculum(curriculum: {
   version: string;
   effectiveYear: number;
 }): boolean {
-  return curriculum.version === '2564' || curriculum.effectiveYear === 2564;
+  return TQF_CURRICULUM_YEARS.has(curriculum.effectiveYear);
 }
 
 // "X of Y courses" behind one PLO: distinct courses of its CLOs, and how many of them have a
