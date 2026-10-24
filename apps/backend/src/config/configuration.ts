@@ -87,6 +87,6 @@ export default () => ({
     // Interpreting already-computed numbers into hedged prose (§25-26) is
     // not open-ended reasoning — the cheapest/fastest current model is the
     // right default; override via env if that changes.
-    model: process.env.ANTHROPIC_MODEL || 'claude-opus-5-5',
+    model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
   },
 });

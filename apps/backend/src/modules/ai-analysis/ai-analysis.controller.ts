@@ -41,27 +41,4 @@ export class AiAnalysisController {
   ) {
     return this.aiAnalysisService.getStudentAnalysis(studentProfileId, user);
   }
-
-  @Get('student/:studentProfileId/careers')
-  // Same cost and data-sharing profile as the skill analysis: same limit.
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STUDENT')
-  @ApiBearerAuth('access-token')
-  @ApiOperation({
-    summary:
-      'AI career suggestions — careers the student’s passed courses and PLO results point to, with the courses that support each (hedged Thai, no new numbers)',
-  })
-  @ApiResponse({ status: 200, description: 'AI career suggestions' })
-  @ApiResponse({ status: 404, description: 'Student profile not found' })
-  @ApiResponse({
-    status: 503,
-    description: 'AI analysis service temporarily unavailable',
-  })
-  getCareerSuggestions(
-    @Param('studentProfileId') studentProfileId: string,
-    @CurrentUser() user: RequestUser,
-  ) {
-    return this.aiAnalysisService.getCareerSuggestions(studentProfileId, user);
-  }
 }
