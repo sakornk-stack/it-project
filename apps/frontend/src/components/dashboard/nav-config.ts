@@ -10,6 +10,7 @@ import {
   ListChecks,
   Network,
   Target,
+  UserCheck,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,7 +23,8 @@ export interface NavItem {
   icon: LucideIcon;
   href: string;
   // Extra paths (the path itself or anything below it) that keep this item lit.
-  // The Staff, Admin and Super Admin menus set it; every other item matches on its href alone.
+  // The Staff, Admin and Super Admin menus and the instructor advisee item set it; every
+  // other item matches on its href alone.
   matchPrefixes?: string[];
 }
 
@@ -40,6 +42,13 @@ const INSTRUCTOR_NAV_ITEMS: NavItem[] = [
   { label: 'รายวิชาที่สอน', icon: BookOpen, href: '/instructor/my-courses' },
   { label: 'นิสิต', icon: Users, href: '/instructor/students' },
   { label: 'ภาพรวมชั้นปี', icon: GraduationCap, href: '/instructor/year-levels' },
+  {
+    label: 'นิสิตในที่ปรึกษา',
+    icon: UserCheck,
+    href: '/instructor/advisees',
+    // One advisee's page lives under /instructor/advisees/[id].
+    matchPrefixes: ['/instructor/advisees'],
+  },
 ];
 
 // SUPER_ADMIN lives under /superadmin and ADMIN under /admin, each tree gated

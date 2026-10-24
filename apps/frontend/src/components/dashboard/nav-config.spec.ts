@@ -17,6 +17,7 @@ const PINNED: Record<string, [string, string][]> = {
     ['รายวิชาที่สอน', '/instructor/my-courses'],
     ['นิสิต', '/instructor/students'],
     ['ภาพรวมชั้นปี', '/instructor/year-levels'],
+    ['นิสิตในที่ปรึกษา', '/instructor/advisees'],
   ],
   SUPER_ADMIN: [
     ['ภาพรวมระบบ', '/superadmin/system-overview'],
@@ -39,9 +40,13 @@ describe('navItemsForRole', () => {
   it.each(Object.entries(PINNED))('leaves the %s menu as it was', (role, expected) => {
     const items = navItemsForRole(role as never);
     expect(items.map((i) => [i.label, i.href])).toEqual(expected);
-    // Only the Staff, Admin and Super Admin menus use prefix matching.
+    // Only the Staff, Admin and Super Admin menus use prefix matching, plus the
+    // instructor's advisee item for its own /instructor/advisees/[id] pages.
     if (role !== 'SUPER_ADMIN') {
-      expect(items.every((i) => i.matchPrefixes === undefined)).toBe(true);
+      const prefixed = items.filter((i) => i.matchPrefixes !== undefined);
+      expect(prefixed.map((i) => [i.href, i.matchPrefixes])).toEqual(
+        role === 'INSTRUCTOR' ? [['/instructor/advisees', ['/instructor/advisees']]] : [],
+      );
     }
   });
 
@@ -80,6 +85,7 @@ describe('isNavItemActive', () => {
     expect(active('STUDENT', '/dashboard')).toEqual(['แดชบอร์ด']);
     expect(active('STUDENT', '/dashboard/extra')).toEqual([]);
     expect(active('INSTRUCTOR', '/instructor/students')).toEqual(['นิสิต']);
+    expect(active('INSTRUCTOR', '/instructor/advisees/abc')).toEqual(['นิสิตในที่ปรึกษา']);
   });
 
   it('keeps the instructor overview lit inside a course page, as before', () => {

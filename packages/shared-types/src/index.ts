@@ -1531,4 +1531,6 @@ export interface AdviseeDetail {
   records: AdviseeCourseRecord[];
   creditCheck: CreditCheckReport;
   ploAchievement: StudentPloAchievementResponse;
+  // The curriculum's PLO pass mark (percent).
+  ploThreshold: number;
 }

@@ -12,7 +12,7 @@ import { AdviseeCourseRecord, AdviseeDetail, AdviseeSummary } from './advisor-re
 const ADVISEE_INCLUDE = {
   user: { select: { fullName: true } },
   program: { select: { code: true, name: true } },
-  curriculum: { select: { version: true } },
+  curriculum: { select: { version: true, defaultAchievementThreshold: true } },
 } satisfies Prisma.StudentProfileInclude;
 
 type AdviseeRow = Prisma.StudentProfileGetPayload<{ include: typeof ADVISEE_INCLUDE }>;
@@ -81,6 +81,7 @@ export class AdvisorService {
       records,
       creditCheck,
       ploAchievement,
+      ploThreshold: profile.curriculum.defaultAchievementThreshold,
     };
   }
 

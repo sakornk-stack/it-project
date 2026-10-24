@@ -12,7 +12,7 @@ const PROFILE = {
   isActive: true,
   user: { fullName: 'นิสิต ทดสอบ' },
   program: { code: 'ICT', name: 'เทคโนโลยีสารสนเทศ' },
-  curriculum: { version: '2564' },
+  curriculum: { version: '2564', defaultAchievementThreshold: 60 },
 };
 
 const CREDIT = {
@@ -123,6 +123,7 @@ describe('AdvisorService.getAdvisee', () => {
     expect(credit.checkCreditsForProfile).toHaveBeenCalledWith(PROFILE);
     expect(plo.calculateForProfile).toHaveBeenCalledWith(PROFILE);
     expect(detail.student.gpa).toBe(3.25);
+    expect(detail.ploThreshold).toBe(60);
     expect(detail.records.map((r) => r.id)).toEqual(['r1', 'r2']);
     expect(detail.records[0]).toEqual({
       id: 'r1',
