@@ -37,7 +37,7 @@ Names and purpose only. Never put values in this file. Templates:
 | `SMTP_FROM` | no | Sender address. |
 | `TOTP_ENCRYPTION_KEY` | yes | Encrypts 2FA secrets (64 hex characters). Losing it makes every 2FA secret unreadable, so back it up separately. |
 | `ANTHROPIC_API_KEY` | no | Enables AI analysis. Empty or `disabled` turns it off: the endpoint answers 503 before any student data is read or sent. **Production keeps it `disabled`** until the privacy policy names the transfer of student data to this outside provider and the university has approved it. |
-| `ANTHROPIC_MODEL` | no | Model override for AI analysis. |
+| `ANTHROPIC_MODEL` | no | Model override for AI analysis (default `claude-opus-5-5`). |
 
 ## Container only (backend and migrator images)
 

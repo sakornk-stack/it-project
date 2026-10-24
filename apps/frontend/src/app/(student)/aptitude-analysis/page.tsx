@@ -19,6 +19,7 @@ import { PloMethodNote } from '@/components/clo-plo-analysis/plo-method-note';
 import { NoPloNotice } from '@/components/clo-plo-analysis/no-plo-notice';
 import { isPreliminaryCloCurriculum } from '@/lib/plo-notes';
 import { CareerFitCard } from '@/components/career-fit/career-fit-card';
+import { AiCareerSuggestions } from '@/components/career-fit/ai-career-suggestions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AptitudeAnalysisPage() {
@@ -133,6 +134,10 @@ export default function AptitudeAnalysisPage() {
 
       <Reveal index={2} className="mt-6">
         <CareerFitCard />
+      </Reveal>
+
+      <Reveal index={3} className="mt-6">
+        <AiCareerSuggestions studentProfileId={profileQuery.data.id} />
       </Reveal>
     </DashboardShell>
   );

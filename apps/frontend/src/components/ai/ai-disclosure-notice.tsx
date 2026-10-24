@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 import { AI_DISCLOSURE_NOTE } from '@/lib/ai-disclosure';
 import { PRIVACY_POLICY_PATH } from '@/lib/privacy-policy';
 
-// Notice to place before a button that calls the Anthropic-backed analysis.
-// Not used anywhere yet — see lib/ai-disclosure.ts for why.
+// Notice to place before a button that calls the Anthropic-backed analysis
+// (see lib/ai-disclosure.ts for where it may and may not go).
 export function AiDisclosureNotice({ className }: Readonly<{ className?: string }>) {
   return (
     <div

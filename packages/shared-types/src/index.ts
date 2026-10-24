@@ -691,6 +691,26 @@ export interface AiSkillAnalysisReport {
   recommendations: string[];
 }
 
+// GET /ai-analysis/student/:id/careers — careers the passed courses and PLO
+// results point to. The fit is words only (the model returns no numbers), and
+// supportingCourses are checked against the transcript server-side.
+export type AiCareerFitLevel = 'STRONG' | 'GOOD' | 'WORTH_EXPLORING';
+
+export interface AiCareerSuggestion {
+  title: string;
+  fit: AiCareerFitLevel;
+  reason: string;
+  supportingCourses: { code: string; name: string }[];
+  skillsToBuild: string[];
+}
+
+export interface AiCareerSuggestionReport {
+  studentProfileId: string;
+  generatedAt: string;
+  overview: string;
+  careers: AiCareerSuggestion[];
+}
+
 export interface PloListItem {
   id: string;
   code: string;
