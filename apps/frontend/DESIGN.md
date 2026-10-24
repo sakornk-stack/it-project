@@ -118,8 +118,9 @@
 
 ## 13) ธีมแถบบน (ทุกบทบาท)
 - `DashboardShell` ใช้ `top-nav-shell.tsx` กับทุกบทบาท: แถบบนเขียวไล่สี + แท็บเมนูตาม `nav-config.ts` (เลื่อนแนวนอนบนมือถือ ไม่มี drawer และไม่มีเมนูซ้ายแล้ว)
-- ระหว่างอยู่หน้าที่ล็อกอินแล้ว `<html>` มี class `theme-ku` (หน้า login/register ใช้ธีมเดิม) (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
+- `<html>` มี class `theme-ku` เสมอ (ใส่ใน `app/layout.tsx`) ทุกหน้ารวม login/register จึงได้ธีมนี้ (`globals.css`): สีเขียว มก. แทนกรมท่า, พื้นหน้าอมเขียว, ฟอนต์ Anuphan (`--font-student`), การ์ด `rounded-xl` มนขึ้นเป็น 1rem ใส่ที่ `<html>` เพื่อให้ dialog/popover/toast ที่ portal ออกไปได้สีเดียวกัน
 - หน้าแรกของทุกบทบาทเริ่มด้วย `WelcomeBanner` (`components/dashboard/welcome-banner.tsx`) เป็น h1 ของหน้า ปุ่มบนแบนเนอร์ใช้ `BANNER_PRIMARY_BUTTON` / `BANNER_SECONDARY_BUTTON`
+- หน้า login/register/ลืมรหัสผ่าน (`components/auth/auth-split-layout.tsx`): แผงแบรนด์ซ้ายเป็นเขียวไล่สีชุดเดียวกับแถบบน ตัวอักษรขาว
 - แถบบนและแบนเนอร์ใช้สีเขียวคงที่ (ตัวอักษรขาว) เหมือนกันทั้งโหมดสว่าง/มืด ไม่ใช้ token; เนื้อหาในหน้าใช้ token ตามปกติ (`text-primary`, `bg-brand-light text-brand`) สีจะเป็นเขียวเอง ห้าม hardcode เขียวในเนื้อหา
 
 ## 12) Instructor pages

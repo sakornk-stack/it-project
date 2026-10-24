@@ -54,13 +54,26 @@ import { PrivacyFooterLink } from '@/components/layout/privacy-footer-link';
 // is just under login's natural 550px, so login/register don't change.
 // title/description are required (no default copy here) so each page owns
 // its brand-panel message and a new page can't silently inherit another's.
-function BrandMark({ className }: Readonly<{ className?: string }>) {
+// `onGreen`: the white version for the green brand panel.
+function BrandMark({ className, onGreen = false }: Readonly<{ className?: string; onGreen?: boolean }>) {
   return (
     <div className={className}>
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
-        <GraduationCap size={18} className="text-brand-light" aria-hidden="true" />
+      <div
+        className={
+          onGreen
+            ? 'flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25'
+            : 'flex h-8 w-8 items-center justify-center rounded-lg bg-brand'
+        }
+      >
+        <GraduationCap
+          size={18}
+          className={onGreen ? 'text-white' : 'text-brand-light'}
+          aria-hidden="true"
+        />
       </div>
-      <span className="text-base font-semibold text-primary">{BRAND_NAME}</span>
+      <span className={onGreen ? 'text-base font-semibold text-white' : 'text-base font-semibold text-primary'}>
+        {BRAND_NAME}
+      </span>
     </div>
   );
 }
@@ -79,28 +92,26 @@ export function AuthSplitLayout({
         <BrandMark className="mb-4 flex items-center justify-center gap-2 md:hidden" />
         <div className="grid grid-cols-1 rounded-2xl border border-border bg-card shadow-card md:min-h-[34rem] md:grid-cols-[5fr_6fr]">
           <div className="relative hidden md:block">
-            <div className="absolute inset-0 overflow-hidden rounded-l-2xl border-r border-border bg-brand-light">
-              <GraduationCap
-                size={280}
-                strokeWidth={1}
-                className="absolute -right-12 -top-12 text-brand/[0.07]"
-                aria-hidden="true"
-              />
+            {/* Fixed greens (the same as the signed-in top bar), white text in
+                both light and dark mode. */}
+            <div className="absolute inset-0 overflow-hidden rounded-l-2xl bg-gradient-to-br from-[#053f39] via-[#06554c] to-[#0f8a74]">
+              <span className="absolute -right-16 -top-20 h-72 w-72 rounded-full bg-white/10" aria-hidden="true" />
+              <span className="absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-white/[0.06]" aria-hidden="true" />
               <GraduationCap
                 size={160}
                 strokeWidth={1}
-                className="absolute -bottom-8 left-8 text-brand/[0.07]"
+                className="absolute bottom-8 right-8 text-white/[0.08]"
                 aria-hidden="true"
               />
             </div>
             <div className="sticky top-[50vh] z-10 -translate-y-1/2 p-10 lg:p-12">
-              <BrandMark className="mb-8 flex items-center gap-2" />
-              <p className="mb-4 text-[1.625rem] font-semibold leading-snug tracking-tight text-primary">{title}</p>
-              <p className="mb-8 max-w-sm text-sm leading-7 text-primary/75">{description}</p>
+              <BrandMark onGreen className="mb-8 flex items-center gap-2.5" />
+              <p className="mb-4 text-[1.625rem] font-semibold leading-snug tracking-tight text-white">{title}</p>
+              <p className="mb-8 max-w-sm text-sm leading-7 text-white/80">{description}</p>
               <div className="flex gap-2">
-                <span className="h-1 w-6 rounded-full bg-brand" />
-                <span className="h-1 w-2 rounded-full bg-brand/40" />
-                <span className="h-1 w-2 rounded-full bg-brand/40" />
+                <span className="h-1 w-6 rounded-full bg-white" />
+                <span className="h-1 w-2 rounded-full bg-white/40" />
+                <span className="h-1 w-2 rounded-full bg-white/40" />
               </div>
             </div>
           </div>

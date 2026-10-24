@@ -94,12 +94,11 @@
     color-scheme: dark;
   }
 
-  /* The roles on the top-bar look (TOP_NAV_ROLES in dashboard-shell.tsx):
-     TopNavShell adds .theme-ku to <html> while one of their pages is open (on
-     <html>, so dialogs, popovers and toasts that portal out of the shell follow
-     too). Kasetsart green instead of navy, a faintly green page and the Anuphan
-     typeface; every pair keeps WCAG AA like the defaults above. Side-menu roles
-     never get the class. */
+  /* The KU theme, always on: app/layout.tsx puts .theme-ku on <html> (so
+     dialogs, popovers and toasts that portal out of the page get it too).
+     Kasetsart green instead of navy, a faintly green page and the Anuphan
+     typeface; every pair keeps WCAG AA like the defaults above. The navy
+     values above stay as the base the theme overrides. */
   html.theme-ku {
     --font-sans: var(--font-student);
     --background: 150 25% 98%;
@@ -135,7 +134,7 @@
     --chart-1: 168 60% 50%;
   }
 
-  /* Rounder cards on the top-bar pages (Card is rounded-xl). */
+  /* Rounder cards (Card is rounded-xl). */
   html.theme-ku .rounded-xl {
     border-radius: 1rem;
   }

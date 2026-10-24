@@ -19,8 +19,8 @@ const plexSansThai = IBM_Plex_Sans_Thai({
   variable: '--font-sans',
 });
 
-// The typeface of the top-bar roles: html.theme-ku (globals.css) points
-// --font-sans at it, so only their pages change.
+// The app's typeface: html.theme-ku (globals.css, always on <html>) points
+// --font-sans at it.
 const anuphan = Anuphan({
   subsets: ['thai', 'latin'],
   weight: ['400', '500', '600', '700'],
@@ -43,7 +43,7 @@ export default function RootLayout({
     // to <html> before React hydrates.
     <html
       lang="th"
-      className={`${plexSansThai.variable} ${anuphan.variable}`}
+      className={`${plexSansThai.variable} ${anuphan.variable} theme-ku`}
       suppressHydrationWarning
     >
       <head>

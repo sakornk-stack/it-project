@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GraduationCap, LogOut } from 'lucide-react';
@@ -17,28 +17,15 @@ import { LoadingGate } from '@/components/ui/loading-gate';
 import { isNavItemActive, navItemsForRole } from './nav-config';
 
 // The frame of every signed-in page (DashboardShell renders it): a green top bar
-// and a tab row, plus the KU theme (green, Anuphan, rounder cards) switched on
-// for the whole document while a page is open. The tab row scrolls sideways on a phone, so there is
+// and a tab row. The KU theme itself (green, Anuphan, rounder cards) is always on
+// <html> (app/layout.tsx). The tab row scrolls sideways on a phone, so there is
 // no drawer to open.
-
-const THEME_CLASS = 'theme-ku';
 
 // Who the app is for, under the logo; the other roles read their role under
 // their own name instead, so it is not said twice.
 const AUDIENCE_LABEL: Partial<Record<Role, string>> = {
   STUDENT: 'สำหรับนิสิต',
 };
-
-// Layout effect: the class lands before the first paint, so the page never
-// flashes the default colours. Removed on leaving, so the sign-in pages keep
-// the default theme.
-function useKuTheme() {
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    root.classList.add(THEME_CLASS);
-    return () => root.classList.remove(THEME_CLASS);
-  }, []);
-}
 
 export function TopNavShell({
   role,
@@ -57,7 +44,6 @@ export function TopNavShell({
   ready?: boolean;
   children: React.ReactNode;
 }>) {
-  useKuTheme();
   const { logout, user } = useAuth();
   const pathname = usePathname();
   const navItems = navItemsForRole(role);
