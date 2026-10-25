@@ -37,7 +37,7 @@ import {
   GRADE_SAVES_NOW_NOTICE,
   recordModeView,
 } from '@/components/staff/record-edit-mode';
-import { StaffAddRecordForm } from '@/components/staff/staff-add-record-form';
+import { AddRecordForm } from '@/components/academic-record/add-record-form';
 import { StaffRecordList } from '@/components/staff/staff-record-list';
 import { staffStatus } from '@/components/staff/staff-status';
 import { StatusBadge } from '@/components/staff/status-badge';
@@ -173,8 +173,8 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
     (r) => r.studentProfileId === studentProfileId,
   );
 
-  function handleRecordCreated() {
-    toast.success('เพิ่มรายวิชาแล้ว');
+  function handleRecordsCreated(newRecordIds: string[]) {
+    toast.success(`เพิ่มรายวิชาแล้ว ${newRecordIds.length} วิชา`);
     setShowAddForm(false);
     refetchRecords();
   }
@@ -511,11 +511,12 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                 </p>
               )}
               {mode.showAddCourse && showAddForm && (
-                <StaffAddRecordForm
+                <AddRecordForm
                   studentProfileId={studentProfileId}
                   courses={filteredCourses}
                   semesterOptions={joinedSemesters}
-                  onCreated={handleRecordCreated}
+                  recorded={ownRecords.filter((r) => r.isActive)}
+                  onCreated={handleRecordsCreated}
                   onCancel={() => setShowAddForm(false)}
                 />
               )}
