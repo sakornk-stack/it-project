@@ -37,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GOOGLE_LOGIN_ENABLED } from '@/lib/feature-flags';
+import { GoogleIcon } from '@/components/auth/google-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Reveal } from '@/components/layout/reveal';
 import {
@@ -496,7 +497,8 @@ function ManualRegisterForm({ invitationProblem }: Readonly<{ invitationProblem:
           </div>
 
           <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`}>
-            <Button type="button" variant="outline" className={cn('w-full', HOVER_LIFT)}>
+            <Button type="button" variant="outline" className={cn('w-full gap-2', HOVER_LIFT)}>
+              <GoogleIcon />
               Google
             </Button>
           </a>
