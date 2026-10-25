@@ -149,9 +149,9 @@ export default function AcademicRecordPage() {
     addFormToggleRef.current?.focus();
   }
 
-  function handleRecordCreated(newRecordId: string) {
+  function handleRecordsCreated(newRecordIds: string[]) {
     refetchAll();
-    setHighlightRecordId(newRecordId);
+    setHighlightRecordId(newRecordIds[newRecordIds.length - 1] ?? null);
   }
 
   if (!user) return null;
@@ -247,7 +247,8 @@ export default function AcademicRecordPage() {
             studentProfileId={profileQuery.data.id}
             courses={filteredCourses}
             semesterOptions={joinedSemesters}
-            onCreated={handleRecordCreated}
+            recorded={records.filter((r) => r.isActive)}
+            onCreated={handleRecordsCreated}
             onCancel={closeAddForm}
             autoFocus={addFormToggle === true}
           />
