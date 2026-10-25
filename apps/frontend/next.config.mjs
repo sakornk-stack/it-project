@@ -6,6 +6,13 @@ import { fileURLToPath } from 'node:url';
 // hoisted node_modules are included. Local `npm run build/start` is unchanged.
 const standalone = process.env.NEXT_OUTPUT === 'standalone';
 
+// Hosts without a reverse proxy in front (Render): the frontend forwards /api
+// to the backend itself, so the browser sees one origin and the refresh cookie
+// stays first-party. Read at build time; a bare host gets https://.
+const apiProxyTarget = process.env.API_PROXY_TARGET?.trim();
+const apiProxyOrigin =
+  apiProxyTarget && (/^https?:\/\//.test(apiProxyTarget) ? apiProxyTarget : `https://${apiProxyTarget}`);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   ...(standalone && {
@@ -26,6 +33,11 @@ const nextConfig = {
       permanent: false,
     }));
   },
+  ...(apiProxyOrigin && {
+    async rewrites() {
+      return [{ source: '/api/:path*', destination: `${apiProxyOrigin}/api/:path*` }];
+    },
+  }),
   distDir: process.env.NEXT_BUILD_MODE === 'production' ? '.next-build' : '.next',
   // Hide the Next.js dev indicator (bottom-left "N" badge) in dev mode.
   devIndicators: false,
