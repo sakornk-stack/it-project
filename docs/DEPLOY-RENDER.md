@@ -19,6 +19,7 @@
      -join ((1..64) | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) })
      ```
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: คัดลอกค่าเดียวกับใน `apps/backend/.env` ในเครื่อง
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: คัดลอกจาก `apps/backend/.env` ในเครื่อง (OAuth client ของโปรเจกต์ EduAnalyze ใน Google Cloud) แล้วเพิ่ม redirect URI `https://eduanalyze-sakorn-web.onrender.com/api/auth/google/callback` ใน Google Cloud → Clients → EduAnalyze
    - กด Apply แล้วรอ build ทั้งสองบริการ (ครั้งแรกราว 10–15 นาที)
 3. **เช็กว่าขึ้นแล้ว**: เปิด `https://eduanalyze-sakorn-api.onrender.com/api/health` ต้องได้ `{"status":"ok"}` (ตอนนี้ยังล็อกอินไม่ได้ เพราะฐานข้อมูลยังว่าง)
 4. **ย้ายข้อมูลจากเครื่องนี้ขึ้นไป** (Docker ในเครื่องต้องเปิดอยู่):

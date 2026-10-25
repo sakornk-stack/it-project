@@ -46,13 +46,12 @@ services:
       # Browser → Render edge → web (Next proxy) → Render edge → API.
       - key: TRUST_PROXY_HOPS
         value: "2"
-      # Google sign-in is off on this deployment (the web build leaves
-      # NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=false), but the API's Google strategy
-      # still needs non-empty values to boot.
+      # From the Google Cloud OAuth client (Authorized redirect URI must list
+      # the GOOGLE_CALLBACK_URL below); filled in on the dashboard.
       - key: GOOGLE_CLIENT_ID
-        value: google-login-disabled
+        sync: false
       - key: GOOGLE_CLIENT_SECRET
-        value: google-login-disabled
+        sync: false
       - key: GOOGLE_CALLBACK_URL
         value: https://eduanalyze-sakorn-web.onrender.com/api/auth/google/callback
       - key: SMTP_HOST
@@ -80,3 +79,5 @@ services:
         value: /api
       - key: API_PROXY_TARGET
         value: eduanalyze-sakorn-api.onrender.com
+      - key: NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN
+        value: "true"
