@@ -268,24 +268,14 @@ export class AuthService {
       );
 
     if (existingMethod) {
-      const user = await this.userService.findById(existingMethod.userId);
-      // Google verifying identity is not a substitute for TOTP step-up —
-      // a user who opted into 2FA must clear it regardless of which
-      // first factor they used (advisor feedback: step up Google login
-      // too, not just email+password).
-      if (await this.twoFactorService.isEnabled(user.id)) {
-        return {
-          pendingToken: this.signPendingTwoFactorToken(user.id),
-          requiresTwoFactor: true as const,
-        };
-      }
-      return this.issueTokenPair(user);
+      return this.signInWithGoogle(await this.userService.findById(existingMethod.userId));
     }
 
-    // No Google identity linked yet — check if an account already exists
-    // under this email via a different method. If so, refuse: linking is
-    // out of scope for this phase, and silently merging accounts here
-    // would be an account-takeover vector.
+    // No Google identity linked yet. An account under this email (made with a
+    // password, an invitation or by staff) gets this Google identity linked:
+    // Google has just verified the address, which is the same proof of
+    // ownership the email sign-up link asks for. An account already linked to
+    // a different Google identity is refused — one Google account per user.
     let existingUser: User | null = null;
     try {
       existingUser = await this.userService.findByEmail(profile.email);
@@ -295,9 +285,24 @@ export class AuthService {
       }
     }
     if (existingUser) {
-      throw new ConflictException(
-        'An account already exists with this email using a different sign-in method',
+      const linkedGoogle = await this.userAuthMethodService.findByUserIdAndProvider(
+        existingUser.id,
+        AuthProvider.GOOGLE,
       );
+      if (linkedGoogle) {
+        throw new ConflictException(
+          'This account is already linked to a different Google account',
+        );
+      }
+      if (!this.hostedDomainOk(profile, normalizeEmail(profile.email))) {
+        throw new GoogleSignupRefusedException('domain_not_allowed');
+      }
+      await this.userAuthMethodService.create(
+        existingUser.id,
+        AuthProvider.GOOGLE,
+        profile.googleId,
+      );
+      return this.signInWithGoogle(existingUser);
     }
 
     // Brand-new identity = a self-service sign-up, so the domain rule applies
@@ -317,6 +322,18 @@ export class AuthService {
       profile.fullName,
     );
     return { pendingToken, isNewUser: true };
+  }
+
+  // Google verifying identity is not a substitute for TOTP step-up — a user
+  // who opted into 2FA must clear it regardless of the first factor.
+  private async signInWithGoogle(user: User) {
+    if (await this.twoFactorService.isEnabled(user.id)) {
+      return {
+        pendingToken: this.signPendingTwoFactorToken(user.id),
+        requiresTwoFactor: true as const,
+      };
+    }
+    return this.issueTokenPair(user);
   }
 
   async completeGoogleRegistration(dto: CompleteGoogleRegistrationDto) {

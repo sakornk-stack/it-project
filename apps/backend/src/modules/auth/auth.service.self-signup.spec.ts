@@ -97,6 +97,7 @@ function setup(opts: { existingEmails?: string[]; requireHostedDomain?: boolean 
   const userAuthMethodService = {
     create: jest.fn().mockResolvedValue({}),
     findByProviderAndProviderUserId: jest.fn().mockResolvedValue(null),
+    findByUserIdAndProvider: jest.fn().mockResolvedValue(null),
   };
   const studentProfileService = {
     create: jest.fn().mockResolvedValue({}),
@@ -121,6 +122,8 @@ function setup(opts: { existingEmails?: string[]; requireHostedDomain?: boolean 
         'jwt.accessExpiresIn': '15m',
         'jwt.refreshSecret': 'test-refresh-secret',
         'jwt.refreshExpiresIn': '7d',
+        'jwt.twoFactorPendingSecret': 'test-2fa-pending-secret',
+        'jwt.twoFactorPendingExpiresIn': '5m',
         'session.absoluteMaxHours': 8,
         'signup.allowedDomains': ['ku.th'],
         'google.requireHostedDomain': opts.requireHostedDomain ?? false,
@@ -154,6 +157,7 @@ function setup(opts: { existingEmails?: string[]; requireHostedDomain?: boolean 
     emailSignupRequestService,
     googlePendingRegistrationService,
     emailService,
+    twoFactorService,
   };
 }
 
@@ -391,9 +395,39 @@ describe('Google sign-in claims (handleGoogleCallback)', () => {
     );
   });
 
-  it('still refuses to link a new Google identity to an existing account (any case)', async () => {
-    const { service } = setup({ existingEmails: ['somchai.j@ku.th'] });
+  it('links Google to an existing account with the same address (any case) and signs in', async () => {
+    const { service, userAuthMethodService, googlePendingRegistrationService } = setup({
+      existingEmails: ['somchai.j@ku.th'],
+    });
+    const result = await service.handleGoogleCallback(google());
+    expect(userAuthMethodService.create).toHaveBeenCalledWith('old', AuthProvider.GOOGLE, 'g-sub');
+    expect(result).toHaveProperty('accessToken');
+    expect(googlePendingRegistrationService.create).not.toHaveBeenCalled();
+  });
+
+  it('still asks for the 2FA code after linking when the account has 2FA on', async () => {
+    const { service, twoFactorService } = setup({ existingEmails: ['somchai.j@ku.th'] });
+    twoFactorService.isEnabled.mockResolvedValueOnce(true);
+    const result = await service.handleGoogleCallback(google());
+    expect(result).toMatchObject({ requiresTwoFactor: true });
+    expect(result).not.toHaveProperty('accessToken');
+  });
+
+  it('refuses when the account is already linked to a different Google account', async () => {
+    const { service, userAuthMethodService } = setup({ existingEmails: ['somchai.j@ku.th'] });
+    userAuthMethodService.findByUserIdAndProvider.mockResolvedValueOnce({ providerUserId: 'other' });
     await expect(service.handleGoogleCallback(google())).rejects.toBeInstanceOf(ConflictException);
+    expect(userAuthMethodService.create).not.toHaveBeenCalled();
+  });
+
+  it('does not link when the Workspace hd check is on and fails', async () => {
+    const { service, userAuthMethodService } = setup({
+      existingEmails: ['somchai.j@ku.th'],
+      requireHostedDomain: true,
+    });
+    const call = service.handleGoogleCallback(google({ hostedDomain: undefined }));
+    await expect(call).rejects.toMatchObject({ reason: 'domain_not_allowed' });
+    expect(userAuthMethodService.create).not.toHaveBeenCalled();
   });
 
   it('lets a returning linked user in without re-checking the domain', async () => {

@@ -7,9 +7,11 @@
 # generates hex).
 set -eu
 
-# A host that hands over a ready connection string (Render's fromDatabase)
-# sets DATABASE_URL itself; everywhere else it is built from POSTGRES_*.
-if [ -z "${DATABASE_URL:-}" ]; then
+# Built from POSTGRES_* whenever they are set (compose, VPS) — this also
+# replaces the host-side DATABASE_URL (localhost:5433) that apps/backend/.env
+# carries for native dev. A host with no POSTGRES_* but a ready connection
+# string (Render's fromDatabase) keeps its DATABASE_URL.
+if [ -n "${POSTGRES_USER:-}" ] || [ -z "${DATABASE_URL:-}" ]; then
   : "${POSTGRES_USER:?POSTGRES_USER is not set}"
   : "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}"
   export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-eduanalyze_ai}?schema=public"

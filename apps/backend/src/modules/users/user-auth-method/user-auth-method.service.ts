@@ -39,8 +39,8 @@ export class UserAuthMethodService {
     }
   }
 
-  // Used as part of the anti-account-takeover check — an existing PASSWORD
-  // user with no GOOGLE method yet must not be silently auto-linked.
+  // Used by AuthService.handleGoogleCallback() to refuse linking a second
+  // Google identity to an account that already has one.
   async findByUserIdAndProvider(
     userId: string,
     provider: AuthProvider,
