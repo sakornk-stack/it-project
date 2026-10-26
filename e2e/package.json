@@ -1,0 +1,12 @@
+{
+  "name": "eduanalyze-e2e",
+  "private": true,
+  "description": "End-to-end tests that drive the running app (docker compose up) in Microsoft Edge with Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

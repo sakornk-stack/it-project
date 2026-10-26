@@ -17,6 +17,7 @@
     "prisma:migrate": "npm run prisma:migrate --workspace=apps/backend",
     "lint": "npm run lint --workspace=apps/backend && npm run lint --workspace=apps/frontend",
     "test:backend": "npm run test --workspace=apps/backend",
+    "test:e2e": "npm test --prefix e2e",
     "docker:rebuild": "docker compose up -d --build",
     "docker:rebuild:frontend": "docker compose up -d --build frontend",
     "docker:rebuild:backend": "docker compose up -d --build backend",

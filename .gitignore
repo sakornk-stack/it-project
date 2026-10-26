@@ -73,3 +73,7 @@ eduanalyze-ai_report.pdf
 # ข้อมูลหลักสูตรที่เป็นความลับ
 apps/backend/prisma/private-data/
 DEPLOY_GUIDE.md
+
+# Playwright e2e run output
+e2e/test-results/
+e2e/playwright-report/
