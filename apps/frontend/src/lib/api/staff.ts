@@ -27,25 +27,39 @@ import type {
   UpdateStudentAdvisorRequest,
   UpdateStudentAdvisorResponse,
   UpdateStudentProfileRequest,
-} from '@eduanalyze-ai/shared-types';
-import { apiClient } from '../api-client';
+} from "@eduanalyze-ai/shared-types";
+import { apiClient } from "../api-client";
 
 export async function fetchStudentProfiles() {
-  const { data } = await apiClient.get<StudentProfileSummary[]>('/student-profiles');
+  const { data } =
+    await apiClient.get<StudentProfileSummary[]>("/student-profiles");
   return data;
 }
 
 export async function fetchStudentProfile(id: string) {
-  const { data } = await apiClient.get<StudentProfileDetail>(`/student-profiles/${id}`);
+  const { data } = await apiClient.get<StudentProfileDetail>(
+    `/student-profiles/${id}`,
+  );
   return data;
 }
 
-export async function updateStudentProfile(id: string, dto: UpdateStudentProfileRequest) {
-  const { data } = await apiClient.patch<StudentProfileSummary>(`/student-profiles/${id}`, dto);
+export async function updateStudentProfile(
+  id: string,
+  dto: UpdateStudentProfileRequest,
+) {
+  const { data } = await apiClient.patch<StudentProfileSummary>(
+    `/student-profiles/${id}`,
+    dto,
+  );
   return data;
 }
 
 // Suspends or reactivates the student's sign-in and directory status together.
+// STAFF only, suspended students only; 204. Grades and login data go with it.
+export async function deleteStudentPermanently(id: string) {
+  await apiClient.delete(`/student-profiles/${id}/permanent`);
+}
+
 export async function updateStudentActiveStatus(
   id: string,
   dto: UpdateStudentActiveStatusRequest,
@@ -57,7 +71,10 @@ export async function updateStudentActiveStatus(
   return data;
 }
 
-export async function updateStudentAdvisor(id: string, dto: UpdateStudentAdvisorRequest) {
+export async function updateStudentAdvisor(
+  id: string,
+  dto: UpdateStudentAdvisorRequest,
+) {
   const { data } = await apiClient.patch<UpdateStudentAdvisorResponse>(
     `/student-profiles/${id}/advisor`,
     dto,
@@ -66,7 +83,9 @@ export async function updateStudentAdvisor(id: string, dto: UpdateStudentAdvisor
 }
 
 export async function fetchStudentAuditLogs(id: string) {
-  const { data } = await apiClient.get<AuditLogEntry[]>(`/student-profiles/${id}/audit-logs`);
+  const { data } = await apiClient.get<AuditLogEntry[]>(
+    `/student-profiles/${id}/audit-logs`,
+  );
   return data;
 }
 
@@ -75,27 +94,39 @@ export async function fetchStudentAuditLogs(id: string) {
 // within the requester's scope, not just one student's, hence a
 // differently-named wrapper here rather than reusing that import directly.
 export async function fetchCourseRecordsInScope() {
-  const { data } = await apiClient.get<StudentCourseRecord[]>('/student-course-records');
+  const { data } = await apiClient.get<StudentCourseRecord[]>(
+    "/student-course-records",
+  );
   return data;
 }
 
 export async function fetchInstructorsInScope() {
-  const { data } = await apiClient.get<InstructorListItem[]>('/users/instructors');
+  const { data } =
+    await apiClient.get<InstructorListItem[]>("/users/instructors");
   return data;
 }
 
 export async function fetchCourseCategories() {
-  const { data } = await apiClient.get<CourseCategory[]>('/course-categories');
+  const { data } = await apiClient.get<CourseCategory[]>("/course-categories");
   return data;
 }
 
 export async function createCourseCategory(dto: CreateCourseCategoryRequest) {
-  const { data } = await apiClient.post<CourseCategory>('/course-categories', dto);
+  const { data } = await apiClient.post<CourseCategory>(
+    "/course-categories",
+    dto,
+  );
   return data;
 }
 
-export async function updateCourseCategory(id: string, dto: UpdateCourseCategoryRequest) {
-  const { data } = await apiClient.patch<CourseCategory>(`/course-categories/${id}`, dto);
+export async function updateCourseCategory(
+  id: string,
+  dto: UpdateCourseCategoryRequest,
+) {
+  const { data } = await apiClient.patch<CourseCategory>(
+    `/course-categories/${id}`,
+    dto,
+  );
   return data;
 }
 
@@ -104,12 +135,19 @@ export async function deleteCourseCategory(id: string) {
 }
 
 export async function fetchCurriculumRequirements() {
-  const { data } = await apiClient.get<CurriculumRequirement[]>('/curriculum-requirements');
+  const { data } = await apiClient.get<CurriculumRequirement[]>(
+    "/curriculum-requirements",
+  );
   return data;
 }
 
-export async function createCurriculumRequirement(dto: CreateCurriculumRequirementRequest) {
-  const { data } = await apiClient.post<CurriculumRequirement>('/curriculum-requirements', dto);
+export async function createCurriculumRequirement(
+  dto: CreateCurriculumRequirementRequest,
+) {
+  const { data } = await apiClient.post<CurriculumRequirement>(
+    "/curriculum-requirements",
+    dto,
+  );
   return data;
 }
 
@@ -129,7 +167,7 @@ export async function deleteCurriculumRequirement(id: string) {
 }
 
 export async function createCourse(dto: CreateCourseRequest) {
-  const { data } = await apiClient.post('/courses', dto);
+  const { data } = await apiClient.post("/courses", dto);
   return data;
 }
 
@@ -144,29 +182,37 @@ export async function deleteCourse(id: string) {
 
 // STAFF only: deactivated courses of one curriculum, so one can be reactivated.
 export async function fetchInactiveCourses(curriculumId: string) {
-  const { data } = await apiClient.get<CourseListItem[]>('/courses/inactive', {
+  const { data } = await apiClient.get<CourseListItem[]>("/courses/inactive", {
     params: { curriculumId },
   });
   return data;
 }
 
 export async function reactivateCourse(id: string) {
-  const { data } = await apiClient.post<CourseListItem>(`/courses/${id}/reactivate`);
+  const { data } = await apiClient.post<CourseListItem>(
+    `/courses/${id}/reactivate`,
+  );
   return data;
 }
 
 export async function fetchPrerequisites() {
-  const { data } = await apiClient.get<Prerequisite[]>('/prerequisites');
+  const { data } = await apiClient.get<Prerequisite[]>("/prerequisites");
   return data;
 }
 
 export async function createPrerequisite(dto: CreatePrerequisiteRequest) {
-  const { data } = await apiClient.post<Prerequisite>('/prerequisites', dto);
+  const { data } = await apiClient.post<Prerequisite>("/prerequisites", dto);
   return data;
 }
 
-export async function updatePrerequisite(id: string, dto: UpdatePrerequisiteRequest) {
-  const { data } = await apiClient.patch<Prerequisite>(`/prerequisites/${id}`, dto);
+export async function updatePrerequisite(
+  id: string,
+  dto: UpdatePrerequisiteRequest,
+) {
+  const { data } = await apiClient.patch<Prerequisite>(
+    `/prerequisites/${id}`,
+    dto,
+  );
   return data;
 }
 
@@ -175,12 +221,19 @@ export async function deletePrerequisite(id: string) {
 }
 
 export async function fetchCourseInstructors() {
-  const { data } = await apiClient.get<CourseInstructor[]>('/course-instructors');
+  const { data } = await apiClient.get<CourseInstructor[]>(
+    "/course-instructors",
+  );
   return data;
 }
 
-export async function createCourseInstructor(dto: CreateCourseInstructorRequest) {
-  const { data } = await apiClient.post<CourseInstructor>('/course-instructors', dto);
+export async function createCourseInstructor(
+  dto: CreateCourseInstructorRequest,
+) {
+  const { data } = await apiClient.post<CourseInstructor>(
+    "/course-instructors",
+    dto,
+  );
   return data;
 }
 
@@ -189,20 +242,22 @@ export async function deleteCourseInstructor(id: string) {
 }
 
 export async function fetchStaffOverview() {
-  const { data } = await apiClient.get<StaffOverviewReport>('/dashboard/staff');
+  const { data } = await apiClient.get<StaffOverviewReport>("/dashboard/staff");
   return data;
 }
 
 export async function fetchStaffStudentRisk() {
   const { data } = await apiClient.get<StaffStudentRiskEntry[]>(
-    '/dashboard/staff/students',
+    "/dashboard/staff/students",
   );
   return data;
 }
 
-export async function createStudentInvitation(dto: CreateStudentInvitationRequest) {
+export async function createStudentInvitation(
+  dto: CreateStudentInvitationRequest,
+) {
   const { data } = await apiClient.post<{ email: string; studentCode: string }>(
-    '/student-invitations',
+    "/student-invitations",
     dto,
   );
   return data;
@@ -210,7 +265,7 @@ export async function createStudentInvitation(dto: CreateStudentInvitationReques
 
 export async function fetchStudentInvitations() {
   const { data } = await apiClient.get<StudentInvitationListEntry[]>(
-    '/student-invitations',
+    "/student-invitations",
   );
   return data;
 }
@@ -228,6 +283,8 @@ export async function resendStudentInvitation(id: string) {
 }
 
 export async function fetchStaffYearLevels() {
-  const { data } = await apiClient.get<StaffYearLevelsReport>('/dashboard/staff/year-levels');
+  const { data } = await apiClient.get<StaffYearLevelsReport>(
+    "/dashboard/staff/year-levels",
+  );
   return data;
 }

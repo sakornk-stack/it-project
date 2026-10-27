@@ -3,27 +3,30 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { PrismaClientOrTx } from '../../../prisma/prisma.types';
-import { ProgramService } from '../../organization/program/program.service';
-import { CurriculumService } from '../../organization/curriculum/curriculum.service';
-import { UserRoleService } from '../user-role/user-role.service';
-import { ScopeResolverService } from '../../../common/scope/scope-resolver.service';
-import { AuditLogService } from '../../../common/audit/audit-log.service';
-import type { AuditSnapshot } from '../../../common/audit/audit-log.util';
-import { RequestUser } from '../../auth/request-user.interface';
-import { UpdateStudentActiveStatusDto } from './dto/update-student-active-status.dto';
-import { UpdateStudentAdvisorDto } from './dto/update-student-advisor.dto';
-import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
+} from "@nestjs/common";
+import { Prisma, Role } from "@prisma/client";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { PrismaClientOrTx } from "../../../prisma/prisma.types";
+import { ProgramService } from "../../organization/program/program.service";
+import { CurriculumService } from "../../organization/curriculum/curriculum.service";
+import { UserRoleService } from "../user-role/user-role.service";
+import { ScopeResolverService } from "../../../common/scope/scope-resolver.service";
+import { AuditLogService } from "../../../common/audit/audit-log.service";
+import type { AuditSnapshot } from "../../../common/audit/audit-log.util";
+import { RequestUser } from "../../auth/request-user.interface";
+import { UpdateStudentActiveStatusDto } from "./dto/update-student-active-status.dto";
+import { UpdateStudentAdvisorDto } from "./dto/update-student-advisor.dto";
+import { UpdateStudentProfileDto } from "./dto/update-student-profile.dto";
 
 const REASON_MIN_LENGTH = 5;
-const EDITABLE_FIELDS = ['programId', 'curriculumId', 'admissionYear'] as const;
+const EDITABLE_FIELDS = ["programId", "curriculumId", "admissionYear"] as const;
 
 @Injectable()
 export class StudentProfileService {
+  private readonly logger = new Logger(StudentProfileService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly userRoleService: UserRoleService,
@@ -61,7 +64,7 @@ export class StudentProfileService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
+        error.code === "P2002"
       ) {
         throw new ConflictException(
           `User ${userId} already has a student profile, or student code "${studentCode}" is already in use`,
@@ -114,10 +117,7 @@ export class StudentProfileService {
   // relationship when a SUPER_ADMIN supplies a studentProfileId directly.
   // `include: { user }` added for the STAFF Student Directory UI, which
   // needs a name to show — not just a bare studentCode.
-  async findActiveByIdOrThrow(
-    id: string,
-    tx: PrismaClientOrTx = this.prisma,
-  ) {
+  async findActiveByIdOrThrow(id: string, tx: PrismaClientOrTx = this.prisma) {
     const profile = await tx.studentProfile.findUnique({
       where: { id },
       include: { user: { select: { fullName: true, email: true } } },
@@ -150,7 +150,11 @@ export class StudentProfileService {
   // INSTRUCTOR account; like a course assignment, the instructor's own scope
   // is not checked (instructors are not modelled by UserScope). Audited with
   // ids only; the history screen names them.
-  async updateAdvisor(id: string, dto: UpdateStudentAdvisorDto, requester: RequestUser) {
+  async updateAdvisor(
+    id: string,
+    dto: UpdateStudentAdvisorDto,
+    requester: RequestUser,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const profile = await tx.studentProfile.findUnique({ where: { id } });
       if (!profile) {
@@ -158,25 +162,31 @@ export class StudentProfileService {
       }
       if (!profile.isActive) {
         throw new ConflictException(
-          'บัญชีนิสิตนี้ถูกระงับอยู่ ต้องเปิดบัญชีก่อนจึงเปลี่ยนอาจารย์ที่ปรึกษาได้',
+          "บัญชีนิสิตนี้ถูกระงับอยู่ ต้องเปิดบัญชีก่อนจึงเปลี่ยนอาจารย์ที่ปรึกษาได้",
         );
       }
       if (profile.advisorUserId === dto.advisorUserId) {
-        throw new BadRequestException('ไม่มีข้อมูลที่เปลี่ยนแปลง');
+        throw new BadRequestException("ไม่มีข้อมูลที่เปลี่ยนแปลง");
       }
       if (dto.advisorUserId !== null) {
-        await this.assertAssignableAdvisor(dto.advisorUserId, profile.userId, tx);
+        await this.assertAssignableAdvisor(
+          dto.advisorUserId,
+          profile.userId,
+          tx,
+        );
       }
 
       const updated = await tx.studentProfile.update({
         where: { id },
         data: { advisorUserId: dto.advisorUserId },
-        include: { advisor: { select: { id: true, fullName: true, isActive: true } } },
+        include: {
+          advisor: { select: { id: true, fullName: true, isActive: true } },
+        },
       });
       await this.auditLogService.record(tx, {
-        action: 'STUDENT_ADVISOR_UPDATE',
+        action: "STUDENT_ADVISOR_UPDATE",
         actor: requester,
-        targetType: 'StudentProfile',
+        targetType: "StudentProfile",
         targetId: id,
         studentProfileId: id,
         programId: profile.programId,
@@ -193,14 +203,20 @@ export class StudentProfileService {
     tx: PrismaClientOrTx,
   ) {
     if (advisorUserId === studentUserId) {
-      throw new BadRequestException('นิสิตเป็นอาจารย์ที่ปรึกษาของตัวเองไม่ได้');
+      throw new BadRequestException("นิสิตเป็นอาจารย์ที่ปรึกษาของตัวเองไม่ได้");
     }
     const advisor = await tx.user.findFirst({
-      where: { id: advisorUserId, isActive: true, userRoles: { some: { role: Role.INSTRUCTOR } } },
+      where: {
+        id: advisorUserId,
+        isActive: true,
+        userRoles: { some: { role: Role.INSTRUCTOR } },
+      },
       select: { id: true },
     });
     if (!advisor) {
-      throw new BadRequestException('ผู้ที่เลือกไม่ใช่อาจารย์ที่ใช้งานอยู่ในระบบ');
+      throw new BadRequestException(
+        "ผู้ที่เลือกไม่ใช่อาจารย์ที่ใช้งานอยู่ในระบบ",
+      );
     }
   }
 
@@ -223,18 +239,32 @@ export class StudentProfileService {
       if (!profile) {
         throw new NotFoundException(`Student profile ${id} not found`);
       }
-      const before = { profileActive: profile.isActive, userActive: profile.user.isActive };
-      if (before.profileActive === dto.isActive && before.userActive === dto.isActive) {
+      const before = {
+        profileActive: profile.isActive,
+        userActive: profile.user.isActive,
+      };
+      if (
+        before.profileActive === dto.isActive &&
+        before.userActive === dto.isActive
+      ) {
         throw new ConflictException(
-          dto.isActive ? 'บัญชีนิสิตนี้เปิดใช้งานอยู่แล้ว' : 'บัญชีนิสิตนี้ถูกระงับอยู่แล้ว',
+          dto.isActive
+            ? "บัญชีนิสิตนี้เปิดใช้งานอยู่แล้ว"
+            : "บัญชีนิสิตนี้ถูกระงับอยู่แล้ว",
         );
       }
-      await tx.studentProfile.update({ where: { id }, data: { isActive: dto.isActive } });
-      await tx.user.update({ where: { id: profile.userId }, data: { isActive: dto.isActive } });
+      await tx.studentProfile.update({
+        where: { id },
+        data: { isActive: dto.isActive },
+      });
+      await tx.user.update({
+        where: { id: profile.userId },
+        data: { isActive: dto.isActive },
+      });
       await this.auditLogService.record(tx, {
-        action: dto.isActive ? 'STUDENT_REACTIVATE' : 'STUDENT_SUSPEND',
+        action: dto.isActive ? "STUDENT_REACTIVATE" : "STUDENT_SUSPEND",
         actor: requester,
-        targetType: 'StudentProfile',
+        targetType: "StudentProfile",
         targetId: id,
         studentProfileId: id,
         programId: profile.programId,
@@ -253,7 +283,11 @@ export class StudentProfileService {
   // courses outside the new curriculum, since GPA, graduation checks and PLO
   // would silently be computed against the wrong curriculum; planned courses
   // outside it are dropped with the change (and counted in the audit row).
-  async update(id: string, dto: UpdateStudentProfileDto, requester: RequestUser) {
+  async update(
+    id: string,
+    dto: UpdateStudentProfileDto,
+    requester: RequestUser,
+  ) {
     const reason = this.requireReason(dto.reason);
     return this.prisma.$transaction(async (tx) => {
       const profile = await tx.studentProfile.findUnique({ where: { id } });
@@ -261,31 +295,45 @@ export class StudentProfileService {
         throw new NotFoundException(`Student profile ${id} not found`);
       }
       if (!profile.isActive) {
-        throw new ConflictException('บัญชีนิสิตนี้ถูกระงับอยู่ ต้องเปิดบัญชีก่อนจึงแก้ข้อมูลได้');
+        throw new ConflictException(
+          "บัญชีนิสิตนี้ถูกระงับอยู่ ต้องเปิดบัญชีก่อนจึงแก้ข้อมูลได้",
+        );
       }
       const next = {
         programId: dto.programId ?? profile.programId,
         curriculumId: dto.curriculumId ?? profile.curriculumId,
         admissionYear: dto.admissionYear ?? profile.admissionYear,
       };
-      const changed = EDITABLE_FIELDS.filter((field) => next[field] !== profile[field]);
+      const changed = EDITABLE_FIELDS.filter(
+        (field) => next[field] !== profile[field],
+      );
       if (changed.length === 0) {
-        throw new BadRequestException('ไม่มีข้อมูลที่เปลี่ยนแปลง');
+        throw new BadRequestException("ไม่มีข้อมูลที่เปลี่ยนแปลง");
       }
 
-      if (changed.includes('programId') || changed.includes('curriculumId')) {
-        await this.validateProgramAndCurriculum(next.programId, next.curriculumId, tx);
+      if (changed.includes("programId") || changed.includes("curriculumId")) {
+        await this.validateProgramAndCurriculum(
+          next.programId,
+          next.curriculumId,
+          tx,
+        );
       }
-      if (changed.includes('programId')) {
+      if (changed.includes("programId")) {
         await this.assertProgramInScope(next.programId, requester);
       }
 
       let plannedCoursesRemoved = 0;
-      if (changed.includes('curriculumId')) {
-        const outsideNewCurriculum = { curriculumId: { not: next.curriculumId } };
+      if (changed.includes("curriculumId")) {
+        const outsideNewCurriculum = {
+          curriculumId: { not: next.curriculumId },
+        };
         const [records, assessments] = await Promise.all([
           tx.studentCourseRecord.count({
-            where: { studentProfileId: id, isActive: true, course: outsideNewCurriculum },
+            where: {
+              studentProfileId: id,
+              isActive: true,
+              course: outsideNewCurriculum,
+            },
           }),
           tx.courseAssessment.count({
             where: { studentProfileId: id, course: outsideNewCurriculum },
@@ -309,7 +357,8 @@ export class StudentProfileService {
         before[field] = profile[field];
         after[field] = next[field];
       }
-      if (plannedCoursesRemoved > 0) after.plannedCoursesRemoved = plannedCoursesRemoved;
+      if (plannedCoursesRemoved > 0)
+        after.plannedCoursesRemoved = plannedCoursesRemoved;
 
       const updated = await tx.studentProfile.update({
         where: { id },
@@ -320,9 +369,9 @@ export class StudentProfileService {
         },
       });
       await this.auditLogService.record(tx, {
-        action: 'STUDENT_PROFILE_UPDATE',
+        action: "STUDENT_PROFILE_UPDATE",
         actor: requester,
-        targetType: 'StudentProfile',
+        targetType: "StudentProfile",
         targetId: id,
         studentProfileId: id,
         programId: next.programId,
@@ -339,20 +388,28 @@ export class StudentProfileService {
     return this.auditLogService.findForStudent(id);
   }
 
-  private async assertProgramInScope(programId: string, requester: RequestUser) {
-    const ancestry = await this.scopeResolverService.resolveAncestry('program', programId);
+  private async assertProgramInScope(
+    programId: string,
+    requester: RequestUser,
+  ) {
+    const ancestry = await this.scopeResolverService.resolveAncestry(
+      "program",
+      programId,
+    );
     const effectiveScopes = await this.scopeResolverService.getEffectiveScopes(
       requester.userId,
     );
     if (!this.scopeResolverService.isCovered(ancestry, effectiveScopes)) {
-      throw new ForbiddenException('สาขาใหม่อยู่นอกขอบเขตของคุณ');
+      throw new ForbiddenException("สาขาใหม่อยู่นอกขอบเขตของคุณ");
     }
   }
 
   private requireReason(reason: string): string {
     const trimmed = reason.trim();
     if (trimmed.length < REASON_MIN_LENGTH) {
-      throw new BadRequestException(`กรุณาระบุเหตุผลอย่างน้อย ${REASON_MIN_LENGTH} ตัวอักษร`);
+      throw new BadRequestException(
+        `กรุณาระบุเหตุผลอย่างน้อย ${REASON_MIN_LENGTH} ตัวอักษร`,
+      );
     }
     return trimmed;
   }
@@ -369,5 +426,96 @@ export class StudentProfileService {
       where: { programId: { in: programIds } },
       include: { user: { select: { fullName: true, email: true } } },
     });
+  }
+
+  // STAFF permanently deleting a student account (ScopeGuard has checked the
+  // program), e.g. a sign-up made with the wrong data. Only a suspended
+  // student, so it is always two deliberate steps; an account holding any role
+  // besides STUDENT is refused. The student's own rows (grades, assessments,
+  // plan, credit requests) and login data go in one transaction, which frees
+  // the email for a new sign-up. Logs ids and row counts only.
+  async permanentlyDelete(id: string, requester: RequestUser) {
+    const deleted = await this.prisma.$transaction(async (tx) => {
+      const profile = await tx.studentProfile.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              isActive: true,
+              userRoles: { select: { role: true } },
+            },
+          },
+        },
+      });
+      if (!profile) {
+        throw new NotFoundException(`Student profile ${id} not found`);
+      }
+      const { user } = profile;
+      if (user.id === requester.userId) {
+        throw new ForbiddenException("ไม่สามารถลบบัญชีของตัวเองได้");
+      }
+      if (user.userRoles.some((r) => r.role !== Role.STUDENT)) {
+        throw new ForbiddenException(
+          "บัญชีนี้มีบทบาทอื่นนอกจากนิสิต ลบจากหน้านี้ไม่ได้",
+        );
+      }
+      if (profile.isActive || user.isActive) {
+        throw new ConflictException("ต้องระงับบัญชีนิสิตก่อนจึงลบถาวรได้");
+      }
+      const byProfile = { where: { studentProfileId: id } };
+      const byUser = { where: { userId: user.id } };
+      const counts = {
+        // CourseAssessmentCloScore rows cascade with their assessment.
+        courseAssessments: (await tx.courseAssessment.deleteMany(byProfile))
+          .count,
+        creditLimitRequests: (
+          await tx.studentCreditLimitRequest.deleteMany(byProfile)
+        ).count,
+        courseRecords: (await tx.studentCourseRecord.deleteMany(byProfile))
+          .count,
+        plannedCourses: (await tx.studentPlannedCourse.deleteMany(byProfile))
+          .count,
+      };
+      // Grades this account entered for anyone else are history; keep the account then.
+      const enteredForOthers = await tx.studentCourseRecord.count({
+        where: { enteredByUserId: user.id },
+      });
+      if (enteredForOthers > 0) {
+        throw new ConflictException(
+          `ลบถาวรไม่ได้: บัญชีนี้เคยบันทึกผลการเรียนให้ผู้อื่น ${enteredForOthers} รายการ`,
+        );
+      }
+      await tx.studentProfile.delete({ where: { id } });
+      const login = {
+        pendingInvitations: (await tx.pendingInvitation.deleteMany(byUser))
+          .count,
+        passwordResetTokens: (await tx.passwordResetToken.deleteMany(byUser))
+          .count,
+        twoFactorCredentials: (await tx.twoFactorCredential.deleteMany(byUser))
+          .count,
+        authMethods: (await tx.userAuthMethod.deleteMany(byUser)).count,
+        consents: (await tx.userConsent.deleteMany(byUser)).count,
+        scopes: (await tx.userScope.deleteMany(byUser)).count,
+        roles: (await tx.userRole.deleteMany(byUser)).count,
+        // No foreign key: sign-ups in progress are tied to the account by email.
+        googlePending: (
+          await tx.googlePendingRegistration.deleteMany({
+            where: { email: user.email },
+          })
+        ).count,
+        emailSignups: (
+          await tx.emailSignupRequest.deleteMany({
+            where: { email: user.email },
+          })
+        ).count,
+      };
+      await tx.user.delete({ where: { id: user.id } });
+      return { ...counts, ...login, studentProfiles: 1, users: 1 };
+    });
+    this.logger.warn(
+      `Permanently deleted student profile ${id} by user ${requester.userId}: ${JSON.stringify(deleted)}`,
+    );
   }
 }

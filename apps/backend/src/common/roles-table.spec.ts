@@ -97,8 +97,8 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       findAll: ['STAFF', 'ADMIN', 'SUPER_ADMIN'],
     },
   ],
-  // Managing a student account (edit, suspend/reactivate, history) is STAFF-only;
-  // there is no route that deletes one.
+  // Managing a student account (edit, suspend/reactivate, permanent delete of a
+  // suspended one, history) is STAFF-only.
   [
     'StudentProfilesController',
     StudentProfilesController,
@@ -108,6 +108,7 @@ const TABLE: [string, { prototype: object }, Handlers][] = [
       findOne: ['ADMIN', 'STAFF'],
       update: ['STAFF'],
       updateActiveStatus: ['STAFF'],
+      permanentlyDelete: ['STAFF'],
       updateAdvisor: ['STAFF'],
       findAuditLogs: ['STAFF'],
     },

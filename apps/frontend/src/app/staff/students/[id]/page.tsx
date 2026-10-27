@@ -1,17 +1,25 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
-import { AlertTriangle, ArrowLeft, Ban, Check, Pencil, Plus, Star } from 'lucide-react';
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Ban,
+  Check,
+  Pencil,
+  Plus,
+  Star,
+} from "lucide-react";
 import {
   fetchAcademicYears,
   fetchCourses,
   fetchMyGpa,
   fetchSemesters,
-} from '@/lib/api/academic-record';
+} from "@/lib/api/academic-record";
 import {
   fetchCourseRecordsInScope,
   fetchInstructorsInScope,
@@ -19,48 +27,52 @@ import {
   fetchStaffStudentRisk,
   fetchStudentAuditLogs,
   fetchStudentProfile,
-} from '@/lib/api/staff';
-import { fetchCurricula, fetchPrograms } from '@/lib/api/organization';
-import { formatSemesterLabel } from '@/lib/grade-label';
-import { useAuth } from '@/lib/auth-context';
-import { ROLE_LABEL_TH } from '@/components/auth/require-role';
-import { useToast } from '@/lib/toast-context';
-import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { PageHeader } from '@/components/layout/page-header';
-import { PageLoadError } from '@/components/layout/page-states';
-import { PageSection } from '@/components/layout/page-section';
-import { Reveal } from '@/components/layout/reveal';
-import { GpaScale } from '@/components/ui/gpa-scale';
-import { MetricCard } from '@/components/staff/metric-card';
+} from "@/lib/api/staff";
+import { fetchCurricula, fetchPrograms } from "@/lib/api/organization";
+import { formatSemesterLabel } from "@/lib/grade-label";
+import { useAuth } from "@/lib/auth-context";
+import { ROLE_LABEL_TH } from "@/components/auth/require-role";
+import { useToast } from "@/lib/toast-context";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { PageHeader } from "@/components/layout/page-header";
+import { PageLoadError } from "@/components/layout/page-states";
+import { PageSection } from "@/components/layout/page-section";
+import { Reveal } from "@/components/layout/reveal";
+import { GpaScale } from "@/components/ui/gpa-scale";
+import { MetricCard } from "@/components/staff/metric-card";
 import {
   GRADE_SAVES_NOW_DETAIL,
   GRADE_SAVES_NOW_NOTICE,
   recordModeView,
-} from '@/components/staff/record-edit-mode';
-import { AddRecordForm } from '@/components/academic-record/add-record-form';
-import { StaffRecordList } from '@/components/staff/staff-record-list';
-import { staffStatus } from '@/components/staff/staff-status';
-import { StatusBadge } from '@/components/staff/status-badge';
-import { isStudentSuspended } from '@/components/staff/student-account';
-import { StudentAccountStatusControl } from '@/components/staff/student-account-status-control';
-import { StudentAdvisorSheet } from '@/components/staff/student-advisor-sheet';
-import { StudentHistorySection } from '@/components/staff/student-history-section';
-import { StudentProfileEditForm } from '@/components/staff/student-profile-edit-form';
-import { NO_ADVISOR_LABEL, type AuditLabelLookups } from '@/components/staff/describe-audit-entry';
-import { AnimatedNumber } from '@/components/ui/animated-number';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { NO_DATA_LABEL } from '@/components/staff/student-reading';
-import { Skeleton, TableSkeleton } from '@/components/ui/skeleton';
-import { BADGE_TONE_CLASSES, type SemanticTone } from '@/lib/tone';
-import { cn } from '@/lib/utils';
+} from "@/components/staff/record-edit-mode";
+import { AddRecordForm } from "@/components/academic-record/add-record-form";
+import { StaffRecordList } from "@/components/staff/staff-record-list";
+import { staffStatus } from "@/components/staff/staff-status";
+import { StatusBadge } from "@/components/staff/status-badge";
+import { isStudentSuspended } from "@/components/staff/student-account";
+import { StudentAccountStatusControl } from "@/components/staff/student-account-status-control";
+import { StudentPermanentDeleteButton } from "@/components/staff/student-permanent-delete";
+import { StudentAdvisorSheet } from "@/components/staff/student-advisor-sheet";
+import { StudentHistorySection } from "@/components/staff/student-history-section";
+import { StudentProfileEditForm } from "@/components/staff/student-profile-edit-form";
+import {
+  NO_ADVISOR_LABEL,
+  type AuditLabelLookups,
+} from "@/components/staff/describe-audit-entry";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NO_DATA_LABEL } from "@/components/staff/student-reading";
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
+import { BADGE_TONE_CLASSES, type SemanticTone } from "@/lib/tone";
+import { cn } from "@/lib/utils";
 
 // Colour of the GPA track: follows the student's status, grey when there is none.
 const STATUS_TONE: Record<string, SemanticTone> = {
-  CRITICAL: 'danger',
-  WATCH: 'warning',
-  NORMAL: 'success',
+  CRITICAL: "danger",
+  WATCH: "warning",
+  NORMAL: "success",
 };
 
 const TERM_ORDER: Record<string, number> = { FIRST: 0, SECOND: 1, SUMMER: 2 };
@@ -70,7 +82,11 @@ export default function StaffStudentDetailPage() {
   return <StaffStudentDetailContent studentProfileId={id} />;
 }
 
-function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: string }) {
+function StaffStudentDetailContent({
+  studentProfileId,
+}: {
+  studentProfileId: string;
+}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -82,56 +98,56 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   const mode = recordModeView(editing);
 
   const profileQuery = useQuery({
-    queryKey: ['staff-student', studentProfileId],
+    queryKey: ["staff-student", studentProfileId],
     queryFn: () => fetchStudentProfile(studentProfileId),
   });
   const gpaQuery = useQuery({
-    queryKey: ['staff-student-gpa', studentProfileId],
+    queryKey: ["staff-student-gpa", studentProfileId],
     queryFn: () => fetchMyGpa(studentProfileId),
   });
   const recordsQuery = useQuery({
-    queryKey: ['staff-course-records'],
+    queryKey: ["staff-course-records"],
     queryFn: fetchCourseRecordsInScope,
   });
   // Same query key the directory list page uses — resolves from cache when
   // arriving via a "ดูรายละเอียด" link, and gives this page a risk level
   // without a dedicated per-student endpoint.
   const riskQuery = useQuery({
-    queryKey: ['staff-student-risk'],
+    queryKey: ["staff-student-risk"],
     queryFn: fetchStaffStudentRisk,
   });
   const coursesQuery = useQuery({
-    queryKey: ['courses'],
+    queryKey: ["courses"],
     queryFn: fetchCourses,
   });
   const academicYearsQuery = useQuery({
-    queryKey: ['academic-years'],
+    queryKey: ["academic-years"],
     queryFn: fetchAcademicYears,
   });
   const semestersQuery = useQuery({
-    queryKey: ['semesters'],
+    queryKey: ["semesters"],
     queryFn: fetchSemesters,
   });
   const programsQuery = useQuery({
-    queryKey: ['programs'],
+    queryKey: ["programs"],
     queryFn: fetchPrograms,
   });
   const curriculaQuery = useQuery({
-    queryKey: ['curricula'],
+    queryKey: ["curricula"],
     queryFn: fetchCurricula,
   });
   const auditQuery = useQuery({
-    queryKey: ['staff-student-audit', studentProfileId],
+    queryKey: ["staff-student-audit", studentProfileId],
     queryFn: () => fetchStudentAuditLogs(studentProfileId),
   });
   // Who can be picked as advisor, and the names the history shows for advisor ids.
   const instructorsQuery = useQuery({
-    queryKey: ['instructors-in-scope'],
+    queryKey: ["instructors-in-scope"],
     queryFn: fetchInstructorsInScope,
   });
   // The requester's own programs and their curricula: what the edit form offers.
   const overviewQuery = useQuery({
-    queryKey: ['staff-overview'],
+    queryKey: ["staff-overview"],
     queryFn: fetchStaffOverview,
   });
 
@@ -158,7 +174,10 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
       });
   }, [semestersQuery.data, yearById]);
   const semesterMap = useMemo(
-    () => new Map(joinedSemesters.map((s, order) => [s.id, { label: s.label, order }])),
+    () =>
+      new Map(
+        joinedSemesters.map((s, order) => [s.id, { label: s.label, order }]),
+      ),
     [joinedSemesters],
   );
 
@@ -180,24 +199,30 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
   }
 
   function refetchRecords() {
-    queryClient.invalidateQueries({ queryKey: ['staff-course-records'] });
+    queryClient.invalidateQueries({ queryKey: ["staff-course-records"] });
     queryClient.invalidateQueries({
-      queryKey: ['staff-student-gpa', studentProfileId],
+      queryKey: ["staff-student-gpa", studentProfileId],
     });
-    queryClient.invalidateQueries({ queryKey: ['staff-student-audit', studentProfileId] });
+    queryClient.invalidateQueries({
+      queryKey: ["staff-student-audit", studentProfileId],
+    });
   }
 
   // After a suspension, reactivation or profile edit: the student, the
   // directory status and the program counts all move.
   function refetchAccount() {
-    queryClient.invalidateQueries({ queryKey: ['staff-student', studentProfileId] });
-    queryClient.invalidateQueries({ queryKey: ['staff-student-risk'] });
-    queryClient.invalidateQueries({ queryKey: ['staff-student-audit', studentProfileId] });
-    queryClient.invalidateQueries({ queryKey: ['staff-overview'] });
+    queryClient.invalidateQueries({
+      queryKey: ["staff-student", studentProfileId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["staff-student-risk"] });
+    queryClient.invalidateQueries({
+      queryKey: ["staff-student-audit", studentProfileId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["staff-overview"] });
   }
 
   function handleProfileSaved() {
-    toast.success('บันทึกข้อมูลนิสิตแล้ว');
+    toast.success("บันทึกข้อมูลนิสิตแล้ว");
     setEditingProfile(false);
     refetchAccount();
   }
@@ -218,15 +243,25 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
 
   if (!user) return null;
 
-  const forbidden = isAxiosError(profileQuery.error) && profileQuery.error.response?.status === 403;
+  const forbidden =
+    isAxiosError(profileQuery.error) &&
+    profileQuery.error.response?.status === 403;
   const program = programsQuery.data?.find((p) => p.id === profile?.programId);
-  const curriculum = curriculaQuery.data?.find((c) => c.id === profile?.curriculumId);
+  const curriculum = curriculaQuery.data?.find(
+    (c) => c.id === profile?.curriculumId,
+  );
   const gpa = gpaQuery.data;
-  const risk = riskQuery.data?.find((s) => s.studentProfileId === studentProfileId);
+  const risk = riskQuery.data?.find(
+    (s) => s.studentProfileId === studentProfileId,
+  );
   const suspended = profile ? isStudentSuspended(profile) : false;
 
   return (
-    <DashboardShell role="STAFF" identityLabel={user.email} fullName={user.fullName}>
+    <DashboardShell
+      role="STAFF"
+      identityLabel={user.email}
+      fullName={user.fullName}
+    >
       <Link
         href="/staff/students"
         className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
@@ -275,7 +310,10 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
         />
       )}
       {profileQuery.isError && !forbidden && (
-        <PageLoadError message="ไม่พบนิสิต" onRetry={() => profileQuery.refetch()} />
+        <PageLoadError
+          message="ไม่พบนิสิต"
+          onRetry={() => profileQuery.refetch()}
+        />
       )}
 
       {profile && (
@@ -287,7 +325,11 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               actions={
                 <div className="flex flex-wrap items-center gap-2">
                   {risk && <StatusBadge status={staffStatus(risk)} />}
-                  <StudentAccountStatusControl profile={profile} onChanged={refetchAccount} />
+                  <StudentAccountStatusControl
+                    profile={profile}
+                    onChanged={refetchAccount}
+                  />
+                  <StudentPermanentDeleteButton profile={profile} />
                 </div>
               }
             />
@@ -295,7 +337,7 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               <p
                 role="note"
                 className={cn(
-                  'mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm',
+                  "mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm",
                   BADGE_TONE_CLASSES.neutral,
                 )}
               >
@@ -310,15 +352,20 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
               <p
                 role="note"
                 className={cn(
-                  'mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm',
+                  "mt-3 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm",
                   BADGE_TONE_CLASSES.warning,
                 )}
               >
-                <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                />
                 <span>
-                  มีรายวิชา D+/D/F/U อยู่{' '}
-                  <span className="font-semibold tabular-nums">{risk.lowGradeCount}</span> วิชา
-                  ควรติดตามผลการเรียนของนิสิต
+                  มีรายวิชา D+/D/F/U อยู่{" "}
+                  <span className="font-semibold tabular-nums">
+                    {risk.lowGradeCount}
+                  </span>{" "}
+                  วิชา ควรติดตามผลการเรียนของนิสิต
                 </span>
               </p>
             )}
@@ -344,34 +391,55 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                 <dl className="grid h-full grid-cols-1 content-evenly gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
                   <div>
                     <dt className="text-xs text-muted-foreground">สาขา</dt>
-                    <dd className="break-words text-primary">{program?.name ?? '—'}</dd>
+                    <dd className="break-words text-primary">
+                      {program?.name ?? "—"}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">ฉบับหลักสูตร</dt>
-                    <dd className="text-primary">{curriculum?.version ?? '—'}</dd>
+                    <dt className="text-xs text-muted-foreground">
+                      ฉบับหลักสูตร
+                    </dt>
+                    <dd className="text-primary">
+                      {curriculum?.version ?? "—"}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">ปีเข้าศึกษา</dt>
-                    <dd className="tabular-nums text-primary">{profile.admissionYear}</dd>
+                    <dt className="text-xs text-muted-foreground">
+                      ปีเข้าศึกษา
+                    </dt>
+                    <dd className="tabular-nums text-primary">
+                      {profile.admissionYear}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs text-muted-foreground">รหัสนิสิต</dt>
-                    <dd className="tabular-nums text-primary">{profile.studentCode}</dd>
+                    <dd className="tabular-nums text-primary">
+                      {profile.studentCode}
+                    </dd>
                   </div>
                   <div className="min-w-0">
                     <dt className="text-xs text-muted-foreground">อีเมล</dt>
-                    <dd className="break-all text-primary">{profile.user.email}</dd>
+                    <dd className="break-all text-primary">
+                      {profile.user.email}
+                    </dd>
                   </div>
                   <div className="min-w-0">
-                    <dt className="text-xs text-muted-foreground">อาจารย์ที่ปรึกษา</dt>
+                    <dt className="text-xs text-muted-foreground">
+                      อาจารย์ที่ปรึกษา
+                    </dt>
                     <dd className="flex flex-wrap items-center gap-x-2 text-primary">
                       <span
-                        className={cn('break-words', !profile.advisor && 'text-muted-foreground')}
+                        className={cn(
+                          "break-words",
+                          !profile.advisor && "text-muted-foreground",
+                        )}
                       >
                         {profile.advisor?.fullName ?? NO_ADVISOR_LABEL}
                       </span>
                       {profile.advisor && !profile.advisor.isActive && (
-                        <Badge tone="danger">บัญชีอาจารย์ถูกระงับ ควรเปลี่ยน</Badge>
+                        <Badge tone="danger">
+                          บัญชีอาจารย์ถูกระงับ ควรเปลี่ยน
+                        </Badge>
                       )}
                       {!suspended && (
                         <Button
@@ -379,11 +447,13 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                           variant="link"
                           className="h-11 px-0 text-brand underline"
                           aria-label={
-                            profile.advisor ? 'เปลี่ยนอาจารย์ที่ปรึกษา' : 'กำหนดอาจารย์ที่ปรึกษา'
+                            profile.advisor
+                              ? "เปลี่ยนอาจารย์ที่ปรึกษา"
+                              : "กำหนดอาจารย์ที่ปรึกษา"
                           }
                           onClick={() => setAdvisorOpen(true)}
                         >
-                          {profile.advisor ? 'เปลี่ยน' : 'กำหนด'}
+                          {profile.advisor ? "เปลี่ยน" : "กำหนด"}
                         </Button>
                       )}
                     </dd>
@@ -398,18 +468,26 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                 label="GPA สะสม"
                 value={
                   gpa.gpa !== null ? (
-                    <AnimatedNumber value={gpa.gpa} decimals={2} format={(n) => n.toFixed(2)} />
+                    <AnimatedNumber
+                      value={gpa.gpa}
+                      decimals={2}
+                      format={(n) => n.toFixed(2)}
+                    />
                   ) : (
                     NO_DATA_LABEL
                   )
                 }
-                unit={gpa.gpa !== null ? '/ 4.00' : undefined}
+                unit={gpa.gpa !== null ? "/ 4.00" : undefined}
                 footer={
                   <div className="space-y-2">
                     {risk && <StatusBadge status={staffStatus(risk)} />}
                     <GpaScale
                       gpa={gpa.gpa}
-                      tone={risk ? (STATUS_TONE[staffStatus(risk)] ?? 'neutral') : 'neutral'}
+                      tone={
+                        risk
+                          ? (STATUS_TONE[staffStatus(risk)] ?? "neutral")
+                          : "neutral"
+                      }
                     />
                   </div>
                 }
@@ -424,7 +502,9 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                   {gpaQuery.isLoading ? (
                     <Skeleton className="h-9 w-20" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{NO_DATA_LABEL}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {NO_DATA_LABEL}
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -459,12 +539,12 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
-                      variant={showAddForm ? 'outline' : 'default'}
+                      variant={showAddForm ? "outline" : "default"}
                       className="gap-1.5 px-4"
                       onClick={() => setShowAddForm((open) => !open)}
                     >
                       {showAddForm ? (
-                        'ยกเลิกการเพิ่ม'
+                        "ยกเลิกการเพิ่ม"
                       ) : (
                         <>
                           <Plus aria-hidden="true" size={16} />
@@ -503,10 +583,16 @@ function StaffStudentDetailContent({ studentProfileId }: { studentProfileId: str
                   role="note"
                   className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
                 >
-                  <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                  <AlertTriangle
+                    aria-hidden="true"
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
                   <span>
-                    <span className="font-semibold">{GRADE_SAVES_NOW_NOTICE}</span>{' '}
-                    {GRADE_SAVES_NOW_DETAIL} · การเพิ่มและการลบรายวิชาก็บันทึกทันทีเช่นกัน
+                    <span className="font-semibold">
+                      {GRADE_SAVES_NOW_NOTICE}
+                    </span>{" "}
+                    {GRADE_SAVES_NOW_DETAIL} ·
+                    การเพิ่มและการลบรายวิชาก็บันทึกทันทีเช่นกัน
                   </span>
                 </p>
               )}
