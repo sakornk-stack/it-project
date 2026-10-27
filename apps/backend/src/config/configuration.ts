@@ -82,6 +82,11 @@ export default () => ({
     pass: process.env.SMTP_PASS,
     from: process.env.SMTP_FROM,
   },
+  // Render's free plan blocks outbound SMTP ports, so the deployed app sends
+  // through Brevo's HTTPS API when this key is set (SMTP_FROM stays the sender).
+  brevo: {
+    apiKey: process.env.BREVO_API_KEY,
+  },
   ai: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     // Interpreting already-computed numbers into hedged prose (§25-26) is

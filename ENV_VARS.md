@@ -35,6 +35,7 @@ Names and purpose only. Never put values in this file. Templates:
 | `SMTP_USER` | no | Mail account. |
 | `SMTP_PASS` | no | Mail app password. |
 | `SMTP_FROM` | no | Sender address. |
+| `BREVO_API_KEY` | no | When set, mail is sent through Brevo's HTTPS API instead of SMTP (Render's free plan blocks SMTP ports). `SMTP_FROM` must be a sender verified in Brevo. |
 | `TOTP_ENCRYPTION_KEY` | yes | Encrypts 2FA secrets (64 hex characters). Losing it makes every 2FA secret unreadable, so back it up separately. |
 | `ANTHROPIC_API_KEY` | no | Enables AI analysis. Empty or `disabled` turns it off: the endpoint answers 503 before any student data is read or sent. **Production keeps it `disabled`** until the privacy policy names the transfer of student data to this outside provider and the university has approved it. |
 | `ANTHROPIC_MODEL` | no | Model override for AI analysis. |

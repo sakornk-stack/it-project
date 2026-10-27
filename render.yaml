@@ -57,6 +57,10 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      # Render's free plan blocks SMTP ports; mail goes out through Brevo's
+      # HTTPS API instead (SMTP_FROM = the Brevo-verified sender).
+      - key: BREVO_API_KEY
+        sync: false
       # Build arg: shows the Google button on the sign-in page.
       - key: NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN
         value: "true"

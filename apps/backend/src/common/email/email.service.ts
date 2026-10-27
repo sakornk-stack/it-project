@@ -19,6 +19,8 @@ export interface SendMailParams {
 // Gmail account password will NOT work since Google blocks plain SMTP
 // auth on the real password). Kept swappable: nothing outside this file
 // knows it's Gmail specifically, only SMTP_HOST/PORT/USER/PASS/FROM.
+// With BREVO_API_KEY set, mail goes through Brevo's HTTPS API instead: Render's
+// free plan blocks outbound SMTP ports (25/465/587), HTTPS is not blocked.
 // Logs carry a shortened address (a***@domain), never the full one.
 export function maskEmail(address: string): string {
   const [local, domain] = address.split('@');
@@ -40,14 +42,26 @@ export function escapeHtml(value: string): string {
   return value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
 }
 
+// "EduAnalyze <x@gmail.com>" or a bare address -> Brevo's sender object.
+export function parseSender(from: string): { name?: string; email: string } {
+  const match = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(from);
+  if (!match) return { email: from.trim() };
+  const name = match[1].trim();
+  return name ? { name, email: match[2].trim() } : { email: match[2].trim() };
+}
+
+const BREVO_SEND_URL = 'https://api.brevo.com/v3/smtp/email';
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly transporter: nodemailer.Transporter;
   private readonly from: string;
   private readonly frontendUrl: string;
+  private readonly brevoApiKey: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
+    this.brevoApiKey = this.configService.get<string>('brevo.apiKey')?.trim() || undefined;
     const host = this.configService.get<string>('smtp.host');
     const port = this.configService.get<number>('smtp.port');
     const user = this.configService.get<string>('smtp.user')?.trim();
@@ -81,17 +95,42 @@ export class EmailService {
   // POST /auth/forgot-password path remains a fallback for the user).
   async sendMail(params: SendMailParams): Promise<void> {
     try {
-      await this.transporter.sendMail({
-        from: this.from,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-      });
+      if (this.brevoApiKey) {
+        await this.sendViaBrevo(params, this.brevoApiKey);
+      } else {
+        await this.transporter.sendMail({
+          from: this.from,
+          to: params.to,
+          subject: params.subject,
+          html: params.html,
+        });
+      }
     } catch (error) {
       this.logger.error(
         `Failed to send email to ${maskEmail(params.to)}: ${(error as Error).message}`,
       );
       throw error;
+    }
+  }
+
+  private async sendViaBrevo(params: SendMailParams, apiKey: string): Promise<void> {
+    const response = await fetch(BREVO_SEND_URL, {
+      method: 'POST',
+      headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        sender: parseSender(this.from),
+        to: [{ email: params.to }],
+        subject: params.subject,
+        htmlContent: params.html,
+      }),
+      // Same ceiling as the SMTP socket timeout above.
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!response.ok) {
+      // Brevo's error body names the problem (e.g. unverified sender) and
+      // never echoes the key or the recipient.
+      const detail = (await response.text().catch(() => '')).slice(0, 200);
+      throw new Error(`Brevo responded ${response.status}: ${detail}`);
     }
   }
 
